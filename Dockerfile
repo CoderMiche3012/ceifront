@@ -1,5 +1,5 @@
 # Usa una imagen oficial de Node.js
-FROM node:18-alpine
+FROM node:22-alpine
 
 # Directorio de trabajo dentro del contenedor
 WORKDIR /app
@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Exponer el puerto por defecto de React (o Vite)
-EXPOSE 3000
+EXPOSE 5173
 
 # Comando para iniciar la aplicación en modo desarrollo
-CMD ["npm", "start"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
