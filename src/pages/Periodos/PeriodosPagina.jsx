@@ -21,11 +21,11 @@ export default function PeriodosPagina() {
   return (
     <section className="space-y-6">
       <EncabezadoPagina
-        titulo="Gestión de Periodos"
-        descripcion="Monitorea y organiza los periodos escolares"
+        titulo="Gestión de Cliclos Escolares"
+        descripcion="Monitorea y organiza los ciclos escolares"
         accion={
           <Boton onClick={handleOpenCreate} icon={<CalendarPlus size={18} />}>
-            Registrar Periodo
+            Registrar Ciclo
           </Boton>
         }
       />
