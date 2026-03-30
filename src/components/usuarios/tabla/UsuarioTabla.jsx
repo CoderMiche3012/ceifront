@@ -84,6 +84,7 @@ export default function UsuarioTabla({users,roles,onView,onEdit,onDeactivate,onA
       columns={columns}
       data={users}
       renderCell={renderCell}
+      rowKey="id_usuario"
     />
   );
 }

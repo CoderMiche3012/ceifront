@@ -53,4 +53,9 @@ export const configSubmenu = [
     path: "/app/roles",
     permission: "Ver Permisos",
   },
+  {
+    label: "Ciclo Escolar",
+    path: "/app/periodos",
+    permission: "Ver Usuarios",
+  },
 ]
