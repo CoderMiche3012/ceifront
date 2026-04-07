@@ -41,14 +41,13 @@ export default function PostulantesPagina() {
         }
       />
 
-      <div className="overflow-hidden rounded-[24px] border border-[#dbe3eb] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+      <div className="rounded-[24px] border border-[#dbe3eb] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] relative">
         {/* Filtros */}
         <PostulanteFiltros
           search={search}
           onSearchChange={handleSearchChange}
           onClearFilters={handleClearFilters}
         />
-
         {/* Tabla con estado de carga */}
         <div className="h-auto">
           {loading ? (

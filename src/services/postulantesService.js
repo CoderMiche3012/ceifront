@@ -34,5 +34,25 @@ export const postulantesService = {
             }
             throw new Error(formatErrorAnidado(error.message));
         }
-    }
+    },
+    eliminarPostulante: async (id) => {
+        try {
+            // Realizamos la petición DELETE al endpoint correspondiente
+            // Nota: Asegúrate de que la URL coincida con tu API (ej: /api/beneficiarios/postulantes/ID/)
+            const res = await API.delete(`/api/beneficiarios/postulantes/${id}/`);
+            return res.data;
+        } catch (error) {
+            console.error("Error al eliminar postulante:", error);
+
+            // Extraemos la data del error de Axios
+            const errorData = error.response?.data || error;
+
+            if (errorData) {
+                // Usamos tu utilidad de formateo para que el error sea legible en el modal
+                throw new Error(formatErrorAnidado(errorData));
+            }
+
+            throw new Error(formatErrorAnidado(error.message));
+        }
+    },
 };

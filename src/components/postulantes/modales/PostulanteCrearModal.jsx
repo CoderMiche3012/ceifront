@@ -34,8 +34,9 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 text-left transition-all">
-        <div className="w-full max-w-2xl rounded-[32px] bg-white shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
-          
+        {/* Se aumentó el max-w a 4xl para dar espacio a las 3 columnas */}
+        <div className="w-full max-w-4xl rounded-[32px] bg-white shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+
           <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-5 flex items-center gap-4 flex-shrink-0">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E5F63]/10 text-[#0E5F63]"><HiOutlineCalendar size={24} /></div>
             <div className="flex-1">
@@ -48,13 +49,14 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
           <form onSubmit={handlePreSubmit} className="flex-1 overflow-y-auto px-6 py-6 sm:px-8 custom-scrollbar">
             <AlertaError mensaje={error} />
 
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 mt-6">
+            {/* Grid principal: 3 columnas en pantallas medianas */}
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-3 mt-6">
               <Field label="Nombre(s)" required>
                 <InputG value={form.id_expediente.nombre} onChange={(e) => updateExpediente("nombre", e.target.value)} placeholder="Ej. Juan" disabled={loading} required />
               </Field>
 
               <Field label="Apellido Paterno" required>
-                <InputG value={form.id_expediente.apellido_p} onChange={(e) => updateExpediente("apellido_p", e.target.value)} placeholder="Ej. Perez"  disabled={loading} required />
+                <InputG value={form.id_expediente.apellido_p} onChange={(e) => updateExpediente("apellido_p", e.target.value)} placeholder="Ej. Perez" disabled={loading} required />
               </Field>
 
               <Field label="Apellido Materno" required>
@@ -62,7 +64,7 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
               </Field>
 
               <Field label="Género" required>
-                <select 
+                <select
                   className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-slate-700 focus:ring-2 focus:ring-[#0E5F63] outline-none transition-all"
                   value={form.id_expediente.genero}
                   onChange={(e) => updateExpediente("genero", e.target.value)}
@@ -83,20 +85,56 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
                 <InputG value={form.id_expediente.telefono} onChange={(e) => updateExpediente("telefono", e.target.value)} placeholder="Ej. 9528889900" disabled={loading} required />
               </Field>
 
-              <div className="md:col-span-2">
+              <div className="md:col-span-3">
                 <Field label="Correo Electrónico" required>
                   <InputG type="email" value={form.id_expediente.correo} onChange={(e) => updateExpediente("correo", e.target.value)} placeholder="correo@ejemplo.com" disabled={loading} required />
                 </Field>
               </div>
             </div>
+            {/* Nueva sección: Información de Ingreso */}
+            <div className="mt-8 border-t border-slate-100 pt-6">
+              <h3 className="text-xs font-bold text-[#0E5F63] uppercase tracking-widest mb-4 px-2">
+                Detalles de Ingreso
+              </h3>
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <Field label="Nivel Escolar Inicial" required>
+                  <select
+                    className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-[#0E5F63] outline-none transition-all"
+                    value={form.nivel_escolar_inicial} // Suponiendo que los guardas en la raíz del form en el hook
+                    onChange={(e) => setForm(prev => ({ ...prev, nivel_escolar_inicial: e.target.value }))}
+                    disabled={loading}
+                    required
+                  >
+                    <option value="">Seleccionar nivel...</option>
+                    <option value="Primaria">Primaria</option>
+                    <option value="Secundaria">Secundaria</option>
+                  </select>
+                </Field>
 
-            <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2 p-6 rounded-[24px] bg-slate-50/50 border border-slate-100">
+                <Field label="Grado Escolar Inicial" required>
+                  <InputG
+                    placeholder="Ej. 3er Año"
+                    value={form.grado_escolar_inicial}
+                    onChange={(e) => setForm(prev => ({ ...prev, grado_escolar_inicial: e.target.value }))}
+                    disabled={loading}
+                    required
+                  />
+                </Field>
+              </div>
+            </div>
+
+            {/* Grid de dirección: 3 columnas en pantallas medianas */}
+            <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3 p-6 rounded-[24px] bg-slate-50/50 border border-slate-100">
               <Field label="Municipio" required>
                 <InputG value={form.id_expediente.id_direccion.municipio} onChange={(e) => updateDireccion("municipio", e.target.value)} placeholder="Oaxaca" disabled={loading} required />
               </Field>
               <Field label="Colonia" required>
                 <InputG value={form.id_expediente.id_direccion.colonia} onChange={(e) => updateDireccion("colonia", e.target.value)} disabled={loading} placeholder="Oaxaca" required />
               </Field>
+              <Field label="Código Postal" required>
+                <InputG value={form.id_expediente.id_direccion.cp} onChange={(e) => updateDireccion("cp", e.target.value)} disabled={loading} placeholder="12345" required />
+              </Field>
+
               <div className="md:col-span-2">
                 <Field label="Calle" required>
                   <InputG value={form.id_expediente.id_direccion.calle} onChange={(e) => updateDireccion("calle", e.target.value)} placeholder="Flores" disabled={loading} required />
@@ -104,9 +142,6 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
               </div>
               <Field label="Número" required>
                 <InputG value={form.id_expediente.id_direccion.numero} onChange={(e) => updateDireccion("numero", e.target.value)} placeholder="numero o SN" disabled={loading} />
-              </Field>
-              <Field label="Código Postal" required>
-                <InputG value={form.id_expediente.id_direccion.cp} onChange={(e) => updateDireccion("cp", e.target.value)} disabled={loading} placeholder="12345" required />
               </Field>
             </div>
 

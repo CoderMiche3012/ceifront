@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { postulantesService } from "../../services/postulantesService";
-import { obtenerVisita } from "../../services/visitasApi";
+import { obtenerVisita } from "../../services/visitasService";
 
 export const usePostulantesPage = () => {
   const [allData, setAllData] = useState([]);

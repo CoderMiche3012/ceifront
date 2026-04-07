@@ -1,7 +1,8 @@
 import DatosTabla from "../../tablas/DatosTabla";
 import AvatarGeneral from "../../shared/AvatarGeneral";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, Eye } from "lucide-react";
 import AccionesPostulante from "./ColumnaAcciones";
+import { NavLink } from "react-router-dom";
 
 const columns = [
   { key: "postulante", label: "Postulante" },
@@ -12,6 +13,7 @@ const columns = [
 ];
 
 export default function PeriodoTabla({ postulantes, onRefresh }) {
+
 
   const calcularEdad = (fechaNacimiento) => {
     if (!fechaNacimiento) return "--";
@@ -27,6 +29,9 @@ export default function PeriodoTabla({ postulantes, onRefresh }) {
 
   const renderCell = (item, key) => {
     const expediente = item.id_expediente || {};
+    const indiceActual = postulantes.indexOf(item);
+    const esUltimo = indiceActual === postulantes.length - 1;
+    const pocosRegistros = postulantes.length <= 2;
 
     switch (key) {
       case "postulante":
@@ -37,7 +42,6 @@ export default function PeriodoTabla({ postulantes, onRefresh }) {
               <span className="text-sm font-semibold text-slate-800 uppercase">
                 {`${expediente.nombre} ${expediente.apellido_p}`}
               </span>
-              <span className="text-[10px] text-slate-400">ID: {item.id_postulante}</span>
             </div>
           </div>
         );
@@ -54,7 +58,7 @@ export default function PeriodoTabla({ postulantes, onRefresh }) {
             </div>
           );
         }
-        
+
         const f = new Date(item.fecha_visita);
         return (
           <div className="flex flex-col gap-0.5">
@@ -86,9 +90,32 @@ export default function PeriodoTabla({ postulantes, onRefresh }) {
         );
 
       case "acciones":
+        const indiceActual = postulantes.indexOf(item);
+        const esUltimo = indiceActual === postulantes.length - 1;
+        const pocosRegistros = postulantes.length <= 2;
+
         return (
-          <div className="flex justify-end pr-2">
-            <AccionesPostulante item={item} onRefresh={onRefresh} />
+
+          <div className="flex items-center gap-2">
+            {/* Usamos 'inline-flex' y una altura fija para que coincida con el botón de al lado */}
+            <NavLink
+              to={`/App/postulantes/expediente/${item.id_postulante}`}
+              className={({ isActive }) => `
+          inline-flex h-8 w-8 items-center justify-center rounded-full transition-all
+          ${isActive
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-slate-400 hover:bg-slate-100 hover:text-blue-600"}
+        `}
+            >
+              <Eye size={18} />
+            </NavLink>
+
+            {/* Este componente debe devolver un botón de exactamente h-8 w-8 */}
+            <AccionesPostulante
+              item={item}
+              onRefresh={onRefresh}
+              abrirHaciaArriba={esUltimo || pocosRegistros}
+            />
           </div>
         );
 
