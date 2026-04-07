@@ -1,21 +1,21 @@
-const API_URL = "http://localhost:8000/api/cuentas"
+import API from "./api"; // tu instancia configurada
+
+const BASE_URL = "/api/cuentas";
 
 export async function obtenerRoles() {
-  const response = await fetch(`${API_URL}/roles`)
-
-  if (!response.ok) {
-    throw new Error("No se pudieron cargar los roles")
+  try {
+    const response = await API.get(`${BASE_URL}/roles`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.message || "No se pudieron cargar los puestos");
   }
-
-  return response.json()
 }
 
 export async function obtenerPermisos() {
-  const response = await fetch(`${API_URL}/permisos`)
-
-  if (!response.ok) {
-    throw new Error("No se pudieron cargar los permisos")
+  try {
+    const response = await API.get(`${BASE_URL}/permisos`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.message || "No se pudieron cargar los permisos");
   }
-
-  return response.json()
 }

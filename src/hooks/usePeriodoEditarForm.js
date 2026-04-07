@@ -68,7 +68,7 @@ export const usePeriodoEditarForm = (periodo, onSuccess, onClose) => {
       );
 
       if (nombreExiste) {
-        throw new Error(`El ciclo "${form.ciclo_escolar}" ya existe en otro registro.`);
+        throw new Error(`El periodo "${form.ciclo_escolar}" ya existe en otro registro.`);
       }
 
       // Validar Traslape
@@ -95,7 +95,7 @@ export const usePeriodoEditarForm = (periodo, onSuccess, onClose) => {
         open: true,
         type: "success",
         title: "¡Actualización Exitosa!",
-        message: `El ciclo ${form.ciclo_escolar} ha sido actualizado correctamente.`
+        message: `El periodo ${form.ciclo_escolar} ha sido actualizado correctamente.`
       });
     } catch (err) {
       setResultModal({

@@ -3,7 +3,7 @@ import InsigniaEstatus from "../../usuarios/insignias/InsigniaEstatus";
 
 // columnas de periodos
 const columns = [
-  { key: "ciclo_escolar", label: "Ciclo Escolar" },
+  { key: "ciclo_escolar", label: "Periodo Escolar" },
   { key: "fecha_inicio", label: "Fecha de Inicio" },
   { key: "fecha_fin", label: "Fecha de Fin" },
   { key: "estado", label: "Estado" },

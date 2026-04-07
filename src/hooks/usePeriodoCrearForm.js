@@ -33,7 +33,7 @@ export const usePeriodoCrearForm = (onSuccess, onClose) => {
       const nombreNuevo = form.ciclo_escolar.trim().toLowerCase();
       //validar duplicidad
       if (periodosActuales.some(p => p.ciclo_escolar.trim().toLowerCase() === nombreNuevo)) {
-        throw new Error(`El ciclo "${form.ciclo_escolar}" ya existe.`);
+        throw new Error(`El periodo "${form.ciclo_escolar}" ya existe.`);
       }
       //validar traslape
       const inicioNuevo = new Date(form.fecha_inicio + "T00:00:00");
@@ -54,7 +54,7 @@ export const usePeriodoCrearForm = (onSuccess, onClose) => {
         open: true,
         type: "success",
         title: "¡Registro Exitoso!",
-        message: `El ciclo ${form.ciclo_escolar} ha sido activado.`
+        message: `El periodo ${form.ciclo_escolar} ha sido activado.`
       });
       setForm({ ciclo_escolar: "", fecha_inicio: "", fecha_fin: "" });
     } catch (err) {

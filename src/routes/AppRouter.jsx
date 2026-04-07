@@ -7,7 +7,9 @@ import AppLayout from "../layouts/AppLayout";
 import PrivateRoute from "./PrivateRoute";
 import AdminRoute from "./AdminRoute";
 import PeriodosPagina from "./../pages/Periodos/PeriodosPagina"
-
+import PostulantesPagina from "./../pages/postulantes/PostulantesPagina"
+import { PermissionsProvider } from "../context/PermissionsContext";
+import PermissionRoute from "./PermissionRoute";
 //define las rutas principales 
 export default function AppRouter() {
   return (
@@ -20,16 +22,32 @@ export default function AppRouter() {
           path="/app"
           element={
             <PrivateRoute>
-              <AppLayout />
+              <PermissionsProvider>
+                <AppLayout />
+              </PermissionsProvider>
             </PrivateRoute>
           }
         >
           {/*pagina principal*/}
           <Route index element={<Inicio />} />
           {/*gestión de Periodos */}
-          <Route path="periodos" element={<PeriodosPagina />} />
+          <Route
+            path="periodos"
+            element={
+              <PermissionRoute permiso="Ver Periodos">
+                <PeriodosPagina />
+              </PermissionRoute>
+            }
+          />
           {/*gestión de usuarios */}
-          <Route path="usuarios" element={<UsuariosPagina />} />
+          <Route
+            path="usuarios"
+            element={
+              <PermissionRoute permiso="Ver Usuarios">
+                <UsuariosPagina />
+              </PermissionRoute>
+            }
+          />
           {/* gestión de roles */}
           <Route
             path="roles"
@@ -37,6 +55,12 @@ export default function AppRouter() {
               <AdminRoute>
                 <RolesPagina />
               </AdminRoute>
+            }
+          />
+          <Route
+            path="postulantes"
+            element={
+              <PostulantesPagina />
             }
           />
         </Route>

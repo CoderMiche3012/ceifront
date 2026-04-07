@@ -1,4 +1,13 @@
-export default function Input({ label, type = "text", placeholder, value, onChange, }) {
+export default function Input({ 
+  label, 
+  type = "text", 
+  placeholder, 
+  value, 
+  onChange, 
+  name,     
+  className, 
+  ...props   
+}) {
   return (
     <div className="w-full">
       {label && (
@@ -7,12 +16,14 @@ export default function Input({ label, type = "text", placeholder, value, onChan
         </label>
       )}
       <input
+        name={name}      
         type={type}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-50"
+        className={`w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-50 ${className || ""}`}
+        {...props}      
       />
     </div>
-  )
+  );
 }

@@ -34,7 +34,7 @@ export default function PeriodoCrearModal({ open, onClose, onSuccess }) {
             </div>
             <div className="flex-1">
               <h2 className="text-xl font-bold text-slate-800">Nuevo Periodo</h2>
-              <p className="text-sm text-slate-500">Configura el ciclo y fechas escolares</p>
+              <p className="text-sm text-slate-500">Configura el periodo y fechas escolares</p>
             </div>
             <button 
               onClick={onClose} 
@@ -50,7 +50,7 @@ export default function PeriodoCrearModal({ open, onClose, onSuccess }) {
             <AlertaError mensaje={error} />
             
             <div className="grid gap-6">
-              <Field label="Ciclo Escolar" required>
+              <Field label="Periodo Escolar" required>
                 <InputG
                   placeholder="Ej: 2026-A"
                   // Blindaje: form?.ciclo_escolar evita el error de undefined
@@ -81,7 +81,7 @@ export default function PeriodoCrearModal({ open, onClose, onSuccess }) {
             </div>
 
             {/* Acciones */}
-            <div className="mt-8 flex flex-col-reverse sm:flex-row justify-end gap-3 border-t pt-6">
+            <div className="mt-8 flex flex-col-reverse sm:flex-row justify-end gap-3 border-t border-slate-100 pt-6">
               <button 
                 type="button" 
                 onClick={onClose} 
@@ -95,7 +95,7 @@ export default function PeriodoCrearModal({ open, onClose, onSuccess }) {
                 disabled={loading}
                 className="px-6 py-3 text-sm font-semibold text-white bg-[#0E5F63] hover:bg-[#0c5357] rounded-2xl shadow-lg transition-all active:scale-95 disabled:opacity-50"
               >
-                {loading ? "Procesando..." : "Registrar Ciclo"}
+                {loading ? "Procesando..." : "Registrar Periodo"}
               </button>
             </div>
           </form>
@@ -106,7 +106,7 @@ export default function PeriodoCrearModal({ open, onClose, onSuccess }) {
       <ModalConfirmacion
         open={showConfirm}
         title="¿Confirmar registro?"
-        description={`Se registrará el ciclo "${form?.ciclo_escolar || ''}". Los anteriores quedarán inactivos.`}
+        description={`Se registrará el periodo "${form?.ciclo_escolar || ''}". Los anteriores quedarán inactivos.`}
         onConfirm={handleConfirmSave}
         onClose={() => setShowConfirm(false)}
       />

@@ -20,15 +20,15 @@ export const getRoleLabel = (user, roles = []) => {
   const foundRole = roles.find(
     (rol) => String(rol?.id_rol || rol?.id || "") === roleId
   );
-  return foundRole?.nombre_rol || foundRole?.nombre || "Sin rol";
+  return foundRole?.nombre_rol || foundRole?.nombre || "Sin puesto";
 };
 
 //construye opciones únicas de roles para filtros
 export const buildRoleOptions = (roles = []) => {
   const uniqueRoles = new Map();
   roles.forEach((rol) => {
-    const value = String( rol.id || rol.id_rol || rol.pk_id_rol || rol.rol_id || "");
-    const label = rol.nombre || rol.nombre_rol || rol.nb_rol || rol.name || rol.rol;
+    const value = String( rol.id || rol.id_rol || "");
+    const label = rol.nombre_rol ;
     if (!value || !label) return;
     if (!uniqueRoles.has(value)) {
       uniqueRoles.set(value, {
@@ -39,7 +39,6 @@ export const buildRoleOptions = (roles = []) => {
   });
   return Array.from(uniqueRoles.values());
 };
-
 //filtra usuarios por búsqueda, estatus y rol
 export const filterAndSortUsers = ({users = [],search = "",statusFilter = "",roleFilter = "",}) => {
   const term = search.toLowerCase();

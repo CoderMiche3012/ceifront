@@ -9,7 +9,7 @@ export default function PeriodoFiltros({
     <FiltrosTabla
       searchValue={search}
       onSearchChange={onSearchChange}
-      searchPlaceholder="Buscar por ciclo escolar (ej. 2024-2025)..."
+      searchPlaceholder="Buscar por periodo escolar (ej. 2024-2025)..."
       filters={[]} // Enviamos array vacío para que no falle el .map() interno
       onClearFilters={onClearFilters}
     />

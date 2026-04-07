@@ -1,6 +1,7 @@
 import { HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi"
 import AlertaError from "../../ui/AlertaError"
-import { useUsuarioEditarModal } from "../../../hooks/useUsuarioEditarForm"
+import { useUsuarioEditarModal } from "../../../hooks/users/useUsuarioEditarForm"
+import ModalConfirmacion from "../../shared/ModalConfirmacion"; 
 
 function Field({ label, name, error, required = false, children }) {
   return (
@@ -18,17 +19,7 @@ function Field({ label, name, error, required = false, children }) {
     </div>
   )
 }
-function Input({
-  id,
-  name,
-  type = "text",
-  value,
-  onChange,
-  placeholder,
-  disabled = false,
-  autoComplete,
-  error = false,
-}) {
+function Input({ id, name, type = "text", value, onChange, placeholder, disabled = false, autoComplete, error = false,}) {
   return (
     <input
       id={id}
@@ -39,15 +30,14 @@ function Input({
       placeholder={placeholder}
       disabled={disabled}
       autoComplete={autoComplete}
-      className={`w-full rounded-2xl border bg-white px-4 py-3 text-[15px] text-slate-700 outline-none transition placeholder:text-slate-400 ${
-        error
+      className={`w-full rounded-2xl border bg-white px-4 py-3 text-[15px] text-slate-700 outline-none transition placeholder:text-slate-400 ${error
           ? "border-rose-300 ring-2 ring-rose-100"
           : "border-slate-200 focus:border-[#0E5F63] focus:ring-4 focus:ring-[#0E5F63]/10"
-      } ${disabled ? "cursor-not-allowed bg-slate-100 opacity-70" : ""}`}
+        } ${disabled ? "cursor-not-allowed bg-slate-100 opacity-70" : ""}`}
     />
   )
 }
-function Select({id,name,value,onChange,disabled = false,error = false,children,}) {
+function Select({ id, name, value, onChange, disabled = false, error = false, children, }) {
   return (
     <select
       id={id}
@@ -55,11 +45,10 @@ function Select({id,name,value,onChange,disabled = false,error = false,children,
       value={value}
       onChange={onChange}
       disabled={disabled}
-      className={`w-full rounded-2xl border bg-white px-4 py-3 text-[15px] text-slate-700 outline-none transition ${
-        error
+      className={`w-full rounded-2xl border bg-white px-4 py-3 text-[15px] text-slate-700 outline-none transition ${error
           ? "border-rose-300 ring-2 ring-rose-100"
           : "border-slate-200 focus:border-[#0E5F63] focus:ring-4 focus:ring-[#0E5F63]/10"
-      } ${disabled ? "cursor-not-allowed bg-slate-100 opacity-70" : ""}`}
+        } ${disabled ? "cursor-not-allowed bg-slate-100 opacity-70" : ""}`}
     >
       {children}
     </select>
@@ -75,10 +64,12 @@ export default function UsuarioEditarModal({
 }) {
   //centraliza estado, validaciones y handlers del formulario
   const {
-    formData,fieldErrors,generalError,loading,showPassword,showConfirmPassword,roleOptions,initials,fullName,
-    setShowPassword,setShowConfirmPassword,handleClose,handleBackdropClick,handleChange,handleSubmit,
+    formData, fieldErrors, generalError, loading, showPassword, showConfirmPassword, roleOptions, initials, fullName,
+    setShowPassword, setShowConfirmPassword, handleClose, handleBackdropClick, handleChange, handleSubmit,
+    isConfirming,      // <-- Extraer del hook
+    setIsConfirming
   } = useUsuarioEditarModal({
-    open,user,roles,onClose,onSuccess,
+    open, user, roles, onClose, onSuccess,
   })
   //si el modal no está abierto o no hay usuario, no se renderiza
   if (!open || !user) return null
@@ -236,7 +227,7 @@ export default function UsuarioEditarModal({
               </Field>
               <div className="md:col-span-2">
                 <Field
-                  label="Rol"
+                  label="Puesto"
                   name="id_rol"
                   required
                   error={fieldErrors.id_rol}
@@ -352,6 +343,17 @@ export default function UsuarioEditarModal({
           </form>
         </div>
       </div>
+      <ModalConfirmacion
+        open={isConfirming}
+        title="¿Confirmar cambios?"
+        description={`¿Estás seguro de que deseas actualizar la información de ${fullName}? Esta acción modificará los datos en la base de datos.`}
+        confirmText="Sí, actualizar"
+        cancelText="Seguir editando"
+        onConfirm={handleSubmit} // Al ser el segundo clic, disparará la API
+        onClose={() => setIsConfirming(false)}
+        loading={loading}
+        color="teal"
+      />
     </div>
   )
 }

@@ -2,8 +2,13 @@ import { useEffect, useState } from "react";
 import { Calendar, Edit3 } from "lucide-react";
 import InsigniaEstatus from "../../components/usuarios/insignias/InsigniaEstatus";
 import { obtenerPeriodos } from "../../services/periodoService"; 
+import { hasPermission } from "../../utils/menuPermissions";
+import { usePermissions } from "../../context/PermissionsContext";
 
 export default function PeriodoActivo({ onEdit }) {
+  //permisos y estado de carga del Contexto Global
+  const { permissions, loading: isPermsLoading } = usePermissions();
+  const canEdit = hasPermission(permissions, "Editar Periodos");
   const [periodoActivo, setPeriodoActivo] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,7 +29,6 @@ export default function PeriodoActivo({ onEdit }) {
         
         setPeriodoActivo(activo);
       } catch (error) {
-        console.error("Error al obtener periodo activo:", error);
       } finally {
         setLoading(false);
       }
@@ -65,14 +69,16 @@ export default function PeriodoActivo({ onEdit }) {
           </p>
         </div>
       </div>
-
+      {!isPermsLoading && canEdit && (
       <button 
         onClick={() => onEdit(periodoActivo)}
         className="group rounded-full p-2 transition-colors hover:bg-gray-50"
         title="Editar periodo"
       >
+      
         <Edit3 size={20} className="text-gray-400 group-hover:text-[#0e6b62]" />
       </button>
+      )}
     </div>
   );
 }

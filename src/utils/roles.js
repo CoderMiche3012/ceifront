@@ -1,4 +1,4 @@
-import {Users,Heart,ClipboardList,GraduationCap,BarChart3,User,} from "lucide-react"
+import {Users,Heart,ClipboardList,GraduationCap,BarChart3,User,CalendarPlus} from "lucide-react"
 
 //modulos del sistema 
 export const modules = [
@@ -8,6 +8,7 @@ export const modules = [
   { key: "cursos", name: "Cursos", icon: GraduationCap },
   { key: "reportes", name: "Reportes", icon: BarChart3 },
   { key: "usuarios", name: "Usuarios", icon: User },
+  { key: "periodos", name: "Periodos", icon: CalendarPlus },
 ]
 // etiquetas visibles y claves internas de acciones
 export const actionsMap = {

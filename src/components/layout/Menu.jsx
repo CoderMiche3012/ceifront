@@ -1,98 +1,93 @@
-import { useMemo, useState } from "react"
-import { NavLink } from "react-router-dom"
-import {HiOutlineCog,HiOutlineLogout,HiChevronDown,HiChevronRight,} from "react-icons/hi"
-import logoCei from "../../assets/imagenes/logo.png"
-import { mainMenu,reportesMenu,configSubmenu,} from "../../config/menuConfig"
-import {hasPermission,filterMenuByPermissions,} from "../../utils/menuPermissions"
+import { useMemo, useState, useCallback } from "react";
+import { NavLink } from "react-router-dom";
+import {HiOutlineCog,HiOutlineLogout,HiChevronDown,HiChevronRight,} from "react-icons/hi";
+import logoCei from "../../assets/imagenes/logo.png";
+import { mainMenu, reportesMenu, configSubmenu } from "../../config/menuConfig";
+import { hasPermission, filterMenuByPermissions } from "../../utils/menuPermissions";
 
-export default function Menu({ sidebarOpen, userPermissions = [] }) {
-  const [configOpen, setConfigOpen] = useState(false)
-
+export default function Menu({ sidebarOpen, userPermissions = [], onLogout }) {
+  const [configOpen, setConfigOpen] = useState(false);
+  //memorizacion de menus 
   const visibleMainMenu = useMemo(() => {
-    return filterMenuByPermissions(mainMenu, userPermissions)
-  }, [userPermissions])
+    return filterMenuByPermissions(mainMenu, userPermissions);
+  }, [userPermissions]);
 
   const visibleConfigSubmenu = useMemo(() => {
-    return filterMenuByPermissions(configSubmenu, userPermissions)
-  }, [userPermissions])
+    return filterMenuByPermissions(configSubmenu, userPermissions);
+  }, [userPermissions]);
 
-  const canViewReportes = hasPermission(
-    userPermissions,
-    reportesMenu.permission
-  )
+  const canViewReportes = useMemo(() => 
+    hasPermission(userPermissions, reportesMenu.permission), 
+  [userPermissions]);
 
-  const canViewConfig = visibleConfigSubmenu.length > 0
+  const canViewConfig = visibleConfigSubmenu.length > 0;
 
-  const expandedClasses = sidebarOpen
-    ? "gap-3 px-4"
-    : "justify-center px-2 lg:justify-start lg:gap-3 lg:px-4"
+  const getLinkClasses = useCallback(({ isActive }) => {
+    const base = "flex items-center rounded-2xl py-3 text-[15px] font-medium transition-all duration-200";
+    const expansion = sidebarOpen 
+      ? "gap-3 px-4" 
+      : "justify-center px-2 lg:justify-start lg:gap-3 lg:px-4";
+    const active = isActive 
+      ? "bg-[#1F8A8A] text-white shadow-md shadow-[#1F8A8A]/20" 
+      : "text-[#0E5F63] hover:bg-slate-200/50";
+    
+    return `${base} ${expansion} ${active}`;
+  }, [sidebarOpen]);
 
   return (
-    <aside className="flex h-screen w-full flex-col border-r border-[#e7e3e8] bg-[#f7f7f8]">
-      <div className="flex items-center gap-3 border-b border-[#e7e3e8] px-4 py-4">
-        <img
-          src={logoCei}
-          alt="Logo Centro de Esperanza"
-          className="h-12 w-12 shrink-0 object-contain"
-        />
-
-        <div className={`${sidebarOpen ? "block" : "hidden"} lg:block min-w-0`}>
-          <p className="mt-1 text-xs uppercase tracking-wide text-[#0E5F63]">
-            Centro de Esperanza Infantil A.C.
+    <aside className="flex h-screen w-full flex-col border-r border-slate-200 bg-[#f7f7f8] transition-all">
+      {/* Header Logo */}
+      <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-5">
+        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white p-1 shadow-sm">
+          <img
+            src={logoCei}
+            alt="Logo CEI"
+            className="h-full w-full object-contain"
+            //si la imagen falla
+            onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=CEI&background=1F8A8A&color=fff"; }}
+          />
+        </div>
+        <div className={`${sidebarOpen ? "block" : "hidden"} lg:block min-w-0 animate-in fade-in slide-in-from-left-2`}>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[#0E5F63] leading-tight">
+            Centro de Esperanza <br /> Infantil A.C.
           </p>
         </div>
       </div>
-
-      <div className="flex-1 overflow-y-auto px-3 py-6">
-        <nav className="space-y-2">
+      {/* Navegación Principal */}
+      <div className="flex-1 overflow-y-auto px-3 py-6 custom-scrollbar">
+        <nav className="space-y-1.5">
           {visibleMainMenu.map((item) => {
-            const Icon = item.icon
-
+            const Icon = item.icon;
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
                 end={item.path === "/app"}
-                className={({ isActive }) =>
-                  `flex items-center rounded-2xl py-3 text-[15px] font-medium transition ${expandedClasses} ${
-                    isActive
-                      ? "bg-[#1F8A8A] text-white shadow-sm"
-                      : "text-[#0E5F63] hover:bg-[#eceff1]"
-                  }`
-                }
+                className={getLinkClasses}
                 title={!sidebarOpen ? item.label : ""}
               >
-                <Icon className="shrink-0 text-lg" />
-                <span className={`${sidebarOpen ? "inline" : "hidden"} lg:inline`}>
+                <Icon className="shrink-0 text-xl" />
+                <span className={`${sidebarOpen ? "inline" : "hidden"} lg:inline truncate`}>
                   {item.label}
                 </span>
               </NavLink>
-            )
+            );
           })}
         </nav>
-
+        {/* Sección Análisis y Sistema */}
         {(canViewReportes || canViewConfig) && (
-          <div className="mt-8">
-            <p
-              className={`${sidebarOpen ? "block" : "hidden"} lg:block mb-3 px-3 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#b6b8c2]`}
-            >
+          <div className="mt-10">
+            <p className={`${sidebarOpen ? "block" : "hidden"} lg:block mb-4 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400`}>
               Análisis y sistema
             </p>
-
-            <nav className="space-y-2">
+            <nav className="space-y-1.5">
               {canViewReportes && (
                 <NavLink
                   to={reportesMenu.path}
-                  className={({ isActive }) =>
-                    `flex items-center rounded-2xl py-3 text-[15px] font-medium transition ${expandedClasses} ${
-                      isActive
-                        ? "bg-[#1F8A8A] text-white shadow-sm"
-                        : "text-[#0E5F63] hover:bg-[#eceff1]"
-                    }`
-                  }
+                  className={getLinkClasses}
                   title={!sidebarOpen ? reportesMenu.label : ""}
                 >
-                  <reportesMenu.icon className="shrink-0 text-lg" />
+                  <reportesMenu.icon className="shrink-0 text-xl" />
                   <span className={`${sidebarOpen ? "inline" : "hidden"} lg:inline`}>
                     {reportesMenu.label}
                   </span>
@@ -100,36 +95,30 @@ export default function Menu({ sidebarOpen, userPermissions = [] }) {
               )}
 
               {canViewConfig && (
-                <>
+                <div className="space-y-1">
                   <button
                     type="button"
                     onClick={() => setConfigOpen((prev) => !prev)}
-                    className={`flex w-full items-center rounded-2xl py-3 text-[15px] font-medium text-[#0E5F63] transition hover:bg-[#eceff1] ${expandedClasses}`}
-                    title={!sidebarOpen ? "Configuración" : ""}
+                    className={`flex w-full items-center rounded-2xl py-3 text-[15px] font-medium text-[#0E5F63] transition hover:bg-slate-200/50 ${sidebarOpen ? "px-4 gap-3" : "justify-center lg:justify-start lg:px-4 lg:gap-3"}`}
                   >
-                    <HiOutlineCog className="shrink-0 text-lg" />
-
-                    <div className={`${sidebarOpen ? "flex" : "hidden"} lg:flex flex-1 items-center`}>
-                      <span className="flex-1 text-left">Configuración</span>
-                      {configOpen ? (
-                        <HiChevronDown className="text-lg" />
-                      ) : (
-                        <HiChevronRight className="text-lg" />
-                      )}
+                    <HiOutlineCog className={`shrink-0 text-xl transition-transform ${configOpen ? "rotate-45" : ""}`} />
+                    <div className={`${sidebarOpen ? "flex" : "hidden"} lg:flex flex-1 items-center justify-between`}>
+                      <span className="truncate">Configuración</span>
+                      {configOpen ? <HiChevronDown /> : <HiChevronRight />}
                     </div>
                   </button>
-
-                  {configOpen && (
-                    <div className="mt-2 space-y-1 pl-10">
+                  {/* Submenú */}
+                  {configOpen && (sidebarOpen || window.innerWidth >= 1024) && (
+                    <div className="mt-1 space-y-1 ml-9 border-l-2 border-slate-200 pl-2 animate-in slide-in-from-top-2 duration-200">
                       {visibleConfigSubmenu.map((subItem) => (
                         <NavLink
                           key={subItem.path}
                           to={subItem.path}
                           className={({ isActive }) =>
-                            `block rounded-xl px-3 py-2 text-sm transition ${
+                            `block rounded-xl px-4 py-2 text-sm transition-colors ${
                               isActive
-                                ? "bg-[#e7f4f3] font-semibold text-[#1F8A8A]"
-                                : "text-[#6d7a80] hover:bg-[#eceff1]"
+                                ? "bg-[#e7f4f3] font-bold text-[#1F8A8A]"
+                                : "text-slate-500 hover:bg-slate-100 hover:text-[#0E5F63]"
                             }`
                           }
                         >
@@ -138,24 +127,27 @@ export default function Menu({ sidebarOpen, userPermissions = [] }) {
                       ))}
                     </div>
                   )}
-                </>
+                </div>
               )}
             </nav>
           </div>
         )}
       </div>
 
-      <div className="border-t border-[#e7e3e8] px-3 py-4">
+      {/* Logout */}
+      <div className="border-t border-slate-200 px-3 py-4 bg-slate-50/50">
         <button
-          className={`flex w-full items-center rounded-2xl py-3 text-[15px] font-medium text-[#ef5b5b] transition hover:bg-red-50 ${expandedClasses}`}
+          onClick={onLogout}
+          type="button"
+          className={`flex w-full items-center rounded-2xl py-3 text-[15px] font-bold text-red-500 transition-all hover:bg-red-50 active:scale-95 ${sidebarOpen ? "px-4 gap-3" : "justify-center lg:justify-start lg:px-4 lg:gap-3"}`}
           title={!sidebarOpen ? "Cerrar Sesión" : ""}
         >
-          <HiOutlineLogout className="text-lg" />
+          <HiOutlineLogout className="text-xl" />
           <span className={`${sidebarOpen ? "inline" : "hidden"} lg:inline`}>
             Cerrar Sesión
           </span>
         </button>
       </div>
     </aside>
-  )
+  );
 }

@@ -1,56 +1,32 @@
-// URL base 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
-//para hacer peticiones HTTP con manejo de token y errores
-async function apiRequest(path, options = {}) {
-  const token = localStorage.getItem("token")
-  const response = await fetch(`${API_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      // Agrega Authorization solo si existe token
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-    ...options,
-  })
-  //manejo de errores de respuesta
-  if (!response.ok) {
-    let message = "Ocurrió un error en la solicitud"
-    try {
-      const errorData = await response.json()
-      message = errorData?.message || message
-    } catch {
-    }
-    throw new Error(message)
-  }
-  //si no hay contenido 
-  if (response.status === 204) return null
-  return response.json()
-}
+import API from "./api";
+const BASE_URL = "/api/cuentas";
+
 //lista de roles
-export async function getRoles() {
-  return apiRequest("/api/cuentas/roles/")
-}
+export const getRoles = async () => {
+  const res = await API.get(`${BASE_URL}/roles/`);
+  return res.data;
+};
+
 //lista de permisos
-export async function getPermissions() {
-  return apiRequest("/api/cuentas/permisos/")
-}
-//actualiza un rol existente
-export async function updateRole(id, payload) {
-  return apiRequest(`/api/cuentas/roles/${id}/`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  })
-}
-// crea un nuevo rol
-export async function createRole(payload) {
-  return apiRequest("/api/cuentas/roles/", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  })
-}
-//elimina un rol por id
-export async function deleteRole(id) {
-  return apiRequest(`/api/cuentas/roles/${id}/`, {
-    method: "DELETE",
-  })
-}
+export const getPermissions = async () => {
+  const res = await API.get(`${BASE_URL}/permisos/`);
+  return res.data;
+};
+
+//actualizar rol
+export const updateRole = async (id, payload) => {
+  const res = await API.put(`${BASE_URL}/roles/${id}/`, payload);
+  return res.data;
+};
+
+//crear rol
+export const createRole = async (payload) => {
+  const res = await API.post(`${BASE_URL}/roles/`, payload);
+  return res.data;
+};
+
+//eliminar rol
+export const deleteRole = async (id) => {
+  const res = await API.delete(`${BASE_URL}/roles/${id}/`);
+  return res.data;
+};

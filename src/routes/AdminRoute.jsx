@@ -11,20 +11,13 @@ export default function AdminRoute({ children }) {
   try {
     user = JSON.parse(userJson);
   } catch (error) {
-    console.error("Error al parsear user del localStorage:", error);
     return <Navigate to="/" replace />;
   }
   //valida si el usuario tiene permisos de super administrador
   const esSuperAdmin =
-    user?.es_superadmin === true ||
-    user?.es_superadmin === "true" ||
+    user?.is_admin === true ||
+    user?.is_admin === "true" ||
     user?.rol === "Súper Administrador";
-  console.log("Validación AdminRoute:", {
-    user,
-    es_superadmin: user?.es_superadmin,
-    rol: user?.rol,
-    esSuperAdmin,
-  });
   //si no es super admin, lo redirige a la app normal
   if (!esSuperAdmin) {
     return <Navigate to="/app" replace />;

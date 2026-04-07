@@ -1,20 +1,15 @@
-const BASE_URL = "http://localhost:8000/api/cuentas";
-//autenticación usando el token guardado
-export const getAuthHeaders = () => {
-  const token = localStorage.getItem("access");
-  if (!token) return null;
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-};
+import API from "./api";
+const BASE_URL = "/api/cuentas";
+import { formatError } from "../utils/errorHandlers";
 
-//guarda el usuario en localStorage conservando campos importantes existentes
+//guardar usuario 
 export const guardarUsuarioLocal = (nuevoUsuario) => {
   const actual = JSON.parse(localStorage.getItem("user") || "{}");
+
   const usuarioFinal = {
     ...actual,
     ...nuevoUsuario,
+    permisos: nuevoUsuario?.permisos ?? actual?.permisos ?? [],
     id_usuario:
       nuevoUsuario?.id_usuario ??
       actual?.id_usuario ??
@@ -26,25 +21,22 @@ export const guardarUsuarioLocal = (nuevoUsuario) => {
       nuevoUsuario?.id_usuario ??
       actual?.id_usuario,
     rol: nuevoUsuario?.rol ?? actual?.rol ?? "",
-    es_superadmin:
-      nuevoUsuario?.es_superadmin ?? actual?.es_superadmin ?? false,
+    is_admin:
+      nuevoUsuario?.is_admin ?? actual?.is_admin ?? false,
     es_staff:
       nuevoUsuario?.es_staff ?? actual?.es_staff ?? false,
   };
   localStorage.setItem("user", JSON.stringify(usuarioFinal));
   return usuarioFinal;
 };
-//obtiene el perfil completo del usuario desde la API
-export const obtenerPerfil = async (userId, token) => {
+export const obtenerPerfil = async (userId, tokenDirecto = null) => {
   try {
-    const response = await fetch(`${BASE_URL}/usuarios/${userId}/`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-    });
-    if (!response.ok) return null;
-    const data = await response.json();
+    const config = {};
+    if (tokenDirecto) {
+      config.headers = { Authorization: `Bearer ${tokenDirecto}` };
+    }
+    const res = await API.get(`${BASE_URL}/usuarios/${userId}/`, config);
+    const data = res.data;
     const idReal = data.id_usuario || data.id;
     return {
       ...data,
@@ -56,94 +48,54 @@ export const obtenerPerfil = async (userId, token) => {
     return null;
   }
 };
-//maneja el inicio de sesión y completa la información del usuario
+// 2. Úsalo en obtenerInicioSesion
 export const obtenerInicioSesion = async ({ username, password }) => {
   try {
-    if (!username || !password) {
-      throw new Error("Usuario y contraseña son obligatorios");
-    }
-    const response = await fetch(`${BASE_URL}/login/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        nom_usuario: username.trim(),
-        password: password.trim(),
-      }),
+    const res = await API.post(`${BASE_URL}/login/`, {
+      nom_usuario: username.trim(),
+      password: password.trim(),
     });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(
-        data?.detail || data?.error || "Usuario o contraseña incorrectos"
-      );
-    }
-    console.log("Respuesta completa login:", data);
-    console.log("Usuario desde login:", data.user);
-    const userId = data.user?.id || data.user?.id_usuario || data.user?.pk;
-    let userFinal = { ...(data.user || {}) };
-    //intenta complementar con el perfil completo
-    if (userId) {
-      const perfilCompleto = await obtenerPerfil(userId, data.access);
-      console.log("Perfil completo:", perfilCompleto);
-      userFinal = {
-        ...(perfilCompleto || {}),
-        ...(data.user || {}),
-        id_usuario:
-          perfilCompleto?.id_usuario ??
-          data.user?.id_usuario ??
-          data.user?.id ??
-          userId,
-        id:
-          perfilCompleto?.id ??
-          data.user?.id ??
-          perfilCompleto?.id_usuario ??
-          userId,
-        rol: data.user?.rol ?? perfilCompleto?.rol ?? "",
-        es_superadmin:
-          data.user?.es_superadmin ?? perfilCompleto?.es_superadmin ?? false,
-        es_staff:
-          data.user?.es_staff ?? perfilCompleto?.es_staff ?? false,
-      };
-    }
-    console.log("Usuario final que se guardará:", userFinal);
+
+    const data = res.data;
+
+    // 🔥 ARMAMOS EL USUARIO CORRECTAMENTE
+    const userFinal = {
+      id_usuario: data.id_usuario,
+      id: data.id_usuario,
+      nom_usuario: data.nom_usuario,
+      rol: data.rol || "",
+      permisos: data.permisos || [],
+      is_admin: data.is_admin ?? false,
+      es_staff: data.es_staff ?? false,
+    };
+
     return {
-      ...data,
+      access: data.access,
+      refresh: data.refresh,
       user: userFinal,
     };
+
   } catch (error) {
     throw new Error(error.message || "Error de conexión");
   }
 };
 
-//obtiene la lista de usuarios autenticados
+// obtener usuarios
 export const obtenerUsuarios = async () => {
-  const headers = getAuthHeaders();
+  try {
+    const res = await API.get(`${BASE_URL}/usuarios/`);
+    const data = res.data;
 
-  if (!headers) {
-    throw new Error("No se encontró el token de autenticación");
+    return Array.isArray(data) ? data : data.data || [];
+  } catch (error) {
+    throw new Error(error.message || "No se pudieron obtener los usuarios");
   }
-  const response = await fetch(`${BASE_URL}/usuarios/`, {
-    method: "GET",
-    headers,
-  });
-  if (response.status === 401) {
-    throw new Error("Sesión expirada o no autorizada");
-  }
-  if (!response.ok) {
-    throw new Error("No se pudieron obtener los usuarios");
-  }
-  const data = await response.json();
-  return Array.isArray(data) ? data : data.data || [];
 };
-//cambia el estatus del usuario a inactivo
-export const desactivarUsuario = async (user) => {
-  const headers = getAuthHeaders();
-  if (!headers) {
-    throw new Error("No se encontró el token de autenticación");
-  }
-  const response = await fetch(`${BASE_URL}/usuarios/${user.id_usuario}/`, {
-    method: "PUT",
-    headers,
-    body: JSON.stringify({
+
+//función base para activar/desactivar
+const actualizarEstatusUsuario = async (user, estatus) => {
+  try {
+    await API.put(`${BASE_URL}/usuarios/${user.id_usuario}/`, {
       nom_usuario: user.nom_usuario,
       nombre: user.nombre,
       apellido_p: user.apellido_p,
@@ -151,71 +103,68 @@ export const desactivarUsuario = async (user) => {
       correo: user.correo,
       telefono: user.telefono,
       id_rol: user.id_rol,
-      estatus: 0,
-    }),
-  });
-  const responseText = await response.text();
-  let errorMessage = "No se pudo cambiar el usuario a inactivo";
-  if (responseText) {
-    try {
-      const responseData = JSON.parse(responseText);
-      errorMessage =
-        responseData?.detail ||
-        responseData?.message ||
-        responseData?.error ||
-        JSON.stringify(responseData);
-    } catch {
-      errorMessage = responseText;
-    }
+      estatus,
+    });
+    return true;
+  } catch (error) {
+    throw new Error(
+      error.message ||
+      `No se pudo cambiar el usuario a ${estatus === 1 ? "activo" : "inactivo"
+      }`
+    );
   }
-  if (response.status === 401) {
-    throw new Error("Sesión expirada o no autorizada");
-  }
-  if (!response.ok) {
-    throw new Error(errorMessage);
-  }
-  return true;
 };
 
-//estatus del usuario a activo
-export const activarUsuario = async (user) => {
-  const headers = getAuthHeaders();
-  if (!headers) {
-    throw new Error("No se encontró el token de autenticación");
+//desactivar
+export const desactivarUsuario = (user) => {
+  return actualizarEstatusUsuario(user, 0);
+};
+
+//activar
+export const activarUsuario = (user) => {
+  return actualizarEstatusUsuario(user, 1);
+};
+//actualizar usuario ( perfil)
+export const actualizarUsuario = async (userId, payload) => {
+  try {
+    const res = await API.patch(
+      `${BASE_URL}/usuarios/${userId}/`,
+      payload
+    );
+
+    return res.data;
+  } catch (error) {
+    throw error;
   }
-  const response = await fetch(`${BASE_URL}/usuarios/${user.id_usuario}/`, {
-    method: "PUT",
-    headers,
-    body: JSON.stringify({
-      nom_usuario: user.nom_usuario,
-      nombre: user.nombre,
-      apellido_p: user.apellido_p,
-      apellido_m: user.apellido_m,
-      correo: user.correo,
-      telefono: user.telefono,
-      id_rol: user.id_rol,
-      estatus: 1,
-    }),
-  });
-  const responseText = await response.text();
-  let errorMessage = "No se pudo cambiar el usuario a inactivo";
-  if (responseText) {
-    try {
-      const responseData = JSON.parse(responseText);
-      errorMessage =
-        responseData?.detail ||
-        responseData?.message ||
-        responseData?.error ||
-        JSON.stringify(responseData);
-    } catch {
-      errorMessage = responseText;
+};
+export const actualizarUsuarioCompleto = async (userId, payload) => {
+  try {
+    const res = await API.patch(`${BASE_URL}/usuarios/${userId}/`, payload);
+    return res.data;
+  } catch (error) {
+    console.log(error)
+    const errorData = error.response?.data || error;
+
+    if (errorData) {
+      throw new Error(formatError(errorData));
     }
+    throw new Error(formatError(error.message));
   }
-  if (response.status === 401) {
-    throw new Error("Sesión expirada o no autorizada");
+};
+
+export const crearUsuario = async (payload) => {
+  try {
+    const res = await API.post(`${BASE_URL}/usuarios/`, payload);
+    return res.data;
+  } catch (error) {
+    console.log(error)
+    // Extraemos la data del error de Axios
+    const errorData = error.response?.data || error;
+
+    if (errorData) {
+      throw new Error(formatError(errorData));
+    }
+
+    throw new Error(formatError(error.message));
   }
-  if (!response.ok) {
-    throw new Error(errorMessage);
-  }
-  return true;
 };

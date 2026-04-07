@@ -33,7 +33,7 @@ export default function PeriodoEditarModal({ open, periodo, onClose, onSuccess }
             </div>
             <div className="flex-1">
               <h2 className="text-xl font-bold text-slate-800">Editar Periodo</h2>
-              <p className="text-sm text-slate-500">Configura el ciclo y fechas escolares</p>
+              <p className="text-sm text-slate-500">Configura el periodo y fechas escolares</p>
             </div>
             <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl transition-colors" disabled={loading}>×</button>
           </div>
@@ -42,7 +42,7 @@ export default function PeriodoEditarModal({ open, periodo, onClose, onSuccess }
             <AlertaError mensaje={error} />
             
             <div className="grid gap-6">
-              <Field label="Ciclo Escolar" required>
+              <Field label="Periodo Escolar" required>
                 <InputG
                   placeholder="Ej: 2026-A"
                   value={form?.ciclo_escolar || ""}

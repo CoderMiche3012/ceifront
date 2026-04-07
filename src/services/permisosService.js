@@ -1,45 +1,36 @@
-import { obtenerPermisos, obtenerRoles } from "./cuentasApi"
-import { obtenerUsuarioLocal } from "../utils/authStorage"
+import { obtenerPermisos } from "./cuentasApi";
+import { obtenerUsuarioLocal } from "../utils/authStorage";
 
 export async function cargarPermisosUsuario() {
-  const userData = obtenerUsuarioLocal()
+  const userData = obtenerUsuarioLocal();
 
-  if (userData?.es_superadmin) {
-    const permisosData = await obtenerPermisos()
+  if (!userData) return [];
 
-    const allPermissions = permisosData.map(
-      (permiso) => permiso.nombre_permiso
-    )
+  // 🔥 CASO 1: superadmin → todos los permisos
+  if (userData?.is_admin) {
+    try {
+      const permisosData = await obtenerPermisos();
 
-    if (!allPermissions.includes("Ver Permisos")) {
-      allPermissions.push("Ver Permisos")
+      const allPermissions = permisosData.map(
+        (permiso) => permiso.nombre_permiso
+      );
+
+      // opcional: asegurar permiso especial
+      if (!allPermissions.includes("Ver Permisos")) {
+        allPermissions.push("Ver Permisos");
+      }
+
+      return allPermissions;
+    } catch (error) {
+      console.error("Error obteniendo permisos:", error);
+      return [];
     }
-
-    return allPermissions
   }
 
-  const userRoleId = Number(userData?.id_rol)
-
-  if (!userRoleId) {
-    return []
+  // 🔥 CASO 2: usuario normal → usar permisos del login
+  if (Array.isArray(userData.permisos)) {
+    return userData.permisos;
   }
 
-  const [rolesData, permisosData] = await Promise.all([
-    obtenerRoles(),
-    obtenerPermisos(),
-  ])
-
-  const currentRole = rolesData.find(
-    (rol) => Number(rol.id_rol) === userRoleId
-  )
-
-  if (!currentRole) {
-    return []
-  }
-
-  const permisosDelRol = (currentRole.permisos || []).map(Number)
-
-  return permisosData
-    .filter((permiso) => permisosDelRol.includes(Number(permiso.id_permiso)))
-    .map((permiso) => permiso.nombre_permiso)
+  return [];
 }

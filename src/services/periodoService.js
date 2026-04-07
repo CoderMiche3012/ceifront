@@ -1,57 +1,55 @@
-const BASE_URL = "http://localhost:8000/api/periodos/periodos";
+import API from "./api";
+const BASE_URL = "/api/periodos/periodos";
+import { formatError } from "../utils/errorHandlers";
 
-export const getAuthHeaders = () => {
-  const token = localStorage.getItem("access");
-  if (!token) return null;
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-};
-
-const handleResponse = async (response, defaultError) => {
-  const text = await response.text();
-  let errorMessage = defaultError;
-
-  if (text) {
-    try {
-      const data = JSON.parse(text);
-      errorMessage = data?.detail || data?.message || data?.error || JSON.stringify(data);
-    } catch {
-      errorMessage = text;
-    }
-  }
-
-  if (response.status === 401) throw new Error("Sesión expirada");
-  if (!response.ok) throw new Error(errorMessage);
-
-  return text ? JSON.parse(text) : true;
-};
-
+//obtener periodos
 export const obtenerPeriodos = async () => {
-  const headers = getAuthHeaders();
-  if (!headers) throw new Error("Sin autenticación");
-  const res = await fetch(`${BASE_URL}/`, { headers });
-  return handleResponse(res, "Error al obtener periodos");
-};
+  try {
+    const res = await API.get(`${BASE_URL}/`);
+    return res.data;
+  } catch (error) {
+    console.log(error)
+    // Extraemos la data del error de Axios
+    const errorData = error.response?.data || error;
 
+    if (errorData) {
+      throw new Error(formatError(errorData));
+    }
+
+    throw new Error(formatError(error.message));
+  }
+};
+//crear periodos
 export const crearPeriodo = async (payload) => {
-  const headers = getAuthHeaders();
-  const res = await fetch(`${BASE_URL}/`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload),
-  });
-  return handleResponse(res, "Error al crear periodo");
-};
+  try {
+    const res = await API.post(`${BASE_URL}/`, payload);
+    return res.data;
+  } catch (error) {
+    console.log(error)
+    // Extraemos la data del error de Axios
+    const errorData = error.response?.data || error;
 
-// Función genérica para actualizar, usada para editar o desactivar
+    if (errorData) {
+      throw new Error(formatError(errorData));
+    }
+
+    throw new Error(formatError(error.message));
+  }
+};
+//editar o desactivar periodo
 export const actualizarPeriodo = async (id, payload) => {
-  const headers = getAuthHeaders();
-  const res = await fetch(`${BASE_URL}/${id}/`, {
-    method: "PUT",
-    headers,
-    body: JSON.stringify(payload),
-  });
-  return handleResponse(res, "Error al actualizar periodo");
+  try {
+    const res = await API.put(`${BASE_URL}/${id}/`, payload);
+    return res.data;
+  } catch (error) {
+    console.log(error)
+    // Extraemos la data del error de Axios
+    const errorData = error.response?.data || error;
+
+    if (errorData) {
+      throw new Error(formatError(errorData));
+    }
+
+    throw new Error(formatError(error.message));
+  }
 };

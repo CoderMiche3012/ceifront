@@ -1,72 +1,80 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SubMenu from "./SubMenu";
 import ModalPerfil from "./../usuarios/modales/ModalPerfil";
-import {obtenerPerfil,guardarUsuarioLocal,} from "../../services/usuariosService";
+import { obtenerPerfil, guardarUsuarioLocal } from "../../services/usuariosService";
 
 export default function Encabezado({ setSidebarOpen }) {
   const navigate = useNavigate();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-  //estado local del usuario completo obtenido desde localStorage
+  //inicialización segura del estado
   const [fullUser, setFullUser] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("user")) || null;
-    } catch {
+      const stored = localStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      console.error("Error parsing user from localStorage", error);
       return null;
     }
   });
-  //actualiza el usuario en localStorage y en el estado
-  const handleUserUpdate = (updatedUser) => {
+  //actualizacion de usuario con callback 
+  const handleUserUpdate = useCallback((updatedUser) => {
+    if (!updatedUser) return;
     const usuarioActualizado = guardarUsuarioLocal(updatedUser);
     setFullUser(usuarioActualizado);
-  };
+    window.dispatchEvent(new Event("storage"));
+  }, []);
+  //sincronizacion inicial 
   useEffect(() => {
-    //sincroniza el usuario local con la información más reciente del perfil
+    let isMounted = true;
     const syncUser = async () => {
-      const storedData = localStorage.getItem("user");
-      if (!storedData) return;
-      const userLocal = JSON.parse(storedData);
       const token = localStorage.getItem("access");
-      if (userLocal?.id && token) {
-        try {
-          const data = await obtenerPerfil(userLocal.id, token);
-          if (data) {
-            const usuarioActualizado = guardarUsuarioLocal(data);
-            setFullUser(usuarioActualizado);
-            console.log("Usuario sincronizado:", usuarioActualizado);
-          }
-        } catch (error) {
-          console.error("Error en la sincronización:", error);
+      const storedData = localStorage.getItem("user");
+      if (!storedData || !token) return;
+      try {
+        const userLocal = JSON.parse(storedData);
+        const data = await obtenerPerfil(userLocal.id_usuario || userLocal.id, token);        
+        if (data && isMounted) {
+          handleUserUpdate(data);
         }
-      } else {
-        console.warn("No se pudo sincronizar: ID de usuario no encontrado en localStorage");
+      } catch (error) {
+        console.error("Error sincronizando perfil:", error);
+        if (error.response?.status === 401) {
+          cerrarSesion();
+        }
       }
     };
     syncUser();
-  }, []);
-
-  //limpia la sesión y redirige al login
+    return () => { isMounted = false; };
+  }, [handleUserUpdate]);
   const cerrarSesion = () => {
-    localStorage.clear();
+    localStorage.removeItem("user");
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh"); 
     navigate("/", { replace: true });
   };
 
   return (
     <>
-      <header className="flex h-20 items-center justify-between border-b border-[#e7e3e8] bg-white px-4 md:px-8">
-        <button
-          onClick={() => setSidebarOpen((prev) => !prev)}
-          className="rounded-xl p-2 hover:bg-slate-100 transition-colors"
-        >
-          ☰
-        </button>
+      <header className="flex h-20 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-8 sticky top-0 z-50">
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen((prev) => !prev)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 transition-all active:scale-95"
+            aria-label="Abrir menú lateral"
+          >
+            <span className="text-2xl">☰</span>
+          </button>          
+        </div>
+
         <SubMenu
           user={fullUser}
           onLogout={cerrarSesion}
           onOpenProfile={() => setProfileModalOpen(true)}
         />
       </header>
-      {/* modal para ver y editar el perfil del usuario */}
+
       <ModalPerfil
         open={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
