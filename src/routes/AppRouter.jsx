@@ -8,6 +8,7 @@ import PrivateRoute from "./PrivateRoute";
 import AdminRoute from "./AdminRoute";
 import PeriodosPagina from "./../pages/Periodos/PeriodosPagina"
 import PostulantesPagina from "./../pages/postulantes/PostulantesPagina"
+import ExpedientePagina from "../pages/postulantes/ExpedientePagina";
 import { PermissionsProvider } from "../context/PermissionsContext";
 import PermissionRoute from "./PermissionRoute";
 //define las rutas principales 
@@ -57,12 +58,14 @@ export default function AppRouter() {
               </AdminRoute>
             }
           />
-          <Route
-            path="postulantes"
-            element={
-              <PostulantesPagina />
-            }
-          />
+          <Route path="postulantes">
+            <Route index element={<PostulantesPagina />} />
+
+            <Route
+              path="expediente/:id"
+              element={<ExpedientePagina />}
+            />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

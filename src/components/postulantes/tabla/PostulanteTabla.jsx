@@ -7,6 +7,7 @@ import { NavLink } from "react-router-dom";
 const columns = [
   { key: "postulante", label: "Postulante" },
   { key: "edad", label: "Edad" },
+  { key: "tutor", label: "Tutor" },
   { key: "fecha_visita", label: "Fecha de Visita" },
   { key: "estatus", label: "Estatus Visita" },
   { key: "acciones", label: "Acciones" },
@@ -49,6 +50,18 @@ export default function PeriodoTabla({ postulantes, onRefresh }) {
       case "edad":
         return <span className="text-sm text-slate-600">{calcularEdad(expediente.fecha_nacimiento)} años</span>;
 
+      case "tutor":
+        return (
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-medium text-slate-800">
+              {item.tutor_nombre}
+            </span>
+            <span className="text-xs text-slate-500">
+              {item.tutor_telefono}
+            </span>
+          </div>
+        );
+
       case "fecha_visita":
         if (!item.fecha_visita) {
           return (
@@ -59,16 +72,24 @@ export default function PeriodoTabla({ postulantes, onRefresh }) {
           );
         }
 
-        const f = new Date(item.fecha_visita);
+        const [fecha, horaCompleta] = item.fecha_visita.split("T");
+        const hora = horaCompleta?.substring(0, 5);
+
+        // Formatear fecha manual (sin new Date)
+        const [year, month, day] = fecha.split("-");
+
+        const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+        const fechaFormateada = `${day} ${meses[parseInt(month, 10) - 1]} ${year}`;
+
         return (
           <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-1.5 text-sm text-slate-700 font-medium">
               <Calendar size={13} className="text-slate-400" />
-              {f.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
+              {fechaFormateada}
             </div>
             <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
               <Clock size={12} />
-              {f.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true })}
+              {hora}
             </div>
           </div>
         );

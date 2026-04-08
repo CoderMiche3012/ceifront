@@ -3,7 +3,7 @@ const BASE_URL = "/api/beneficiarios/expedientes";
 import { formatError } from "../utils/errorHandlers";
 
 //obtener periodos
-export const obtenerFamilia = async () => {
+export const obtenerExpediente = async () => {
   try {
     const res = await API.get(`${BASE_URL}/`);
     return res.data;

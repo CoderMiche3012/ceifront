@@ -10,7 +10,7 @@ export default function UsuarioFiltros({
     <FiltrosTabla
       searchValue={search}
       onSearchChange={onSearchChange}
-      searchPlaceholder="Buscar por nombre"
+      searchPlaceholder="Buscar por nombre del postulante o tutor"
       filters={filters}
       onClearFilters={onClearFilters}
     />

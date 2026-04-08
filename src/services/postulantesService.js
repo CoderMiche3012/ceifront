@@ -55,4 +55,9 @@ export const postulantesService = {
             throw new Error(formatErrorAnidado(error.message));
         }
     },
+    obtenerPostulantePorId: async (id) => {
+
+        const res = await API.get(`/api/beneficiarios/postulantes/${id}`);
+        return res.data;
+    }
 };

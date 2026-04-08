@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { postulantesService } from "../../services/postulantesService";
 import { obtenerVisita } from "../../services/visitasService";
+import { obtenerExpediente } from "../../services/expedientesService";
 
 export const usePostulantesPage = () => {
   const [allData, setAllData] = useState([]);
@@ -12,29 +13,74 @@ export const usePostulantesPage = () => {
   const PAGE_SIZE = 4;
 
   const fetchPostulantes = useCallback(async () => {
-    // Solo ponemos loading true la primera vez o si es necesario
-    // Si quieres un refresco silencioso tras agendar, podrías quitar el setLoading(true)
-    setLoading(true); 
+    setLoading(true);
     setError(null);
+
     try {
-      const [resPostulantes, resVisitas] = await Promise.all([
+      const [resPostulantes, resVisitas, resExpedientes] = await Promise.all([
         postulantesService.obtenerPostulantes(),
-        obtenerVisita()
+        obtenerVisita(),
+        obtenerExpediente()
       ]);
 
-      const listaPostulantes = Array.isArray(resPostulantes) ? resPostulantes : resPostulantes.results || [];
-      const listaVisitas = Array.isArray(resVisitas) ? resVisitas : [];
+      const listaPostulantes = Array.isArray(resPostulantes)
+        ? resPostulantes
+        : resPostulantes.results || [];
 
-      const datosCombinados = listaPostulantes.map(postulante => {
-        // Buscamos la visita vinculada a este postulante específico
-        const visita = listaVisitas.find(v => v.id_postulante === postulante.id_postulante);
-        
+      const listaVisitas = Array.isArray(resVisitas)
+        ? resVisitas
+        : [];
+
+      const listaExpedientes = Array.isArray(resExpedientes)
+        ? resExpedientes
+        : resExpedientes.results || [];
+
+      const datosCombinados = listaPostulantes.map((postulante) => {
+        // ✅ ID seguro (objeto o número)
+        const expedienteId =
+          typeof postulante.id_expediente === "object"
+            ? postulante.id_expediente?.id_expediente
+            : postulante.id_expediente;
+
+        // ✅ Buscar expediente correcto
+        const expediente = listaExpedientes.find(
+          (e) => String(e.id_expediente) === String(expedienteId)
+        );
+
+        // ✅ Buscar visita
+        const visita = listaVisitas.find(
+          (v) => v.id_postulante === postulante.id_postulante
+        );
+
+        // ✅ Fallback inteligente de familia
+        const familia =
+          expediente?.familia ||
+          postulante.id_expediente?.familia ||
+          [];
+
+        // ✅ Obtener tutor
+        const tutor = familia.find(
+          (f) => f.es_tutor_principal === true
+        );
+
         return {
           ...postulante,
-          // Mantenemos la lógica de prioridad: si no hay visita en la BD, es "No agendada"
-          fecha_visita: visita ? visita.fecha_visita : null,
-          estado_visita: visita ? visita.estado_visita : "No agendada",
-          nota_visita: visita ? visita.nota_visita : ""
+
+          // ✅ usar siempre "expediente"
+          expediente: expediente || postulante.id_expediente,
+
+          // visita
+          id_visita: visita?.id_visita || null,
+          fecha_visita: visita?.fecha_visita || null,
+          estado_visita: visita?.estado_visita || "No agendada",
+          nota_visita: visita?.nota_visita || "",
+
+          // tutor
+          tutor_nombre: tutor
+            ? `${tutor.nombre} ${tutor.apellido_p} ${tutor.apellido_m || ""}`
+            : "--",
+
+          tutor_telefono: tutor?.telefono || "--"
         };
       });
 
@@ -51,17 +97,26 @@ export const usePostulantesPage = () => {
     fetchPostulantes();
   }, [fetchPostulantes]);
 
-  // Filtrado
+  // 🔍 FILTRO (ya corregido)
   const filteredPostulantes = useMemo(() => {
+    const searchLower = search.toLowerCase();
+
     return allData.filter((p) => {
-      const nombreCompleto = `${p.id_expediente?.nombre} ${p.id_expediente?.apellido_p} ${p.id_expediente?.apellido_m || ""}`.toLowerCase();
-      return nombreCompleto.includes(search.toLowerCase());
+      const nombrePostulante = `${p.expediente?.nombre || ""
+        } ${p.expediente?.apellido_p || ""} ${p.expediente?.apellido_m || ""
+        }`.toLowerCase();
+
+      const nombreTutor = (p.tutor_nombre || "").toLowerCase();
+
+      return (
+        nombrePostulante.includes(searchLower) ||
+        nombreTutor.includes(searchLower)
+      );
     });
   }, [allData, search]);
 
   const totalPages = Math.ceil(filteredPostulantes.length / PAGE_SIZE);
 
-  // Asegurar que si los datos cambian y la página actual queda fuera de rango, vuelva a la 1
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(totalPages);
@@ -88,7 +143,7 @@ export const usePostulantesPage = () => {
     totalCount: filteredPostulantes.length,
     loading,
     error,
-    fetchPostulantes, // Esta es la función que pasas al prop 'onRefresh' de la tabla
+    fetchPostulantes,
     search,
     handleSearchChange,
     handleClearFilters,
