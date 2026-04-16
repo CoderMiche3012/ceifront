@@ -11,10 +11,8 @@ export const useAccionesVisita = (item, onRefresh) => {
     title: "",
     message: ""
   });
-
   const resetForm = () => setFormData({ fecha: "", hora: "", nota: "" });
 
-  // ✅ Cargar datos SOLO al abrir modal (sin pisar cambios del usuario)
   useEffect(() => {
     if (modalMode === "agendar") {
       if (item?.id_visita && item?.fecha_visita) {
@@ -37,7 +35,14 @@ export const useAccionesVisita = (item, onRefresh) => {
         nota: ""
       }));
     }
-  }, [modalMode]); // 🔥 SOLO modalMode
+
+    if (modalMode === "finalizar" || modalMode === "cancelar") {
+      setFormData(prev => ({
+        ...prev,
+        nota: "" 
+      }));
+    }
+  }, [modalMode]); 
 
   const ejecutarAccion = async () => {
     setLoading(true);
@@ -48,7 +53,6 @@ export const useAccionesVisita = (item, onRefresh) => {
           throw new Error("Fecha y hora son obligatorias");
         }
 
-        // ✅ SIN timezone (evita desfases raros)
         const fechaIso = `${formData.fecha}T${formData.hora}:00-06:00`;
 
         console.log("FormData:", formData);
@@ -88,7 +92,8 @@ export const useAccionesVisita = (item, onRefresh) => {
         }
 
         await actualizarVisita(item.id_visita, {
-          estado_visita: "Cancelada"
+          estado_visita: "Cancelada",
+          nota_visita: formData.nota
         });
       }
 
@@ -96,9 +101,8 @@ export const useAccionesVisita = (item, onRefresh) => {
         open: true,
         type: "success",
         title: "¡Éxito!",
-        message: `La visita ha sido ${
-          item.id_visita ? "actualizada" : "agendada"
-        } correctamente.`
+        message: `La visita ha sido ${item.id_visita ? "actualizada" : "agendada"
+          } correctamente.`
       });
 
       setModalMode(null);

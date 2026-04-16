@@ -23,7 +23,7 @@ export default function RolesPagina() {
     clearMessages 
   } = useRoles();
   const [showResultModal, setShowResultModal] = useState(false);
-  //configuración de resultados con validación de nulidad
+  //configuracion de resultados con validación de nulidad
   const resultConfig = useMemo(() => {
     if (error) return { type: "error", title: "Ocurrió un problema", message: error };
     if (success) return { type: "success", title: "Operación exitosa", message: success };

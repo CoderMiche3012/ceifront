@@ -16,8 +16,8 @@ export const mainMenu = [
     permission: "Ver Beneficiarios",
   },
   {
-    label: "Postulantes",
-    path: "/app/postulantes",
+    label: "Nuevos Ingresos",
+    path: "/app/ingresos",
     icon: HiOutlineUserAdd,
     permission: "Ver Postulantes",
   },

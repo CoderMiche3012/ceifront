@@ -13,28 +13,30 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
     form, setForm, error, loading, showConfirm, setShowConfirm,
     resultModal, handlePreSubmit, handleConfirmSave, handleFinalClose
   } = usePostulanteCrearForm(onSuccess, onClose);
-
   if (!open) return null;
-
-  // Actualizadores
   const updateExpediente = (f, v) => setForm(p => ({ ...p, id_expediente: { ...p.id_expediente, [f]: v } }));
   const updateDireccion = (f, v) => setForm(p => ({ ...p, id_expediente: { ...p.id_expediente, id_direccion: { ...p.id_expediente.id_direccion, [f]: v } } }));
-  
-  const updateFamiliar = (i, f, v) => {
-    const n = [...form.id_expediente.familia];
-    n[i] = { ...n[i], [f]: v };
-    updateExpediente("familia", n);
-  };
 
-  // Clases CSS reutilizables
+  const updateFamiliar = (index, field, value) => {
+    setForm(prev => {
+      const nuevaFamilia = [...prev.id_expediente.familia];
+      nuevaFamilia[index] = { ...nuevaFamilia[index], [field]: value };
+      return {
+        ...prev,
+        id_expediente: {
+          ...prev.id_expediente,
+          familia: nuevaFamilia
+        }
+      };
+    });
+  };
   const inputClass = "h-9 text-sm rounded-lg border-slate-200 focus:ring-[#0E5F63]";
   const selectClass = "w-full h-9 px-3 rounded-lg border border-slate-200 bg-white text-sm outline-none focus:ring-1 focus:ring-[#0E5F63]";
-
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[2px] p-4">
         <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl flex flex-col max-h-[92vh] border border-slate-100">
-          
+
           {/* Header */}
           <div className="px-8 py-4 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -42,16 +44,16 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
                 {step === 1 ? <HiOutlineUser size={20} /> : <HiUserGroup size={20} />}
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-800 leading-none">Nuevo Postulante</h2>
+                <h2 className="text-base font-bold text-slate-800 leading-none">Nuevo Ingreso</h2>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Paso {step} de 2</span>
               </div>
             </div>
             <div className="flex items-center gap-3">
-               <div className="flex gap-1">
-                  <div className={`h-1 w-5 rounded-full ${step === 1 ? 'bg-[#0E5F63]' : 'bg-slate-200'}`} />
-                  <div className={`h-1 w-5 rounded-full ${step === 2 ? 'bg-[#0E5F63]' : 'bg-slate-200'}`} />
-               </div>
-               <button onClick={onClose} className="ml-4 text-slate-400 hover:text-slate-600 text-xl">×</button>
+              <div className="flex gap-1">
+                <div className={`h-1 w-5 rounded-full ${step === 1 ? 'bg-[#0E5F63]' : 'bg-slate-200'}`} />
+                <div className={`h-1 w-5 rounded-full ${step === 2 ? 'bg-[#0E5F63]' : 'bg-slate-200'}`} />
+              </div>
+              <button onClick={onClose} className="ml-4 text-slate-400 hover:text-slate-600 text-xl">×</button>
             </div>
           </div>
 
@@ -67,7 +69,7 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
                     <div className="col-span-12 md:col-span-6"><Field label="Nombre(s)" required><InputG className={inputClass} placeholder="Ej: Juan Antonio" value={form.id_expediente.nombre} onChange={(e) => updateExpediente("nombre", e.target.value)} /></Field></div>
                     <div className="col-span-6 md:col-span-3"><Field label="Ap. Paterno" required><InputG className={inputClass} placeholder="Ej: Pérez" value={form.id_expediente.apellido_p} onChange={(e) => updateExpediente("apellido_p", e.target.value)} /></Field></div>
                     <div className="col-span-6 md:col-span-3"><Field label="Ap. Materno"><InputG className={inputClass} placeholder="Ej: García" value={form.id_expediente.apellido_m} onChange={(e) => updateExpediente("apellido_m", e.target.value)} /></Field></div>
-                    
+
                     <div className="col-span-6 md:col-span-3"><Field label="Género" required><select className={selectClass} value={form.id_expediente.genero} onChange={(e) => updateExpediente("genero", e.target.value)}><option value="">Elegir...</option><option value="Femenino">Femenino</option><option value="Masculino">Masculino</option></select></Field></div>
                     <div className="col-span-6 md:col-span-3"><Field label="Fecha Nac." required><InputG className={inputClass} type="date" value={form.id_expediente.fecha_nacimiento} onChange={(e) => updateExpediente("fecha_nacimiento", e.target.value)} /></Field></div>
                     <div className="col-span-6 md:col-span-3"><Field label="Teléfono" required><InputG className={inputClass} value={form.id_expediente.telefono} onChange={(e) => updateExpediente("telefono", e.target.value)} placeholder="Ej: 9511234567" /></Field></div>
@@ -84,6 +86,8 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
                     <div className="col-span-6 md:col-span-2"><Field label="CP" required><InputG className={inputClass} placeholder="68000" value={form.id_expediente.id_direccion.cp} onChange={(e) => updateDireccion("cp", e.target.value)} /></Field></div>
                     <div className="col-span-6 md:col-span-2"><Field label="Núm." required><InputG className={inputClass} placeholder="101-A" value={form.id_expediente.id_direccion.numero} onChange={(e) => updateDireccion("numero", e.target.value)} /></Field></div>
                     <div className="col-span-12"><Field label="Calle" required><InputG className={inputClass} placeholder="Ej: Av. Independencia" value={form.id_expediente.id_direccion.calle} onChange={(e) => updateDireccion("calle", e.target.value)} /></Field></div>
+                    <div className="col-span-12 md:col-span-6"><Field label="Referencia de la dirección" required><InputG className={inputClass} placeholder="Ej: 1°" value={form.referencia_casa} onChange={(e) => setForm(p => ({ ...p, referencia_casa: e.target.value }))} /></Field></div>  
+                    <div className="col-span-12 md:col-span-6"><Field label="Referencia de ingreso o como conocio el programa" required><InputG className={inputClass} placeholder="Ej: 1°" value={form.referencia_ingreso} onChange={(e) => setForm(p => ({ ...p, referencia_ingreso: e.target.value }))} /></Field></div>                                  
                   </div>
                 </div>
               </div>
@@ -105,15 +109,33 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em]">Estructura Familiar</h3>
                     <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em]">Los familiares son modificables</h3>
-                    <button type="button" onClick={() => { 
-                      const n = [...form.id_expediente.familia, { 
-                        nombre: "", apellido_p: "", apellido_m: "", parentesco: "", edad: "", 
-                        actividad_principal: "", area_laboral_escuela: "", salario: "0.00", 
-                        vive_en_casa: true, telefono: "" 
-                      }]; 
-                      updateExpediente("familia", n); 
-                    }} className="text-[10px] font-bold bg-[#0E5F63] text-white px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-[#0c5357] transition-colors">
-                      <HiPlus /> AGREGAR INTEGRANTE
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nuevoIntegrante = {
+                          nombre: "",
+                          apellido_p: "",
+                          apellido_m: "",
+                          parentesco: "",
+                          edad: "",
+                          actividad_principal: "",
+                          area_laboral_escuela: "",
+                          salario: "0.00",
+                          vive_en_casa: true,
+                          telefono: "",
+                          es_tutor_principal: false 
+                        };
+                        setForm(prev => ({
+                          ...prev,
+                          id_expediente: {
+                            ...prev.id_expediente,
+                            familia: [...prev.id_expediente.familia, nuevoIntegrante]
+                          }
+                        }));
+                      }}
+                      className="text-[10px] font-bold bg-[#0E5F63] text-white px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-[#0c5357]"
+                    >
+                      <HiPlus /> Registrar Ingreso
                     </button>
                   </div>
 
@@ -143,7 +165,7 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
                           <Field label="Teléfono"><InputG className={inputClass} placeholder="10 dígitos" value={fam.telefono} onChange={(e) => updateFamiliar(idx, "telefono", e.target.value)} /></Field>
                           <Field label="Actividad"><InputG className={inputClass} placeholder="Ej: Empleado" value={fam.actividad_principal} onChange={(e) => updateFamiliar(idx, "actividad_principal", e.target.value)} /></Field>
                           <Field label="Lugar Trabajo/Esc."><InputG className={inputClass} placeholder="Nombre Empresa/Esc." value={fam.area_laboral_escuela} onChange={(e) => updateFamiliar(idx, "area_laboral_escuela", e.target.value)} /></Field>
-                          
+
                           <Field label="Salario Mensual"><InputG className={inputClass} type="number" placeholder="0.00" value={fam.salario} onChange={(e) => updateFamiliar(idx, "salario", e.target.value)} /></Field>
                           <Field label="¿Vive en casa?">
                             <select className={selectClass} value={fam.vive_en_casa} onChange={(e) => updateFamiliar(idx, "vive_en_casa", e.target.value === "true")}>
@@ -165,12 +187,17 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
             <button type="button" onClick={step === 1 ? onClose : () => setStep(1)} className="px-6 py-2 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors">
               {step === 1 ? 'Cancelar' : 'Volver'}
             </button>
-            <button 
-              type="button" 
+            <button
+              type="button"
+              disabled={loading}
               onClick={step === 1 ? () => setStep(2) : handlePreSubmit}
-              className="px-8 py-2 bg-[#0E5F63] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#0E5F63]/20 hover:bg-[#0c5357] transition-all flex items-center gap-2"
+              className="px-8 py-2 bg-[#0E5F63] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#0E5F63]/20 hover:bg-[#0c5357] transition-all flex items-center gap-2 disabled:opacity-50"
             >
-              {step === 1 ? (<>Siguiente <HiArrowRight/></>) : (<>{loading ? 'Guardando...' : 'Finalizar Registro'} <HiCheck/></>)}
+              {step === 1 ? (
+                <>Siguiente <HiArrowRight /></>
+              ) : (
+                <>{loading ? 'Guardando...' : 'Finalizar Registro'} <HiCheck /></>
+              )}
             </button>
           </div>
         </div>

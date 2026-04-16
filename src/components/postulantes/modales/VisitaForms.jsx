@@ -35,3 +35,19 @@ export const FormFinalizar = ({ data, onChange }) => (
     />
   </div>
 );
+
+// Formulario para Cancelar con Nota
+export const FormCancelar = ({ data, onChange }) => (
+  <div className="mt-4 text-left">
+    <label className="text-[10px] font-bold text-slate-400 uppercase">
+      Motivo de cancelación
+    </label>
+    <textarea 
+      className="w-full rounded-xl border border-slate-200 p-2.5 text-sm outline-none focus:ring-2 focus:ring-red-500/20" 
+      rows="3" 
+      placeholder="Escribe el motivo de la cancelación..."
+      value={data.nota || ""}
+      onChange={(e) => onChange({ ...data, nota: e.target.value })} 
+    />
+  </div>
+);

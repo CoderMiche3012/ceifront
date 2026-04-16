@@ -1,18 +1,40 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { UserPlus } from "lucide-react";
+import { useReactToPrint } from "react-to-print";
 import Boton from "../../components/ui/Boton";
 import EncabezadoPagina from "../../components/shared/EncabezadoPagina";
-import PostulanteCrearModal from "../../components/postulantes/modales/PostulanteCrearModal"; // Ajusta la ruta
-import { usePostulantesPage } from "../../hooks/postulantes/usePostulantesPage"; // Ajusta la ruta
+import PostulanteCrearModal from "../../components/postulantes/modales/PostulanteCrearModal";
+import { usePostulantesPage } from "../../hooks/postulantes/usePostulantesPage";
 import PeriodoTabla from "../../components/postulantes/tabla/PostulanteTabla";
 import PostulanteFiltros from "../../components/postulantes/tabla/PostulanteFiltros";
 import PaginacionTabla from "../../components/tablas/PaginacionTabla";
+import { FormatoImpresion } from "../../components/postulantes/FormatoSocioeconomico";
+import { flushSync } from "react-dom";
 
 
 export default function PostulantesPagina() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [postulanteAImprimir, setPostulanteAImprimir] = useState(null);
+  const componenteRef = useRef(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: componenteRef,
+    documentTitle: `Estudio_${postulanteAImprimir?.id_expediente?.nombre || 'Postulante'}`,
+  });
+  const ejecutarImpresion = (postulante) => {
+    flushSync(() => {
+      setPostulanteAImprimir(postulante);
+    });
+
+    setTimeout(() => {
+      console.time("print_total");
+      handlePrint();
+      console.timeEnd("print_total");
+    }, 100);
+  };
 
   const {
+    filters,
     postulantes,
     totalCount,
     loading,
@@ -20,6 +42,7 @@ export default function PostulantesPagina() {
     search,
     handleSearchChange,
     handleClearFilters,
+    handleFilterChange,
     currentPage,
     totalPages,
     setCurrentPage,
@@ -29,14 +52,14 @@ export default function PostulantesPagina() {
   return (
     <section className="space-y-6">
       <EncabezadoPagina
-        titulo="Gestión de Postulantes"
-        descripcion="Monitoreo y organización de postulantes"
+        titulo="Gestión de Nuevos Ingresos"
+        descripcion="Monitoreo y organización de posibles nuevos beneficiarios"
         accion={
           <Boton
             icon={<UserPlus size={18} />}
             onClick={() => setIsModalOpen(true)}
           >
-            Registrar Postulante
+            Registrar Ingreso
           </Boton>
         }
       />
@@ -45,7 +68,9 @@ export default function PostulantesPagina() {
         {/* Filtros */}
         <PostulanteFiltros
           search={search}
+          filters={filters} // Nuevo
           onSearchChange={handleSearchChange}
+          onFilterChange={handleFilterChange} // Nuevo
           onClearFilters={handleClearFilters}
         />
         {/* Tabla con estado de carga */}
@@ -55,7 +80,7 @@ export default function PostulantesPagina() {
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
             </div>
           ) : (
-            <PeriodoTabla postulantes={postulantes} onRefresh={fetchPostulantes} />
+            <PeriodoTabla postulantes={postulantes} onRefresh={fetchPostulantes} onPrint={ejecutarImpresion} />
           )}
         </div>
 
@@ -69,6 +94,11 @@ export default function PostulantesPagina() {
             onPageChange={setCurrentPage}
           />
         )}
+      </div>
+      <div style={{ position: "absolute", left: "-9999px" }}>
+        <div ref={componenteRef}>
+          <FormatoImpresion postulante={postulanteAImprimir} />
+        </div>
       </div>
 
       <PostulanteCrearModal

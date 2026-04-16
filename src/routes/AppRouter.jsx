@@ -58,7 +58,7 @@ export default function AppRouter() {
               </AdminRoute>
             }
           />
-          <Route path="postulantes">
+          <Route path="ingresos">
             <Route index element={<PostulantesPagina />} />
 
             <Route

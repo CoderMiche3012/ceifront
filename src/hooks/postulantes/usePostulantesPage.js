@@ -2,26 +2,43 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { postulantesService } from "../../services/postulantesService";
 import { obtenerVisita } from "../../services/visitasService";
 import { obtenerExpediente } from "../../services/expedientesService";
+import { obtenerEstudios } from "../../services/estudiosService";
 
 export const usePostulantesPage = () => {
   const [allData, setAllData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({
+    visita: "todos",
+    estudio: "todos",
+    decision: "todos"
+  });
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 4;
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
+  };
+
+
 
   const fetchPostulantes = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const [resPostulantes, resVisitas, resExpedientes] = await Promise.all([
+      const [resPostulantes, resVisitas, resExpedientes, resEstudios] = await Promise.all([
         postulantesService.obtenerPostulantes(),
         obtenerVisita(),
-        obtenerExpediente()
+        obtenerExpediente(),
+        obtenerEstudios()
       ]);
+
+      const listaEstudios = Array.isArray(resEstudios)
+        ? resEstudios
+        : resEstudios.results || [];
 
       const listaPostulantes = Array.isArray(resPostulantes)
         ? resPostulantes
@@ -36,29 +53,28 @@ export const usePostulantesPage = () => {
         : resExpedientes.results || [];
 
       const datosCombinados = listaPostulantes.map((postulante) => {
-        // ✅ ID seguro (objeto o número)
         const expedienteId =
           typeof postulante.id_expediente === "object"
             ? postulante.id_expediente?.id_expediente
             : postulante.id_expediente;
 
-        // ✅ Buscar expediente correcto
         const expediente = listaExpedientes.find(
           (e) => String(e.id_expediente) === String(expedienteId)
         );
 
-        // ✅ Buscar visita
         const visita = listaVisitas.find(
           (v) => v.id_postulante === postulante.id_postulante
         );
 
-        // ✅ Fallback inteligente de familia
+        const estudio = listaEstudios.find(
+          (est) => String(est.id_expediente) === String(expedienteId)
+        );
+
         const familia =
           expediente?.familia ||
           postulante.id_expediente?.familia ||
           [];
 
-        // ✅ Obtener tutor
         const tutor = familia.find(
           (f) => f.es_tutor_principal === true
         );
@@ -66,7 +82,6 @@ export const usePostulantesPage = () => {
         return {
           ...postulante,
 
-          // ✅ usar siempre "expediente"
           expediente: expediente || postulante.id_expediente,
 
           // visita
@@ -74,13 +89,17 @@ export const usePostulantesPage = () => {
           fecha_visita: visita?.fecha_visita || null,
           estado_visita: visita?.estado_visita || "No agendada",
           nota_visita: visita?.nota_visita || "",
+          estatus_estudio: estudio?.estatus_estudio || "Pendiente",
 
           // tutor
           tutor_nombre: tutor
             ? `${tutor.nombre} ${tutor.apellido_p} ${tutor.apellido_m || ""}`
             : "--",
 
-          tutor_telefono: tutor?.telefono || "--"
+          tutor_telefono: tutor?.telefono || "--",
+
+          nivel_escolar_inicial: estudio?.nivel_escolar_inicial || "--",
+          grado_escolar_inicial: estudio?.grado_escolar_inicial || "--"
         };
       });
 
@@ -97,23 +116,26 @@ export const usePostulantesPage = () => {
     fetchPostulantes();
   }, [fetchPostulantes]);
 
-  // 🔍 FILTRO (ya corregido)
   const filteredPostulantes = useMemo(() => {
     const searchLower = search.toLowerCase();
 
     return allData.filter((p) => {
-      const nombrePostulante = `${p.expediente?.nombre || ""
-        } ${p.expediente?.apellido_p || ""} ${p.expediente?.apellido_m || ""
-        }`.toLowerCase();
+      // Filtro de Búsqueda
+      const nombrePostulante = `${p.expediente?.nombre || ""} ${p.expediente?.apellido_p || ""}`.toLowerCase();
+      const matchSearch = nombrePostulante.includes(searchLower) || (p.tutor_nombre || "").toLowerCase().includes(searchLower);
 
-      const nombreTutor = (p.tutor_nombre || "").toLowerCase();
+      // Filtro de Visita (basado en p.estado_visita)
+      const matchVisita = filters.visita === "todos" || p.estado_visita?.toLowerCase() === filters.visita.toLowerCase();
 
-      return (
-        nombrePostulante.includes(searchLower) ||
-        nombreTutor.includes(searchLower)
-      );
+      // Filtro de Estudio (basado en p.estatus_estudio)
+      const matchEstudio = filters.estudio === "todos" || p.estatus_estudio?.toLowerCase() === filters.estudio.toLowerCase();
+
+      // Filtro de Decisión (basado en p.estatus_postulante)
+      const matchDecision = filters.decision === "todos" || p.estatus_postulante?.toLowerCase() === filters.decision.toLowerCase();
+
+      return matchSearch && matchVisita && matchEstudio && matchDecision;
     });
-  }, [allData, search]);
+  }, [allData, search, filters]);
 
   const totalPages = Math.ceil(filteredPostulantes.length / PAGE_SIZE);
 
@@ -135,8 +157,11 @@ export const usePostulantesPage = () => {
 
   const handleClearFilters = () => {
     setSearch("");
+    setFilters({ visita: "todos", estudio: "todos", decision: "todos" });
     setCurrentPage(1);
   };
+
+
 
   return {
     postulantes: paginatedPostulantes,
@@ -150,6 +175,8 @@ export const usePostulantesPage = () => {
     currentPage,
     totalPages,
     setCurrentPage,
-    PAGE_SIZE
+    PAGE_SIZE, filters,
+    handleFilterChange,
+
   };
 };

@@ -9,13 +9,10 @@ export const obtenerPeriodos = async () => {
     return res.data;
   } catch (error) {
     console.log(error)
-    // Extraemos la data del error de Axios
     const errorData = error.response?.data || error;
-
     if (errorData) {
       throw new Error(formatError(errorData));
     }
-
     throw new Error(formatError(error.message));
   }
 };
@@ -26,16 +23,14 @@ export const crearPeriodo = async (payload) => {
     return res.data;
   } catch (error) {
     console.log(error)
-    // Extraemos la data del error de Axios
     const errorData = error.response?.data || error;
-
     if (errorData) {
       throw new Error(formatError(errorData));
     }
-
     throw new Error(formatError(error.message));
   }
 };
+
 //editar o desactivar periodo
 export const actualizarPeriodo = async (id, payload) => {
   try {

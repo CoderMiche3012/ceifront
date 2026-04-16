@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { formatError } from "../utils/errorHandlers";
 import { actualizarUsuario } from "../services/usuariosService";
-export function usePerfilForm({ user, open, onClose, onUserUpdated, setResultado }) {
+export function usePerfilForm({ user, open, onUserUpdated, setResultado }) {
   //estados de usuario
   const [nombre, setNombre] = useState("");
   const [nom_usuario, setNomUsuario] = useState("");
