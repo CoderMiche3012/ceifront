@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { crearVisita, actualizarVisita } from "../../services/visitasService";
 
 export const useAccionesVisita = (item, onRefresh) => {
-  const [modalMode, setModalMode] = useState(null); // 'agendar', 'finalizar', 'cancelar'
+  const [modalMode, setModalMode] = useState(null); 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ fecha: "", hora: "", nota: "" });
   const [result, setResult] = useState({

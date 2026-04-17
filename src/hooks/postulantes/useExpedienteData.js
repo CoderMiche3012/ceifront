@@ -59,6 +59,8 @@ export const useExpedienteData = (id) => {
           nivel_escolar_inicial: estudioExpediente?.nivel_escolar_inicial,
           id_estudio: estudioExpediente?.id_estudio,
           estatus_estudio: estudioExpediente?.estatus_estudio,
+          prioridad_servicio: estudioExpediente?.prioridad_servicio,
+          nota_servicio: estudioExpediente?.nota_servicio,
           grado_escolar_inicial: estudioExpediente?.grado_escolar_inicial,
           referencia_casa: estudioExpediente?.referencia_casa,
           referencia_ingreso: estudioExpediente?.referencia_ingreso,
@@ -87,14 +89,14 @@ export const useExpedienteData = (id) => {
   const getEstatusInfo = () => {
     const estatus = data?.estatus_postulante?.toLowerCase();
     switch (estatus) {
-      case "aprobado":
-        return { text: "Aprobado", className: "bg-green-100 text-green-600" };
+      case "aceptado":
+        return { text: "Aceptado", className: "bg-green-100 text-green-600" };
       case "rechazado":
         return { text: "Rechazado", className: "bg-red-100 text-red-600" };
       case "en revisión":
         return { text: "En Revisión", className: "bg-amber-100 text-amber-600" };
-      case "estudio completo":
-        return { text: "Estudio completo", className: "bg-teal-100 text-teal-600" };
+      case "espera":
+        return { text: "En Espera", className: "bg-teal-100 text-teal-600" };
       default:
         return { text: "Sin estatus", className: "bg-slate-100 text-slate-500" };
     }
