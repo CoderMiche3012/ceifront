@@ -12,7 +12,6 @@ const COLUMNS = [
     { key: "acciones", label: "Acciones" },
 ];
 export default function beneficiariosTabla({ beneficiarios = [], onRefresh }) {
-    console.log("TABLA RECIBE:", beneficiarios);
     const calcularEdad = (fechaNacimiento) => {
         if (!fechaNacimiento) return "--";
         const hoy = new Date();
@@ -87,8 +86,8 @@ export default function beneficiariosTabla({ beneficiarios = [], onRefresh }) {
                 return (
                     <div className="flex items-center gap-3">
                         <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-slate-800 uppercase leading-none">
-                                {"oendiente"}
+                            <span className="text-sm font-semibold text-slate-800 leading-none">
+                                {"pendiente"}
                                 <span className="text-xs text-slate-500">
                                     {""}
                                 </span>
@@ -100,7 +99,7 @@ export default function beneficiariosTabla({ beneficiarios = [], onRefresh }) {
                 return (
                     <div className="flex items-center gap-1">
                         <NavLink
-                            to={`/App/beneficiarios/expediente/${item.expediente?.id_expediente}`}
+                            to={`/App/beneficiarios/expediente/${item.id_beneficiario}`}
                             className={({ isActive }) => `
                 inline-flex h-8 w-8 items-center justify-center rounded-full transition-all
                 ${isActive ? "bg-blue-100 text-blue-600" : "text-slate-400 hover:bg-slate-100 hover:text-blue-600"}

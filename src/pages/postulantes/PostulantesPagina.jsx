@@ -27,9 +27,7 @@ export default function PostulantesPagina() {
     });
 
     setTimeout(() => {
-      console.time("print_total");
       handlePrint();
-      console.timeEnd("print_total");
     }, 100);
   };
 
@@ -68,9 +66,9 @@ export default function PostulantesPagina() {
         {/* Filtros */}
         <PostulanteFiltros
           search={search}
-          filters={filters} // Nuevo
+          filters={filters} 
           onSearchChange={handleSearchChange}
-          onFilterChange={handleFilterChange} // Nuevo
+          onFilterChange={handleFilterChange} 
           onClearFilters={handleClearFilters}
         />
         {/* Tabla con estado de carga */}

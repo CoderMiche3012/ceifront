@@ -6,6 +6,7 @@ import TabsExpediente from "../../components/beneficiarios/detalles/TabsExpedien
 import { useExpedienteData } from "./../../hooks/beneficiarios/useExpedienteData";
 import DatosGenerales from "../../components/beneficiarios/detalles/DatosGenerales";
 import BotonInterno from "../../components/ui/BotonInterno";
+import FamiliaCard from "../../components/beneficiarios/detalles/FamiliaCard";
 export default function ExpedientePagina() {
   const { id } = useParams();
 
@@ -18,7 +19,6 @@ export default function ExpedientePagina() {
     estatusInfo,
     edad,
   } = useExpedienteData(id);
-
   // pantalla carga
   if (loading) {
     return (
@@ -81,6 +81,9 @@ export default function ExpedientePagina() {
       <main className="mt-6">
         {tab === "generales" && (
           <DatosGenerales data={data} setData={setData} />
+        )}
+        {tab === "familia" && (
+          <FamiliaCard data={data} setData={setData} />
         )}
       </main>
     </section>

@@ -68,8 +68,6 @@ const ALIMENTOS = [
 
 const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
     if (!postulante) return null;
-    console.log(postulante);
-    // Extraemos datos del objeto que ya manejas en tu hook
     const { expediente, fecha_visita, fecha_nacimiento, tutor_nombre, tutor_telefono } = postulante;
     const familia = expediente?.familia || [];
     const fechaEncuesta = fecha_visita
@@ -98,7 +96,6 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
 
     return (
         <div ref={ref} className="bg-white text-[11px] leading-tight text-black font-sans mt-[5.5mm] print:mt-[5.5mm] p-10 print:px-4 print:pb-4 print:pt-0 break-inside-avoid-page page-break-inside-avoid">
-            {/* Encabezado estilo formato oficial */}
             <div className="mb-4">
                 {/* Encabezado */}
                 <div className="flex items-center mb-4">
@@ -111,8 +108,6 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                             className="h-28 object-contain"
                         />
                     </div>
-
-                    {/* Título CON cuadro */}
                     <div className="w-2/3">
                         <div className="border border-black text-center py-2">
                             <h1 className="text-base font-bold tracking-wide">

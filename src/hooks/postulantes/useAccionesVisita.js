@@ -55,10 +55,6 @@ export const useAccionesVisita = (item, onRefresh) => {
 
         const fechaIso = `${formData.fecha}T${formData.hora}:00-06:00`;
 
-        console.log("FormData:", formData);
-        console.log("ISO generado:", fechaIso);
-        console.log("fecha_visita cruda:", item.fecha_visita);
-
         const payload = {
           id_postulante: item.id_postulante,
           fecha_visita: fechaIso,

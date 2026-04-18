@@ -74,6 +74,7 @@ export default function BeneficiariosPagina() {
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => {
           setIsModalOpen(false);
+          fetchBeneficiarios();
         }}
       />
     </section>

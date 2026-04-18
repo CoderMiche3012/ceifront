@@ -11,6 +11,16 @@ export default function TabsExpediente({ tab, setTab }) {
       >
         Datos generales
       </button>
+      <button
+        onClick={() => setTab("familia")}
+        className={`pb-2 text-sm font-medium ${
+          tab === "familia"
+            ? "border-b-2 border-teal-600 text-teal-600"
+            : "text-slate-500"
+        }`}
+      >
+        Familia
+      </button>
 
         
     </div>

@@ -95,7 +95,6 @@ export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
     setError(null);
 
     try {
-      console.log("DATA QUE SE ENVÍA:", form.id_expediente);
       const resExpediente = await crearExpediente(form.id_expediente);
       const dataExpediente = resExpediente.data || resExpediente;
       const idExpedienteGenerado = dataExpediente.id_expediente;

@@ -1,5 +1,7 @@
 import { User, PencilLine } from 'lucide-react';
 import React, { useState } from 'react';
+import EditarDatosGenerales from "./../modales/EditarDatosGenerales";
+
 
 export default function DatosPersonalesCard({ data, setData }) {
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -14,14 +16,13 @@ export default function DatosPersonalesCard({ data, setData }) {
         </h3>
 
         <button
+          onClick={() => setModalAbierto(true)}
           className="flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors group"
         >
           <PencilLine className="w-4 h-4 group-hover:rotate-12 transition-transform" />
           Editar datos
         </button>
       </div>
-
-      {/* Grid de Información */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-8 text-sm">
 
         <div>
@@ -59,8 +60,6 @@ export default function DatosPersonalesCard({ data, setData }) {
           </p>
         </div>
 
-
-        {/* Dirección ocupa espacio restante */}
         <div className="col-span-1 md:col-span-3 border-t border-slate-50 pt-4 mt-2">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Dirección</p>
           <p className="text-slate-700 font-medium">
@@ -70,7 +69,12 @@ export default function DatosPersonalesCard({ data, setData }) {
 
       </div>
 
-     
+      <EditarDatosGenerales
+        isOpen={modalAbierto}
+        onClose={() => setModalAbierto(false)}
+        data={data}
+        setData={setData}
+      />
     </div>
   );
 }

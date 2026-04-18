@@ -4,9 +4,7 @@ import ModalResultado from "./../../shared/ModalResultado";
 import { actualizarEstudio } from "./../../../services/estudiosService";
 
 export default function EstudioCard({ data, setData }) {
-  // Referencia para el input de archivo real
   const fileInputRef = useRef(null);
-  console.log(data);
   const [modalConfig, setModalConfig] = useState({
     open: false,
     type: "success",
@@ -18,7 +16,6 @@ export default function EstudioCard({ data, setData }) {
   const estudioCompleto = estatus === "completo";
   const documento = data?.documento_estudio;
 
-  // Función para disparar el click del input oculto
   const handleTriggerClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
@@ -28,20 +25,14 @@ export default function EstudioCard({ data, setData }) {
   const handleFileChange = async (e) => {
     const archivo = e.target.files[0];
 
-    // Si no hay archivo (canceló selección), salimos silenciosamente
     if (!archivo) return;
 
     try {
-      // 1. Preparar datos
+      //preparar datos
       const formData = new FormData();
       formData.append("archivo", archivo);
       formData.append("estatus_estudio", "Completo");
-      console.log(data.id_estudio)
-
-      // 2. API - Usamos el formData real
       await actualizarEstudio(data.id_estudio, { estatus_estudio: "Completo" });
-
-      // 3. Actualizar estado local (Inmutable)
       const nuevoDocumento = {
         nombre: archivo.name,
         fecha: new Date().toISOString(),
@@ -54,7 +45,6 @@ export default function EstudioCard({ data, setData }) {
         documento_estudio: nuevoDocumento,
       }));
 
-      // 4. Mostrar Modal de Éxito
       setModalConfig({
         open: true,
         type: "success",
@@ -63,7 +53,6 @@ export default function EstudioCard({ data, setData }) {
       });
 
     } catch (error) {
-      // capturamos cualquier error para mostrar TU modal, no el del sistema
       setModalConfig({
         open: true,
         type: "error",
@@ -71,14 +60,12 @@ export default function EstudioCard({ data, setData }) {
         message: error.response?.data?.message || "No se pudo procesar el archivo. Intente de nuevo.",
       });
     } finally {
-      // Limpiamos el input para que permita subir el mismo archivo si falla
       if (e.target) e.target.value = "";
     }
   };
 
   return (
     <>
-      {/* Input oculto real - Más estable que el dinámico */}
       <input
         type="file"
         ref={fileInputRef}

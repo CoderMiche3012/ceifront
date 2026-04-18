@@ -4,8 +4,7 @@ import { obtenerVisita } from "../../services/visitasService";
 import { obtenerBeneficiario } from "../../services/beneficiariosService";
 
 /**
- * para gestionar la logica del expediente de un beneficiario
- * @param {string} id - ID del beneficiario 
+ * @param {string} idBeneficiario - ID del beneficiario (viene de la URL)
  */
 export const useExpedienteData = (id) => {
   const [data, setData] = useState(null);
@@ -16,43 +15,55 @@ export const useExpedienteData = (id) => {
       try {
         setLoading(true);
         //peticiones concurrentes para optimizar tiempo de carga
-        const [beneficiario, expedientes] = await Promise.all([
-          obtenerExpediente(),
+        const [beneficiariosData, expedientes] = await Promise.all([
           obtenerBeneficiario(),
+          obtenerExpediente(),
         ]);
+
         //Listas
         const listaExp = Array.isArray(expedientes) ? expedientes : expedientes.results || [];
-        const listaBeneficiarios = Array.isArray(beneficiario) ? beneficiario : beneficiario.results || [];
+        const listaBeneficiarios = Array.isArray(beneficiariosData) ? beneficiariosData : beneficiariosData.results || [];
+
+        const beneficiario = listaBeneficiarios.find(
+          (b) => String(b.id_beneficiario) === String(id)
+        );
+
         //busqueda de relaciones
         const expediente = listaExp.find(
-          (e) =>
-            String(e.id_expediente) ===
-            String(beneficiario.id_expediente?.id_expediente || beneficiario.id_expediente)
+          (e) => String(e.id_expediente) === String(beneficiario.id_expediente)
         );
-        const familia = expediente?.familia || beneficiario.id_expediente?.familia || [];
+        const familia = expediente?.familia || beneficiariosData.id_expediente?.familia || [];
         const tutor = familia.find((f) => f.es_tutor_principal);
+
+
 
         //estructura de datos
         setData({
           nombre: expediente?.nombre,
-          genero: beneficiario.id_expediente?.genero,
+          genero: expediente?.genero,
           apellido_p: expediente?.apellido_p,
           apellido_m: expediente?.apellido_m,
-          correo: beneficiario.id_expediente?.correo,
-          telefono: beneficiario.id_expediente?.telefono,
-          fecha_nacimiento: beneficiario.id_expediente?.fecha_nacimiento,
-          cp: beneficiario.id_expediente?.id_direccion?.cp,
-          municipio: beneficiario.id_expediente?.id_direccion?.municipio,
-          calle: beneficiario.id_expediente?.id_direccion?.calle,
-          numero: beneficiario.id_expediente?.id_direccion?.numero,
-          colonia: beneficiario.id_expediente?.id_direccion?.colonia,
+          correo: expediente?.correo,
+          telefono: expediente?.telefono,
+          fecha_nacimiento: expediente?.fecha_nacimiento,
+          nota_situacion_familiar: expediente?.nota_situacion_familiar,
+          cp: expediente?.id_direccion?.cp,
+          municipio: expediente?.id_direccion?.municipio,
+          calle: expediente?.id_direccion?.calle,
+          numero: expediente?.id_direccion?.numero,
+          colonia: expediente?.id_direccion?.colonia,
           familia: familia,
           estatus_beneficiario: beneficiario.estatus || beneficiario.estado || beneficiario.estatus_beneficiario,
+          fecha_ingreso:beneficiario.fecha_ingreso,
+          nota:beneficiario.notas,
           id_expediente: expediente?.id_expediente,
-          id_direccion: beneficiario.id_expediente?.id_direccion?.id_direccion,
+          id_direccion: expediente?.id_direccion?.id_direccion,
           id_beneficiario: beneficiario.id_beneficiario,
           tutor_nombre: tutor
             ? `${tutor.nombre} ${tutor.apellido_p} ${tutor.apellido_m || ""}`
+            : "--",
+          tutor_telefono: tutor
+            ? `${tutor.telefono || ""}`
             : "--",
         });
       } catch (error) {
@@ -67,8 +78,8 @@ export const useExpedienteData = (id) => {
   const getEstatusInfo = () => {
     const estatus = data?.estatus_beneficiario?.toLowerCase();
     switch (estatus) {
-      case "aceptado":
-        return { text: "Aceptado", className: "bg-green-100 text-green-600" };
+      case "activo":
+        return { text: "Activo", className: "bg-green-100 text-green-600" };
       case "inactivo":
         return { text: "Inactivo", className: "bg-red-100 text-red-600" };
       default:
