@@ -11,6 +11,8 @@ import PostulantesPagina from "./../pages/postulantes/PostulantesPagina"
 import ExpedientePagina from "../pages/postulantes/ExpedientePagina";
 import { PermissionsProvider } from "../context/PermissionsContext";
 import PermissionRoute from "./PermissionRoute";
+import BeneficiariosPagina from "../pages/beneficiarios/BeneficiariosPagina";
+import ExpedientePaginaB from "../pages/beneficiarios/ExpedientePaginaB";
 //define las rutas principales 
 export default function AppRouter() {
   return (
@@ -37,6 +39,23 @@ export default function AppRouter() {
             element={
               <PermissionRoute permiso="Ver Periodos">
                 <PeriodosPagina />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path="beneficiarios"
+            element={
+              <PermissionRoute permiso="Ver Beneficiarios">
+                <BeneficiariosPagina />
+              </PermissionRoute>
+            }
+          />
+
+          <Route
+            path="beneficiarios/expediente/:id"
+            element={
+              <PermissionRoute permiso="Ver Beneficiarios">
+                <ExpedientePaginaB />
               </PermissionRoute>
             }
           />
