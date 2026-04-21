@@ -16,6 +16,7 @@ export default function usePeriodosPage() {
   const [selectedPeriodo, setSelectedPeriodo] = useState(null);
   const handleOpenCreate = () => setIsCreateModalOpen(true);
   const handleCloseCreate = () => setIsCreateModalOpen(false);
+
   //logica para la tabla
   const fetchPeriodos = async () => {
     try {
@@ -38,7 +39,7 @@ export default function usePeriodosPage() {
       .filter((periodo) => {
         // 1. Solo incluimos los que tienen estado false
         const esInactivo = periodo.estado === false || Number(periodo.estado) === 0;
-        
+
         // 2. Aplicamos la búsqueda por ciclo escolar
         const coincideBusqueda = periodo.ciclo_escolar
           ?.toLowerCase()
@@ -49,6 +50,14 @@ export default function usePeriodosPage() {
       // 3. Ordenamos por id_periodo (1, 2, 3...)
       .sort((a, b) => a.id_periodo - b.id_periodo);
   }, [periodos, search]);
+  const periodoActivo = useMemo(() => {
+    return periodos.find((p) =>
+      p.estado === true ||
+      p.estado === 1 ||
+      p.estado === "1" ||
+      p.estado === "true"
+    );
+  }, [periodos]);
   //para la paginacion
   const totalPages = Math.ceil(filteredPeriodos.length / PAGE_SIZE);
   const periodosPaginados = filteredPeriodos.slice(
@@ -74,11 +83,11 @@ export default function usePeriodosPage() {
     setIsEditModalOpen(false);
   };
   return {
-    periodos: periodosPaginados, filteredPeriodos, search, handleSearchChange, handleClearFilters, filteredPeriodos,//para el filtro y busqueda
+    periodoActivo,periodos: periodosPaginados, filteredPeriodos, search, handleSearchChange, handleClearFilters, filteredPeriodos,//para el filtro y busqueda
     currentPage, totalPages, PAGE_SIZE, setCurrentPage, //para la paginacion
     loading, error,
     //para los modales
-    isCreateModalOpen, isEditModalOpen, selectedPeriodo, 
+    isCreateModalOpen, isEditModalOpen, selectedPeriodo,
     handleOpenCreate, handleCloseCreate, handleOpenEdit, handleCloseEdit,
     fetchPeriodos,
   };

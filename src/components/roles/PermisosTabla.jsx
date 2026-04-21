@@ -10,9 +10,19 @@ const DEFAULT_ACTIONS = [
 export default function PermisosTabla({
   permisos = {},
   onPermissionChange,
+  role,
   disabled = false,
   actions = DEFAULT_ACTIONS,
 }) {
+  const isAdminRole =
+    role?.nombre_rol?.trim().toLowerCase() === "administrador";
+
+  const modulesFiltrados = modules.filter((module) => {
+    if (module.key === "usuarios") {
+      return isAdminRole; // 👈 SOLO si el rol editado es admin
+    }
+    return true;
+  });
   return (
     <>
       {/* Vista tabla */}
@@ -29,7 +39,7 @@ export default function PermisosTabla({
             </tr>
           </thead>
           <tbody>
-            {modules.map((module) => {
+            {modulesFiltrados.map((module) => {
               const Icon = module.icon
               const modulePermissions = permisos?.[module.key] || {}
               return (
@@ -47,9 +57,25 @@ export default function PermisosTabla({
                         type="checkbox"
                         checked={Boolean(modulePermissions[action.key])}
                         disabled={disabled}
-                        onChange={() =>
-                          onPermissionChange?.(module.key, action.key)
-                        }
+                        onChange={() => {
+                          const current = modulePermissions;
+                          //si activa crear/editar/eliminar forzar ver
+                          if (action.key !== "ver") {
+                            if (!current.ver) {
+                              onPermissionChange?.(module.key, "ver");
+                            }
+                          }
+
+                          //si desactiva ver quitar todos los demás
+                          if (action.key === "ver" && current.ver) {
+                            ["crear", "editar", "eliminar"].forEach((perm) => {
+                              if (current[perm]) {
+                                onPermissionChange?.(module.key, perm);
+                              }
+                            });
+                          }
+                          onPermissionChange?.(module.key, action.key);
+                        }}
                         className="h-4 w-4 cursor-pointer accent-teal-600 disabled:cursor-not-allowed"
                       />
                     </td>

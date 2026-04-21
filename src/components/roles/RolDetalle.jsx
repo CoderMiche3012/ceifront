@@ -94,6 +94,7 @@ export default function RolDetalle({
         <PermisosTabla
           permisos={currentPermissions}
           onPermissionChange={onPermissionChange}
+          role={selectedRole}
           disabled={!editMode || saving}
         />
 

@@ -66,14 +66,34 @@ export function usePerfilForm({ user, open, onUserUpdated, setResultado }) {
     setLoading(true);
     try {
       // Construcción del payload limpia
-      const payload = {
-        correo: correo.trim().toLowerCase(),
-        telefono: telefono?.trim() || "",
-      };
+      const payload = {};
+      const correoNormalizado = correo.trim().toLowerCase();
+      const correoOriginal = user.correo?.trim().toLowerCase();
+
+      if (correoNormalizado !== correoOriginal) {
+        payload.correo = correoNormalizado;
+      }
+
+      const telefonoNormalizado = telefono?.trim() || "";
+      const telefonoOriginal = user.telefono?.trim() || "";
+
+      if (telefonoNormalizado !== telefonoOriginal) {
+        payload.telefono = telefonoNormalizado;
+      }
       if (cambiarPass) {
         payload.password_actual = passwordActual;
         payload.password = nuevaPassword;
         payload.confirm_password = confirmarPassword;
+      }
+      if (Object.keys(payload).length === 0) {
+        setResultado({
+          open: true,
+          type: "info",
+          title: "Sin cambios",
+          message: "No realizaste ninguna modificación",
+        });
+        setLoading(false);
+        return;
       }
       const data = await actualizarUsuario(user.id_usuario, payload);
       setResultado({
@@ -83,7 +103,7 @@ export function usePerfilForm({ user, open, onUserUpdated, setResultado }) {
         message: "Los cambios se guardaron correctamente",
       });
       if (onUserUpdated) onUserUpdated(data);
-      resetPasswordFields(); 
+      resetPasswordFields();
     } catch (err) {
       const mensaje = formatError(err?.response?.data || err);
       setError(mensaje);
@@ -91,26 +111,26 @@ export function usePerfilForm({ user, open, onUserUpdated, setResultado }) {
       setLoading(false);
     }
   }, [
-    correo, telefono, cambiarPass, passwordActual, 
-    nuevaPassword, confirmarPassword, user?.id_usuario, 
+    correo, telefono, cambiarPass, passwordActual,
+    nuevaPassword, confirmarPassword, user?.id_usuario,
     onUserUpdated, setResultado, resetPasswordFields
   ]);
   return {
     //datos
     nombre, nom_usuario, apellidoP, apellidoM, correo, setCorreo, telefono, setTelefono,
     //contraseña
-    passwordActual, setPasswordActual, 
-    nuevaPassword, setNuevaPassword, 
+    passwordActual, setPasswordActual,
+    nuevaPassword, setNuevaPassword,
     confirmarPassword, setConfirmarPassword,
     cambiarPass, setCambiarPass,
     //visibilidad
-    showPasswordActual, setShowPasswordActual, 
-    showNuevaPassword, setShowNuevaPassword, 
+    showPasswordActual, setShowPasswordActual,
+    showNuevaPassword, setShowNuevaPassword,
     showConfirmarPassword, setShowConfirmarPassword,
     // estado
     error, loading,
     // acciones
-    handleSubmit, 
+    handleSubmit,
     cancelarCambioPassword: resetPasswordFields,
   };
 }

@@ -103,7 +103,7 @@ export function useUsuarioEditarModal({
 
     if (!formData.nombre.trim()) errors.nombre = "El nombre es obligatorio";
     if (!formData.apellido_p.trim()) errors.apellido_p = "El apellido paterno es obligatorio";
-    
+
     if (!formData.correo.trim()) {
       errors.correo = "El correo electrónico es obligatorio";
     } else if (!emailRegex.test(formData.correo)) {
@@ -136,25 +136,56 @@ export function useUsuarioEditarModal({
       }
       return;
     }
-    //validacion extra de ID de usuario antes de disparar API
+    //validacion extra 
     if (!user?.id_usuario) {
       setGeneralError("Error: No se encontró el ID del usuario.");
       return;
     }
     try {
       setLoading(true);
-      const payload = {
+      const payload = {};
+
+      const normalizado = {
         nombre: formData.nombre.trim(),
         apellido_p: formData.apellido_p.trim(),
         apellido_m: formData.apellido_m.trim(),
-        correo: formData.correo.trim(),
+        correo: formData.correo.trim().toLowerCase(),
         telefono: formData.telefono.trim(),
         nom_usuario: formData.nom_usuario.trim(),
         id_rol: Number(formData.id_rol),
       };
+
+      const original = {
+        nombre: user.nombre || "",
+        apellido_p: user.apellido_p || "",
+        apellido_m: user.apellido_m || "",
+        correo: user.correo?.toLowerCase() || "",
+        telefono: user.telefono || "",
+        nom_usuario: user.nom_usuario || "",
+        id_rol: Number(getRoleId(user)),
+      };
+
+      //comparar campo por campo
+      Object.keys(normalizado).forEach((key) => {
+        if (normalizado[key] !== original[key]) {
+          payload[key] = normalizado[key];
+        }
+      });
       if (formData.password.trim()) {
         payload.password = formData.password;
         payload.confirm_password = formData.confirm_password;
+      }
+
+      if (formData.password.trim()) {
+        payload.password = formData.password;
+        payload.confirm_password = formData.confirm_password;
+      }
+      //validar si no hay cambios
+      if (Object.keys(payload).length === 0) {
+        setGeneralError("No realizaste ningún cambio");
+        setIsConfirming(false);
+        setLoading(false);
+        return;
       }
       await actualizarUsuarioCompleto(user.id_usuario, payload);
       setIsConfirming(false);

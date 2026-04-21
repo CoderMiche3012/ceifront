@@ -31,6 +31,7 @@ export default function PeriodoTabla({ postulantes = [], onRefresh, onPrint }) {
     //posicionamiento de las acciones
     const totalRegistros = postulantes.length;
     const indiceActual = postulantes.indexOf(item);
+    
     const abrirHaciaArriba = indiceActual >= totalRegistros - 2 && totalRegistros > 1;
     switch (key) {
       case "postulante":
@@ -120,12 +121,12 @@ export default function PeriodoTabla({ postulantes = [], onRefresh, onPrint }) {
         );
 
       case "estatus_postulante":
-        const estudioFinalizado = item.estatus_estudio?.toLowerCase() === "completado";
+        const estudioFinalizado = item.estatus_estudio?.toLowerCase() === "completo";
         return (
           <div className="flex items-center gap-2">
             {estudioFinalizado ? (
               <span className="text-sm font-medium text-slate-700">
-                {item.estatus_postulante || "Sin decisión"}
+                {item.estatus || "Sin decisión"}
               </span>
             ) : (
               <div className="flex items-center gap-1.5 text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-200 shadow-sm">

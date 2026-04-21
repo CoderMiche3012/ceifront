@@ -95,14 +95,7 @@ export const obtenerUsuarios = async () => {
 //función base para activar/desactivar
 const actualizarEstatusUsuario = async (user, estatus) => {
   try {
-    await API.put(`${BASE_URL}/usuarios/${user.id_usuario}/`, {
-      nom_usuario: user.nom_usuario,
-      nombre: user.nombre,
-      apellido_p: user.apellido_p,
-      apellido_m: user.apellido_m,
-      correo: user.correo,
-      telefono: user.telefono,
-      id_rol: user.id_rol,
+    await API.patch(`${BASE_URL}/usuarios/${user.id_usuario}/`, {
       estatus,
     });
     return true;

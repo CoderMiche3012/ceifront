@@ -16,7 +16,7 @@ export default function PeriodosPagina() {
   const { permissions, loading: isPermsLoading } = usePermissions();  
 
   const {
-    periodos, loading, error, fetchPeriodos,
+    periodoActivo,periodos, loading, error, fetchPeriodos,
     search, handleSearchChange, handleClearFilters,
     currentPage, totalPages, filteredPeriodos, PAGE_SIZE, setCurrentPage,
     isCreateModalOpen, isEditModalOpen, selectedPeriodo,
@@ -41,7 +41,7 @@ export default function PeriodosPagina() {
         }
       />
 
-      <PeriodoActivo onEdit={handleOpenEdit} />
+      <PeriodoActivo periodoActivo={periodoActivo} onEdit={handleOpenEdit} />
 
       {/* Solo mostrar alerta si realmente hay un error de datos */}
       {error && <Alerta mensaje={error} tipo="error" />}

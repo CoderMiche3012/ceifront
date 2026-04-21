@@ -5,40 +5,12 @@ import { obtenerPeriodos } from "../../services/periodoService";
 import { hasPermission } from "../../utils/menuPermissions";
 import { usePermissions } from "../../context/PermissionsContext";
 
-export default function PeriodoActivo({ onEdit }) {
+export default function PeriodoActivo({ periodoActivo, onEdit }) {
   //permisos y estado de carga del Contexto Global
   const { permissions, loading: isPermsLoading } = usePermissions();
   const canEdit = hasPermission(permissions, "Editar Periodos");
-  const [periodoActivo, setPeriodoActivo] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const cargarPeriodoActivo = async () => {
-      try {
-        setLoading(true);
-        const data = await obtenerPeriodos();
-        
-        // LÓGICA ROBUSTA: Buscamos el activo aceptando true, "true", 1 o "1"
-        const activo = data?.find((p) => 
-          p.estado === true || 
-          p.estado === 1 || 
-          p.estado === "1" ||
-          p.estado === "true"
-          );
-        
-        
-        setPeriodoActivo(activo);
-      } catch (error) {
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    cargarPeriodoActivo();
-  }, []);
-
-  if (loading || !periodoActivo) return null;
-
+  if (!periodoActivo) return null;
   return (
     <div className="flex items-center justify-between rounded-[24px] border border-[#dbe3eb] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
       <div className="flex items-center gap-5">
