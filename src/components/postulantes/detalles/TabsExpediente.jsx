@@ -22,6 +22,17 @@ export default function TabsExpediente({ tab, setTab }) {
       >
         Visita
       </button>
+
+      <button
+        onClick={() => setTab("Resultados")}
+        className={`pb-2 text-sm font-medium ${
+          tab === "Resultados"
+            ? "border-b-2 border-teal-600 text-teal-600"
+            : "text-slate-500"
+        }`}
+      >
+        Resultados
+      </button>
     </div>
   );
 }

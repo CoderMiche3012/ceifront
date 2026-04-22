@@ -12,6 +12,7 @@ export default function EstudioCard({ data, setData }) {
     message: "",
   });
 
+  const noEditable = ["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
   const estatus = data?.estatus_estudio?.toLowerCase();
   const estudioCompleto = estatus === "completo";
   const documento = data?.documento_estudio;
@@ -114,14 +115,15 @@ export default function EstudioCard({ data, setData }) {
               >
                 <Download size={14} /> Descargar
               </a>
-
-              <button
-                type="button"
-                onClick={handleTriggerClick}
-                className="rounded-xl bg-amber-100 px-3 py-2 text-xs font-semibold hover:bg-amber-200 flex items-center justify-center gap-2"
-              >
-                <RefreshCw size={14} /> Cambiar
-              </button>
+              {!noEditable && (
+                <button
+                  type="button"
+                  onClick={handleTriggerClick}
+                  className="rounded-xl bg-amber-100 px-3 py-2 text-xs font-semibold hover:bg-amber-200 flex items-center justify-center gap-2"
+                >
+                  <RefreshCw size={14} /> Cambiar
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -133,10 +135,12 @@ export default function EstudioCard({ data, setData }) {
             <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center">
               <Upload size={24} className="text-blue-600" />
             </div>
-            <div className="text-center">
-              <span className="text-sm font-bold text-slate-700 block">Subir documento</span>
-              <span className="text-xs text-slate-400">PDF o Word (Máx. 10MB)</span>
-            </div>
+            {!noEditable && (
+              <div className="text-center">
+                <span className="text-sm font-bold text-slate-700 block">Subir documento</span>
+                <span className="text-xs text-slate-400">PDF o Word (Máx. 10MB)</span>
+              </div>
+            )}
           </button>
         )}
       </div>

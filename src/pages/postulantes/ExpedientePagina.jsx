@@ -4,6 +4,8 @@ import { Calendar, Upload, Plus } from "lucide-react";
 import AvatarGeneral from "../../components/shared/AvatarGeneral";
 import TabsExpediente from "../../components/postulantes/detalles/TabsExpediente";
 import CitaTab from "../../components/postulantes/detalles/CitaTab";
+import ResultadosCard from "../../components/postulantes/detalles/ResultadosCard";
+import VisitasCard from "../../components/postulantes/detalles/VisitasCard";
 import { useExpedienteData } from "./../../hooks/postulantes/useExpedienteData";
 import DatosGenerales from "../../components/postulantes/detalles/DatosGenerales";
 import RecomendacionCard from "../../components/postulantes/detalles/RecomendacionCard";
@@ -11,6 +13,7 @@ import FotosCard from "../../components/postulantes/detalles/FotosCard";
 import BotonInterno from "../../components/ui/BotonInterno";
 export default function ExpedientePagina() {
   const { id } = useParams();
+
 
   const {
     data,
@@ -22,6 +25,7 @@ export default function ExpedientePagina() {
     estatusInfo,
     edad,
   } = useExpedienteData(id);
+  console.log(data)
 
   const [mostrarSubida, setMostrarSubida] = useState(false);
   const [archivo, setArchivo] = useState(null);
@@ -173,30 +177,12 @@ export default function ExpedientePagina() {
 
         {tab === "Visita" && (
           <div className="space-y-6">
-
-            <div className="grid grid-cols-3 gap-6">
-
-              <div className="col-span-2">
-                <RecomendacionCard
-                  data={data}
-                  setData={setData}
-                />
-              </div>
-
-              <div className="col-span-1">
-                <FotosCard
-                  data={data}
-                  setData={setData}
-                />
-              </div>
-
-            </div>
-
-            <CitaTab
-              visitas={visitasFiltradas}
-              onRefresh={() => window.location.reload()}
-            />
-
+            <VisitasCard data={data} setData={setData} />
+          </div>
+        )}
+        {tab === "Resultados" && (
+          <div className="space-y-6">
+            <ResultadosCard data={data} setData={setData} />
           </div>
         )}
       </main>

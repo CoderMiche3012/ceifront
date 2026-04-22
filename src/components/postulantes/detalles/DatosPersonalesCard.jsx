@@ -4,27 +4,29 @@ import EditarDatosGenerales from "./../modales/EditarDatosGenerales";
 
 export default function DatosPersonalesCard({ data, setData }) {
   const [modalAbierto, setModalAbierto] = useState(false);
+  const noEditable = ["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
 
   return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+    <div className="rounded-2xl bg-white p-8 shadow-sm border border-slate-200">
 
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800">
-          <User className="w-4 h-4 text-teal-600" />
+      <div className="flex items-center justify-between mb-8">
+        <h3 className="flex items-center gap-2 text-base font-bold text-slate-800">
+          <User className="w-5 h-5 text-teal-600" />
           Datos Personales
         </h3>
-
-        <button
-          onClick={() => setModalAbierto(true)}
-          className="flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors group"
-        >
-          <PencilLine className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-          Editar datos
-        </button>
+        {!noEditable && (
+          <button
+            onClick={() => setModalAbierto(true)}
+            className="flex items-center gap-2 text-sm font-semibold text-teal-600 hover:text-teal-700 transition group"
+          >
+            <PencilLine className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+            Editar datos
+          </button>
+        )}
       </div>
 
       {/* Grid de Información */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-8 text-sm">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
 
         <div>
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Nombre completo</p>
@@ -54,50 +56,49 @@ export default function DatosPersonalesCard({ data, setData }) {
           </p>
         </div>
 
-        <div className="col-span-1 md:col-span-2">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Correo</p>
+        <div className="col-span-1 md:col-span-2 lg:col-span-1">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            Correo
+          </p>
           <p className="text-slate-700 font-medium italic text-teal-700">
             {data.correo || "--"}
           </p>
         </div>
-
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Nivel escolar</p>
-          <p className="text-slate-700 font-medium">
-            {data.nivel_escolar_inicial || "--"}
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            Escolaridad
           </p>
-        </div>
 
-        <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Grado escolar</p>
-          <p className="text-slate-700 font-medium">
-            {data.grado_escolar_inicial || "--"}
-          </p>
+          <div className="flex items-center gap-2 text-slate-700 font-medium">
+            <span>{data.nivel_escolar_inicial || "--"}</span>
+            <span className="text-slate-400">|</span>
+            <span>{data.grado_escolar_inicial || "--"}</span>
+          </div>
         </div>
-
-        {/* Dirección ocupa espacio restante */}
-        <div className="col-span-1 md:col-span-3 border-t border-slate-50 pt-4 mt-2">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Dirección</p>
-          <p className="text-slate-700 font-medium">
-            Calle {data.calle}, # {data.numero}, Col. {data.colonia}, {data.municipio}, C.P {data.cp}
-          </p>
-        </div>
-
         <div>
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Referencia de la casa</p>
-          <p className="text-slate-700 font-medium text-xs italic">
+          <p className="text-slate-700 font-medium">
             {data.referencia_casa || "--"}
           </p>
         </div>
 
-        <div className="col-span-1 md:col-span-2">
+        <div>
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Referencias de ingreso</p>
           <p className="text-slate-700 font-medium">
             {data.referencia_ingreso || "--"}
           </p>
         </div>
 
-      </div>
+        <div >
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            Dirección
+          </p>
+          <p className="text-slate-700 font-medium leading-relaxed">
+            Calle {data.calle}, # {data.numero}, Col. {data.colonia}, {data.municipio}, C.P {data.cp}
+          </p>
+        </div>
+
+      </div>    
 
       <EditarDatosGenerales
         isOpen={modalAbierto}

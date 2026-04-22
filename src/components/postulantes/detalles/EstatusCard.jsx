@@ -10,10 +10,12 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { postulantesService } from "../../../services/postulantesService";
+import { crearBeneficiario } from "../../../services/beneficiariosService";
 
 export default function EstatusCard({ data, onChangeDecision }) {
   const estatusEstudio = data?.estatus_estudio?.toLowerCase()?.trim();
   const estudioCompleto = estatusEstudio === "completo";
+  const noEditable = ["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
   const obtenerEstatusInicial = () => {
     const valor = data?.estatus_postulante?.toLowerCase()?.trim();
 
@@ -40,14 +42,25 @@ export default function EstatusCard({ data, onChangeDecision }) {
     setLoading(true);
 
     try {
+      // 1. Actualizar estatus postulante
       await postulantesService.actualizarPostulante(
         data.id_postulante,
         { estatus: value }
       );
 
+      // 2. Si fue aceptado -> crear beneficiario automático
+      if (value === "aceptado") {
+        await crearBeneficiario({
+          estatus: "Activo",
+          fecha_ingreso: new Date().toISOString().split("T")[0],
+          id_expediente: data.id_expediente,
+        });
+      }
+
       setDecision(value);
 
       if (onChangeDecision) onChangeDecision(value);
+
     } catch (error) {
       console.error(error);
       alert("Error al guardar");
@@ -202,13 +215,14 @@ export default function EstatusCard({ data, onChangeDecision }) {
         <h3 className={`text-2xl font-black ${current.color} mb-6`}>
           {current.label}
         </h3>
-
-        <button
-          onClick={() => setDecision("seleccion")}
-          className="text-sm text-slate-400 hover:text-indigo-500"
-        >
-          Cambiar decisión
-        </button>
+        {!noEditable && (
+          <button
+            onClick={() => setDecision("seleccion")}
+            className="text-sm text-slate-400 hover:text-indigo-500"
+          >
+            Cambiar decisión
+          </button>
+        )}
       </div>
     );
   };

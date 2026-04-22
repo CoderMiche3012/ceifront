@@ -12,7 +12,7 @@ export default function RecomendacionCard({ data, setData }) {
   const estudioCompleto =
     data?.estatus_estudio?.toLowerCase()?.trim() ===
     "completo";
-
+  const noEditable = ["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
   const [prioridad, setPrioridad] = useState("");
   const [nota, setNota] = useState("");
   const [loading, setLoading] = useState(false);
@@ -102,7 +102,8 @@ export default function RecomendacionCard({ data, setData }) {
       {/* BOTÓN EDITAR */}
       {tienePrioridad &&
         estudioCompleto &&
-        !editando && (
+        !editando && !noEditable &&(
+          
           <button
             onClick={() => setEditando(true)}
             className="absolute top-5 right-5 flex items-center gap-1 text-sm font-semibold text-emerald-800 hover:text-emerald-900"

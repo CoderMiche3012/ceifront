@@ -18,27 +18,13 @@ export default function DatosGenerales({ data, setData }) {
     }));
   };
   return (
-    <div className="grid grid-cols-3 gap-6">
-      <div className="col-span-2 space-y-6">
-        <DatosPersonalesCard data={data} setData={setData} />
-
-        <ComposicionFamiliar
-          familia={data?.familia || []}
-          expedienteId={data?.id_expediente}
-          onUpdate={handleUpdateFamilia}
-        />
-      </div>
-
-      <div className="col-span-1 space-y-6">
-        <EstatusCard
-          data={data}
-          onChangeDecision={handleUpdateEstatus}
-        />
-        <EstudioCard
-          data={data}
-          setData={setData}
-        />
-      </div>
+    <div className="space-y-6">
+      <DatosPersonalesCard data={data} setData={setData} />
+      <ComposicionFamiliar
+        familia={data?.familia || []}
+        expedienteId={data?.id_expediente}
+        onUpdate={handleUpdateFamilia}
+      />
     </div>
   );
 }

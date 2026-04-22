@@ -6,7 +6,10 @@ export default function ResumenCard({ data, setData }) {
   const formatearFecha = (fecha) => {
     if (!fecha) return "--";
 
-    return new Date(fecha).toLocaleDateString("es-MX", {
+    const [year, month, day] = fecha.split("-");
+    const fechaLocal = new Date(year, month - 1, day);
+
+    return fechaLocal.toLocaleDateString("es-MX", {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -15,22 +18,36 @@ export default function ResumenCard({ data, setData }) {
   const calcularTiempo = (fecha) => {
     if (!fecha) return "--";
 
-    const inicio = new Date(fecha);
+    const [year, month, day] = fecha.split("-");
+    const inicio = new Date(year, month - 1, day);
     const hoy = new Date();
 
-    let años = hoy.getFullYear() - inicio.getFullYear();
-    let meses = hoy.getMonth() - inicio.getMonth();
+    // 🔹 Hacer conteo inclusivo (sumar 1 día)
+    const hoyInclusivo = new Date(hoy);
+    hoyInclusivo.setDate(hoyInclusivo.getDate() + 1);
+
+    let años = hoyInclusivo.getFullYear() - inicio.getFullYear();
+    let meses = hoyInclusivo.getMonth() - inicio.getMonth();
+    let dias = hoyInclusivo.getDate() - inicio.getDate();
+
+    if (dias < 0) {
+      meses--;
+      // días del mes anterior
+      const ultimoMes = new Date(
+        hoyInclusivo.getFullYear(),
+        hoyInclusivo.getMonth(),
+        0
+      );
+      dias += ultimoMes.getDate();
+    }
 
     if (meses < 0) {
       años--;
       meses += 12;
     }
 
-    if (años === 0) {
-      return `${meses} mes${meses !== 1 ? "es" : ""}`;
-    }
-
-    return `${años} año${años !== 1 ? "s" : ""} ${meses} mes${meses !== 1 ? "es" : ""}`;
+    return `${años > 0 ? años + " año" + (años !== 1 ? "s " : " ") : ""}${meses > 0 ? meses + " mes" + (meses !== 1 ? "es " : " ") : ""
+      }${dias} día${dias !== 1 ? "s" : ""}`;
   };
   return (
     <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
