@@ -53,7 +53,6 @@ export default function PeriodosPagina() {
           onClearFilters={handleClearFilters}
         />
         
-        {/* Agregamos un estado de carga visual a la tabla si tu hook lo permite */}
         <PeriodoTabla 
           periodos={periodos} 
           isLoading={loading} 

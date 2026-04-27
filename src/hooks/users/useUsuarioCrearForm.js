@@ -107,7 +107,7 @@ export function useUsuarioCrearModal({ open, roles = [], onClose, onSuccess }) {
         nom_usuario: formData.nom_usuario.trim(),
         id_rol: Number(formData.id_rol),
         password: formData.password,
-        confirm_password: formData.confirm_password, // <--- Aquí lo incluimos
+        confirm_password: formData.confirm_password, 
         estatus: 1,
       };
       await crearUsuario(payload);

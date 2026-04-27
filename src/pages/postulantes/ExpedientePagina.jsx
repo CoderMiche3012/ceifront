@@ -52,7 +52,6 @@ export default function ExpedientePagina() {
   const handleSubirDocumento = () => {
     if (!archivo) return alert("Selecciona un archivo");
 
-    // aquí luego conectas backend o drive
     const nuevoDocumento = {
       nombre: archivo.name,
       fecha: new Date().toISOString(),

@@ -68,4 +68,19 @@ export const actualizarDireccion = async (id, payload) => {
   }
 };
 
+export const obtenerExpedienteIndividual = async (id) => {
+  try {
+    const res = await API.get(`${BASE_URL}/${id}/`);
+    return res.data;
+  } catch (error) {
+    console.log(error);
 
+    const errorData = error.response?.data || error;
+
+    if (errorData) {
+      throw new Error(formatErrorAnidado(errorData));
+    }
+
+    throw new Error(formatErrorAnidado(error.message));
+  }
+};

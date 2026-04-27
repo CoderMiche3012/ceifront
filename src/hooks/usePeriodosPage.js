@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react"; // <--- Agrega useMemo aquí
+import { useEffect, useState, useMemo } from "react"; 
 import { obtenerPeriodos } from "../services/periodoService";
 
 export default function usePeriodosPage() {
