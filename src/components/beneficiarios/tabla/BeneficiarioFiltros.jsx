@@ -15,7 +15,7 @@ export default function beneficiarioFiltros({
       options: [
         { value: "todos", label: "Todas las visitas" },
         { value: "Activo", label: "Activo" },
-        { value: "Anactivo", label: "Anactivo" },
+        { value: "Inactivo", label: "Inactivo" },
         { value: "Graduado", label: "Graduado" },
         { value: "Pausa", label: "En Pausa" },
       ],

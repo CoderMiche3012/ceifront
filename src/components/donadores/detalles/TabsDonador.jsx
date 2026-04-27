@@ -12,7 +12,7 @@ export default function TabsDonador({ tab, setTab }) {
         Datos generales
       </button>
       <button
-        onClick={() => setTab("familia")}
+        onClick={() => setTab("donativo")}
         className={`pb-2 text-sm font-medium ${
           tab === "donativo"
             ? "border-b-2 border-teal-600 text-teal-600"

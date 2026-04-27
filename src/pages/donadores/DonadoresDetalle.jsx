@@ -6,7 +6,7 @@ import { useDonadorData } from "../../hooks/donadores/useDonadorData";
 import BotonInterno from "../../components/ui/BotonInterno";
 import TabsDonador from "../../components/donadores/detalles/TabsDonador";
 import DatosGenerales from "../../components/donadores/detalles/DatosGenerales";
-
+import Donativos from "../../components/donadores/detalles/Donativos";
 export default function DonadoresDetalle() {
   const { id } = useParams();
   const {
@@ -78,10 +78,14 @@ export default function DonadoresDetalle() {
       <TabsDonador tab={tab} setTab={setTab} />
 
       <main className="mt-6">
-        {tab === "generales" && (
-          <DatosGenerales data={data} setData={setData} />
-        )}
-        
+        <div className="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+          {tab === "generales" && (
+            <DatosGenerales data={data} setData={setData} />
+          )}
+          {tab === "donativo" && (
+            <Donativos data={data} setData={setData} />
+          )}
+        </div>
       </main>
     </section>
   );

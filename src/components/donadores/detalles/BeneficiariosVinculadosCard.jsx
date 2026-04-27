@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, Plus, Search, X, UserPlus, Loader2, CheckCircle2, Trash2,} from "lucide-react";
+import { Users, Plus, Search, X, UserPlus, Loader2, CheckCircle2, Trash2, } from "lucide-react";
 import AvatarGeneral from "../../shared/AvatarGeneral";
 import { useBeneficiariosVinculados } from "../../../hooks/donadores/useBeneficiariosVinculados";
 import ModalConfirmacion from "../../shared/ModalConfirmacion";
 import ModalResultado from "../../shared/ModalResultado";
 
-export default function BeneficiariosVinculadosCard({data,setData,}) {
+export default function BeneficiariosVinculadosCard({ data, setData, }) {
   const navigate = useNavigate();
   const [modalEliminar, setModalEliminar] = useState(false);
   const [idEliminar, setIdEliminar] = useState(null);
-
+  const donadorActivo =
+    data?.estatus?.toLowerCase() === "activo";
   const [resultado, setResultado] = useState({
     open: false,
     type: "success",
@@ -76,7 +77,20 @@ export default function BeneficiariosVinculadosCard({data,setData,}) {
           </h3>
 
           <button
-            onClick={() => setOpenModal(true)}
+            onClick={() => {
+              if (!donadorActivo) {
+                setResultado({
+                  open: true,
+                  type: "warning",
+                  title: "Donador inactivo",
+                  message:
+                    "Solo se pueden asignar beneficiarios a donadores activos.",
+                });
+                return;
+              }
+
+              setOpenModal(true);
+            }}
             className="h-10 w-10 rounded-xl bg-teal-600 text-white flex items-center justify-center hover:bg-teal-700 transition"
           >
             <Plus className="w-5 h-5" />

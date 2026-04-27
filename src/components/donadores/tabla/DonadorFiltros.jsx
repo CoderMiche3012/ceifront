@@ -13,10 +13,20 @@ export default function DonadorFiltros({
       key: "estatus",
       label: "Estatus",
       options: [
-        { value: "todos", label: "Todas las visitas" },
+        { value: "todos", label: "Todos los estatus" },
         { value: "Activo", label: "Activo" },
-        { value: "Anactivo", label: "Anactivo" },
+        { value: "Inactivo", label: "Inactivo" },
         { value: "Pausa", label: "En Pausa" },
+      ],
+    },
+    {
+      key: "tipo",
+      label: "Tipo",
+      options: [
+        { value: "todos", label: "Todos los tipos" },
+        { value: "CEI", label: "CEI" },
+        { value: "CANFRO", label: "CANFRO" },
+        { value: "OYE", label: "OYE" },
       ],
     },
   ];
