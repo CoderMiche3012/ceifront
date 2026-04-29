@@ -174,7 +174,6 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                             <th className="border border-black p-1 text-[9px] w-[15%]">Parentesco / <br /><span className="italic lowercase">Relationship</span></th>
                             <th className="border border-black p-1 text-[9px] w-[10%]">Edad / <br /><span className="italic lowercase">Age</span></th>
                             <th className="border border-black p-1 text-[9px] w-[20%]">Ocupación o grado escolar / <br /><span className="italic lowercase">Occupation</span></th>
-                            <th className="border border-black p-1 text-[9px] w-[15%]">Area G. Laboral / <br /><span className="italic lowercase">Education</span></th>
                             <th className="border border-black p-1 text-[9px] w-[15%]">Salario o Escuela / <br /><span className="italic lowercase">Monthly Income</span></th>
                         </tr>
                     </thead>
@@ -186,7 +185,6 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                                     <td className="border border-black p-1 text-[10px]">{miembro.parentesco}</td>
                                     <td className="border border-black p-1 text-[10px]">{miembro.edad}</td>
                                     <td className="border border-black p-1 text-[10px]">{miembro.actividad_principal || "---"}</td>
-                                    <td className="border border-black p-1 text-[10px]">{miembro.area_laboral_escuela || "---"}</td>
                                     <td className="border border-black p-1 text-[10px]">${miembro.salario || "0.00"}</td>
                                 </tr>
                             ))
@@ -762,6 +760,11 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
 
                         <span>ISSSTE</span>
                         <span className="w-3 h-3 border border-black"></span>
+                        <span>
+                            Otros / <span className="italic text-slate-600">Others:</span>
+                            <span className="border-b border-black inline-block min-w-[80px] ml-1"></span>
+                        </span>
+
                     </div>
 
                     <p className="font-bold">
@@ -781,9 +784,33 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                         {contactosFamilia || "__________________________"}
                     </p>
                     <p className="font-bold">
-                        situación especial de la familia /
-                        <span className="italic text-slate-600"> special situation of the family</span>
+                        Motivos Por los que considera que necesita el apoyo /
+                        <span className="italic text-slate-600"> Reasons why you feel you need the support</span>
                     </p>
+                    <div className="flex items-center gap-3">
+                        
+
+                        <span>Continuar mis estudios</span>
+                        <span className="w-3 h-3 border border-black"></span>
+
+                        <span>Situación económica limitada</span>
+                        <span className="w-3 h-3 border border-black"></span>
+
+                        <span>Gastos médicos o familiares</span>
+                        <span className="w-3 h-3 border border-black"></span>
+
+                        <span className="w-3 h-3 border border-black"></span>
+                        <span>
+                            Otros / <span className="italic text-slate-600">Others:</span>
+                            <span className="border-b border-black inline-block min-w-[80px] ml-1"></span>
+                        </span>
+
+                    </div>
+                    <p className="font-bold">
+                        Situación especial de la familia /
+                        <span className="italic text-slate-600"> Special situation of the family</span>
+                    </p>
+                    <span className="border-b border-black inline-block w-full"></span>
                     <p className="font-bold">
                         Nombre y firma de la persona que realizó el estudio /
                         <span className="italic text-slate-600"> Name and signature of the person who conducted the study</span>
