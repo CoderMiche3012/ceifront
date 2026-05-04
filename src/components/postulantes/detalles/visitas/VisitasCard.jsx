@@ -1,8 +1,9 @@
 import EstudioCard from "./EstudioCard";
 import FotosCard from "./FotosCard";
-import CitaTab from "./CitaTab";
-import RecomendacionCard from "./RecomendacionCard";
-export default function visitasCard({ data, setData }) {
+import VitasTab from "./VitasTab"
+export default function visitasCard({ data, visitas, setData }) {
+
+  console.log(visitas)
   const handleUpdateFamilia = (nuevaFamilia) => {
     if (!setData) return;
     setData((prev) => ({
@@ -20,7 +21,7 @@ export default function visitasCard({ data, setData }) {
   return (
     <div className="grid grid-cols-3 gap-6">
       <div className="col-span-2 space-y-6">
-        <CitaTab data={data} setData={setData} />
+        <VitasTab visitas={visitas} setData={setData} />
       </div>
 
       <div className="col-span-1 space-y-6">

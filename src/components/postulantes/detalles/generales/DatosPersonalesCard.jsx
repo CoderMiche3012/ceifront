@@ -1,6 +1,6 @@
 import { User, PencilLine } from 'lucide-react';
 import React, { useState } from 'react';
-import EditarDatosGenerales from "./../modales/EditarDatosGenerales";
+import EditarDatosGenerales from "../../modales/EditarDatosGenerales";
 
 export default function DatosPersonalesCard({ data, setData }) {
   const [modalAbierto, setModalAbierto] = useState(false);

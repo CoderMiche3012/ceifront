@@ -1,16 +1,7 @@
-import {
-  CheckCircle,
-  Lock,
-  Loader2,
-  AlertCircle,
-  Clock,
-  Check,
-  X,
-  ChevronRight,
-} from "lucide-react";
+import {CheckCircle,Lock,Loader2,AlertCircle,Clock,Check,X,ChevronRight,} from "lucide-react";
 import { useState, useEffect } from "react";
-import { postulantesService } from "../../../services/postulantesService";
-import { crearBeneficiario } from "../../../services/beneficiariosService";
+import { postulantesService } from "../../../../services/postulantesService";
+import { crearBeneficiario } from "../../../../services/beneficiariosService";
 
 export default function EstatusCard({ data, onChangeDecision }) {
   const estatusEstudio = data?.estatus_estudio?.toLowerCase()?.trim();

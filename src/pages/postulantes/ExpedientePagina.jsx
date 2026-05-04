@@ -3,18 +3,12 @@ import { useState } from "react";
 import { Calendar, Upload, Plus } from "lucide-react";
 import AvatarGeneral from "../../components/shared/AvatarGeneral";
 import TabsExpediente from "../../components/postulantes/detalles/TabsExpediente";
-import CitaTab from "../../components/postulantes/detalles/CitaTab";
-import ResultadosCard from "../../components/postulantes/detalles/ResultadosCard";
-import VisitasCard from "../../components/postulantes/detalles/VisitasCard";
+import ResultadosCard from "../../components/postulantes/detalles/resultados/ResultadosCard";
+import VisitasCard from "../../components/postulantes/detalles/visitas/VisitasCard";
 import { useExpedienteData } from "./../../hooks/postulantes/useExpedienteData";
-import DatosGenerales from "../../components/postulantes/detalles/DatosGenerales";
-import RecomendacionCard from "../../components/postulantes/detalles/RecomendacionCard";
-import FotosCard from "../../components/postulantes/detalles/FotosCard";
-import BotonInterno from "../../components/ui/BotonInterno";
+import DatosGenerales from "../../components/postulantes/detalles/generales/DatosGenerales";
 export default function ExpedientePagina() {
   const { id } = useParams();
-
-
   const {
     data,
     setData,
@@ -25,11 +19,9 @@ export default function ExpedientePagina() {
     estatusInfo,
     edad,
   } = useExpedienteData(id);
-  console.log(data)
 
   const [mostrarSubida, setMostrarSubida] = useState(false);
   const [archivo, setArchivo] = useState(null);
-
   // pantalla carga
   if (loading) {
     return (
@@ -38,7 +30,6 @@ export default function ExpedientePagina() {
       </div>
     );
   }
-
   // no encontrado
   if (!data) {
     return (
@@ -47,32 +38,29 @@ export default function ExpedientePagina() {
       </div>
     );
   }
-
   // subir documento
   const handleSubirDocumento = () => {
-    if (!archivo) return alert("Selecciona un archivo");
-
-    const nuevoDocumento = {
-      nombre: archivo.name,
-      fecha: new Date().toISOString(),
-    };
-
-    setData((prev) => ({
-      ...prev,
-      estatus_estudio: "Completo",
-      documento_estudio: nuevoDocumento,
-    }));
-
-    setMostrarSubida(false);
-    setArchivo(null);
+    if (!archivo) return;
+    setSubiendo(true);
+    setTimeout(() => {
+      const nuevoDocumento = {
+        nombre: archivo.name,
+        fecha: new Date().toISOString(),
+      };
+      setData((prev) => ({
+        ...prev,
+        estatus_estudio: "Completo",
+        documento_estudio: nuevoDocumento,
+      }));
+      setMostrarSubida(false);
+      setArchivo(null);
+      setSubiendo(false);
+    }, 800); // 800ms de "carga" simulada
   };
-
   const estudioCompleto =
     data.estatus_estudio?.toLowerCase() === "completo";
-
   return (
     <section className="space-y-6">
-      {/* Header */}
       <header className="rounded-2xl bg-white p-6 flex items-center justify-between shadow border border-slate-200">
         <div className="flex items-center gap-4">
           <div className="relative">
@@ -82,19 +70,14 @@ export default function ExpedientePagina() {
             />
             <div className="absolute bottom-0 right-0 h-5 w-5 rounded-full bg-teal-500 border-2 border-white"></div>
           </div>
-
           <div>
             <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-lg font-semibold text-slate-800">
                 {data.nombre} {data.apellido_p}
               </h2>
-
-              <span
-                className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${estatusInfo.className}`}
-              >
+              <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${estatusInfo.className}`}>
                 {estatusInfo.text}
               </span>
-
               {/* Estado estudio */}
               <span
                 className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${estudioCompleto
@@ -105,13 +88,11 @@ export default function ExpedientePagina() {
                 Estudio: {data.estatus_estudio || "Pendiente"}
               </span>
             </div>
-
             <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
               <span className="flex items-center gap-1">
                 <Calendar size={14} />
                 {edad} años
               </span>
-
               <span>
                 Tutor:{" "}
                 <span className="font-medium text-slate-700">
@@ -121,9 +102,6 @@ export default function ExpedientePagina() {
             </div>
           </div>
         </div>
-
-        {/* Botón agregar estudio */}
-
       </header>
 
       {/* Caja subir documento */}
@@ -176,7 +154,7 @@ export default function ExpedientePagina() {
 
         {tab === "Visita" && (
           <div className="space-y-6">
-            <VisitasCard data={data} setData={setData} />
+            <VisitasCard data={data} visitas={visitasFiltradas} setData={setData} />
           </div>
         )}
         {tab === "Resultados" && (

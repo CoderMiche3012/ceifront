@@ -1,36 +1,45 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { UserPlus } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import Boton from "../../components/ui/Boton";
 import EncabezadoPagina from "../../components/shared/EncabezadoPagina";
 import PostulanteCrearModal from "../../components/postulantes/modales/PostulanteCrearModal";
 import { usePostulantesPage } from "../../hooks/postulantes/usePostulantesPage";
-import PeriodoTabla from "../../components/postulantes/tabla/PostulanteTabla";
+import PostulanteTabla from "../../components/postulantes/tabla/PostulanteTabla";
 import PostulanteFiltros from "../../components/postulantes/tabla/PostulanteFiltros";
 import PaginacionTabla from "../../components/tablas/PaginacionTabla";
 import { FormatoImpresion } from "../../components/postulantes/FormatoSocioeconomico";
-import { flushSync } from "react-dom";
 
 
 export default function PostulantesPagina() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [postulanteAImprimir, setPostulanteAImprimir] = useState(null);
   const componenteRef = useRef(null);
-
+  const nombreArchivo =postulanteAImprimir?.id_expediente?.nombre?.replace(/\s+/g, "_")?.replace(/[^\w-]/g, "") || "Postulante";
   const handlePrint = useReactToPrint({
     contentRef: componenteRef,
-    documentTitle: `Estudio_${postulanteAImprimir?.id_expediente?.nombre || 'Postulante'}`,
-  });
+    documentTitle: `Estudio_${nombreArchivo}`,
+    //limpia el estado para que el componente se desmonte tras imprimir
+    onAfterPrint: () => {
+      setPostulanteAImprimir(null);
+    },
+    onPrintError: (error) => {
+      console.error("Error al imprimir:", error);
+      setPostulanteAImprimir(null); 
+    },
+  })
+  useEffect(() => {
+    if (postulanteAImprimir && componenteRef.current) {
+      const timer = setTimeout(() => {
+        handlePrint();
+      }, 300); 
+      return () => clearTimeout(timer);
+    }
+  }, [postulanteAImprimir, handlePrint]);
   const ejecutarImpresion = (postulante) => {
-    flushSync(() => {
-      setPostulanteAImprimir(postulante);
-    });
-
-    setTimeout(() => {
-      handlePrint();
-    }, 100);
+    if (!postulante) return;
+    setPostulanteAImprimir(postulante);
   };
-
   const {
     filters,
     postulantes,
@@ -66,9 +75,9 @@ export default function PostulantesPagina() {
         {/* Filtros */}
         <PostulanteFiltros
           search={search}
-          filters={filters} 
+          filters={filters}
           onSearchChange={handleSearchChange}
-          onFilterChange={handleFilterChange} 
+          onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
         />
         {/* Tabla con estado de carga */}
@@ -78,7 +87,7 @@ export default function PostulantesPagina() {
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
             </div>
           ) : (
-            <PeriodoTabla postulantes={postulantes} onRefresh={fetchPostulantes} onPrint={ejecutarImpresion} />
+            <PostulanteTabla postulantes={postulantes} onRefresh={fetchPostulantes} onPrint={ejecutarImpresion} />
           )}
         </div>
 
@@ -93,11 +102,15 @@ export default function PostulantesPagina() {
           />
         )}
       </div>
-      <div style={{ position: "absolute", left: "-9999px" }}>
-        <div ref={componenteRef}>
-          <FormatoImpresion postulante={postulanteAImprimir} />
+      {postulanteAImprimir && (
+        <div style={{ display: "none" }}>
+          <div ref={componenteRef}>
+            {postulanteAImprimir && (
+              <FormatoImpresion postulante={postulanteAImprimir} />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <PostulanteCrearModal
         open={isModalOpen}

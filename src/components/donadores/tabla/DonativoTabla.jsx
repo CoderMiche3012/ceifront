@@ -55,7 +55,6 @@ export default function DonativoTabla({
         return null;
     }
   };
-console.log("d",donativos);
   return (
     
     <DatosTabla

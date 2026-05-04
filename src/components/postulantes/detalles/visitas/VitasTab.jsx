@@ -1,7 +1,7 @@
 import { CalendarDays, Clock, MessageSquare, Info } from "lucide-react";
-import AccionesPostulante from "../tabla/ColumnaAcciones"; 
+import AccionesPostulante from "../../tabla/ColumnaAcciones"; 
 
-export default function CitaTab({ visitas = [], onRefresh }) {
+export default function VitasTab({ visitas = [], onRefresh }) {
   const formatearFecha = (fecha) => {
     if (!fecha) return "Sin fecha";
     return new Date(fecha).toLocaleDateString("es-MX", {

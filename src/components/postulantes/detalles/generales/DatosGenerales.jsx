@@ -1,7 +1,5 @@
 import DatosPersonalesCard from "./DatosPersonalesCard";
-import ComposicionFamiliar from "./../../Expediente/familia/ComposicionFamiliar";
-import EstatusCard from "./EstatusCard";
-import EstudioCard from "./EstudioCard";
+import ComposicionFamiliar from "../../../Expediente/familia/ComposicionFamiliar";
 export default function DatosGenerales({ data, setData }) {
   const handleUpdateFamilia = (nuevaFamilia) => {
     if (!setData) return;

@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { FileText, Download, Eye, RefreshCw, Upload } from "lucide-react";
-import ModalResultado from "./../../shared/ModalResultado";
-import { actualizarEstudio } from "./../../../services/estudiosService";
+import ModalResultado from "../../../shared/ModalResultado";
+import { actualizarEstudio } from "../../../../services/estudiosService";
 
 export default function EstudioCard({ data, setData }) {
   const fileInputRef = useRef(null);

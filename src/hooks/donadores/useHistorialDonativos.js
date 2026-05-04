@@ -63,7 +63,6 @@ export default function useHistorialDonativos(data) {
             setDonativos(filtrados);
             setPeriodos(resPeriodos || []);
         } catch (error) {
-            console.log(error);
         }
     };
 

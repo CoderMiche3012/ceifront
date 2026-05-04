@@ -1,12 +1,6 @@
 import { useState, useEffect } from "react";
-import {
-  ShieldCheck,
-  Lock,
-  Loader2,
-  CheckCircle,
-  Pencil,
-} from "lucide-react";
-import { actualizarEstudio } from "../../../services/estudiosService";
+import {ShieldCheck,Lock,Loader2,CheckCircle,Pencil,} from "lucide-react";
+import { actualizarEstudio } from "../../../../services/estudiosService";
 
 export default function RecomendacionCard({ data, setData }) {
   const estudioCompleto =
