@@ -5,6 +5,7 @@ import { obtenerSeguimientosPorBeneficiario } from "../../../../../services/segu
 import { obtenerPeriodos } from "../../../../../services/periodoService";
 import DetalleSeguimientoEscolar from "./DetalleSeguimientoEscolar";
 
+
 export default function HistorialEscolarCard({ data }) {
   const id_beneficiario = data?.id_beneficiario;
 

@@ -1,11 +1,11 @@
 import API from "./api";
-const BASE_URL = "/api/escolaridad/grados";
+const BASE_URL = "/api/escolaridad/datos-escolares";
 import { formatError } from "../utils/errorHandlers";
 
 
-export const obtenerGrados = async () => {
+export const obtenerDatosEscolares = async () => {
   try {
-    const res = await API.get(`${BASE_URL}`);
+    const res = await API.get(`${BASE_URL}/`);
     return res.data;
   } catch (error) {
     console.log(error)
@@ -17,7 +17,7 @@ export const obtenerGrados = async () => {
   }
 };
 
-export const obtenerGrado = async (id) => {
+export const obtenerDatosEscolaresInd = async (id) => {
   try {
     const res = await API.get(`${BASE_URL}/${id}/`);
     return res.data;
@@ -31,7 +31,7 @@ export const obtenerGrado = async (id) => {
   }
 };
 //crear periodos
-export const crearGrado = async (payload) => {
+export const crearDatosEscolaresInd = async (payload) => {
   try {
     const res = await API.post(`${BASE_URL}/`, payload);
     return res.data;
@@ -46,7 +46,7 @@ export const crearGrado = async (payload) => {
 };
 
 //editar o desactivar periodo
-export const actualizarGrado = async (id, payload) => {
+export const actualizarDatosEscolaresInd = async (id, payload) => {
   try {
     const res = await API.put(`${BASE_URL}/${id}/`, payload);
     return res.data;

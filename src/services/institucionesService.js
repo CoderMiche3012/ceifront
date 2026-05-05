@@ -1,11 +1,11 @@
 import API from "./api";
-const BASE_URL = "/api/escolaridad/instituciones/";
+const BASE_URL = "/api/escolaridad/instituciones";
 import { formatError } from "../utils/errorHandlers";
 
 
 export const obtenerInstituciones = async () => {
   try {
-    const res = await API.get(`${BASE_URL}/`);
+    const res = await API.get(`${BASE_URL}`);
     return res.data;
   } catch (error) {
     console.log(error)
