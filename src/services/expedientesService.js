@@ -84,3 +84,19 @@ export const obtenerExpedienteIndividual = async (id) => {
     throw new Error(formatErrorAnidado(error.message));
   }
 };
+export const eliminarExpediente = async (id) => {
+  try {
+    const res = await API.delete(`${BASE_URL}/${id}/`);
+    return res.data;
+  } catch (error) {
+    console.log(error);
+
+    const errorData = error.response?.data || error;
+
+    if (errorData) {
+      throw new Error(formatErrorAnidado(errorData));
+    }
+
+    throw new Error(formatErrorAnidado(error.message));
+  }
+};

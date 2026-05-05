@@ -1,33 +1,28 @@
 import DatosPersonalesCard from "./DatosPersonalesCard";
-import ResumenCard from "./ResumenCard";
 import DonadorCard from "./DonadorCard";
-import NotasSeguimientoCard from "./NotasSeguimientoCard";
-export default function DatosGenerales({ data, setData }) {
-  const handleUpdateFamilia = (nuevaFamilia) => {
-    if (!setData) return;
-    setData((prev) => ({
-      ...prev,
-      familia: nuevaFamilia,
-    }));
-  };
-  const handleUpdateEstatus = (nuevoEstatus) => {
-    if (!setData) return;
-    setData((prev) => ({
-      ...prev,
-      estatus_postulante: nuevoEstatus,
-    }));
-  };
+import SeguimientoLinea from "./seguimiento/SeguimientoLinea";
+
+// Ya no recibimos setData, solo data
+export default function DatosGenerales({ data }) {
+
+  if (!data) return (
+    <div className="p-4 text-slate-500 animate-pulse font-medium">
+      Cargando información general...
+    </div>
+  );
+
   return (
-    <div className="grid grid-cols-3 gap-6">
-      <div className="col-span-2 space-y-6">
-        <DatosPersonalesCard data={data} setData={setData} />
-        <NotasSeguimientoCard data={data} setData={setData} />
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Columna Principal: 2/3 del ancho */}
+      <div className="md:col-span-2 space-y-6">
+        {/* Solo pasamos data. La edición se manejará con Mutations dentro de cada Card */}
+        <DatosPersonalesCard data={data} />
+        <DonadorCard data={data} />
       </div>
 
-      <div className="col-span-1 space-y-6">
-        <ResumenCard data={data} setData={setData} />
-        <DonadorCard data={data} setData={setData} />
-
+      {/* Columna Lateral: 1/3 del ancho */}
+      <div className="md:col-span-1 space-y-6">
+        <SeguimientoLinea data={data} />
       </div>
     </div>
   );

@@ -1,119 +1,110 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { obtenerExpediente } from "../../services/expedientesService";
 import { obtenerBeneficiario } from "../../services/beneficiariosService";
+const INITIAL_FILTERS = {
+  estatus: "todos",
+};
 
-export const useBeneficiariosPage = () => {
-  const [allData, setAllData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({
-    estatus: "todos",
-  });
-
+export const useBeneficiariosPage = (pageSize = 4) => {
+  const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 4;
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
-  };
+  const PAGE_SIZE = pageSize;
 
-  const fetchBeneficiarios = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const [resBeneficiarios, resExpedientes] = await Promise.all([
+  const { data = [], isLoading, error, refetch } = useQuery({
+    queryKey: ["beneficiarios"],
+    queryFn: async () => {
+      const [beneficiariosRes, expedientesRes] = await Promise.all([
         obtenerBeneficiario(),
         obtenerExpediente(),
       ]);
 
-      const listaBeneficiarios = Array.isArray(resBeneficiarios)
-        ? resBeneficiarios
-        : resBeneficiarios.results || [];
+      const beneficiarios = beneficiariosRes?.results || beneficiariosRes || [];
+      const expedientes = expedientesRes?.results || expedientesRes || [];
 
-      const listaExpedientes = Array.isArray(resExpedientes)
-        ? resExpedientes
-        : resExpedientes.results || [];
+      const expedientesMap = new Map(
+        expedientes.map((e) => [String(e.id_expediente), e])
+      );
 
-      const datosCombinados = listaBeneficiarios.map((beneficiario) => {
-        const expedienteId =
-          typeof beneficiario.id_expediente === "object"
-            ? beneficiario.id_expediente?.id_expediente
-            : beneficiario.id_expediente;
-
-        const expediente = listaExpedientes.find(
-          (e) => String(e.id_expediente) === String(expedienteId)
-        );
+      return beneficiarios.map((b) => {
+        const id =
+          typeof b.id_expediente === "object"
+            ? b.id_expediente?.id_expediente
+            : b.id_expediente;
 
         return {
-          ...beneficiario,
-          expediente: expediente || beneficiario.id_expediente,
+          ...b,
+          expediente: expedientesMap.get(String(id)) || b.id_expediente,
         };
       });
+    },
 
-      setAllData(datosCombinados);
-    } catch (err) {
-      console.error("Error en la carga de datos:", err);
-      setError(err.message || "Error al obtener la lista");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-  useEffect(() => {
-    fetchBeneficiarios();
-  }, [fetchBeneficiarios]);
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
 
-  const filteredBeneficiarios = useMemo(() => {
-    const searchLower = search.toLowerCase();
-    return allData.filter((p) => {
-      // Filtro de Búsqueda
-      const nombreBeneficiario = `${p.expediente?.nombre || ""} ${p.expediente?.apellido_p || ""}`.toLowerCase();
-      const matchSearch = nombreBeneficiario.includes(searchLower);
+  const filtered = useMemo(() => {
+    const searchLower = search.trim().toLowerCase();
+    const statusFilter = filters.estatus?.toLowerCase();
 
-      // Filtro de estatus
-      const matchStatus = filters.estatus === "todos" || p.estatus?.toLowerCase() === filters.estatus.toLowerCase();
-      return matchStatus && matchSearch;
+    return data.filter((item) => {
+      const nombre = `${item.expediente?.nombre || ""} ${item.expediente?.apellido_p || ""}`.toLowerCase();
+
+      const matchSearch =
+        !searchLower || nombre.includes(searchLower);
+
+      const status = String(item.estatus || "").toLowerCase();
+
+      const matchStatus =
+        statusFilter === "todos" || status === statusFilter;
+
+      return matchSearch && matchStatus;
     });
-  }, [allData, search, filters]);
+  }, [data, search, filters]);
 
-  const totalPages = Math.ceil(filteredBeneficiarios.length / PAGE_SIZE);
-  useEffect(() => {
-    if (currentPage > totalPages && totalPages > 0) {
-      setCurrentPage(totalPages);
-    }
-  }, [totalPages, currentPage]);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filtered.length / PAGE_SIZE)
+  );
 
-  const paginatedBeneficiarios = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredBeneficiarios.slice(start, start + PAGE_SIZE);
-  }, [filteredBeneficiarios, currentPage]);
+  const safePage = Math.min(currentPage, totalPages);
+
+  const paginated = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, safePage, PAGE_SIZE]);
 
   const handleSearchChange = (value) => {
     setSearch(value);
     setCurrentPage(1);
   };
 
+  const handleFilterChange = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
+  };
+
   const handleClearFilters = () => {
     setSearch("");
-    setFilters({ estatus: "todos" });
+    setFilters(INITIAL_FILTERS);
     setCurrentPage(1);
   };
 
   return {
-    beneficiarios: paginatedBeneficiarios,
-    totalCount: filteredBeneficiarios.length,
-    loading,
-    error,
-    fetchBeneficiarios,
+    beneficiarios: paginated,
+    totalCount: filtered.length,
+    loading: isLoading,
+    error: error?.message || null,
     search,
-    handleSearchChange,
-    handleClearFilters,
-    currentPage,
+    filters,
+    currentPage: safePage,
     totalPages,
-    setCurrentPage,
-    PAGE_SIZE, filters,
+    handleSearchChange,
     handleFilterChange,
-
+    handleClearFilters,
+    setCurrentPage,
+    PAGE_SIZE,
+    refetch,
   };
 };

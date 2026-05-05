@@ -1,5 +1,5 @@
 import { UserPlus } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import Boton from "../../components/ui/Boton";
 import EncabezadoPagina from "../../components/shared/EncabezadoPagina";
 import BeneficiarioCrearModal from "../../components/beneficiarios/modales/BeneficiarioCrearModal";
@@ -7,31 +7,39 @@ import BeneficiarioTabla from "../../components/beneficiarios/tabla/Beneficiario
 import BeneficiarioFiltros from "../../components/beneficiarios/tabla/BeneficiarioFiltros";
 import PaginacionTabla from "../../components/tablas/PaginacionTabla";
 import { useBeneficiariosPage } from "../../hooks/beneficiarios/useBeneficiariosPage";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function BeneficiariosPagina() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const queryClient = useQueryClient();
   const {
-      filters,
-      beneficiarios,
-      totalCount,
-      loading,
-      fetchBeneficiarios,
-      search,
-      handleSearchChange,
-      handleClearFilters,
-      handleFilterChange,
-      currentPage,
-      totalPages,
-      setCurrentPage,
-      PAGE_SIZE
-    } = useBeneficiariosPage();
-    
+    filters,
+    beneficiarios,
+    totalCount,
+    loading,
+    search,
+    handleSearchChange,
+    handleClearFilters,
+    handleFilterChange,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    PAGE_SIZE,
+    refetch
+  } = useBeneficiariosPage();
+
+  const handleCreateSuccess = () => {
+    setIsModalOpen(false);
+    // Magia: Esto actualiza CUALQUIER componente que use la lista de beneficiarios
+    queryClient.invalidateQueries({ queryKey: ["beneficiarios"] });
+    setCurrentPage(1); // Opcional: volver a la página 1 para ver el nuevo registro
+  };
 
   return (
     <section className="space-y-6">
       <EncabezadoPagina
         titulo="Gestión de Beneficiarios"
-        descripcion="Monitoreo y organizacion de expedientes"
+        descripcion="Monitoreo y organizacion de beneficiarios"
         accion={
           <Boton
             icon={<UserPlus size={18} />}
@@ -44,22 +52,19 @@ export default function BeneficiariosPagina() {
       <div className="rounded-[24px] border border-[#dbe3eb] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] relative">
         <BeneficiarioFiltros
           search={search}
-          filters={filters} 
+          filters={filters}
           onSearchChange={handleSearchChange}
-          onFilterChange={handleFilterChange} 
+          onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
         />
-        <div className="h-auto">
-          {loading ? (
-            <div className="flex h-64 items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
-            </div>
-          ) : (
-            <BeneficiarioTabla beneficiarios={beneficiarios} onRefresh={fetchBeneficiarios} />
-          )}
-        </div>
-
-        {!loading && (
+        <BeneficiarioTabla beneficiarios={beneficiarios} onRefresh={refetch} />
+        {loading && (
+          <div className="flex flex-col items-center gap-2">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
+            <span className="text-sm text-slate-500">Cargando beneficiarios...</span>
+          </div>
+        )}
+        {!loading && totalPages >= 1 && (
           <PaginacionTabla
             currentPage={currentPage}
             totalPages={totalPages}
@@ -72,10 +77,7 @@ export default function BeneficiariosPagina() {
       <BeneficiarioCrearModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={() => {
-          setIsModalOpen(false);
-          fetchBeneficiarios();
-        }}
+        onSuccess={handleCreateSuccess}
       />
     </section>
   );

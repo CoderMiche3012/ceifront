@@ -1,152 +1,210 @@
-import { useState, useEffect, useRef } from "react";
-import { postulantesService } from "../../services/postulantesService";
-import { crearBeneficiario } from "../../services/beneficiariosService";
-import { crearEstudio } from "../../services/estudiosService";
-import { crearExpediente } from "../../services/expedientesService";
+import { useState, useRef, useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {crearBeneficiario,eliminarBeneficiario, } from "../../services/beneficiariosService";
+import {crearExpediente,eliminarExpediente,} from "../../services/expedientesService";
+
+const getErrorMessage = (err) =>
+  err?.response?.data?.message ||
+  err?.message ||
+  "Error inesperado";
+const initialForm = {
+  fecha_ingreso: new Date().toISOString().split("T")[0],
+  id_usuario: null,
+  id_expediente: {
+    nombre: "",
+    apellido_p: "",
+    apellido_m: "",
+    fecha_nacimiento: "",
+    telefono: "",
+    genero: "",
+    correo: "",
+    nota_situacion_familiar: "Registro manual desde panel",
+    id_direccion: {
+      calle: "",
+      numero: "",
+      colonia: "",
+      municipio: "",
+      cp: "",
+    },
+    familia: [
+      {
+        nombre: "",
+        apellido_p: "",
+        apellido_m: "",
+        parentesco: "",
+        edad: "",
+        actividad_principal: "",
+        area_laboral_escuela: "",
+        salario: 0,
+        vive_en_casa: true,
+        telefono: "",
+        es_tutor_principal: true,
+      },
+    ],
+  },
+};
+
 export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
+  const isSubmitting = useRef(false);
+  const [form, setForm] = useState(initialForm);
   const [error, setError] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [resultModal, setResultModal] = useState({
     open: false,
     type: "success",
     title: "",
-    message: ""
+    message: "",
   });
-
-  const isSubmitting = useRef(false);
-
-  const [form, setForm] = useState({
-    fecha_ingreso: "",
-    id_expediente: {
-      nombre: "",
-      apellido_p: "",
-      apellido_m: "",
-      fecha_nacimiento: "",
-      telefono: "",
-      genero: "",
-      correo: "",
-      nota_situacion_familiar: "Registro manual desde panel",
-      id_direccion: {
-        calle: "",
-        numero: "",
-        colonia: "",
-        municipio: "",
-        cp: ""
-      },
-      familia: [
-        {
-          nombre: "",
-          apellido_p: "",
-          apellido_m: "",
-          parentesco: "",
-          edad: "",
-          actividad_principal: "",
-          area_laboral_escuela: "",
-          salario: "",
-          vive_en_casa: true,
-          telefono: "",
-          es_tutor_principal: true
-        }
-      ]
-    }
-  });
-
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        const userId = user.id_usuario || user.id;
-        if (userId) setForm(prev => ({ ...prev, id_usuario: userId }));
-      } catch (e) {
-        console.error("Error cargando user:", e);
+    const raw = localStorage.getItem("user");
+    if (!raw) return;
+
+    try {
+      const user = JSON.parse(raw);
+      const id_usuario = user?.id_usuario || user?.id;
+
+      if (id_usuario) {
+        setForm((prev) => ({
+          ...prev,
+          id_usuario,
+        }));
       }
+    } catch (e) {
+      console.error("Error parsing user:", e);
     }
   }, []);
 
-  const handlePreSubmit = (e) => {
-    if (e) e.preventDefault();
-    setError(null);
+  const mutation = useMutation({
+    mutationFn: async (formData) => {
+      let idExpediente = null;
+      let idBeneficiario = null;
+      try {
+        //crear expediente
+        const resExp = await crearExpediente(formData.id_expediente);
+        const expediente = resExp?.data || resExp;
+        idExpediente = expediente?.id_expediente;
+        if (!idExpediente) {
+          throw new Error("No se generó el ID del expediente");
+        }
+        //crear beneficiario
+        const resBen = await crearBeneficiario({
+          id_expediente: idExpediente,
+          fecha_ingreso: formData.fecha_ingreso,
+          notas: "Registro inicial",
+          estatus: "Activo",
+        });
+        const beneficiario = resBen?.data || resBen;
+        idBeneficiario = beneficiario?.id_beneficiario;
+        return beneficiario;
+      } catch (error) {
+        try {
+          if (idBeneficiario && eliminarBeneficiario) {
+            await eliminarBeneficiario(idBeneficiario);
+          }
 
-    const { nombre, apellido_p, correo, fecha_nacimiento, genero, familia } = form.id_expediente;
-    const { calle, municipio, cp } = form.id_expediente.id_direccion;
+          if (idExpediente) {
+            await eliminarExpediente(idExpediente);
+          }
+        } catch (rollbackError) {
+          console.error("Rollback falló:", rollbackError);
+        }
 
-    const tutor = familia[0];
-
-    if (!nombre || !apellido_p || !correo || !fecha_nacimiento || !genero || !calle || !municipio || !cp) {
-      setError("Por favor, completa todos los campos obligatorios");
-      return;
-    }
-
-    if (!tutor.nombre || !tutor.apellido_p || !tutor.parentesco) {
-      setError("Los datos del Tutor Principal son obligatorios.");
-      return;
-    }
-
-    setShowConfirm(true);
-  };
-
-  const handleConfirmSave = async () => {
-    if (isSubmitting.current) return;
-    isSubmitting.current = true;
-    setLoading(true);
-    setShowConfirm(false);
-    setError(null);
-
-    try {
-      const resExpediente = await crearExpediente(form.id_expediente);
-      const dataExpediente = resExpediente.data || resExpediente;
-      const idExpedienteGenerado = dataExpediente.id_expediente;
-      if (!idExpedienteGenerado) {
-        throw new Error("No se recibió ID de expediente");
+        throw error;
       }
-      await crearBeneficiario({
-        id_expediente: idExpedienteGenerado,
-        fecha_ingreso: form.fecha_ingreso,
-        notas: "",
-        estatus: "Activo",
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["beneficiarios"],
       });
+
       setResultModal({
         open: true,
         type: "success",
-        title: "¡Éxito!",
-        message: "Registro completado correctamente."
+        title: "Registro exitoso",
+        message: "Beneficiario y expediente creados correctamente",
       });
+    },
 
-    } catch (err) {
-      console.error("Error al registrar:", err);
-      setError(err.message);
+    onError: (err) => {
       setResultModal({
         open: true,
         type: "error",
         title: "Error",
-        message: err.message
+        message: getErrorMessage(err),
       });
-    } finally {
-      setLoading(false);
+    },
+
+    onSettled: () => {
       isSubmitting.current = false;
+    },
+  });
+  //validacion
+  const validateForm = () => {
+    const f = form.id_expediente;
+    const dir = f.id_direccion;
+    const tutor = f.familia?.[0];
+
+    if (!f.nombre || !f.apellido_p || !f.fecha_nacimiento) {
+      return "Faltan datos personales obligatorios";
     }
+
+    if (!dir.calle || !dir.municipio) {
+      return "Faltan datos de dirección";
+    }
+
+    if (!tutor?.nombre || !tutor?.parentesco) {
+      return "Faltan datos del tutor principal";
+    }
+
+    return null;
+  };
+
+  const handlePreSubmit = (e) => {
+    e?.preventDefault();
+
+    const errorValidation = validateForm();
+    if (errorValidation) {
+      setError(errorValidation);
+      return;
+    }
+
+    setError(null);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmSave = () => {
+    if (isSubmitting.current) return;
+
+    isSubmitting.current = true;
+    setShowConfirm(false);
+
+    mutation.mutate(form);
   };
 
   const handleFinalClose = () => {
     if (resultModal.type === "success") {
       onSuccess?.();
-      onClose();
+      onClose?.();
     }
-    setResultModal(p => ({ ...p, open: false }));
+
+    setResultModal((prev) => ({
+      ...prev,
+      open: false,
+    }));
   };
 
   return {
     form,
     setForm,
     error,
-    loading,
+    loading: mutation.isPending,
     showConfirm,
     setShowConfirm,
     resultModal,
     handlePreSubmit,
     handleConfirmSave,
-    handleFinalClose
+    handleFinalClose,
   };
 };
