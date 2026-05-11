@@ -25,7 +25,10 @@ export default function BeneficiariosPagina() {
     totalPages,
     setCurrentPage,
     PAGE_SIZE,
-    refetch
+    refetch,
+    periodosDisponibles,   // 🔥 AGREGAR ESTO
+    periodo,
+    setPeriodo
   } = useBeneficiariosPage();
 
   const handleCreateSuccess = () => {
@@ -51,12 +54,20 @@ export default function BeneficiariosPagina() {
       />
       <div className="rounded-[24px] border border-[#dbe3eb] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] relative">
         <BeneficiarioFiltros
-          search={search}
-          filters={filters}
-          onSearchChange={handleSearchChange}
-          onFilterChange={handleFilterChange}
-          onClearFilters={handleClearFilters}
-        />
+  search={search}
+  filters={filters}
+  onSearchChange={handleSearchChange}
+  onFilterChange={(key, value) => {
+    if (key === "periodo") {
+      setPeriodo(value);
+    } else {
+      handleFilterChange(key, value);
+    }
+  }}
+  onClearFilters={handleClearFilters}
+  periodos={periodosDisponibles}
+  periodo={periodo}   // 🔥 FALTABA ESTO
+/>
         <BeneficiarioTabla beneficiarios={beneficiarios} onRefresh={refetch} />
         {loading && (
           <div className="flex flex-col items-center gap-2">
