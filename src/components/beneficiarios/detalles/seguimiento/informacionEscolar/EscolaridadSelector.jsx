@@ -44,7 +44,6 @@ export default function EscolaridadSelector({
   return (
     <div ref={ref} className="relative w-full">
 
-      {/* 🔥 SIN BORDE (Field ya lo tiene) */}
       <Input
         value={busqueda}
         onFocus={() => setMostrar(true)}

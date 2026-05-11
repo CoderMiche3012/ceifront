@@ -8,6 +8,8 @@ import { useExpedienteData } from "../../hooks/beneficiarios/useExpedienteData";
 import { useBeneficiariosPage } from "../../hooks/beneficiarios/useBeneficiariosPage";
 import { useQueryClient } from "@tanstack/react-query";
 import HistorialEscolarCard from "../../components/beneficiarios/detalles/seguimiento/informacionEscolar/HistorialEscolar";
+import HistorialServicios from "../../components/beneficiarios/detalles/seguimiento/Servicios/HistorialServicios";
+
 export default function ExpedientePagina() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -71,7 +73,7 @@ export default function ExpedientePagina() {
 
   // Lógica de visualización (Se mantiene igual, ¡tu diseño es excelente!)
   const nombreCompleto = `${data.nombre} ${data.apellido_p} ${data.apellido_m || ""}`.trim();
-  
+
   const formatearFecha = (fecha) => {
     if (!fecha || fecha === "--") return "Sin registro";
     return new Date(fecha).toLocaleDateString("es-MX", {
@@ -92,10 +94,10 @@ export default function ExpedientePagina() {
         {/* Overlay de actualización sutil */}
         {isFetching && (
           <div className="absolute inset-0 z-10 bg-white/40 backdrop-blur-[1px] flex items-center justify-center animate-in fade-in">
-             <div className="flex items-center gap-3 px-4 py-2 bg-white/90 shadow-lg rounded-full border border-slate-100">
-               <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-teal-600"></div>
-               <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">Sincronizando...</span>
-             </div>
+            <div className="flex items-center gap-3 px-4 py-2 bg-white/90 shadow-lg rounded-full border border-slate-100">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-teal-600"></div>
+              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">Sincronizando...</span>
+            </div>
           </div>
         )}
 
@@ -135,7 +137,23 @@ export default function ExpedientePagina() {
       <main className="min-h-[400px] mt-4">
         {tab === "generales" && <DatosGenerales data={data} />}
         {tab === "familia" && <FamiliaCard data={data} />}
-         {tab === "escuela" && <HistorialEscolarCard data={data} />}
+        {tab === "escuela" && <HistorialEscolarCard data={data} />}
+        {tab === "apoyos" && (
+          <div className="space-y-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-800 mb-2">
+                Apoyos económicos
+              </h3>
+
+              <p className="text-sm text-slate-500">
+                Aquí puedes mostrar becas, apoyos activos, montos,
+                historial de entregas, etc.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {tab === "asistencias" && <HistorialServicios data={data} />}
       </main>
     </section>
   );

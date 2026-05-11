@@ -127,7 +127,6 @@ export default function ModalBoleta({ open, onClose, boleta }) {
 
           {/* BODY */}
           <div className="p-6 space-y-6">
-            {/* ===== PROMEDIO PRO ===== */}
             <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-400 uppercase">
                 Promedio general
@@ -157,7 +156,6 @@ export default function ModalBoleta({ open, onClose, boleta }) {
               />
             </div>
 
-            {/* ===== ARCHIVO PRO ===== */}
             <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center hover:border-teal-400 transition">
               <p className="text-xs font-semibold text-slate-400 uppercase mb-2">
                 Archivo adjunto

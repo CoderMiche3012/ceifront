@@ -1,12 +1,13 @@
-import { BookOpen, ChevronDown } from "lucide-react";
+import { HandHelping, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+
 import { obtenerSeguimientosPorBeneficiario } from "../../../../../services/seguimientoService";
 import { obtenerPeriodos } from "../../../../../services/periodoService";
-import DetalleSeguimientoEscolar from "./DetalleSeguimientoEscolar";
 
+import ResumenServiciosCard from "./ResumenServiciosCard";
 
-export default function HistorialEscolarCard({ data }) {
+export default function HistorialServicios({ data }) {
   const id_beneficiario = data?.id_beneficiario;
 
   const [abierto, setAbierto] = useState(null);
@@ -41,7 +42,7 @@ export default function HistorialEscolarCard({ data }) {
     return (
       <div className="rounded-2xl bg-white p-6 border border-slate-200">
         <p className="text-sm text-slate-500 text-center">
-          Cargando historial...
+          Cargando historial de servicios...
         </p>
       </div>
     );
@@ -55,13 +56,19 @@ export default function HistorialEscolarCard({ data }) {
   );
 
   const listaOrdenada = [...seguimientos].sort((a, b) => {
-    const indexA = periodos.findIndex(p => p.id_periodo === a.id_periodo);
-    const indexB = periodos.findIndex(p => p.id_periodo === b.id_periodo);
+    const indexA = periodos.findIndex(
+      (p) => p.id_periodo === a.id_periodo
+    );
+
+    const indexB = periodos.findIndex(
+      (p) => p.id_periodo === b.id_periodo
+    );
+
     return indexB - indexA;
   });
 
   const toggle = (id) => {
-    setAbierto(prev => (prev === id ? null : id));
+    setAbierto((prev) => (prev === id ? null : id));
   };
 
   /* ===============================
@@ -71,68 +78,112 @@ export default function HistorialEscolarCard({ data }) {
     return (
       <div className="rounded-2xl bg-white p-6 border border-slate-200">
         <p className="text-sm text-slate-500 text-center">
-          Sin historial escolar
+          Sin historial de servicios
         </p>
       </div>
     );
   }
-  const calcularPromedio = (boletas) => {
-  if (!boletas || boletas.length === 0) return null;
 
-  const suma = boletas.reduce(
-    (acc, b) => acc + Number(b.promedio_boleta || 0),
-    0
-  );
+  const contarServicios = (servicios = []) => {
+    return servicios.filter((s) => s.asistencia).length;
+  };
 
-  return (suma / boletas.length).toFixed(2);
-};
+  const obtenerUltimaFecha = (servicios = []) => {
+    if (!servicios.length) return null;
+
+    const ordenadas = [...servicios].sort(
+      (a, b) =>
+        new Date(b.fecha_realizacion) -
+        new Date(a.fecha_realizacion)
+    );
+
+    const fecha = ordenadas[0].fecha_realizacion;
+
+    const [year, month, day] = fecha.split("-");
+
+    return new Date(year, month - 1, day).toLocaleDateString(
+      "es-MX",
+      {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }
+    );
+  };
 
   return (
     <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
 
       {/* HEADER */}
       <h3 className="text-sm font-bold text-slate-800 mb-4">
-        Historial Escolar
+        Historial de Servicios
       </h3>
 
       <div className="space-y-3">
 
         {listaOrdenada.map((item) => {
           const periodo = periodosMap[item.id_periodo];
-          const isOpen = abierto === item.id_seguimiento;
+
+          const isOpen =
+            abierto === item.id_seguimiento;
+
+          const totalServicios = contarServicios(
+            item.usos_servicios
+          );
+
+          const ultimaFecha = obtenerUltimaFecha(
+            item.usos_servicios
+          );
 
           return (
             <div key={item.id_seguimiento}>
 
               <div
-                onClick={() => toggle(item.id_seguimiento)}
+                onClick={() =>
+                  toggle(item.id_seguimiento)
+                }
                 className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 hover:bg-slate-50 transition cursor-pointer"
               >
+
                 {/* IZQUIERDA */}
                 <div className="flex items-center gap-3">
+
                   <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-teal-100 text-teal-600">
-                    <BookOpen size={18} />
+                    <HandHelping size={18} />
                   </div>
 
                   <div>
                     <p className="text-sm font-semibold text-slate-800">
-                      {periodo?.ciclo_escolar || "Ciclo"}
+                      {periodo?.ciclo_escolar ||
+                        "Periodo"}
                     </p>
 
                     <p className="text-xs text-slate-500">
-                      {item.datos_escolares?.id_escolaridad?.nivel_escolar || "Nivel"} • {item.datos_escolares?.id_escolaridad?.grado_escolar || "Grado"}
+                      Comedor • Psicología
                     </p>
                   </div>
                 </div>
 
                 {/* DERECHA */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
+
                   <div className="text-right">
                     <p className="text-[10px] uppercase text-slate-400 font-semibold">
-                      Promedio
+                      Servicios
                     </p>
+
                     <p className="text-sm font-bold text-teal-600">
-                      {calcularPromedio(item.datos_escolares?.boletas) ?? "--"}
+                      {totalServicios}
+                    </p>
+                  </div>
+
+                  <div className="text-right hidden sm:block">
+                    <p className="text-[10px] uppercase text-slate-400 font-semibold">
+                      Último registro
+                    </p>
+
+                    <p className="text-xs font-medium text-slate-600">
+                      {ultimaFecha || "--"}
                     </p>
                   </div>
 
@@ -148,14 +199,17 @@ export default function HistorialEscolarCard({ data }) {
                   }`}
               >
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                  <DetalleSeguimientoEscolar idSeguimiento={item.id_seguimiento} />
+                  <ResumenServiciosCard
+                    idSeguimiento={
+                      item.id_seguimiento
+                    }
+                  />
                 </div>
               </div>
 
             </div>
           );
         })}
-
       </div>
     </div>
   );

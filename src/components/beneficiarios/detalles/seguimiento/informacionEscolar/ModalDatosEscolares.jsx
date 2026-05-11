@@ -33,7 +33,6 @@ export default function ModalDatosEscolares({
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4">
         <div className="bg-[#F8FAFC] rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-white">
 
-          {/* ================= HEADER ================= */}
           <div className="flex items-center justify-between p-6 bg-white border-b border-slate-100">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-[#0E5F63]/10 rounded-2xl">
@@ -58,14 +57,12 @@ export default function ModalDatosEscolares({
             </button>
           </div>
 
-          {/* ================= CONTENIDO ================= */}
           <div className="p-6 max-h-[70vh] overflow-y-auto">
 
             <Alerta mensaje={datos.error} />
 
             <div className="space-y-8">
 
-              {/* ===== INSTITUCIÓN ===== */}
               <section>
                 <div className="flex items-center gap-2 mb-4">
                   <School className="w-4 h-4 text-[#0E5F63]" />
@@ -79,7 +76,6 @@ export default function ModalDatosEscolares({
                 </Field>
               </section>
 
-              {/* ===== ESCOLARIDAD ===== */}
               <section>
                 <div className="flex items-center gap-2 mb-4">
                   <BookOpen className="w-4 h-4 text-[#0E5F63]" />
@@ -93,7 +89,6 @@ export default function ModalDatosEscolares({
                 </Field>
               </section>
 
-              {/* ===== DETALLES ===== */}
               <section>
                 <div className="flex items-center gap-2 mb-4">
                   <span className="h-px w-6 bg-[#0E5F63]/30"></span>
@@ -155,7 +150,6 @@ export default function ModalDatosEscolares({
 
             </div>
 
-            {/* ================= BOTONES ================= */}
             <div className="flex justify-end gap-4 mt-10">
               <button
                 onClick={onClose}
@@ -176,7 +170,6 @@ export default function ModalDatosEscolares({
         </div>
       </div>
 
-      {/* ================= CONFIRMACIÓN ================= */}
       <ModalConfirmacion
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
@@ -195,7 +188,6 @@ export default function ModalDatosEscolares({
         }}
       />
 
-      {/* ================= RESULTADO ================= */}
       <ModalResultado
         open={resultadoOpen}
         type="success"
