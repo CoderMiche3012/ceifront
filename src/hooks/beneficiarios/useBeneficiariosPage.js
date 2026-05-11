@@ -2,10 +2,13 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { obtenerExpediente } from "../../services/expedientesService";
 import { obtenerBeneficiario } from "../../services/beneficiariosService";
+import { obtenerDonador } from "../../services/donadoresService";
 const INITIAL_FILTERS = {
   estatus: "todos",
   nivel: "todos",
   rendimiento: "todos",
+  donador: "todos",
+
 };
 
 export const useBeneficiariosPage = (pageSize = 4) => {
@@ -17,13 +20,16 @@ export const useBeneficiariosPage = (pageSize = 4) => {
   const { data = [], isLoading, error, refetch } = useQuery({
     queryKey: ["beneficiarios"],
     queryFn: async () => {
-      const [beneficiariosRes, expedientesRes] = await Promise.all([
+      const [beneficiariosRes, expedientesRes, donadoresRes] = await Promise.all([
         obtenerBeneficiario(),
         obtenerExpediente(),
+        obtenerDonador(),
+
       ]);
 
       const beneficiarios = beneficiariosRes?.results || beneficiariosRes || [];
       const expedientes = expedientesRes?.results || expedientesRes || [];
+      const donadores = donadoresRes?.results || donadoresRes || [];
 
       const expedientesMap = new Map(
         expedientes.map((e) => [String(e.id_expediente), e])
@@ -34,6 +40,17 @@ export const useBeneficiariosPage = (pageSize = 4) => {
           typeof b.id_expediente === "object"
             ? b.id_expediente?.id_expediente
             : b.id_expediente;
+
+        const tieneDonador = donadores.some((d) =>
+          (d.beneficiarios_apoyados || []).some(
+            (ben) =>
+              String(
+                typeof ben === "object"
+                  ? ben.id_beneficiario
+                  : ben
+              ) === String(b.id_beneficiario)
+          )
+        );
 
         const expediente = expedientesMap.get(String(id)) || b.id_expediente;
 
@@ -64,10 +81,20 @@ export const useBeneficiariosPage = (pageSize = 4) => {
 
         return {
           ...b,
-          expediente,
+          expediente: {
+            ...expediente,
+            direccion: {
+              cp: expediente?.id_direccion?.cp ?? "--",
+              municipio: expediente?.id_direccion?.municipio ?? "--",
+              calle: expediente?.id_direccion?.calle ?? "--",
+              numero: expediente?.id_direccion?.numero ?? "--",
+              colonia: expediente?.id_direccion?.colonia ?? "--",
+            },
+          },
           estatus,
           promedio,
           nivelGrado,
+          tieneDonador,
         };
       });
     },
@@ -94,16 +121,20 @@ export const useBeneficiariosPage = (pageSize = 4) => {
       const promedio = Number(item.promedio);
       let rendimiento = "sin_datos";
       if (!isNaN(promedio)) {
-        if (promedio < 6) rendimiento = "bajo";
-        else if (promedio < 8) rendimiento = "medio";
-        else rendimiento = "alto";
+        if (promedio < 7.5) rendimiento = "Regularizacion";
+        else if (promedio < 8) rendimiento = "bajo";
+        else rendimiento = "bueno";
       }
+      const matchDonador =
+        filters.donador === "todos" ||
+        (filters.donador === "con" && item.tieneDonador) ||
+        (filters.donador === "sin" && !item.tieneDonador);
 
       const matchRendimiento =
         filters.rendimiento === "todos" ||
         rendimiento === filters.rendimiento;
 
-      return matchSearch && matchStatus && matchNivel && matchRendimiento;
+      return matchSearch && matchStatus && matchNivel && matchRendimiento && matchDonador;
     });
   }, [data, search, filters]);
 

@@ -48,3 +48,20 @@ export const actualizarPeriodo = async (id, payload) => {
     throw new Error(formatError(error.message));
   }
 };
+
+export const eliminarPeriodo = async (id) => {
+  try {
+    const res = await API.delete(`${BASE_URL}/${id}/`);
+    return res.data;
+  } catch (error) {
+    console.log(error)
+    // Extraemos la data del error de Axios
+    const errorData = error.response?.data || error;
+
+    if (errorData) {
+      throw new Error(formatError(errorData));
+    }
+
+    throw new Error(formatError(error.message));
+  }
+};

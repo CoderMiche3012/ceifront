@@ -144,60 +144,65 @@ export default function SeguimientoLinea({ data }) {
       </div>
 
       {/* TIMELINE */}
-      <div className="space-y-6">
-        {!listaOrdenada.length && (
-          <p className="text-sm text-slate-500 text-center py-6">
-            Sin seguimientos
-          </p>
-        )}
 
-        {listaOrdenada.map((item, index) => {
-          const esReciente = item.id_periodo === idMasReciente;
+      {/* TIMELINE */}
+      <div className="max-h-[420px] overflow-y-auto pr-2">
+        <div className="space-y-6">
 
-          return (
-            <div key={item.id_seguimiento} className="flex gap-4">
+          {!listaOrdenada.length && (
+            <p className="text-sm text-slate-500 text-center py-6">
+              Sin seguimientos
+            </p>
+          )}
 
-              <div className="flex flex-col items-center">
-                <div className={`w-3 h-3 rounded-full ${esReciente ? "bg-teal-500" : "bg-slate-300"}`} />
-                {index !== listaOrdenada.length - 1 && (
-                  <div className="w-px h-full bg-slate-200" />
-                )}
-              </div>
+          {listaOrdenada.map((item, index) => {
+            const esReciente = item.id_periodo === idMasReciente;
 
-              <div className="flex-1 border border-slate-100 rounded-xl p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <p className="text-sm font-semibold text-slate-700">
-                    {periodosMap[item.id_periodo]}
-                  </p>
+            return (
+              <div key={item.id_seguimiento} className="flex gap-4">
 
-                  <button
-                    onClick={() => abrirEditar(item)}
-                    className="flex items-center gap-1.5 text-xs font-medium text-teal-600 hover:text-teal-700 group"
-                  >
-                    <PencilLine className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                    Editar
-                  </button>
+                <div className="flex flex-col items-center">
+                  <div className={`w-3 h-3 rounded-full ${esReciente ? "bg-teal-500" : "bg-slate-300"}`} />
+                  {index !== listaOrdenada.length - 1 && (
+                    <div className="w-px h-full bg-slate-200" />
+                  )}
                 </div>
 
-                <span className={`inline-block text-xs font-semibold px-2 py-1 rounded-full mb-2 ${esReciente
+                <div className="flex-1 border border-slate-100 rounded-xl p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-sm font-semibold text-slate-700">
+                      {periodosMap[item.id_periodo]}
+                    </p>
+
+                    <button
+                      onClick={() => abrirEditar(item)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-teal-600 hover:text-teal-700 group"
+                    >
+                      <PencilLine className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                      Editar
+                    </button>
+                  </div>
+
+                  <span className={`inline-block text-xs font-semibold px-2 py-1 rounded-full mb-2 ${esReciente
                     ? "bg-teal-100 text-teal-700"
                     : "bg-slate-100 text-slate-600"
-                  }`}>
-                  {item.estatus}
-                </span>
+                    }`}>
+                    {item.estatus}
+                  </span>
 
-                <p className="text-sm text-slate-600">
-                  {item.nota_seguimiento || "--"}
-                </p>
+                  <p className="text-sm text-slate-600">
+                    {item.nota_seguimiento || "--"}
+                  </p>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+
+        </div>
       </div>
 
       {/* BOTÓN */}
-      {/* BOTÓN */}
-      <div className="flex justify-center mt-8 pt-4 border-t border-slate-100">
+      <div className="sticky bottom-0 bg-white pt-6 mt-6 border-t border-slate-100 flex justify-center">
         <BotonInterno onClick={() => setMostrarSelector(true)}>
           <Plus className="w-4 h-4" />
           Agregar seguimiento
@@ -386,8 +391,8 @@ export default function SeguimientoLinea({ data }) {
                   {/* indicador visual */}
                   <span
                     className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold px-2 py-0.5 rounded-full ${estatus === "Activo"
-                        ? "bg-teal-100 text-teal-700"
-                        : "bg-slate-200 text-slate-600"
+                      ? "bg-teal-100 text-teal-700"
+                      : "bg-slate-200 text-slate-600"
                       }`}
                   >
                     {estatus}

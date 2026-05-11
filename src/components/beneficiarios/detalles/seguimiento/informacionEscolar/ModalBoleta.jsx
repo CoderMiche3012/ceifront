@@ -133,27 +133,29 @@ export default function ModalBoleta({ open, onClose, boleta }) {
               </label>
 
               <input
-                type="number"
-                placeholder="Ej. 9.5"
-                value={form.promedio_boleta}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    promedio_boleta: e.target.value,
-                  })
-                }
-                className="
-      w-full
-      bg-transparent
-      border-b
-      border-slate-300
-      px-0 py-2
-      text-sm text-slate-700
-      placeholder:text-slate-400
-      focus:border-teal-500
-      focus:outline-none
-    "
-              />
+  type="number"
+  placeholder="Ej. 9.5"
+  max="10"
+  step="0.01"
+  value={form.promedio_boleta}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      promedio_boleta: e.target.value,
+    })
+  }
+  className="
+    w-full
+    bg-transparent
+    border-b
+    border-slate-300
+    px-0 py-2
+    text-sm text-slate-700
+    placeholder:text-slate-400
+    focus:border-teal-500
+    focus:outline-none
+  "
+/>
             </div>
 
             <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center hover:border-teal-400 transition">

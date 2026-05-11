@@ -10,6 +10,15 @@ export default function beneficiarioFiltros({
 }) {
   const opcionesFiltros = [
     {
+  key: "donador",
+  label: "Donador",
+  options: [
+    { value: "todos", label: "Todos" },
+    { value: "con", label: "Con donador" },
+    { value: "sin", label: "Sin donador" },
+  ],
+},
+    {
   key: "nivel",
   label: "Nivel",
   options: [
@@ -17,6 +26,8 @@ export default function beneficiarioFiltros({
     { value: "preescolar", label: "Preescolar" },
     { value: "primaria", label: "Primaria" },
     { value: "secundaria", label: "Secundaria" },
+    { value: "preparatoria", label: "Preparatoria" },
+    { value: "universidad", label: "Universidad" },
   ],
 },
 {
@@ -24,9 +35,9 @@ export default function beneficiarioFiltros({
   label: "Rendimiento",
   options: [
     { value: "todos", label: "Todos los Rendimientos" },
+    { value: "bueno", label: "Bueno" },
     { value: "bajo", label: "Bajo" },
-    { value: "medio", label: "Medio" },
-    { value: "alto", label: "Alto" },
+    { value: "regularizacion", label: "Regularizacion" },
   ],
 }
   ];
@@ -39,7 +50,7 @@ export default function beneficiarioFiltros({
       onClearFilters={onClearFilters}
       filters={opcionesFiltros.map(f => ({
         ...f,
-        value: filters[f.key],
+        value: filters[f.key] ?? "todos",
         onChange: (val) => onFilterChange(f.key, val)
       }))}
     />

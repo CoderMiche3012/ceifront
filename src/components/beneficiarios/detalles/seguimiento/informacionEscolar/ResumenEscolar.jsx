@@ -13,12 +13,30 @@ export default function ResumenEscolar({
   const promedio = tienePromedio ? Number(promedioGeneral) : null;
 
   const getEtiqueta = (p) => {
-    if (p >= 9) return "SOBRESALIENTE";
-    if (p >= 8) return "NOTABLE";
-    if (p >= 7) return "BUENO";
-    return "BAJO";
+    if (p >= 8) return "BUENO";
+    if (p >= 7.5) return "BAJO";
+    return "REGULARIZACION";
   };
+  const nivelEducativo = (() => {
+    const nivel = grado?.nivel_escolar;
 
+    if (
+      ["Preescolar", "Primaria", "Secundaria"]
+        .includes(nivel)
+    ) {
+      return "Educación Básica";
+    }
+
+    if (nivel === "Preparatoria") {
+      return "Educación Media Superior";
+    }
+
+    if (nivel === "Universidad") {
+      return "Educación Superior";
+    }
+
+    return "--";
+  })();
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
 
@@ -44,7 +62,7 @@ export default function ResumenEscolar({
 
         {/* DERECHA - PROMEDIO */}
         <div className="flex items-center gap-4">
-          
+
           <div className="text-right">
             <p className="text-xs font-semibold text-slate-400 uppercase">
               Promedio general
@@ -72,9 +90,8 @@ export default function ResumenEscolar({
           {/* BARRA */}
           <div className="w-28 h-2 bg-slate-100 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${
-                tienePromedio ? "bg-teal-500" : "bg-slate-300"
-              }`}
+              className={`h-full rounded-full transition-all ${tienePromedio ? "bg-teal-500" : "bg-slate-300"
+                }`}
               style={{
                 width: tienePromedio ? `${(promedio / 10) * 100}%` : "0%",
               }}
@@ -85,6 +102,15 @@ export default function ResumenEscolar({
 
       {/* INFO PRINCIPAL */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-slate-100 pt-5">
+        <div>
+          <p className="text-xs font-semibold text-slate-400 uppercase mb-1">
+            Nivel educativo
+          </p>
+
+          <p className="text-slate-700 font-medium">
+            {nivelEducativo}
+          </p>
+        </div>
 
         <div>
           <p className="text-xs font-semibold text-slate-400 uppercase mb-1">
@@ -114,14 +140,17 @@ export default function ResumenEscolar({
           </p>
         </div>
 
-        <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase mb-1">
-            Licenciatura / Especialidad
-          </p>
-          <p className="text-slate-700 font-medium">
-            {escolar?.licenciatura || "Ninguno"}
-          </p>
-        </div>
+        {escolar?.especialidad && (
+          <div>
+            <p className="text-xs font-semibold text-slate-400 uppercase mb-1">
+              Licenciatura/ Especialidad
+            </p>
+
+            <p className="text-slate-700 font-medium">
+              {escolar.especialidad}
+            </p>
+          </div>
+        )}
 
         <div>
           <p className="text-xs font-semibold text-slate-400 uppercase mb-1">

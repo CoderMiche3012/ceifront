@@ -1,7 +1,9 @@
 import { NavLink } from "react-router-dom";
 import DatosTabla from "../../tablas/DatosTabla";
 import AvatarGeneral from "../../shared/AvatarGeneral";
-import { Calendar, Clock, Eye, Printer, Check, X, Lock } from "lucide-react";
+import { Calendar, Clock, Eye, Printer, Check, X, Lock, PencilLine } from "lucide-react";
+import EditarDatosGenerales from "../modales/EditarDatosGenerales";
+import { useState } from "react";
 
 const COLUMNS = [
     { key: "beneficiarios", label: "beneficiarios" },
@@ -12,7 +14,9 @@ const COLUMNS = [
     { key: "acciones", label: "Acciones" },
 ];
 export default function beneficiariosTabla({ beneficiarios = [], onRefresh }) {
-    console.log("dt",beneficiarios)
+    const [openEdit, setOpenEdit] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
+    console.log("dt", beneficiarios)
     const calcularEdad = (fechaNacimiento) => {
         if (!fechaNacimiento) return "--";
         const hoy = new Date();
@@ -80,16 +84,17 @@ export default function beneficiariosTabla({ beneficiarios = [], onRefresh }) {
                 );
             }
             case "donador": {
-                const estatus = item.estado_visita?.toLowerCase();
-                const configEstatus = {
-                    sin_donador: "bg-amber-100 text-amber-700 border-amber-200",
-                    con_donador: "bg-blue-100 text-blue-700 border-blue-200",
-                };
-                const estilo = configEstatus[estatus] || "bg-slate-100 text-slate-600 border-slate-200";
+                const tieneDonador = item.tieneDonador;
+
+                const estilo = tieneDonador
+                    ? "bg-blue-100 text-blue-700 border-blue-200"
+                    : "bg-amber-100 text-amber-700 border-amber-200";
 
                 return (
-                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${estilo}`}>
-                        {"Sin donador"}
+                    <span
+                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${estilo}`}
+                    >
+                        {tieneDonador ? "Con donador" : "Sin donador"}
                     </span>
                 );
             }
@@ -102,16 +107,40 @@ export default function beneficiariosTabla({ beneficiarios = [], onRefresh }) {
             case "acciones":
                 return (
                     <div className="flex items-center gap-1">
+
+                        {/* VER */}
                         <NavLink
                             to={`/App/beneficiarios/expediente/${item.id_beneficiario}`}
                             className={({ isActive }) => `
-                inline-flex h-8 w-8 items-center justify-center rounded-full transition-all
-                ${isActive ? "bg-blue-100 text-blue-600" : "text-slate-400 hover:bg-slate-100 hover:text-blue-600"}
-              `}
+                    inline-flex h-8 w-8 items-center justify-center rounded-full transition-all
+                    ${isActive ? "bg-blue-100 text-blue-600" : "text-slate-400 hover:bg-slate-100 hover:text-blue-600"}
+                `}
                             title="Ver Expediente"
                         >
                             <Eye size={18} />
                         </NavLink>
+
+                        {/* EDITAR */}
+                        <button
+                            onClick={() => {
+                                setSelectedItem(item); setSelectedItem({
+                                    ...item.expediente,
+                                    id_beneficiario: item.id_beneficiario,
+                                });
+                                setOpenEdit(true);
+                            }}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-emerald-600 transition-all"
+                            title="Editar"
+                        >
+                            <PencilLine size={18} />
+                        </button>
+
+                        {/* MODAL */}
+                        <EditarDatosGenerales
+                            isOpen={openEdit}
+                            onClose={() => setOpenEdit(false)}
+                            data={selectedItem}
+                        />
                     </div>
                 );
             default: return null;

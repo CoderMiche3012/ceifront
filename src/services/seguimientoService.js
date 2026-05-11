@@ -89,3 +89,17 @@ export const obtenerSeguimientoPorPeriodo = async ({
     throw new Error(formatError(errorData));
   }
 };
+
+export const eliminarSeguimiento = async (id) => {
+  try {
+    const res = await API.delete(`${BASE_URL}/${id}/`);
+    return res.data;
+  } catch (error) {
+    console.log(error)
+    const errorData = error.response?.data || error;
+    if (errorData) {
+      throw new Error(formatError(errorData));
+    }
+    throw new Error(formatError(error.message));
+  }
+};
