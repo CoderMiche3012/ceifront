@@ -11,10 +11,12 @@ const COLUMNS = [
     { key: "tipo", label: "tipo" },
     { key: "contacto", label: "contacto" },
     { key: "asignados", label: "Niños Asignados" },
+    { key: "donaciones", label: "Donaciones (Periodo Activo)" },
+
     { key: "estatus", label: "Estatus" },
     { key: "acciones", label: "Acciones" },
 ];
-export default function DonadoresTabla({ donadores = [], onRefresh, onEditar  }) {
+export default function DonadoresTabla({ donadores = [], onRefresh, onEditar }) {
 
     const renderCell = (item, key) => {
         const donador = item || {};
@@ -84,6 +86,32 @@ export default function DonadoresTabla({ donadores = [], onRefresh, onEditar  })
                     </span>
                 );
             }
+            case "donaciones": {
+                const totales = donador.totalesPeriodoActivo || {};
+
+                const monedas = Object.entries(totales);
+
+                if (monedas.length === 0) {
+                    return (
+                        <span className="text-xs text-slate-400">
+                            Sin donaciones
+                        </span>
+                    );
+                }
+
+                return (
+                    <div className="flex flex-col gap-1">
+                        {monedas.map(([moneda, monto]) => (
+                            <span
+                                key={moneda}
+                                className="text-sm font-semibold text-slate-700"
+                            >
+                                {moneda}: ${Number(monto).toLocaleString("es-MX")}
+                            </span>
+                        ))}
+                    </div>
+                );
+            }
             case "acciones":
                 return (
                     <div className="flex items-center gap-2">
@@ -110,13 +138,13 @@ export default function DonadoresTabla({ donadores = [], onRefresh, onEditar  })
             default: return null;
         }
     };
-    
+
     return (
         <DatosTabla
             columns={COLUMNS}
             data={donadores}
             renderCell={renderCell}
-            rowKey="id_donadores"
+            rowKey="id_donador"
         />
     );
 }

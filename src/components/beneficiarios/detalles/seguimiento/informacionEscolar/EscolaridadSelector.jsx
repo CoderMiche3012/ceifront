@@ -1,14 +1,39 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Input from "../../../../ui/Input";
 
 export default function EscolaridadSelector({
   gradosMock,
   setForm,
+  form, // 👈 importante si quieres valor inicial
 }) {
   const [busqueda, setBusqueda] = useState("");
   const [mostrar, setMostrar] = useState(false);
 
   const ref = useRef();
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setMostrar(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // 🔥 valor inicial (opcional pero pro)
+  useEffect(() => {
+    if (form?.id_escolaridad) {
+      const seleccionado = gradosMock.find(
+        (g) => g.id === form.id_escolaridad
+      );
+      if (seleccionado) {
+        setBusqueda(`${seleccionado.nivel} - ${seleccionado.grado}`);
+      }
+    }
+  }, [form?.id_escolaridad, gradosMock]);
 
   const filtrados = gradosMock.filter((g) =>
     `${g.nivel} ${g.grado}`
@@ -17,7 +42,9 @@ export default function EscolaridadSelector({
   );
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative w-full">
+
+      {/* 🔥 SIN BORDE (Field ya lo tiene) */}
       <Input
         value={busqueda}
         onFocus={() => setMostrar(true)}
@@ -25,27 +52,43 @@ export default function EscolaridadSelector({
           setBusqueda(e.target.value);
           setMostrar(true);
         }}
-        placeholder="Buscar escolaridad..."
+        placeholder="Buscar por nivel o grado..."
+        className="w-full text-sm bg-transparent border-0 outline-none 
+                   focus:ring-0 focus:outline-none"
       />
 
+      {/* DROPDOWN */}
       {mostrar && (
-        <div className="absolute w-full bg-white border rounded-xl max-h-40 overflow-auto">
-          {filtrados.map((g) => (
-            <div
-              key={g.id}
-              onClick={() => {
-                setForm((prev) => ({
-                  ...prev,
-                  id_escolaridad: g.id,
-                }));
-                setBusqueda(`${g.nivel} - ${g.grado}`);
-                setMostrar(false);
-              }}
-              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-            >
-              {g.nivel} - {g.grado}
+        <div className="absolute z-50 mt-2 w-full bg-white 
+                        border border-slate-200 
+                        rounded-xl shadow-lg 
+                        max-h-52 overflow-auto">
+
+          {filtrados.length > 0 ? (
+            filtrados.map((g) => (
+              <div
+                key={g.id}
+                onClick={() => {
+                  setForm((prev) => ({
+                    ...prev,
+                    id_escolaridad: g.id,
+                  }));
+                  setBusqueda(`${g.nivel} - ${g.grado}`);
+                  setMostrar(false);
+                }}
+                className="px-4 py-2 text-sm cursor-pointer transition
+                           hover:bg-[#0E5F63]/10 hover:text-[#0E5F63]"
+              >
+                <div className="font-medium">{g.nivel}</div>
+                <div className="text-xs text-slate-400">{g.grado}</div>
+              </div>
+            ))
+          ) : (
+            <div className="px-4 py-2 text-sm text-slate-400">
+              Sin resultados
             </div>
-          ))}
+          )}
+
         </div>
       )}
     </div>

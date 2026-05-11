@@ -101,7 +101,6 @@ export default function EditarResumen({ isOpen, onClose, data, setData }) {
                       <option value="">Selecciona un estatus</option>
                       <option value="Activo">Activo</option>
                       <option value="Inactivo">Inactivo</option>
-                      <option value="Pausa">En pausa</option>
                     </select>
                   </Field>
 

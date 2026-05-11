@@ -76,10 +76,20 @@ export default function HistorialEscolarCard({ data }) {
       </div>
     );
   }
+  const calcularPromedio = (boletas) => {
+  if (!boletas || boletas.length === 0) return null;
+
+  const suma = boletas.reduce(
+    (acc, b) => acc + Number(b.promedio_boleta || 0),
+    0
+  );
+
+  return (suma / boletas.length).toFixed(2);
+};
 
   return (
     <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-      
+
       {/* HEADER */}
       <h3 className="text-sm font-bold text-slate-800 mb-4">
         Historial Escolar
@@ -111,7 +121,7 @@ export default function HistorialEscolarCard({ data }) {
                     </p>
 
                     <p className="text-xs text-slate-500">
-                      {item.nivel || "Nivel"} • {item.grado || "Grado"}
+                      {item.datos_escolares?.id_escolaridad?.nivel_escolar || "Nivel"} • {item.datos_escolares?.id_escolaridad?.grado_escolar || "Grado"}
                     </p>
                   </div>
                 </div>
@@ -123,23 +133,21 @@ export default function HistorialEscolarCard({ data }) {
                       Promedio
                     </p>
                     <p className="text-sm font-bold text-teal-600">
-                      {item.promedio_general ?? "--"}
+                      {calcularPromedio(item.datos_escolares?.boletas) ?? "--"}
                     </p>
                   </div>
 
                   <ChevronDown
-                    className={`w-4 h-4 text-slate-400 transition-transform ${
-                      isOpen ? "rotate-180" : ""
-                    }`}
+                    className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
               </div>
 
               {/* 🔥 ABANICO */}
               <div
-                className={`overflow-hidden transition-all duration-300 ${
-                  isOpen ? "max-h-[500px] mt-2" : "max-h-0"
-                }`}
+                className={`transition-all duration-300 ${isOpen ? "mt-2" : "hidden"
+                  }`}
               >
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
                   <DetalleSeguimientoEscolar idSeguimiento={item.id_seguimiento} />

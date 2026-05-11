@@ -15,6 +15,7 @@ import BeneficiariosPagina from "../pages/beneficiarios/BeneficiariosPagina";
 import ExpedientePaginaB from "../pages/beneficiarios/ExpedientePaginaB";
 import DonadoresPagina from "../pages/donadores/DonadoresPagina";
 import DonadoresDetalle from "../pages/donadores/DonadoresDetalle";
+import AsistenciasPagina from "../pages/asistencias/AsistenciasPagina";
 //define las rutas principales 
 export default function AppRouter() {
   return (
@@ -49,6 +50,15 @@ export default function AppRouter() {
             element={
               <PermissionRoute permiso="Ver Beneficiarios">
                 <BeneficiariosPagina />
+              </PermissionRoute>
+            }
+          />
+
+          <Route
+            path="asistencias"
+            element={
+              <PermissionRoute permiso="Ver Beneficiarios">
+                <AsistenciasPagina />
               </PermissionRoute>
             }
           />

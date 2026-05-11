@@ -9,7 +9,7 @@ import DonadorCrearModal from "../../components/donadores/modales/DonadorCrearMo
 import EditarDatosGenerales from "../../components/donadores/modales/EditarDatosGenerales";
 import { UserPlus, Users, UserCheck, UserX, Building2, HeartHandshake, HandHeart } from "lucide-react";
 export default function DonadoresPagina() {
-    
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalEditar, setModalEditar] = useState(false);
     const [donadorSeleccionado, setDonadorSeleccionado] = useState(null);
@@ -28,6 +28,7 @@ export default function DonadoresPagina() {
         setCurrentPage,
         PAGE_SIZE
     } = useDonadoresPage();
+    console.log("aa", donadores)
     const handleEditar = (donador) => {
         setDonadorSeleccionado(donador);
         setModalEditar(true);
@@ -53,62 +54,62 @@ export default function DonadoresPagina() {
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
 
-    {/* Activos */}
-    <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
-        <div>
-            <p className="text-sm text-slate-500">Activos</p>
-            <h3 className="text-2xl font-bold text-green-600">{activos}</h3>
-        </div>
-        <div className="bg-green-100 text-green-600 p-3 rounded-xl">
-            <UserCheck size={22} />
-        </div>
-    </div>
+                {/* Activos */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-sm text-slate-500">Activos</p>
+                        <h3 className="text-2xl font-bold text-green-600">{activos}</h3>
+                    </div>
+                    <div className="bg-green-100 text-green-600 p-3 rounded-xl">
+                        <UserCheck size={22} />
+                    </div>
+                </div>
 
-    {/* Inactivos */}
-    <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
-        <div>
-            <p className="text-sm text-slate-500">Inactivos</p>
-            <h3 className="text-2xl font-bold text-red-600">{inactivos}</h3>
-        </div>
-        <div className="bg-red-100 text-red-600 p-3 rounded-xl">
-            <UserX size={22} />
-        </div>
-    </div>
+                {/* Inactivos */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-sm text-slate-500">Inactivos</p>
+                        <h3 className="text-2xl font-bold text-red-600">{inactivos}</h3>
+                    </div>
+                    <div className="bg-red-100 text-red-600 p-3 rounded-xl">
+                        <UserX size={22} />
+                    </div>
+                </div>
 
-    {/* CEI */}
-    <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
-        <div>
-            <p className="text-sm text-slate-500">CEI</p>
-            <h3 className="text-2xl font-bold text-blue-600">{cei}</h3>
-        </div>
-        <div className="bg-blue-100 text-blue-600 p-3 rounded-xl">
-            <Building2 size={22} />
-        </div>
-    </div>
+                {/* CEI */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-sm text-slate-500">CEI</p>
+                        <h3 className="text-2xl font-bold text-blue-600">{cei}</h3>
+                    </div>
+                    <div className="bg-blue-100 text-blue-600 p-3 rounded-xl">
+                        <Building2 size={22} />
+                    </div>
+                </div>
 
-    {/* CANFRO */}
-    <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
-        <div>
-            <p className="text-sm text-slate-500">CANFRO</p>
-            <h3 className="text-2xl font-bold text-purple-600">{canfro}</h3>
-        </div>
-        <div className="bg-purple-100 text-purple-600 p-3 rounded-xl">
-            <HeartHandshake size={22} />
-        </div>
-    </div>
+                {/* CANFRO */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-sm text-slate-500">CANFRO</p>
+                        <h3 className="text-2xl font-bold text-purple-600">{canfro}</h3>
+                    </div>
+                    <div className="bg-purple-100 text-purple-600 p-3 rounded-xl">
+                        <HeartHandshake size={22} />
+                    </div>
+                </div>
 
-    {/* OYE */}
-    <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
-        <div>
-            <p className="text-sm text-slate-500">OYE</p>
-            <h3 className="text-2xl font-bold text-orange-600">{oye}</h3>
-        </div>
-        <div className="bg-orange-100 text-orange-600 p-3 rounded-xl">
-            <HandHeart size={22} />
-        </div>
-    </div>
+                {/* OYE */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-sm text-slate-500">OYE</p>
+                        <h3 className="text-2xl font-bold text-orange-600">{oye}</h3>
+                    </div>
+                    <div className="bg-orange-100 text-orange-600 p-3 rounded-xl">
+                        <HandHeart size={22} />
+                    </div>
+                </div>
 
-</div>
+            </div>
             <div className="rounded-[24px] border border-[#dbe3eb] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] relative">
                 <DonadorFiltros
                     search={search}

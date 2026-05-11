@@ -26,14 +26,14 @@ export default function useHistorialDonativos(data) {
     const [saving, setSaving] = useState(false);
     const [showModalEditar, setShowModalEditar] = useState(false);
     const [donativoEditando, setDonativoEditando] = useState(null);
-    // ... otros estados ...
-    const [errorForm, setErrorForm] = useState(""); // <--- Agregar este
+    const [errorForm, setErrorForm] = useState(""); 
     const [form, setForm] = useState({
         id_donador: "",
         id_periodo: "",
         concepto: "",
         monto: "",
         fecha: "",
+        moneda: "MXN",
     });
 
     useEffect(() => {
@@ -74,6 +74,7 @@ export default function useHistorialDonativos(data) {
             concepto: "",
             monto: "",
             fecha: "",
+            moneda: "MXN",
         });
         setShowModal(true);
     };
@@ -88,23 +89,21 @@ export default function useHistorialDonativos(data) {
             concepto: donativo.concepto,
             monto: donativo.monto,
             fecha: donativo.fecha,
+            moneda: donativo.moneda || "MXN",
         });
         setShowModalEditar(true);
     };
 
     const cerrarModal = () => {
         setShowModal(false);
-        setErrorForm(""); // Limpiar error al cerrar creación
+        setErrorForm(""); 
     };
 
     const handleSubmitClick = (tipo) => {
-        // Validamos campos vacíos
         if (!form.concepto || !form.monto || !form.fecha) {
             setErrorForm("Todos los campos son obligatorios para registrar el donativo.");
             return;
         }
-
-        // Si todo está bien, limpiamos el error y abrimos confirmación
         setErrorForm("");
         setModalConf({ open: true, data: tipo });
     };
@@ -119,6 +118,7 @@ export default function useHistorialDonativos(data) {
                     concepto: form.concepto,
                     monto: Number(Number(form.monto).toFixed(3)),
                     fecha: form.fecha,
+                    moneda: form.moneda,
                 });
                 cerrarModal();
             } else {
@@ -126,6 +126,7 @@ export default function useHistorialDonativos(data) {
                     concepto: form.concepto,
                     monto: Number(Number(form.monto).toFixed(3)),
                     fecha: form.fecha,
+                    moneda: form.moneda,
                 });
                 setShowModalEditar(false);
             }
@@ -167,7 +168,6 @@ export default function useHistorialDonativos(data) {
     };
 
     return {
-        // states
         donativos,
         periodosOrdenados,
         modalConf,
@@ -181,14 +181,12 @@ export default function useHistorialDonativos(data) {
         saving,
         form,
 
-        // setters
         setOpenId,
         setModalConf,
         setModalRes,
         setShowModalEditar,
         setForm,
 
-        // handlers
         abrirModal,
         abrirModalEditar,
         cerrarModal,

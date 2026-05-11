@@ -38,7 +38,7 @@ export default function Menu({ sidebarOpen, userPermissions = [], onLogout }) {
     <aside className="flex h-screen w-full flex-col border-r border-slate-200 bg-[#f7f7f8] transition-all">
       {/* Header Logo */}
       <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-5">
-        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white p-1 shadow-sm">
+        <div className="h-21 w-21 shrink-0 overflow-hidden rounded-xl bg-white p-1 shadow-sm">
           <img
             src={logoCei}
             alt="Logo CEI"
@@ -48,7 +48,7 @@ export default function Menu({ sidebarOpen, userPermissions = [], onLogout }) {
           />
         </div>
         <div className={`${sidebarOpen ? "block" : "hidden"} lg:block min-w-0 animate-in fade-in slide-in-from-left-2`}>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#0E5F63] leading-tight">
+          <p className="text-[13px] font-bold uppercase tracking-widest text-[#0E5F63] leading-tight">
             Centro de Esperanza <br /> Infantil A.C.
           </p>
         </div>

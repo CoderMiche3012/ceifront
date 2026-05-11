@@ -1,13 +1,16 @@
-import { useState, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
-
-import { crearDatosEscolaresInd } from "../../../services/escuelaService";
+import { useEffect, useState, useRef, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { crearDatosEscolaresInd, actualizarDatosEscolaresInd } from "../../../services/escuelaService";
 import {
   obtenerInstituciones,
   crearInstitucion,
 } from "../../../services/institucionesService";
 
-export default function useDatosEscolares(id_seguimiento) {
+export default function useDatosEscolares(id_seguimiento, datosIniciales) {
+  console.log("inicial",datosIniciales)
+  const queryClient = useQueryClient();
+  const esEdicion = !!datosIniciales?.id_datos_escolares;
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -23,6 +26,7 @@ export default function useDatosEscolares(id_seguimiento) {
     useState(null);
 
   /* ================= ESCUELAS ================= */
+
   const [busqueda, setBusqueda] = useState("");
   const [mostrarResultados, setMostrarResultados] = useState(false);
 
@@ -39,13 +43,27 @@ export default function useDatosEscolares(id_seguimiento) {
     queryFn: obtenerInstituciones,
   });
 
-  const filtradas = instituciones.filter((i) =>
-    i.nombre.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  // 🔥 BÚSQUEDA PRO (nombre + clave)
+  const filtradas = useMemo(() => {
+    const b = busqueda.toLowerCase().trim();
+
+    if (!b) return instituciones;
+
+    return instituciones.filter((i) => {
+      const nombre = i.nombre?.toLowerCase() || "";
+      const clave = i.clave_escolar?.toLowerCase() || "";
+
+      return nombre.includes(b) || clave.includes(b);
+    });
+  }, [instituciones, busqueda]);
 
   const seleccionarInstitucion = (inst) => {
     setInstitucionSeleccionada(inst);
-    setBusqueda(inst.nombre);
+    setBusqueda(
+      inst.clave_escolar
+        ? `${inst.nombre} (${inst.clave_escolar})`
+        : inst.nombre
+    );
     setMostrarResultados(false);
   };
 
@@ -53,22 +71,84 @@ export default function useDatosEscolares(id_seguimiento) {
     try {
       const nueva = await crearInstitucion(nuevaEscuela);
 
+      // ⚡ actualización inmediata (sin refetch)
+      queryClient.setQueryData(["instituciones"], (old = []) => [
+        nueva,
+        ...old,
+      ]);
+
       setInstitucionSeleccionada(nueva);
-      setBusqueda(nueva.nombre);
+      setBusqueda(
+        nueva.clave_escolar
+          ? `${nueva.nombre} (${nueva.clave_escolar})`
+          : nueva.nombre
+      );
+
       setCrearModo(false);
+      setMostrarResultados(false);
       setNuevaEscuela({ nombre: "", clave_escolar: "" });
     } catch (err) {
       setError(err.message);
     }
   };
+  useEffect(() => {
+  if (datosIniciales) {
+    setForm({
+      grupo: datosIniciales.grupo || "",
+      turno: datosIniciales.turno?.toUpperCase() || "",
+      modalidad_educativa:
+        datosIniciales.modalidad_educativa?.toUpperCase() || "",
+      especialidad: datosIniciales.especialidad || "",
+
+      // 🔥 AQUÍ EL FIX
+      id_escolaridad:
+        datosIniciales.id_escolaridad?.id_escolaridad || "",
+    });
+
+    // 🔥 institución correcta
+    if (datosIniciales.id_institucion) {
+      setInstitucionSeleccionada({
+        id_institucion:
+          datosIniciales.id_institucion.id_institucion,
+        nombre: datosIniciales.id_institucion.nombre,
+        clave_escolar:
+          datosIniciales.id_institucion.clave_escolar,
+      });
+
+      setBusqueda(
+        datosIniciales.id_institucion.clave_escolar
+          ? `${datosIniciales.id_institucion.nombre} (${datosIniciales.id_institucion.clave_escolar})`
+          : datosIniciales.id_institucion.nombre
+      );
+    }
+  }
+}, [datosIniciales]);
 
   /* ================= ESCOLARIDAD ================= */
 
   const gradosMock = [
     { id: 1, nivel: "Preescolar", grado: "1°" },
-    { id: 2, nivel: "Primaria", grado: "1°" },
-    { id: 3, nivel: "Secundaria", grado: "1°" },
-    { id: 4, nivel: "Preparatoria", grado: "1°" },
+    { id: 2, nivel: "Preescolar", grado: "2°" },
+    { id: 3, nivel: "Preescolar", grado: "3°" },
+    { id: 4, nivel: "Primaria", grado: "1°" },
+    { id: 5, nivel: "Primaria", grado: "2°" },
+    { id: 6, nivel: "Primaria", grado: "3°" },
+    { id: 7, nivel: "Primaria", grado: "4°" },
+    { id: 8, nivel: "Primaria", grado: "5°" },
+    { id: 9, nivel: "Primaria", grado: "6°" },
+    { id: 10, nivel: "Secundaria", grado: "1°" },
+    { id: 11, nivel: "Secundaria", grado: "2°" },
+    { id: 12, nivel: "Secundaria", grado: "3°" },
+    { id: 13, nivel: "Preparatoria", grado: "1°" },
+    { id: 14, nivel: "Preparatoria", grado: "2°" },
+    { id: 15, nivel: "Preparatoria", grado: "3°" },
+    { id: 16, nivel: "Universidad", grado: "1°" },
+    { id: 17, nivel: "Universidad", grado: "2°" },
+    { id: 18, nivel: "Universidad", grado: "3°" },
+    { id: 19, nivel: "Universidad", grado: "4°" },
+    { id: 20, nivel: "Universidad", grado: "5°" },
+    { id: 21, nivel: "Universidad", grado: "6°" },
+    { id: 22, nivel: "Universidad", grado: "7°" },
   ];
 
   const nivelSeleccionado = gradosMock.find(
@@ -104,11 +184,26 @@ export default function useDatosEscolares(id_seguimiento) {
         throw new Error("La especialidad es requerida");
       }
 
-      await crearDatosEscolaresInd({
+      const payload = {
         ...form,
         id_institucion: institucionSeleccionada.id_institucion,
         id_seguimiento,
-      });
+      };
+
+      if (esEdicion) {
+        await actualizarDatosEscolaresInd(
+          datosIniciales.id_datos_escolares,
+          payload
+        );
+      } else {
+        await crearDatosEscolaresInd(payload);
+      }
+
+      // 🔥 refrescar
+      queryClient.invalidateQueries([
+        "seguimiento",
+        id_seguimiento,
+      ]);
 
       return true;
     } catch (err) {

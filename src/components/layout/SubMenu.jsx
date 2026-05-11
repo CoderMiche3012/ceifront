@@ -50,10 +50,10 @@ export default function SubMenu({ user, onLogout, onOpenProfile }) {
         className="flex items-center gap-3 rounded-2xl px-3 py-2 transition-all hover:bg-slate-100/80 active:scale-95"
       >
         <div className="hidden text-right sm:block">
-          <p className="text-sm font-bold text-slate-800 leading-tight">
+          <p className="text-xl font-bold text-slate-800 leading-tight">
             {nombreCompleto}
           </p>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#1F8A8A]">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#1F8A8A]">
             {user?.rol?.nombre || user?.rol || "Invitado"}
           </p>
         </div>

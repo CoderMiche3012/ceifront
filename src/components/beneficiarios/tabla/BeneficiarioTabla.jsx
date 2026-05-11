@@ -12,6 +12,7 @@ const COLUMNS = [
     { key: "acciones", label: "Acciones" },
 ];
 export default function beneficiariosTabla({ beneficiarios = [], onRefresh }) {
+    console.log("dt",beneficiarios)
     const calcularEdad = (fechaNacimiento) => {
         if (!fechaNacimiento) return "--";
         const hoy = new Date();
@@ -36,7 +37,7 @@ export default function beneficiariosTabla({ beneficiarios = [], onRefresh }) {
                         <AvatarGeneral nombre={expediente.nombre} apellidoP={expediente.apellido_p} />
                         <div className="flex flex-col">
                             <span className="text-sm font-semibold text-slate-800 uppercase leading-none">
-                                {`${expediente.nombre || ""} ${expediente.apellido_p || ""} ${expediente.apellido_m || ""}`} 
+                                {`${expediente.nombre || ""} ${expediente.apellido_p || ""} ${expediente.apellido_m || ""}`}
                                 <span className="text-xs text-slate-500">
                                     {calcularEdad(expediente.fecha_nacimiento) || ""}
                                 </span>
@@ -45,7 +46,7 @@ export default function beneficiariosTabla({ beneficiarios = [], onRefresh }) {
                     </div>
                 );
             case "estatus": {
-                const estatus = item.estado_visita?.toLowerCase();
+                const estatus = item.estatus?.toLowerCase();
                 const configEstatus = {
                     activo: "bg-amber-100 text-amber-700 border-amber-200",
                     inactivo: "bg-blue-100 text-blue-700 border-blue-200",
@@ -60,14 +61,24 @@ export default function beneficiariosTabla({ beneficiarios = [], onRefresh }) {
                     </span>
                 );
             }
-            case "promedio":
+            case "promedio": {
+                const promedio = Number(item.promedio);
+                console.log(item.promedio)
+
+                let color = "text-slate-500";
+
+                if (!isNaN(promedio)) {
+                    if (promedio < 6) color = "text-red-600";
+                    else if (promedio < 8) color = "text-yellow-600";
+                    else color = "text-green-600";
+                }
+
                 return (
-                    <div className="flex flex-col leading-tight">
-                        <span className="text-sm font-medium text-slate-800">
-                            {" pendiente"}
-                        </span>
-                    </div>
+                    <span className={`text-sm font-bold ${color}`}>
+                        {item.promedio ?? "—"}
+                    </span>
                 );
+            }
             case "donador": {
                 const estatus = item.estado_visita?.toLowerCase();
                 const configEstatus = {
@@ -84,16 +95,9 @@ export default function beneficiariosTabla({ beneficiarios = [], onRefresh }) {
             }
             case "escuela":
                 return (
-                    <div className="flex items-center gap-3">
-                        <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-slate-800 leading-none">
-                                {"pendiente"}
-                                <span className="text-xs text-slate-500">
-                                    {""}
-                                </span>
-                            </span>
-                        </div>
-                    </div>
+                    <span className="text-sm font-medium text-slate-700">
+                        {item.nivelGrado}
+                    </span>
                 );
             case "acciones":
                 return (

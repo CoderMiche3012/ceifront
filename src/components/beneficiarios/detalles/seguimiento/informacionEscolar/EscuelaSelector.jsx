@@ -30,7 +30,7 @@ export default function EscuelaSelector({
                     }}
                     onFocus={() => setMostrarResultados(true)}
                     placeholder="Buscar escuela..."
-                    className="flex-1 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0E5F63]"
+                    className="flex-1 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#0E5F63] focus:border-[#0E5F63]"
                 />
 
                 <button
@@ -47,7 +47,7 @@ export default function EscuelaSelector({
 
             {/* Resultados */}
             {mostrarResultados && busqueda && !crearModo && (
-                <div className="absolute z-10 mt-2 w-full bg-white rounded-lg shadow-sm max-h-60 overflow-y-auto">
+                <div className="absolute z-20 mt-2 w-full bg-white rounded-xl shadow-lg border border-slate-200 max-h-60 overflow-y-auto">
                     {filtradas.length > 0 ? (
                         filtradas.map((i) => (
                             <div
@@ -55,7 +55,13 @@ export default function EscuelaSelector({
                                 onClick={() => seleccionarInstitucion(i)}
                                 className="px-4 py-2 cursor-pointer transition hover:bg-[#0E5F63]/10 hover:text-[#0E5F63]"
                             >
-                                {i.nombre}
+                                <div className="font-medium">{i.nombre}</div>
+
+                                {i.clave_escolar && (
+                                    <div className="text-xs text-gray-400">
+                                        {i.clave_escolar}
+                                    </div>
+                                )}
                             </div>
                         ))
                     ) : (
@@ -69,18 +75,20 @@ export default function EscuelaSelector({
             {/* Crear escuela con contorno */}
             {/* Crear escuela con contorno */}
             {crearModo && (
-                <div className="mt-3 border border-gray-200 rounded-xl p-4 bg-white shadow-sm space-y-4">
+                <div className="mt-3 border border-gray-200 rounded-xl p-3 bg-white shadow-sm space-y-3">
 
                     {/* Título */}
-                    <div className="text-sm font-medium text-gray-600">
+                    <div className="text-xs font-medium text-gray-500">
                         Crear escuela
                     </div>
 
-                    {/* Inputs en la misma línea */}
-                    <div className="flex gap-3">
+                    {/* Inputs */}
+                    <div className="flex gap-2">
 
                         {/* Escuela */}
-                        <div className="flex-1 border border-gray-200 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-[#0E5F63]">
+                        <div className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 
+        focus-within:border-[#0E5F63] transition">
+
                             <Input
                                 placeholder="Nombre de la escuela"
                                 value={nuevaEscuela.nombre}
@@ -90,12 +98,17 @@ export default function EscuelaSelector({
                                         nombre: e.target.value,
                                     })
                                 }
-                                className="border-0 focus:outline-none w-full"
+                                className="w-full text-sm h-6 p-0 border-0 bg-transparent
+             outline-none
+             focus:outline-none focus:ring-0 focus:ring-transparent
+             focus-visible:outline-none focus-visible:ring-0"
                             />
                         </div>
 
                         {/* Clave */}
-                        <div className="w-40 border border-gray-200 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-[#0E5F63]">
+                        <div className="w-32 border border-gray-200 rounded-lg px-2 py-1.5 
+        focus-within:border-[#0E5F63] transition">
+
                             <Input
                                 placeholder="Clave"
                                 value={nuevaEscuela.clave_escolar}
@@ -105,20 +118,23 @@ export default function EscuelaSelector({
                                         clave_escolar: e.target.value,
                                     })
                                 }
-                                className="border-0 focus:outline-none w-full"
+                                className="w-full text-sm h-6 p-0 border-0 bg-transparent
+             outline-none
+             focus:outline-none focus:ring-0 focus:ring-transparent
+             focus-visible:outline-none focus-visible:ring-0"
                             />
                         </div>
 
                     </div>
 
                     {/* Acciones */}
-                    <div className="flex justify-end gap-5 text-sm pt-1">
+                    <div className="flex justify-end gap-4 text-xs pt-1">
 
                         <button
                             onClick={() => setCrearModo(false)}
                             className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition"
                         >
-                            <X size={16} />
+                            <X size={14} />
                             Cancelar
                         </button>
 
@@ -126,7 +142,7 @@ export default function EscuelaSelector({
                             onClick={handleCrearEscuela}
                             className="flex items-center gap-1 text-[#0E5F63] font-medium hover:opacity-80 transition"
                         >
-                            <Check size={16} />
+                            <Check size={14} />
                             Crear
                         </button>
 

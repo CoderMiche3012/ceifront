@@ -10,16 +10,25 @@ export default function beneficiarioFiltros({
 }) {
   const opcionesFiltros = [
     {
-      key: "estatus",
-      label: "Estatus",
-      options: [
-        { value: "todos", label: "Todas las visitas" },
-        { value: "Activo", label: "Activo" },
-        { value: "Inactivo", label: "Inactivo" },
-        { value: "Graduado", label: "Graduado" },
-        { value: "Pausa", label: "En Pausa" },
-      ],
-    },
+  key: "nivel",
+  label: "Nivel",
+  options: [
+    { value: "todos", label: "Todos  los Niveles" },
+    { value: "preescolar", label: "Preescolar" },
+    { value: "primaria", label: "Primaria" },
+    { value: "secundaria", label: "Secundaria" },
+  ],
+},
+{
+  key: "rendimiento",
+  label: "Rendimiento",
+  options: [
+    { value: "todos", label: "Todos los Rendimientos" },
+    { value: "bajo", label: "Bajo" },
+    { value: "medio", label: "Medio" },
+    { value: "alto", label: "Alto" },
+  ],
+}
   ];
 
   return (

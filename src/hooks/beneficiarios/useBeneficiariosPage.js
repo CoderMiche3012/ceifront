@@ -4,6 +4,8 @@ import { obtenerExpediente } from "../../services/expedientesService";
 import { obtenerBeneficiario } from "../../services/beneficiariosService";
 const INITIAL_FILTERS = {
   estatus: "todos",
+  nivel: "todos",
+  rendimiento: "todos",
 };
 
 export const useBeneficiariosPage = (pageSize = 4) => {
@@ -33,9 +35,39 @@ export const useBeneficiariosPage = (pageSize = 4) => {
             ? b.id_expediente?.id_expediente
             : b.id_expediente;
 
+        const expediente = expedientesMap.get(String(id)) || b.id_expediente;
+
+        //ordenar seguimientos por id_periodo (o id_seguimiento)
+        const seguimientos = b.historial_seguimientos || [];
+
+        const ultimoSeguimiento = [...seguimientos].sort(
+          (a, b) => b.id_periodo - a.id_periodo
+        )[0];
+        const estatus = ultimoSeguimiento?.estatus || "Sin seguimiento";
+        let promedio = null;
+        const boletas =
+          ultimoSeguimiento?.datos_escolares?.boletas || [];
+
+        if (boletas.length > 0) {
+          const suma = boletas.reduce(
+            (acc, b) => acc + Number(b.promedio_boleta || 0),
+            0
+          );
+          promedio = (suma / boletas.length).toFixed(1);
+        }
+        const escolaridad =
+          ultimoSeguimiento?.datos_escolares?.id_escolaridad;
+
+        const nivelGrado = escolaridad
+          ? `${escolaridad.nivel_escolar} ${escolaridad.grado_escolar}`
+          : "Sin datos";
+
         return {
           ...b,
-          expediente: expedientesMap.get(String(id)) || b.id_expediente,
+          expediente,
+          estatus,
+          promedio,
+          nivelGrado,
         };
       });
     },
@@ -50,16 +82,28 @@ export const useBeneficiariosPage = (pageSize = 4) => {
 
     return data.filter((item) => {
       const nombre = `${item.expediente?.nombre || ""} ${item.expediente?.apellido_p || ""}`.toLowerCase();
-
       const matchSearch =
         !searchLower || nombre.includes(searchLower);
-
       const status = String(item.estatus || "").toLowerCase();
-
       const matchStatus =
         statusFilter === "todos" || status === statusFilter;
+      const nivel = item.nivelGrado?.toLowerCase() || "";
+      const matchNivel =
+        filters.nivel === "todos" ||
+        nivel.includes(filters.nivel.toLowerCase());
+      const promedio = Number(item.promedio);
+      let rendimiento = "sin_datos";
+      if (!isNaN(promedio)) {
+        if (promedio < 6) rendimiento = "bajo";
+        else if (promedio < 8) rendimiento = "medio";
+        else rendimiento = "alto";
+      }
 
-      return matchSearch && matchStatus;
+      const matchRendimiento =
+        filters.rendimiento === "todos" ||
+        rendimiento === filters.rendimiento;
+
+      return matchSearch && matchStatus && matchNivel && matchRendimiento;
     });
   }, [data, search, filters]);
 

@@ -28,10 +28,10 @@ export const mainMenu = [
     permission: "Ver Donadores",
   },
   {
-    label: "Voluntarios",
-    path: "/app/voluntarios",
+    label: "Asistencias",
+    path: "/app/asistencias",
     icon: HiOutlineUsers,
-    permission: "Ver Voluntarios",
+    permission: "Ver Beneficiarios",
   },
 ]
 

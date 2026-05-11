@@ -10,6 +10,7 @@ import ModalResultado from "../../shared/ModalResultado";
 import ModalConfirmacion from "../../shared/ModalConfirmacion";
 import useHistorialDonativos from "../../../hooks/donadores/useHistorialDonativos";
 import Alerta from "../../ui/AlertaError";
+import {formatMoney} from "../../../utils/formatMoney";
 
 const PAGE_SIZE = 2;
 export default function HistorialDonativos({ data }) {
@@ -38,7 +39,7 @@ export default function HistorialDonativos({ data }) {
         handleConfirmarGuardado,
         changePage,
         handleSearchChange,
-        errorForm,setErrorForm
+        errorForm, setErrorForm
     } = useHistorialDonativos(data);
     const cerrarModal = () => { setErrorForm(""); cerrarModalOriginal(); };
     return (
@@ -51,7 +52,11 @@ export default function HistorialDonativos({ data }) {
                     const search = searchByPeriodo[periodo.id_periodo] || "";
                     const baseItems = donativos.filter((d) => Number(d.id_periodo) === Number(periodo.id_periodo));
                     const items = baseItems.filter((d) => d.concepto?.toLowerCase().includes(search.toLowerCase()));
-                    const total = items.reduce((sum, item) => sum + Number(item.monto || 0), 0);
+                    const totalPorMoneda = items.reduce((acc, item) => {
+                        const moneda = item.moneda || "MXN";
+                        acc[moneda] = (acc[moneda] || 0) + Number(item.monto || 0);
+                        return acc;
+                    }, {});
                     const abierto = openId === periodo.id_periodo;
                     const currentPage = pages[periodo.id_periodo] || 1;
                     const totalPages = Math.ceil(items.length / PAGE_SIZE) || 1;
@@ -78,7 +83,13 @@ export default function HistorialDonativos({ data }) {
                                             Total del periodo
                                         </p>
                                         <p className="text-sm font-bold text-teal-600">
-                                            ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            <div className="text-right space-y-1">
+  {Object.entries(totalPorMoneda).map(([moneda, total]) => (
+    <p key={moneda} className="text-sm font-bold text-teal-600">
+      {formatMoney(total, moneda)}
+    </p>
+  ))}
+</div>
                                         </p>
                                     </div>
                                     <ChevronDown
@@ -167,22 +178,28 @@ export default function HistorialDonativos({ data }) {
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-5">
+                        <div className="p-6 space-y-6">
+
                             <Alerta mensaje={errorForm} tipo="error" />
+
+                            {/* CONCEPTO */}
                             <div className="space-y-1.5">
                                 <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                                     <Tag className="w-4 h-4 text-slate-400" /> Concepto
                                 </label>
                                 <input
                                     type="text"
-                                    placeholder="Concepto del donativo"
+                                    placeholder="Ej. Colecta anual"
                                     value={form.concepto}
                                     onChange={(e) => setForm({ ...form, concepto: e.target.value })}
-                                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all"
+                                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 transition-all"
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            {/* FILA PRINCIPAL */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                                {/* MONTO */}
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                                         <DollarSign className="w-4 h-4 text-slate-400" /> Monto
@@ -192,10 +209,27 @@ export default function HistorialDonativos({ data }) {
                                         placeholder="0.00"
                                         value={form.monto}
                                         onChange={(e) => setForm({ ...form, monto: e.target.value })}
-                                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all"
+                                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600"
                                     />
                                 </div>
 
+                                {/* MONEDA */}
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium text-slate-700">
+                                        Moneda
+                                    </label>
+                                    <select
+                                        value={form.moneda}
+                                        onChange={(e) => setForm({ ...form, moneda: e.target.value })}
+                                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 bg-white"
+                                    >
+                                        <option value="MXN">MXN</option>
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                    </select>
+                                </div>
+
+                                {/* FECHA */}
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                                         <Calendar className="w-4 h-4 text-slate-400" /> Fecha
@@ -204,11 +238,11 @@ export default function HistorialDonativos({ data }) {
                                         type="date"
                                         value={form.fecha}
                                         onChange={(e) => setForm({ ...form, fecha: e.target.value })}
-                                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all"
+                                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600"
                                     />
                                 </div>
-                            </div>
 
+                            </div>
                         </div>
 
                         <div className="px-6 py-4 bg-slate-50 border-t flex justify-end gap-3">
@@ -264,8 +298,11 @@ export default function HistorialDonativos({ data }) {
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-5">
+                        <div className="p-6 space-y-6">
+
                             <Alerta mensaje={errorForm} tipo="error" />
+
+                            {/* CONCEPTO */}
                             <div className="space-y-1.5">
                                 <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                                     <Tag className="w-4 h-4 text-slate-400" /> Concepto
@@ -279,7 +316,10 @@ export default function HistorialDonativos({ data }) {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            {/* FILA PRINCIPAL */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                                {/* MONTO */}
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                                         <DollarSign className="w-4 h-4 text-slate-400" /> Monto
@@ -289,10 +329,27 @@ export default function HistorialDonativos({ data }) {
                                         placeholder="0.00"
                                         value={form.monto}
                                         onChange={(e) => setForm({ ...form, monto: e.target.value })}
-                                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 transition-all"
+                                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600"
                                     />
                                 </div>
 
+                                {/* MONEDA */}
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium text-slate-700">
+                                        Moneda
+                                    </label>
+                                    <select
+                                        value={form.moneda}
+                                        onChange={(e) => setForm({ ...form, moneda: e.target.value })}
+                                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 bg-white"
+                                    >
+                                        <option value="MXN">MXN</option>
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                    </select>
+                                </div>
+
+                                {/* FECHA */}
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                                         <Calendar className="w-4 h-4 text-slate-400" /> Fecha
@@ -301,11 +358,11 @@ export default function HistorialDonativos({ data }) {
                                         type="date"
                                         value={form.fecha}
                                         onChange={(e) => setForm({ ...form, fecha: e.target.value })}
-                                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 transition-all"
+                                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600"
                                     />
                                 </div>
-                            </div>
 
+                            </div>
                         </div>
 
                         <div className="px-6 py-4 bg-slate-50 border-t flex justify-end gap-3">
@@ -352,3 +409,4 @@ export default function HistorialDonativos({ data }) {
         </div>
     );
 }
+

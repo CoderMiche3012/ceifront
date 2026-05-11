@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {crearBeneficiario,eliminarBeneficiario, } from "../../services/beneficiariosService";
-import {crearExpediente,eliminarExpediente,} from "../../services/expedientesService";
-
+import { crearBeneficiario, eliminarBeneficiario, } from "../../services/beneficiariosService";
+import { crearExpediente, eliminarExpediente, } from "../../services/expedientesService";
+import { crearSeguimiento } from "../../services/seguimientoService";
+import { obtenerPeriodos } from "../../services/periodoService";
 const getErrorMessage = (err) =>
   err?.response?.data?.message ||
   err?.message ||
@@ -96,6 +97,26 @@ export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
         });
         const beneficiario = resBen?.data || resBen;
         idBeneficiario = beneficiario?.id_beneficiario;
+        //obtener todos los periodos
+        const resPeriodos = await obtenerPeriodos();
+        const periodos = resPeriodos?.data || resPeriodos;
+
+        //buscar el activo
+        const periodoActivo = periodos.find(p => p.estado === true);
+
+        if (!periodoActivo) {
+          throw new Error("No hay periodo activo");
+        }
+
+        const idPeriodo = periodoActivo.id_periodo;
+
+        //crear seguimiento
+        await crearSeguimiento({
+          id_beneficiario: idBeneficiario,
+          id_periodo: idPeriodo,
+          nota_seguimiento: "Seguimiento creado automáticamente al registrar beneficiario",
+        });
+
         return beneficiario;
       } catch (error) {
         try {

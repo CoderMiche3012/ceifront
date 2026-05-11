@@ -33,7 +33,7 @@ export default function Encabezado({ setSidebarOpen }) {
       if (!storedData || !token) return;
       try {
         const userLocal = JSON.parse(storedData);
-        const data = await obtenerPerfil(userLocal.id_usuario || userLocal.id, token);        
+        const data = await obtenerPerfil(userLocal.id_usuario || userLocal.id, token);
         if (data && isMounted) {
           handleUserUpdate(data);
         }
@@ -50,7 +50,7 @@ export default function Encabezado({ setSidebarOpen }) {
   const cerrarSesion = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("access");
-    localStorage.removeItem("refresh"); 
+    localStorage.removeItem("refresh");
     navigate("/", { replace: true });
   };
 
@@ -65,7 +65,15 @@ export default function Encabezado({ setSidebarOpen }) {
             aria-label="Abrir menú lateral"
           >
             <span className="text-2xl">☰</span>
-          </button>          
+          </button>
+
+          {/* NOMBRE SISTEMA */}
+          <div className="hidden sm:flex flex-col leading-tight">
+            <h1 className="text-xl md:text-2xl font-extrabold text-[#2F3B3B] tracking-tight">
+              Centro de Esperanza Infantil A.C
+            </h1>
+
+          </div>
         </div>
 
         <SubMenu

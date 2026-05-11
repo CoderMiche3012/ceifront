@@ -1,5 +1,6 @@
 import DatosTabla from "../../tablas/DatosTabla";
 import { Pencil } from "lucide-react";
+import  {formatMoney} from "../../../utils/formatMoney";
 
 const COLUMNS = [
   { key: "concepto", label: "Concepto" },
@@ -12,7 +13,7 @@ export default function DonativoTabla({
   donativos = [],
   onEditar,
 }) {
-  
+
   const renderCell = (item, key) => {
     switch (key) {
       case "concepto":
@@ -25,7 +26,7 @@ export default function DonativoTabla({
       case "monto":
         return (
           <span className="text-sm font-medium text-emerald-600">
-            ${Number(item.monto).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatMoney(item.monto, item.moneda)}
           </span>
         );
 
@@ -56,7 +57,7 @@ export default function DonativoTabla({
     }
   };
   return (
-    
+
     <DatosTabla
       columns={COLUMNS}
       data={donativos}

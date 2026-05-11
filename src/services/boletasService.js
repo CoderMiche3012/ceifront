@@ -1,11 +1,11 @@
 import API from "./api";
-const BASE_URL = "/api/beneficiarios/seguimientos";
+const BASE_URL = "/api/escolaridad/boletas";
 import { formatError } from "../utils/errorHandlers";
 
-//obtener periodos
-export const obtenerSeguimientos = async () => {
+
+export const obtenerBoletas = async () => {
   try {
-    const res = await API.get(`${BASE_URL}/`);
+    const res = await API.get(`${BASE_URL}`);
     return res.data;
   } catch (error) {
     console.log(error)
@@ -17,7 +17,7 @@ export const obtenerSeguimientos = async () => {
   }
 };
 
-export const obtenerSeguimiento = async (id) => {
+export const obtenerBoleta = async (id) => {
   try {
     const res = await API.get(`${BASE_URL}/${id}/`);
     return res.data;
@@ -31,7 +31,7 @@ export const obtenerSeguimiento = async (id) => {
   }
 };
 //crear periodos
-export const crearSeguimiento = async (payload) => {
+export const crearBoleta = async (payload) => {
   try {
     const res = await API.post(`${BASE_URL}/`, payload);
     return res.data;
@@ -46,9 +46,9 @@ export const crearSeguimiento = async (payload) => {
 };
 
 //editar o desactivar periodo
-export const actualizarSeguimiento = async (id, payload) => {
+export const actualizarBoleta = async (id, payload) => {
   try {
-    const res = await API.patch(`${BASE_URL}/${id}/`, payload);
+    const res = await API.put(`${BASE_URL}/${id}/`, payload);
     return res.data;
   } catch (error) {
     console.log(error)
@@ -63,29 +63,3 @@ export const actualizarSeguimiento = async (id, payload) => {
   }
 };
 
-export const obtenerSeguimientosPorBeneficiario = async (id_beneficiario) => {
-  try {
-    const res = await API.get(`${BASE_URL}/`, {
-      params: { id_beneficiario }
-    });
-    return res.data;
-  } catch (error) {
-    const errorData = error.response?.data || error;
-    throw new Error(formatError(errorData));
-  }
-};
-
-export const obtenerSeguimientoPorPeriodo = async ({
-  id_beneficiario,
-  id_periodo,
-}) => {
-  try {
-    const res = await API.get(`${BASE_URL}/`, {
-      params: { id_beneficiario, id_periodo }
-    });
-    return res.data;
-  } catch (error) {
-    const errorData = error.response?.data || error;
-    throw new Error(formatError(errorData));
-  }
-};

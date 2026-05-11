@@ -15,7 +15,6 @@ import ModalResultado from "../../../shared/ModalResultado";
 
 export default function SeguimientoLinea({ data }) {
   const id_beneficiario = data.id_beneficiario;
-
   const queryClient = useQueryClient();
 
   // 🔹 Estados
@@ -25,9 +24,12 @@ export default function SeguimientoLinea({ data }) {
   const [estatus, setEstatus] = useState("Activo");
   const [error, setError] = useState("");
 
-  // 🔥 nuevos estados UX
+  // 🔥 UX
   const [confirmar, setConfirmar] = useState(null);
   const [exito, setExito] = useState(false);
+
+  const [confirmarEdicion, setConfirmarEdicion] = useState(false);
+  const [exitoEdicion, setExitoEdicion] = useState(false);
 
   // 🔹 Queries
   const { data: seguimientos = [], isLoading: loadingSeg } = useQuery({
@@ -52,13 +54,19 @@ export default function SeguimientoLinea({ data }) {
   });
 
   const mutationEditar = useMutation({
-    mutationFn: actualizarSeguimiento,
+    mutationFn: ({ id_seguimiento, ...data }) =>
+      actualizarSeguimiento(id_seguimiento, data),
+
     onSuccess: () => {
       queryClient.invalidateQueries(["seguimientos"]);
+      setConfirmarEdicion(false);
       setEditando(null);
+      setExitoEdicion(true);
     },
+
     onError: () => {
       setError("Error al actualizar");
+      setConfirmarEdicion(false);
     },
   });
 
@@ -86,16 +94,14 @@ export default function SeguimientoLinea({ data }) {
   );
 
   // 🔥 acciones
-  const handleCrear = (id_periodo) => {
-    setConfirmar(id_periodo);
-  };
+  const handleCrear = (id_periodo) => setConfirmar(id_periodo);
 
   const confirmarCreacion = () => {
     mutationCrear.mutate({
       id_beneficiario,
       id_periodo: confirmar,
       estatus: "Activo",
-      nota_seguimiento: ".",
+      nota_seguimiento: "Seguimiento creado manualmente",
     });
   };
 
@@ -111,7 +117,10 @@ export default function SeguimientoLinea({ data }) {
       setError("La nota es obligatoria");
       return;
     }
+    setConfirmarEdicion(true);
+  };
 
+  const confirmarActualizacion = () => {
     mutationEditar.mutate({
       id_seguimiento: editando.id_seguimiento,
       estatus,
@@ -136,7 +145,6 @@ export default function SeguimientoLinea({ data }) {
 
       {/* TIMELINE */}
       <div className="space-y-6">
-
         {!listaOrdenada.length && (
           <p className="text-sm text-slate-500 text-center py-6">
             Sin seguimientos
@@ -150,15 +158,13 @@ export default function SeguimientoLinea({ data }) {
             <div key={item.id_seguimiento} className="flex gap-4">
 
               <div className="flex flex-col items-center">
-                <div className={`w-3 h-3 rounded-full ${esReciente ? "bg-teal-500" : "bg-slate-300"
-                  }`} />
+                <div className={`w-3 h-3 rounded-full ${esReciente ? "bg-teal-500" : "bg-slate-300"}`} />
                 {index !== listaOrdenada.length - 1 && (
                   <div className="w-px h-full bg-slate-200" />
                 )}
               </div>
 
               <div className="flex-1 border border-slate-100 rounded-xl p-4">
-
                 <div className="flex justify-between items-center mb-2">
                   <p className="text-sm font-semibold text-slate-700">
                     {periodosMap[item.id_periodo]}
@@ -173,17 +179,17 @@ export default function SeguimientoLinea({ data }) {
                   </button>
                 </div>
 
-                <span className={`inline-block text-xs font-semibold px-2 py-1 rounded-full mb-2 ${esReciente
+                <span className={`inline-block text-xs font-semibold px-2 py-1 rounded-full mb-2 ${
+                  esReciente
                     ? "bg-teal-100 text-teal-700"
                     : "bg-slate-100 text-slate-600"
-                  }`}>
+                }`}>
                   {item.estatus}
                 </span>
 
                 <p className="text-sm text-slate-600">
                   {item.nota_seguimiento || "--"}
                 </p>
-
               </div>
             </div>
           );
@@ -198,73 +204,7 @@ export default function SeguimientoLinea({ data }) {
         </BotonInterno>
       </div>
 
-      {/* MODAL CREAR */}
-      {mostrarSelector && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200">
-
-            {/* HEADER */}
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">
-                  Agregar seguimiento
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Selecciona un periodo disponible
-                </p>
-              </div>
-
-              <button
-                onClick={() => setMostrarSelector(false)}
-                className="p-2 rounded-lg hover:bg-slate-100 transition"
-              >
-                <X className="w-4 h-4 text-slate-500" />
-              </button>
-            </div>
-
-            {/* CONTENIDO */}
-            {periodosDisponibles.length === 0 ? (
-              <div className="text-center py-6 border border-slate-100 rounded-xl">
-                <p className="text-sm text-slate-500">
-                  Todos los periodos ya están asignados
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-
-                {periodosDisponibles.map((p) => (
-                  <button
-                    key={p.id_periodo}
-                    onClick={() => handleCrear(p.id_periodo)}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl border border-slate-200 hover:bg-teal-50 hover:border-teal-200 transition group"
-                  >
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-teal-700">
-                      {p.ciclo_escolar}
-                    </span>
-
-                    <Plus className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
-                  </button>
-                ))}
-
-              </div>
-            )}
-
-            {/* FOOTER */}
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => setMostrarSelector(false)}
-                className="text-sm text-slate-500 hover:text-slate-700"
-              >
-                Cerrar
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* 🔥 CONFIRMACIÓN */}
+      {/* CONFIRMAR CREACIÓN */}
       <ModalConfirmacion
         open={!!confirmar}
         title="Asignar periodo"
@@ -274,7 +214,7 @@ export default function SeguimientoLinea({ data }) {
         loading={mutationCrear.isLoading}
       />
 
-      {/* 🔥 ÉXITO */}
+      {/* ÉXITO CREACIÓN */}
       <ModalResultado
         open={exito}
         title="Seguimiento creado"
@@ -284,41 +224,119 @@ export default function SeguimientoLinea({ data }) {
 
       {/* MODAL EDITAR */}
       {editando && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4">
 
-            <h3 className="text-lg font-bold mb-4">Editar seguimiento</h3>
+    <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in duration-300">
 
-            <Alerta mensaje={error} />
+      {/* HEADER */}
+      <div className="flex items-center justify-between p-6 border-b bg-white">
+        <div>
+          <h3 className="text-xl font-black text-slate-800 tracking-tight">
+            Editar seguimiento
+          </h3>
+          <p className="text-xs text-slate-500 mt-1">
+            Modifica la nota o el estatus del periodo
+          </p>
+        </div>
 
-            <textarea
-              value={nota}
-              onChange={(e) => setNota(e.target.value)}
-              className="w-full border rounded-xl p-3 mb-3"
-            />
+        <button
+          onClick={() => setEditando(null)}
+          className="p-2 rounded-full hover:bg-slate-100 transition"
+        >
+          <X className="w-4 h-4 text-slate-400" />
+        </button>
+      </div>
 
+      {/* CONTENIDO */}
+      <div className="p-6 space-y-6">
+
+        <Alerta mensaje={error} />
+
+        {/* NOTA */}
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            Nota del seguimiento
+          </label>
+
+          <textarea
+            value={nota}
+            onChange={(e) => setNota(e.target.value)}
+            placeholder="Escribe una observación o detalle importante..."
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
+            rows={4}
+          />
+        </div>
+
+        {/* ESTATUS */}
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            Estatus
+          </label>
+
+          <div className="mt-2 relative">
             <select
               value={estatus}
               onChange={(e) => setEstatus(e.target.value)}
-              className="w-full border rounded-xl p-3"
+              className="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
             >
-              <option>Activo</option>
-              <option>Inactivo</option>
+              <option value="Activo">Activo</option>
+              <option value="Inactivo">Inactivo</option>
             </select>
 
-            <div className="flex justify-end gap-3 mt-4">
-              <button onClick={() => setEditando(null)}>Cancelar</button>
-              <button
-                onClick={guardarEdicion}
-                className="bg-teal-600 text-white px-4 py-2 rounded-xl"
-              >
-                Guardar
-              </button>
-            </div>
-
+            {/* indicador visual */}
+            <span
+              className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold px-2 py-0.5 rounded-full ${
+                estatus === "Activo"
+                  ? "bg-teal-100 text-teal-700"
+                  : "bg-slate-200 text-slate-600"
+              }`}
+            >
+              {estatus}
+            </span>
           </div>
         </div>
-      )}
+
+      </div>
+
+      {/* FOOTER */}
+      <div className="flex justify-end gap-3 p-6 border-t bg-slate-50">
+
+        <button
+          onClick={() => setEditando(null)}
+          className="px-5 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 transition"
+        >
+          Cancelar
+        </button>
+
+        <button
+          onClick={guardarEdicion}
+          className="px-6 py-2 bg-teal-600 text-white text-sm font-bold rounded-2xl shadow-md hover:bg-teal-700 active:scale-95 transition"
+        >
+          Guardar cambios
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+)}
+      {/* CONFIRMAR EDICIÓN */}
+      <ModalConfirmacion
+        open={confirmarEdicion}
+        title="Confirmar cambios"
+        description="¿Deseas actualizar este seguimiento?"
+        onConfirm={confirmarActualizacion}
+        onClose={() => setConfirmarEdicion(false)}
+        loading={mutationEditar.isLoading}
+      />
+
+      {/* ÉXITO EDICIÓN */}
+      <ModalResultado
+        open={exitoEdicion}
+        title="Seguimiento actualizado"
+        message="Los cambios se guardaron correctamente"
+        onClose={() => setExitoEdicion(false)}
+      />
 
     </div>
   );
