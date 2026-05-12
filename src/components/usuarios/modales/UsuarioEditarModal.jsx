@@ -66,7 +66,7 @@ export default function UsuarioEditarModal({
   const {
     formData, fieldErrors, generalError, loading, showPassword, showConfirmPassword, roleOptions, initials, fullName,
     setShowPassword, setShowConfirmPassword, handleClose, handleBackdropClick, handleChange, handleSubmit,
-    isConfirming,      // <-- Extraer del hook
+    isConfirming,      
     setIsConfirming
   } = useUsuarioEditarModal({
     open, user, roles, onClose, onSuccess,

@@ -2,12 +2,7 @@ import { Clock, PencilLine, Plus, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { obtenerPeriodos } from "../../../../services/periodoService";
-import {
-  obtenerSeguimientos,
-  crearSeguimiento,
-  actualizarSeguimiento,
-} from "../../../../services/seguimientoService";
-
+import {obtenerSeguimientos,crearSeguimiento,actualizarSeguimiento,} from "../../../../services/seguimientoService";
 import BotonInterno from "../../../ui/BotonInterno";
 import Alerta from "../../../ui/AlertaError";
 import ModalConfirmacion from "../../../shared/ModalConfirmacion";
@@ -16,22 +11,16 @@ import ModalResultado from "../../../shared/ModalResultado";
 export default function SeguimientoLinea({ data }) {
   const id_beneficiario = data.id_beneficiario;
   const queryClient = useQueryClient();
-
-  // 🔹 Estados
   const [mostrarSelector, setMostrarSelector] = useState(false);
   const [editando, setEditando] = useState(null);
   const [nota, setNota] = useState("");
   const [estatus, setEstatus] = useState("Activo");
   const [error, setError] = useState("");
-
-  // 🔥 UX
   const [confirmar, setConfirmar] = useState(null);
   const [exito, setExito] = useState(false);
-
   const [confirmarEdicion, setConfirmarEdicion] = useState(false);
   const [exitoEdicion, setExitoEdicion] = useState(false);
 
-  // 🔹 Queries
   const { data: seguimientos = [], isLoading: loadingSeg } = useQuery({
     queryKey: ["seguimientos"],
     queryFn: obtenerSeguimientos,
@@ -41,8 +30,6 @@ export default function SeguimientoLinea({ data }) {
     queryKey: ["periodos"],
     queryFn: obtenerPeriodos,
   });
-
-  // 🔥 MUTATIONS
   const mutationCrear = useMutation({
     mutationFn: crearSeguimiento,
     onSuccess: () => {
@@ -52,7 +39,6 @@ export default function SeguimientoLinea({ data }) {
       setExito(true);
     },
   });
-
   const mutationEditar = useMutation({
     mutationFn: ({ id_seguimiento, ...data }) =>
       actualizarSeguimiento(id_seguimiento, data),
@@ -70,7 +56,6 @@ export default function SeguimientoLinea({ data }) {
     },
   });
 
-  // 🔹 Map
   const periodosMap = Object.fromEntries(
     periodos.map((p) => [p.id_periodo, p.ciclo_escolar])
   );
@@ -93,7 +78,6 @@ export default function SeguimientoLinea({ data }) {
     (p) => !usadosIds.includes(p.id_periodo)
   );
 
-  // 🔥 acciones
   const handleCrear = (id_periodo) => setConfirmar(id_periodo);
 
   const confirmarCreacion = () => {
@@ -143,9 +127,6 @@ export default function SeguimientoLinea({ data }) {
         </h3>
       </div>
 
-      {/* TIMELINE */}
-
-      {/* TIMELINE */}
       <div className="max-h-[420px] overflow-y-auto pr-2">
         <div className="space-y-6">
 
@@ -200,8 +181,6 @@ export default function SeguimientoLinea({ data }) {
 
         </div>
       </div>
-
-      {/* BOTÓN */}
       <div className="sticky bottom-0 bg-white pt-6 mt-6 border-t border-slate-100 flex justify-center">
         <BotonInterno onClick={() => setMostrarSelector(true)}>
           <Plus className="w-4 h-4" />
@@ -214,7 +193,6 @@ export default function SeguimientoLinea({ data }) {
 
           <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-300">
 
-            {/* HEADER */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white">
 
               <div>
@@ -308,8 +286,6 @@ export default function SeguimientoLinea({ data }) {
           </div>
         </div>
       )}
-
-      {/* CONFIRMAR CREACIÓN */}
       <ModalConfirmacion
         open={!!confirmar}
         title="Asignar periodo"
@@ -318,22 +294,17 @@ export default function SeguimientoLinea({ data }) {
         onClose={() => setConfirmar(null)}
         loading={mutationCrear.isLoading}
       />
-
-      {/* ÉXITO CREACIÓN */}
       <ModalResultado
         open={exito}
         title="Seguimiento creado"
         message="El periodo fue asignado correctamente"
         onClose={() => setExito(false)}
       />
-
-      {/* MODAL EDITAR */}
       {editando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4">
 
           <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in duration-300">
 
-            {/* HEADER */}
             <div className="flex items-center justify-between p-6 border-b bg-white">
               <div>
                 <h3 className="text-xl font-black text-slate-800 tracking-tight">
@@ -372,7 +343,6 @@ export default function SeguimientoLinea({ data }) {
                 />
               </div>
 
-              {/* ESTATUS */}
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                   Estatus
@@ -388,7 +358,6 @@ export default function SeguimientoLinea({ data }) {
                     <option value="Inactivo">Inactivo</option>
                   </select>
 
-                  {/* indicador visual */}
                   <span
                     className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold px-2 py-0.5 rounded-full ${estatus === "Activo"
                       ? "bg-teal-100 text-teal-700"
@@ -402,7 +371,6 @@ export default function SeguimientoLinea({ data }) {
 
             </div>
 
-            {/* FOOTER */}
             <div className="flex justify-end gap-3 p-6 border-t bg-slate-50">
 
               <button
@@ -424,7 +392,6 @@ export default function SeguimientoLinea({ data }) {
           </div>
         </div>
       )}
-      {/* CONFIRMAR EDICIÓN */}
       <ModalConfirmacion
         open={confirmarEdicion}
         title="Confirmar cambios"
@@ -434,7 +401,6 @@ export default function SeguimientoLinea({ data }) {
         loading={mutationEditar.isLoading}
       />
 
-      {/* ÉXITO EDICIÓN */}
       <ModalResultado
         open={exitoEdicion}
         title="Seguimiento actualizado"

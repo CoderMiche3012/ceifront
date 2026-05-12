@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  crearBoleta,
-  actualizarBoleta,
-} from "../../../../../services/boletasService";
+import { crearBoleta, actualizarBoleta,} from "../../../../../services/boletasService";
 import ModalConfirmacion from "../../../../shared/ModalConfirmacion";
 import ModalResultado from "../../../../shared/ModalResultado";
 
@@ -35,16 +32,13 @@ export default function ModalBoleta({ open, onClose, boleta }) {
 
   const buildFormData = () => {
     const formData = new FormData();
-
     formData.append("tipo_boleta", boleta?.tipo_boleta);
     formData.append("periodo_boleta", boleta?.periodo_boleta);
     formData.append("promedio_boleta", form.promedio_boleta);
     formData.append("id_datos_escolares", boleta?.id_datos_escolares);
-
     if (form.archivo) {
       formData.append("archivo", form.archivo);
     }
-
     return formData;
   };
 
@@ -112,10 +106,8 @@ export default function ModalBoleta({ open, onClose, boleta }) {
 
   return (
     <>
-      {/* MODAL */}
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-40">
         <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-          {/* HEADER */}
           <div className="px-6 py-4 border-b bg-slate-50">
             <h3 className="text-lg font-bold text-slate-900">
               {boleta?.id_boleta ? "Editar boleta" : "Agregar boleta"}
@@ -125,7 +117,6 @@ export default function ModalBoleta({ open, onClose, boleta }) {
             </p>
           </div>
 
-          {/* BODY */}
           <div className="p-6 space-y-6">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-400 uppercase">
@@ -191,7 +182,6 @@ export default function ModalBoleta({ open, onClose, boleta }) {
             </div>
           </div>
 
-          {/* FOOTER */}
           <div className="px-6 py-4 border-t bg-slate-50 flex justify-end gap-3">
             <button
               onClick={onClose}

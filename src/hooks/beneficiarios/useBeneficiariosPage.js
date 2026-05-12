@@ -10,7 +10,7 @@ const INITIAL_FILTERS = {
   nivel: "todos",
   rendimiento: "todos",
   donador: "todos",
-  periodo: "actual", // 🔥 AGREGAR ESTO
+  periodo: "actual", 
 };
 
 export const useBeneficiariosPage = (pageSize = 4) => {
@@ -21,7 +21,6 @@ export const useBeneficiariosPage = (pageSize = 4) => {
 
   const PAGE_SIZE = pageSize;
 
-  // 🔥 BENEFICIARIOS + EXPEDIENTES + DONADORES
   const { data = [], isLoading, error, refetch } = useQuery({
     queryKey: ["beneficiarios"],
     queryFn: async () => {
@@ -63,8 +62,6 @@ export const useBeneficiariosPage = (pageSize = 4) => {
           expedientesMap.get(String(id)) || b.id_expediente;
 
         const seguimientos = b.historial_seguimientos || [];
-
-        // 🔥 SEGUIMIENTO POR PERIODO
         const seguimientoSeleccionado = (() => {
           if (!seguimientos.length) return null;
 
@@ -134,8 +131,6 @@ export const useBeneficiariosPage = (pageSize = 4) => {
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });
-
-  // 🔥 PERIODOS DESDE BACKEND (CORRECTO)
   const { data: periodosRes = [] } = useQuery({
     queryKey: ["periodos"],
     queryFn: obtenerPeriodos,
@@ -159,8 +154,6 @@ export const useBeneficiariosPage = (pageSize = 4) => {
 
   return [...base, ...mapeados];
 }, [periodosRes]);
-
-  // 🔥 FILTROS
   const filtered = useMemo(() => {
     const searchLower = search.trim().toLowerCase();
     const statusFilter = filters.estatus?.toLowerCase();
@@ -231,7 +224,6 @@ export const useBeneficiariosPage = (pageSize = 4) => {
     return filtered.slice(start, start + PAGE_SIZE);
   }, [filtered, safePage, PAGE_SIZE]);
 
-  // 🔥 HANDLERS
   const handleSearchChange = (value) => {
     setSearch(value);
     setCurrentPage(1);
@@ -269,7 +261,6 @@ export const useBeneficiariosPage = (pageSize = 4) => {
     PAGE_SIZE,
     refetch,
 
-    // 🔥 NUEVO
     periodosDisponibles,
     periodo,
     setPeriodo,

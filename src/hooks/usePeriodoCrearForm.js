@@ -43,10 +43,6 @@ export const usePeriodoCrearForm = (
       title: "",
       message: "",
     });
-
-  /* =========================================
-     🔥 ESCOLARIDADES
-  ========================================= */
   const escolaridades = [
     {
       id_escolaridad: 1,
@@ -164,9 +160,6 @@ export const usePeriodoCrearForm = (
     },
   ];
 
-  /* =========================================
-     🔹 VALIDAR PRE SUBMIT
-  ========================================= */
   const handlePreSubmit = (e) => {
 
     e.preventDefault();
@@ -203,10 +196,6 @@ export const usePeriodoCrearForm = (
 
     setShowConfirm(true);
   };
-
-  /* =========================================
-     🔥 CONFIRMAR CREACIÓN
-  ========================================= */
   const handleConfirmSave = async () => {
 
     setShowConfirm(false);
@@ -223,9 +212,6 @@ export const usePeriodoCrearForm = (
 
     try {
 
-      /* =====================================
-         🔹 OBTENER PERIODOS
-      ===================================== */
       const periodosActuales =
         await obtenerPeriodos();
 
@@ -234,9 +220,6 @@ export const usePeriodoCrearForm = (
           .trim()
           .toLowerCase();
 
-      /* =====================================
-         🔹 VALIDAR DUPLICADOS
-      ===================================== */
       if (
         periodosActuales.some(
           (p) =>
@@ -249,10 +232,6 @@ export const usePeriodoCrearForm = (
           `El periodo "${form.ciclo_escolar}" ya existe.`
         );
       }
-
-      /* =====================================
-         🔹 VALIDAR TRASLAPES
-      ===================================== */
       const inicioNuevo = new Date(
         form.fecha_inicio + "T00:00:00"
       );
@@ -284,17 +263,11 @@ export const usePeriodoCrearForm = (
         );
       }
 
-      /* =====================================
-         🔹 OBTENER PERIODO ACTIVO
-      ===================================== */
       periodoAnterior =
         periodosActuales.find(
           (p) => Number(p.estado) === 1
         );
 
-      /* =====================================
-         🔹 DESACTIVAR PERIODO ACTIVO
-      ===================================== */
       if (periodoAnterior) {
 
         await actualizarPeriodo(
@@ -305,10 +278,6 @@ export const usePeriodoCrearForm = (
           }
         );
       }
-
-      /* =====================================
-         🔥 CREAR NUEVO PERIODO
-      ===================================== */
       nuevoPeriodo =
         await crearPeriodo({
           ...form,
@@ -317,15 +286,8 @@ export const usePeriodoCrearForm = (
           estado: 1,
         });
 
-      /* =====================================
-         🔥 OBTENER SEGUIMIENTOS
-      ===================================== */
       const seguimientos =
         await obtenerSeguimientos();
-
-      /* =====================================
-         🔥 FILTRAR ACTIVOS
-      ===================================== */
       const seguimientosActivos =
         seguimientos.filter(
           (s) =>
@@ -334,14 +296,8 @@ export const usePeriodoCrearForm = (
             s.estatus === "Activo"
         );
 
-      /* =====================================
-         🔥 CREAR NUEVOS SEGUIMIENTOS
-      ===================================== */
       for (const seg of seguimientosActivos) {
 
-        /* =================================
-           🔹 EVITAR DUPLICADOS
-        ================================= */
         const existe =
           seguimientos.some(
             (s) =>
@@ -353,9 +309,6 @@ export const usePeriodoCrearForm = (
 
         if (existe) continue;
 
-        /* =================================
-           🔥 CREAR SEGUIMIENTO
-        ================================= */
         const nuevoSeguimiento =
           await crearSeguimiento({
             id_beneficiario:
@@ -373,10 +326,6 @@ export const usePeriodoCrearForm = (
         seguimientosCreados.push(
           nuevoSeguimiento.id_seguimiento
         );
-
-        /* =================================
-           🔥 HEREDAR DATOS ESCOLARES
-        ================================= */
         if (seg.datos_escolares) {
 
           const escolaridadActual =
@@ -441,10 +390,6 @@ export const usePeriodoCrearForm = (
           });
         }
       }
-
-      /* =====================================
-         🔥 ÉXITO
-      ===================================== */
       setResultModal({
         open: true,
         type: "success",
@@ -462,10 +407,6 @@ export const usePeriodoCrearForm = (
       });
 
     } catch (err) {
-
-      /* =====================================
-         🔥 ROLLBACK
-      ===================================== */
       try {
 
         await Promise.all(
@@ -515,9 +456,6 @@ export const usePeriodoCrearForm = (
     }
   };
 
-  /* =========================================
-     🔹 CERRAR MODAL
-  ========================================= */
   const handleFinalClose = () => {
 
     setResultModal({

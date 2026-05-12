@@ -1,20 +1,11 @@
 import { useState } from "react";
-import {
-  X,
-  GraduationCap,
-  School,
-  BookOpen,
-} from "lucide-react";
-
+import {X,GraduationCap,School,BookOpen,} from "lucide-react";
 import Field from "../../../../ui/Field";
 import Input from "../../../../ui/Input";
 import Alerta from "../../../../ui/AlertaError";
-
 import ModalResultado from "../../../../shared/ModalResultado";
 import ModalConfirmacion from "../../../../shared/ModalConfirmacion";
-
 import useDatosEscolares from "../../../../../hooks/beneficiarios/seguimiento/useDatosEscolares";
-
 import EscuelaSelector from "./EscuelaSelector";
 import EscolaridadSelector from "./EscolaridadSelector";
 
@@ -79,9 +70,6 @@ export default function ModalDatosEscolares({
             <Alerta mensaje={datos.error} />
 
             <div className="space-y-8">
-
-              {/* ================= ESCUELA ================= */}
-
               <section>
 
                 <div className="flex items-center gap-2 mb-4">
@@ -93,13 +81,13 @@ export default function ModalDatosEscolares({
                 </div>
 
                 <Field label="Escuela" required>
-                  <EscuelaSelector {...datos} />
+                  <EscuelaSelector
+                    {...datos}
+                    municipios={datos.municipios}
+                  />
                 </Field>
 
               </section>
-
-              {/* ================= NIVEL ================= */}
-
               <section>
 
                 <div className="flex items-center gap-2 mb-4">
@@ -111,8 +99,6 @@ export default function ModalDatosEscolares({
                 </div>
 
                 <div className="space-y-4">
-
-                  {/* NIVEL EDUCATIVO */}
                   <Field
                     label="Nivel educativo"
                     required
@@ -157,8 +143,6 @@ export default function ModalDatosEscolares({
                       </option>
                     </select>
                   </Field>
-
-                  {/* ESCOLARIDAD */}
                   <Field
                     label="Escolaridad"
                     required
@@ -171,8 +155,6 @@ export default function ModalDatosEscolares({
                 </div>
 
               </section>
-
-              {/* ================= DETALLES ================= */}
 
               <section>
 
@@ -243,7 +225,6 @@ export default function ModalDatosEscolares({
 
                   </Field>
 
-                  {/* MODALIDAD */}
                   <Field label="Periodo académico" required>
                     <select
                       name="modalidad_educativa"
@@ -392,3 +373,5 @@ export default function ModalDatosEscolares({
     </>
   );
 }
+
+

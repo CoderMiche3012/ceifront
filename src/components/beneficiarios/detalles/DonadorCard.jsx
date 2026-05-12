@@ -3,24 +3,17 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { obtenerDonador } from "../../../services/donadoresService";
 
-// 1. Solo recibimos data
 export default function DonadorCard({ data }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [donadores, setDonadores] = useState([]);
-
-  // 2. Memorizamos la función de búsqueda para evitar renders innecesarios
   const buscarDonadores = useCallback(async () => {
     if (!data?.id_beneficiario) return;
 
     try {
       setLoading(true);
-      const response = await obtenerDonador();
-      
-      // Normalizamos la respuesta
+      const response = await obtenerDonador();      
       const lista = Array.isArray(response) ? response : response.results || [];
-
-      // Filtramos: buscamos si el ID de este beneficiario está en la lista de apoyo del donador
       const encontrados = lista.filter((item) =>
         item.beneficiarios_apoyados?.includes(data.id_beneficiario)
       );
@@ -60,7 +53,6 @@ export default function DonadorCard({ data }) {
         )}
       </div>
 
-      {/* CUERPO DEL COMPONENTE (Misma lógica visual excelente que tenías) */}
       {loading ? (
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 text-center">
           <Loader2 className="w-6 h-6 animate-spin text-teal-500 mx-auto mb-3" />

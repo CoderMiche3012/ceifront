@@ -1,21 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import Input from "../../../../ui/Input";
 
-export default function EscolaridadSelector({
-  gradosMock,
-  setForm,
-  form,
-}) {
+export default function EscolaridadSelector({gradosMock,setForm,form,}) {
   const [busqueda, setBusqueda] =
     useState("");
 
   const [mostrar, setMostrar] =
     useState(false);
-
   const ref = useRef();
-
-  /* ================= CLICK OUTSIDE ================= */
-
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (
@@ -37,9 +29,6 @@ export default function EscolaridadSelector({
         handleClickOutside
       );
   }, []);
-
-  /* ================= VALOR INICIAL ================= */
-
   useEffect(() => {
     if (form?.id_escolaridad) {
 
@@ -60,16 +49,11 @@ export default function EscolaridadSelector({
     form?.id_escolaridad,
     gradosMock,
   ]);
-
-  /* ================= LIMPIAR BÚSQUEDA ================= */
-
   useEffect(() => {
     if (!form?.id_escolaridad) {
       setBusqueda("");
     }
   }, [form?.id_escolaridad]);
-
-  /* ================= FILTRO ================= */
 
   const filtrados = gradosMock.filter(
     (g) =>
@@ -79,7 +63,6 @@ export default function EscolaridadSelector({
           busqueda.toLowerCase()
         )
   );
-
   return (
     <div
       ref={ref}
@@ -115,8 +98,6 @@ export default function EscolaridadSelector({
                    focus:ring-0 focus:outline-none 
                    disabled:opacity-50"
       />
-
-      {/* ================= DROPDOWN ================= */}
 
       {mostrar &&
         form?.nivel_educativo && (

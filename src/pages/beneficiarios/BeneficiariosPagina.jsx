@@ -26,16 +26,15 @@ export default function BeneficiariosPagina() {
     setCurrentPage,
     PAGE_SIZE,
     refetch,
-    periodosDisponibles,   // 🔥 AGREGAR ESTO
+    periodosDisponibles,  
     periodo,
     setPeriodo
   } = useBeneficiariosPage();
 
   const handleCreateSuccess = () => {
     setIsModalOpen(false);
-    // Magia: Esto actualiza CUALQUIER componente que use la lista de beneficiarios
     queryClient.invalidateQueries({ queryKey: ["beneficiarios"] });
-    setCurrentPage(1); // Opcional: volver a la página 1 para ver el nuevo registro
+    setCurrentPage(1); 
   };
 
   return (
@@ -66,7 +65,7 @@ export default function BeneficiariosPagina() {
   }}
   onClearFilters={handleClearFilters}
   periodos={periodosDisponibles}
-  periodo={periodo}   // 🔥 FALTABA ESTO
+  periodo={periodo}  
 />
         <BeneficiarioTabla beneficiarios={beneficiarios} onRefresh={refetch} />
         {loading && (

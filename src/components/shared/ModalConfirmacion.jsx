@@ -1,5 +1,4 @@
 import { TriangleAlert } from "lucide-react";
-//reutilizable para confirmar acciones importantes
 export default function ModalConfirmacion({
   open,
   title,

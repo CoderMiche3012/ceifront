@@ -10,10 +10,6 @@ export default function HistorialEscolarCard({ data }) {
   const id_beneficiario = data?.id_beneficiario;
 
   const [abierto, setAbierto] = useState(null);
-
-  /* ===============================
-     🔹 QUERY SEGUIMIENTOS
-  =============================== */
   const {
     data: seguimientos = [],
     isLoading: loadingSeg,
@@ -22,10 +18,6 @@ export default function HistorialEscolarCard({ data }) {
     queryFn: () => obtenerSeguimientosPorBeneficiario(id_beneficiario),
     enabled: !!id_beneficiario,
   });
-
-  /* ===============================
-     🔹 QUERY PERIODOS
-  =============================== */
   const {
     data: periodos = [],
     isLoading: loadingPer,
@@ -33,10 +25,6 @@ export default function HistorialEscolarCard({ data }) {
     queryKey: ["periodos"],
     queryFn: obtenerPeriodos,
   });
-
-  /* ===============================
-     🔹 LOADING
-  =============================== */
   if (loadingSeg || loadingPer) {
     return (
       <div className="rounded-2xl bg-white p-6 border border-slate-200">
@@ -47,9 +35,6 @@ export default function HistorialEscolarCard({ data }) {
     );
   }
 
-  /* ===============================
-     🔹 MAP Y ORDEN
-  =============================== */
   const periodosMap = Object.fromEntries(
     periodos.map((p) => [p.id_periodo, p])
   );
@@ -64,9 +49,6 @@ export default function HistorialEscolarCard({ data }) {
     setAbierto(prev => (prev === id ? null : id));
   };
 
-  /* ===============================
-     🔹 EMPTY
-  =============================== */
   if (!listaOrdenada.length) {
     return (
       <div className="rounded-2xl bg-white p-6 border border-slate-200">
@@ -89,8 +71,6 @@ export default function HistorialEscolarCard({ data }) {
 
   return (
     <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-
-      {/* HEADER */}
       <h3 className="text-sm font-bold text-slate-800 mb-4">
         Historial Escolar
       </h3>

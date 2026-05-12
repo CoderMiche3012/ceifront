@@ -20,7 +20,6 @@ export default function TabsExpediente({ tab, setTab }) {
   return (
     <div role="tablist" className="flex gap-8 items-center relative">
       
-      {/* Tabs normales */}
       {tabs.map((t) => {
         const active = tab === t.id;
 
@@ -69,7 +68,6 @@ export default function TabsExpediente({ tab, setTab }) {
           )}
         </button>
 
-        {/* Dropdown */}
         {openBeneficios && (
           <div className="absolute top-12 left-0 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50">
             {beneficiosTabs.map((item) => {

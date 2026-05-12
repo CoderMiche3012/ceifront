@@ -19,11 +19,22 @@ export default function useUsersData() {
       setError("");
       const data = await obtenerUsuarios();
       const rawUsers = Array.isArray(data) ? data : (data?.data || []);
-      const normalizedUsers = rawUsers.map((user) => ({
-        ...user,
-        //normalizar estatus para que la UI siempre vea "Activo" o "Inactivo"
-        estatus: normalizeStatus(user.estatus),
-      }));
+      const usuarioGuardado = JSON.parse(localStorage.getItem("user"));
+      const usuarioActualId = usuarioGuardado?.id_usuario;
+
+      console.log("usuario actual:", usuarioGuardado);
+      const normalizedUsers = rawUsers
+        .filter(
+          (user) =>
+            user.id_usuario !== usuarioActualId && 
+            user.id_rol !== null &&
+            user.id_rol !== undefined &&
+            user.id_rol !== ""
+        )
+        .map((user) => ({
+          ...user,
+          estatus: normalizeStatus(user.estatus),
+        }));
       setUsers(normalizedUsers);
     } catch (err) {
       setError(err.message || "Ocurrió un error al cargar usuarios");

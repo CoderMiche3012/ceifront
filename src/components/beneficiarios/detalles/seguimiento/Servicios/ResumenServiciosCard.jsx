@@ -1,10 +1,5 @@
 import { useMemo } from "react";
-import {
-  Utensils,
-  Brain,
-  ChevronRight,
-  Users,
-} from "lucide-react";
+import {Utensils,Brain,ChevronRight,Users,} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { obtenerSeguimiento } from "../../../../../services/seguimientoService";

@@ -1,13 +1,6 @@
-import {
-  GraduationCap,
-  PencilLine,
-  FileText,
-  Star,
-  PlusCircle,
-} from "lucide-react";
+import { GraduationCap, PencilLine, FileText, Star, PlusCircle,} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-
 import { obtenerSeguimiento } from "../../../../../services/seguimientoService";
 import ResumenEscolar from "./ResumenEscolar";
 import ModalDatosEscolares from "./ModalDatosEscolares";
@@ -33,10 +26,7 @@ export default function DetalleSeguimiento({ idSeguimiento }) {
   const grado = escolar?.id_escolaridad || null;
   const institucion = escolar?.id_institucion || null;
   const boletas = escolar?.boletas || [];
-
-  /* ===============================
-     PERIODOS
-  =============================== */
+  //periodos
   const generarPeriodos = (periodicidad) => {
     if (!periodicidad) return [];
 
@@ -66,9 +56,7 @@ export default function DetalleSeguimiento({ idSeguimiento }) {
   const periodoActual = periodos[indexPeriodo];
   const boleta = getBoleta(periodoActual);
 
-  /* ===============================
-     PROMEDIO
-  =============================== */
+  //promedio
   const promedioGeneral =
     boletas.length > 0
       ? (
@@ -82,8 +70,6 @@ export default function DetalleSeguimiento({ idSeguimiento }) {
   return (
     <>
       <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
-
-        {/* IZQUIERDA */}
         <div className="lg:col-span-2 rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
 
           <div className="flex items-center justify-between mb-6">
@@ -114,8 +100,6 @@ export default function DetalleSeguimiento({ idSeguimiento }) {
             />
           )}
         </div>
-
-        {/* DERECHA */}
         <div className="lg:col-span-1 rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
 
           {!escolar || periodos.length === 0 ? (
@@ -124,7 +108,6 @@ export default function DetalleSeguimiento({ idSeguimiento }) {
             </p>
           ) : (
             <>
-              {/* HEADER */}
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-bold text-slate-800">
                   {periodoActual}
@@ -153,15 +136,12 @@ export default function DetalleSeguimiento({ idSeguimiento }) {
                 </div>
               </div>
 
-              {/* CALIFICACIÓN */}
               <div className="flex items-center gap-2 text-sm mb-3">
                 <span>Calificación:</span>
                 <span className="font-semibold">
                   {boleta?.promedio_boleta ?? "Sin registrar"}
                 </span>
               </div>
-
-              {/* DOCUMENTO */}
               {boleta?.link ? (
                 <a
                   href={boleta.link}
@@ -176,8 +156,6 @@ export default function DetalleSeguimiento({ idSeguimiento }) {
                   Sin documento de boleta
                 </div>
               )}
-
-              {/* BOTÓN */}
               <button
                 onClick={() => {
                   setBoletaSeleccionada({

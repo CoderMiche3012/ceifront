@@ -1,9 +1,12 @@
-import {CheckCircle,Lock,Loader2,AlertCircle,Clock,Check,X,ChevronRight,} from "lucide-react";
+import { CheckCircle, Lock, Loader2, AlertCircle, Clock, Check, X, ChevronRight, } from "lucide-react";
 import { useState, useEffect } from "react";
 import { postulantesService } from "../../../../services/postulantesService";
 import { crearBeneficiario } from "../../../../services/beneficiariosService";
+import { usePeriodoActivo } from "../../../../hooks/usePeriodoActivo"
 
 export default function EstatusCard({ data, onChangeDecision }) {
+  const { data: periodoData } = usePeriodoActivo();
+  const idPeriodoActivo = periodoData?.idPeriodoActivo;
   const estatusEstudio = data?.estatus_estudio?.toLowerCase()?.trim();
   const estudioCompleto = estatusEstudio === "completo";
   const noEditable = ["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
@@ -33,20 +36,24 @@ export default function EstatusCard({ data, onChangeDecision }) {
     setLoading(true);
 
     try {
-      // 1. Actualizar estatus postulante
       await postulantesService.actualizarPostulante(
         data.id_postulante,
         { estatus: value }
       );
 
-      // 2. Si fue aceptado -> crear beneficiario automático
       if (value === "aceptado") {
-        await crearBeneficiario({
+        const beneficiario = await crearBeneficiario({
           estatus: "Activo",
           fecha_ingreso: new Date().toISOString().split("T")[0],
           id_expediente: data.id_expediente,
         });
+        await seguimientoService.crearSeguimiento({
+          id_beneficiario: beneficiario.id_beneficiario,
+          id_periodo: idPeriodoActivo,
+          estatus: "Activo",
+        });
       }
+
 
       setDecision(value);
 

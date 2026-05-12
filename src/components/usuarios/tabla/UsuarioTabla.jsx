@@ -20,7 +20,6 @@ export default function UsuarioTabla({
   canStatus = false,
 }) {
   
-  // 1. Definir columnas dinámicamente
   const columns = useMemo(() => {
     const baseColumns = [
       { key: "usuario", label: "Usuario" },
@@ -66,7 +65,6 @@ export default function UsuarioTabla({
       case "estatus":
         return <InsigniaEstatus status={user.estatus} />;
       case "acciones": {
-        // 2. Construir lista de acciones permitidas
         const availableActions = [];
 
         if (canView) {

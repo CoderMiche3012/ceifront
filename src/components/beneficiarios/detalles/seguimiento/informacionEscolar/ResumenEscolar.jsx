@@ -1,9 +1,4 @@
-export default function ResumenEscolar({
-  escolar,
-  grado,
-  institucion,
-  promedioGeneral,
-}) {
+export default function ResumenEscolar({ escolar, grado, institucion, promedioGeneral,}) {
   const tienePromedio =
     promedioGeneral !== null &&
     promedioGeneral !== undefined &&
@@ -37,13 +32,23 @@ export default function ResumenEscolar({
 
     return "--";
   })();
+  const nombreMunicipio = (() => {
+  if (!institucion?.municipio_escuela) return "";
+
+  if (
+    typeof institucion.municipio_escuela === "object"
+  ) {
+    return (
+      institucion.municipio_escuela.nombre || ""
+    );
+  }
+
+  return institucion.municipio_nombre || "";
+})();
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
 
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-6">
-
-        {/* IZQUIERDA */}
         <div>
           <p className="text-xs font-semibold text-slate-400 uppercase mb-1">
             Institución
@@ -53,14 +58,13 @@ export default function ResumenEscolar({
             {institucion?.nombre || "--"}
           </h3>
 
-          {institucion?.clave_escolar && (
-            <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 font-medium mt-1 inline-block">
-              {institucion.clave_escolar}
-            </span>
-          )}
+          {nombreMunicipio && (
+  <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 font-medium mt-1 inline-block">
+    {nombreMunicipio}
+  </span>
+)}
         </div>
 
-        {/* DERECHA - PROMEDIO */}
         <div className="flex items-center gap-4">
 
           <div className="text-right">
@@ -87,7 +91,6 @@ export default function ResumenEscolar({
             )}
           </div>
 
-          {/* BARRA */}
           <div className="w-28 h-2 bg-slate-100 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${tienePromedio ? "bg-teal-500" : "bg-slate-300"
@@ -100,7 +103,6 @@ export default function ResumenEscolar({
         </div>
       </div>
 
-      {/* INFO PRINCIPAL */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-slate-100 pt-5">
         <div>
           <p className="text-xs font-semibold text-slate-400 uppercase mb-1">

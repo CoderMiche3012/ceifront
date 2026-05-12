@@ -2,7 +2,6 @@ import { User, PencilLine } from 'lucide-react';
 import React, { useState } from 'react';
 import EditarDatosGenerales from "./../modales/EditarDatosGenerales";
 
-// Eliminamos setData de las props
 export default function DatosPersonalesCard({ data }) {
   const [modalAbierto, setModalAbierto] = useState(false);
 
@@ -67,7 +66,6 @@ export default function DatosPersonalesCard({ data }) {
         </div>
       </div>
 
-      {/* Aquí también quitamos setData */}
       <EditarDatosGenerales
         isOpen={modalAbierto}
         onClose={() => setModalAbierto(false)}

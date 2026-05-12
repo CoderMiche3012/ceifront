@@ -37,17 +37,13 @@ export default function usePeriodosPage() {
   const filteredPeriodos = useMemo(() => {
     return periodos
       .filter((periodo) => {
-        // 1. Solo incluimos los que tienen estado false
         const esInactivo = periodo.estado === false || Number(periodo.estado) === 0;
-
-        // 2. Aplicamos la búsqueda por ciclo escolar
         const coincideBusqueda = periodo.ciclo_escolar
           ?.toLowerCase()
           .includes(search.toLowerCase());
 
         return esInactivo && coincideBusqueda;
       })
-      // 3. Ordenamos por id_periodo (1, 2, 3...)
       .sort((a, b) => a.id_periodo - b.id_periodo);
   }, [periodos, search]);
   const periodoActivo = useMemo(() => {

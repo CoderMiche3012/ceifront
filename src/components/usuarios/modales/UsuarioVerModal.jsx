@@ -6,25 +6,23 @@ import InsigniaEstatus from "../insignias/InsigniaEstatus"
 
 export default function UsuarioVerModal({ open, user, onClose }) {
   
-  // 1. Manejo de tecla ESC y bloqueo de scroll
   useEffect(() => {
     if (open) {
       const handleEsc = (e) => {
         if (e.key === "Escape") onClose();
       };
       window.addEventListener("keydown", handleEsc);
-      document.body.style.overflow = "hidden"; // Bloquea scroll del fondo
+      document.body.style.overflow = "hidden"; 
       
       return () => {
         window.removeEventListener("keydown", handleEsc);
-        document.body.style.overflow = "unset"; // Libera scroll
+        document.body.style.overflow = "unset"; 
       };
     }
   }, [open, onClose]);
 
   if (!open || !user) return null;
 
-  // Helper para datos opcionales
   const renderDato = (dato) => dato || <span className="italic text-slate-400 text-xs">No registrado</span>;
 
   return (

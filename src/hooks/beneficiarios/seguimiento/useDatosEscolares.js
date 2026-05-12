@@ -10,6 +10,7 @@ import {
   obtenerInstituciones,
   crearInstitucion,
 } from "../../../services/institucionesService";
+import { obtenerMunicipios } from "../../../services/municipiosService";
 
 export default function useDatosEscolares(
   id_seguimiento,
@@ -36,8 +37,6 @@ export default function useDatosEscolares(
     setInstitucionSeleccionada] =
     useState(null);
 
-  /* ================= ESCUELAS ================= */
-
   const [busqueda, setBusqueda] = useState("");
 
   const [mostrarResultados,
@@ -50,7 +49,7 @@ export default function useDatosEscolares(
   const [nuevaEscuela,
     setNuevaEscuela] = useState({
       nombre: "",
-      clave_escolar: "",
+      municipio_escuela: "",
     });
 
   const refEscuela = useRef();
@@ -60,8 +59,11 @@ export default function useDatosEscolares(
       queryKey: ["instituciones"],
       queryFn: obtenerInstituciones,
     });
+  const { data: municipios = [] } = useQuery({
+    queryKey: ["municipios"],
+    queryFn: obtenerMunicipios,
+  });
 
-  // 🔥 BÚSQUEDA
   const filtradas = useMemo(() => {
     const b = busqueda.toLowerCase().trim();
 
@@ -71,61 +73,82 @@ export default function useDatosEscolares(
       const nombre =
         i.nombre?.toLowerCase() || "";
 
-      const clave =
-        i.clave_escolar?.toLowerCase() || "";
+
+      const municipio =
+        i.municipio_escuela?.nombre?.toLowerCase() || "";
 
       return (
         nombre.includes(b) ||
-        clave.includes(b)
+        municipio.includes(b)
       );
     });
   }, [instituciones, busqueda]);
+const obtenerNombreMunicipio = (inst) => {
+  if (typeof inst.municipio_escuela === "object") {
+    return inst.municipio_escuela?.nombre || "";
+  }
 
+  return (
+    municipios.find(
+      (m) => Number(m.id) === Number(inst.municipio_escuela)
+    )?.nombre || ""
+  );
+};
   const seleccionarInstitucion = (inst) => {
-    setInstitucionSeleccionada(inst);
+  const municipio = obtenerNombreMunicipio(inst);
 
-    setBusqueda(
-      inst.clave_escolar
-        ? `${inst.nombre} (${inst.clave_escolar})`
-        : inst.nombre
-    );
+  setInstitucionSeleccionada(inst);
 
-    setMostrarResultados(false);
-  };
+  setBusqueda(
+    municipio
+      ? `${inst.nombre} - ${municipio}`
+      : inst.nombre
+  );
+
+  setMostrarResultados(false);
+};
 
   const handleCrearEscuela = async () => {
     try {
-      const nueva =
-        await crearInstitucion(nuevaEscuela);
+      const nombreLimpio = nuevaEscuela.nombre?.trim();
+      const municipioId = Number(nuevaEscuela.municipio_escuela);
+      if (!nombreLimpio) {
+        throw new Error("El nombre de la escuela no puede estar vacío");
+      }
+      if (!municipioId || isNaN(municipioId)) {
+        throw new Error("Debes seleccionar un municipio válido");
+      }
 
-      // ⚡ actualización inmediata
-      queryClient.setQueryData(
-        ["instituciones"],
-        (old = []) => [nueva, ...old]
-      );
+      const payload = {
+        nombre: nombreLimpio,
+        municipio_escuela: municipioId,
+      };
+
+      console.log("Enviando a API:", payload); // 👈 Revisa esto en tu consola
+
+      const nueva = await crearInstitucion(payload);
+
+      // ... resto del código (actualizar caché, etc)
+      queryClient.setQueryData(["instituciones"], (old = []) => [nueva, ...old]);
 
       setInstitucionSeleccionada(nueva);
 
-      setBusqueda(
-        nueva.clave_escolar
-          ? `${nueva.nombre} (${nueva.clave_escolar})`
-          : nueva.nombre
-      );
+const municipio = obtenerNombreMunicipio(nueva);
 
+setBusqueda(
+  municipio
+    ? `${nueva.nombre} - ${municipio}`
+    : nueva.nombre
+);
       setCrearModo(false);
-      setMostrarResultados(false);
-
-      setNuevaEscuela({
-        nombre: "",
-        clave_escolar: "",
-      });
+      setNuevaEscuela({ nombre: "", municipio_escuela: "" }); // Resetear
+      setError(""); // Limpiar errores previos
 
     } catch (err) {
-      setError(err.message);
+      console.error("Error al crear:", err);
+      setError(err.message || "Error al conectar con el servidor");
     }
   };
-
-  /* ================= EDICIÓN ================= */
 
   useEffect(() => {
     if (datosIniciales) {
@@ -181,31 +204,28 @@ export default function useDatosEscolares(
           nivelEducativo,
       });
 
-      // 🔥 institución
       if (datosIniciales.id_institucion) {
-
-        setInstitucionSeleccionada({
+        const inst = {
           id_institucion:
             datosIniciales.id_institucion.id_institucion,
-
           nombre:
             datosIniciales.id_institucion.nombre,
+          municipio_escuela:
+            datosIniciales.id_institucion.municipio_escuela,
+        };
 
-          clave_escolar:
-            datosIniciales.id_institucion.clave_escolar,
-        });
+        setInstitucionSeleccionada(inst);
 
-        setBusqueda(
-          datosIniciales.id_institucion
-            .clave_escolar
-            ? `${datosIniciales.id_institucion.nombre} (${datosIniciales.id_institucion.clave_escolar})`
-            : datosIniciales.id_institucion.nombre
-        );
+        const municipio = obtenerNombreMunicipio(inst);
+
+setBusqueda(
+  municipio
+    ? `${inst.nombre} - ${municipio}`
+    : inst.nombre
+);
       }
     }
   }, [datosIniciales]);
-
-  /* ================= NIVELES ================= */
 
   const nivelesEducativos = {
     BASICA: [
@@ -222,8 +242,6 @@ export default function useDatosEscolares(
       "Universidad",
     ],
   };
-
-  /* ================= ESCOLARIDAD ================= */
 
   const gradosMock = [
     {
@@ -342,7 +360,6 @@ export default function useDatosEscolares(
     },
   ];
 
-  // 🔥 FILTRAR SEGÚN NIVEL
   const gradosFiltrados = useMemo(() => {
     if (!form.nivel_educativo)
       return [];
@@ -359,21 +376,18 @@ export default function useDatosEscolares(
     );
   }, [form.nivel_educativo]);
 
-  // 🔥 nivel actual
   const nivelSeleccionado =
     gradosMock.find(
       (g) =>
         g.id === form.id_escolaridad
     )?.nivel;
 
-  // 🔥 mostrar especialidad
   const mostrarEspecialidad =
     form.nivel_educativo ===
     "MEDIA_SUPERIOR" ||
     form.nivel_educativo ===
     "SUPERIOR";
 
-  /* ================= PERIODICIDAD ================= */
   const tieneBoletas =
     datosIniciales?.boletas?.length > 0;
 
@@ -405,8 +419,6 @@ export default function useDatosEscolares(
     }
   }, [form.nivel_educativo]);
 
-  /* ================= FORM ================= */
-
   const handleChange = (e) => {
     setForm((prev) => ({
       ...prev,
@@ -414,8 +426,6 @@ export default function useDatosEscolares(
         e.target.value,
     }));
   };
-
-  /* ================= SUBMIT ================= */
 
   const handleSubmit = async () => {
     try {
@@ -447,7 +457,6 @@ export default function useDatosEscolares(
         );
       }
 
-      // 🔥 quitar campo visual
       const {
         nivel_educativo,
         ...formularioLimpio
@@ -474,7 +483,6 @@ export default function useDatosEscolares(
         );
       }
 
-      // 🔥 refrescar
       queryClient.invalidateQueries([
         "seguimiento",
         id_seguimiento,
@@ -500,7 +508,7 @@ export default function useDatosEscolares(
     // estados
     error,
     loading,
-      tieneBoletas,
+    tieneBoletas,
 
 
     // escuela
@@ -518,6 +526,8 @@ export default function useDatosEscolares(
     handleCrearEscuela,
     refEscuela,
     institucionSeleccionada,
+      obtenerNombreMunicipio, // 👈 agrega esto
+
 
     // escolaridad
     gradosMock:
@@ -527,7 +537,8 @@ export default function useDatosEscolares(
 
     // submit
     handleSubmit,
+    municipios,
+
   };
 }
 
- 

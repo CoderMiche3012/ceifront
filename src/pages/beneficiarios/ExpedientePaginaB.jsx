@@ -14,11 +14,10 @@ export default function ExpedientePagina() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // 1. Usamos el hook refactorizado
   const {
     data,
-    loading,      // Mapeado a isLoading (primera carga)
-    isFetching,   // Mapeado a isFetching (fondo/actualización)
+    loading,      
+    isFetching,   
     error,
     tab,
     setTab,
@@ -29,7 +28,6 @@ export default function ExpedientePagina() {
   // Validación de ID (se queda igual)
   if (!id) return <div className="p-10 text-center text-red-500">ID inválido</div>;
 
-  // 2. Spinner de pantalla completa (Solo la primera vez)
   if (loading) {
     return (
       <div className="flex flex-col h-96 items-center justify-center space-y-4">
@@ -39,7 +37,6 @@ export default function ExpedientePagina() {
     );
   }
 
-  // 3. Estado de Error mejorado
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4 p-10 bg-red-50 rounded-2xl border border-red-100">
@@ -59,7 +56,6 @@ export default function ExpedientePagina() {
     );
   }
 
-  // 4. Si no hay data después de cargar
   if (!data) {
     return (
       <div className="p-20 text-center space-y-4">

@@ -48,7 +48,6 @@ export const obtenerPerfil = async (userId, tokenDirecto = null) => {
     return null;
   }
 };
-// 2. Úsalo en obtenerInicioSesion
 export const obtenerInicioSesion = async ({ username, password }) => {
   try {
     const res = await API.post(`${BASE_URL}/login/`, {
@@ -57,8 +56,6 @@ export const obtenerInicioSesion = async ({ username, password }) => {
     });
 
     const data = res.data;
-
-    // 🔥 ARMAMOS EL USUARIO CORRECTAMENTE
     const userFinal = {
       id_usuario: data.id_usuario,
       id: data.id_usuario,

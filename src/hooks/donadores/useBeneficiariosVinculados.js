@@ -12,9 +12,6 @@ export function useBeneficiariosVinculados(data, setData) {
   const [loadingId, setLoadingId] = useState(null);
   const [listaBeneficiarios, setListaBeneficiarios] = useState([]);
 
-  /* ===============================
-     🔹 CALCULAR EDAD
-  =============================== */
   const calcularEdad = (fecha) => {
     if (!fecha) return "--";
 
@@ -31,9 +28,6 @@ export function useBeneficiariosVinculados(data, setData) {
     return edad;
   };
 
-  /* ===============================
-     🔹 CARGAR EXPEDIENTES
-  =============================== */
   useEffect(() => {
     if (!data?.beneficiarios?.length) return;
 
@@ -70,9 +64,6 @@ export function useBeneficiariosVinculados(data, setData) {
     cargar();
   }, [data?.beneficiarios?.length, setData]);
 
-  /* ===============================
-     🔥 CARGAR BENEFICIARIOS ACTIVOS
-  =============================== */
   const cargarBeneficiarios = async () => {
     try {
       setLoading(true);
@@ -87,7 +78,6 @@ export function useBeneficiariosVinculados(data, setData) {
 
       const idsVinculados = (data?.beneficiarios_apoyados || []).map(String);
 
-      // 🔥 obtener último periodo
       const ultimoPeriodo = [...periodos]
         .sort((a, b) => b.id_periodo - a.id_periodo)[0]?.id_periodo;
 
@@ -114,14 +104,12 @@ export function useBeneficiariosVinculados(data, setData) {
         })
       );
 
-      // 🔥 filtrar activos y no vinculados
       const activos = beneficiariosConEstado.filter(
         (item) =>
           item.esActivo &&
           !idsVinculados.includes(String(item.id_beneficiario))
       );
 
-      // 🔥 completar con expediente
       const completos = await Promise.all(
         activos.map(async (item) => {
           if (!item.id_expediente) return item;
@@ -149,9 +137,6 @@ export function useBeneficiariosVinculados(data, setData) {
     }
   };
 
-  /* ===============================
-     🔍 FILTRO
-  =============================== */
   const filtrados = useMemo(() => {
     return listaBeneficiarios.filter((item) =>
       `${item.nombre} ${item.apellido_p} ${item.apellido_m}`
@@ -159,10 +144,6 @@ export function useBeneficiariosVinculados(data, setData) {
         .includes(search.toLowerCase())
     );
   }, [search, listaBeneficiarios]);
-
-  /* ===============================
-     ➕ AGREGAR
-  =============================== */
   const handleAgregar = async (idBeneficiario) => {
     try {
       setLoadingId(idBeneficiario);
@@ -198,10 +179,6 @@ export function useBeneficiariosVinculados(data, setData) {
       setLoadingId(null);
     }
   };
-
-  /* ===============================
-     ❌ ELIMINAR
-  =============================== */
   const handleEliminar = async (idBeneficiario) => {
     try {
       const actuales = (data?.beneficiarios_apoyados || []).map(String);

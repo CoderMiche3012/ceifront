@@ -20,9 +20,7 @@ export default function PeriodoActivo({ periodoActivo, onEdit }) {
 
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            {/* IMPORTANTE: Forzamos el envío de la palabra "ACTIVO" 
-               para que el componente InsigniaEstatus lo reconozca 100%
-            */}
+      
             <InsigniaEstatus status={periodoActivo.estado ? "Activo" : "Inactivo"} />
             
             <span className="text-sm text-gray-400">
