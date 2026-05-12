@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 //componentes
 import Input from "../../components/ui/Input";
 import BotonInicio from "../../components/ui/BotonInicio";
@@ -8,49 +9,66 @@ import AlertaError from "../../components/ui/AlertaError";
 //servicios y Utilidades
 import { formatError } from "../../utils/errorHandlers";
 import { obtenerInicioSesion, guardarUsuarioLocal } from "../../services/usuariosService";
-//assets
+//imagenes
 import inicio from "../../assets/imagenes/inicio.png";
 import logoCei from "../../assets/imagenes/logo.png";
 export default function InicioSesion() {
   const navigate = useNavigate();
-  //estados locales
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
-  const [status, setStatus] = useState({ loading: false, error: null });
-  //manejador de cambios en inputs 
+  const [mostrarRecuperacion, setMostrarRecuperacion] = useState(false);
+  const [bloqueoMsg, setBloqueoMsg] = useState(null);
+
+  const loginMutation = useMutation({
+    mutationFn: obtenerInicioSesion,
+    onSuccess: (response, variables) => {
+      const cleanUsername = variables.username;
+      localStorage.setItem("access", response.access);
+      localStorage.setItem("refresh", response.refresh);
+      guardarUsuarioLocal(response.user);
+      // Limpiar rastros de intentos fallidos
+      localStorage.removeItem(`intentos_${cleanUsername}`);
+      localStorage.removeItem(`bloqueo_${cleanUsername}`);
+      navigate("/app", { replace: true });
+    },
+    onError: (err, variables) => {
+      const cleanUsername = variables.username;
+      const key = `intentos_${cleanUsername}`;
+      let intentos = Number(localStorage.getItem(key) || 0) + 1;
+      localStorage.setItem(key, intentos);
+      if (intentos >= 3) {
+        const tiempoBloqueo = Date.now() + 15 * 60 * 1000;
+        localStorage.setItem(`bloqueo_${cleanUsername}`, tiempoBloqueo);
+        localStorage.removeItem(key);
+      }
+    },
+  });
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  }, []);
-  const handleSubmit = async (e) => {
+    if (bloqueoMsg) setBloqueoMsg(null);
+  }, [bloqueoMsg]);
+
+  const handleSubmit = (e) => {
     e.preventDefault();
     const cleanUsername = formData.username.trim();
     const cleanPassword = formData.password.trim();
-    //validacion
+
     if (!cleanUsername || !cleanPassword) {
-      setStatus({ loading: false, error: "Por favor, completa todos los campos." });
+      setBloqueoMsg("Por favor, completa todos los campos.");
       return;
     }
-    setStatus({ loading: true, error: null });
-    try {
-      const response = await obtenerInicioSesion({
-        username: cleanUsername,
-        password: cleanPassword,
-      });
-      if (response?.access) {
-        //almacenamiento
-        localStorage.setItem("access", response.access);
-        localStorage.setItem("refresh", response.refresh);
-        guardarUsuarioLocal(response.user);
-        navigate("/app", { replace: true });
-      } else {
-        throw new Error("Respuesta de servidor inválida.");
-      }
-    } catch (err) {
-      setStatus({ loading: false, error: formatError(err) });
+    // Verificar si está bloqueado antes de la petición
+    const bloqueo = localStorage.getItem(`bloqueo_${cleanUsername}`);
+    if (bloqueo && Date.now() < Number(bloqueo)) {
+      const minutos = Math.ceil((Number(bloqueo) - Date.now()) / 60000);
+      setBloqueoMsg(`Cuenta bloqueada. Intenta en ${minutos} min.`);
+      return;
     }
+    loginMutation.mutate({ username: cleanUsername, password: cleanPassword });
   };
-  //prevenir re-renders innecesarios de componentes estáticos
+  const errorAMostrar = bloqueoMsg || (loginMutation.isError ? formatError(loginMutation.error) : null);
+
   const visualPanel = useMemo(() => (
     <div className="relative hidden min-h-screen lg:block" aria-hidden="true">
       <img
@@ -70,6 +88,21 @@ export default function InicioSesion() {
       </div>
     </div>
   ), []);
+  const correoAdmin = "cei@gmail.com";
+  const asunto = encodeURIComponent("Solicitud de recuperación de contraseña");
+  const mensaje = encodeURIComponent(
+    `Hola.
+
+      Solicito el restablecimiento de mi contraseña del sistema CEI.
+
+      Usuario:
+      Correo registrado:
+
+      Enviar esta solicitud desde el correo registrado en el sistema.
+
+      Gracias.`
+  );
+  const mailtoLink = `mailto:${correoAdmin}?subject=${asunto}&body=${mensaje}`;
   return (
     <main className="min-h-screen w-screen bg-white">
       <section className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-2">
@@ -93,7 +126,7 @@ export default function InicioSesion() {
                   placeholder="Ingresa tu usuario"
                   value={formData.username}
                   onChange={handleInputChange}
-                  disabled={status.loading}
+                  disabled={loginMutation.isPending}
                   required
                   autoComplete="username"
                 />
@@ -108,7 +141,7 @@ export default function InicioSesion() {
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={handleInputChange}
-                    disabled={status.loading}
+                    disabled={loginMutation.isPending}
                     required
                     autoComplete="current-password"
                     className="pr-12"
@@ -116,17 +149,26 @@ export default function InicioSesion() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    disabled={status.loading}
+                    disabled={loginMutation.isPending}
                     aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                     className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-[#0E5F63] transition-colors focus:outline-none"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setMostrarRecuperacion(true)}
+                    className="text-sm font-medium text-[#0E5F63] hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
               </div>
-              {status.error && <AlertaError mensaje={status.error} />}
-              <BotonInicio type="submit" disabled={status.loading}>
-                {status.loading ? (
+              {errorAMostrar && <AlertaError mensaje={errorAMostrar} />}
+              <BotonInicio type="submit" disabled={loginMutation.isPending}>
+                {loginMutation.isPending ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" /> Verificando...
                   </span>
@@ -143,6 +185,59 @@ export default function InicioSesion() {
           </div>
         </div>
       </section>
+      {mostrarRecuperacion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-bold text-[#0E5F63]">
+              Recuperar contraseña
+            </h2>
+            <div className="mt-4 space-y-3 text-sm text-gray-600">
+              <p>
+                Para recuperar tu contraseña debes contactar al administrador del sistema.
+              </p>
+              <div className="rounded-xl bg-gray-50 p-4">
+                <p className="font-semibold text-slate-700">
+                  Importante
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  <li>
+                    El correo debe enviarse desde el correo registrado en el sistema.
+                  </li>
+                  <li>
+                    Debes incluir tu nombre de usuario.
+                  </li>
+                  <li>
+                    El administrador verificará tu información antes de restablecer la contraseña.
+                  </li>
+                </ul>
+              </div>
+              <div className="rounded-xl border border-[#0E5F63]/20 bg-[#0E5F63]/5 p-3">
+                <p className="text-sm font-semibold text-[#0E5F63]">
+                  Correo de soporte
+                </p>
+                <p className="mt-1 break-all text-sm text-gray-700">
+                  cei@gmail.com
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setMostrarRecuperacion(false)}
+                className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+              >
+                Cerrar
+              </button>
+              <a
+                href={mailtoLink}
+                className="rounded-xl bg-[#0E5F63] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0b4e52]"
+              >
+                Abrir correo
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
-}
+} 

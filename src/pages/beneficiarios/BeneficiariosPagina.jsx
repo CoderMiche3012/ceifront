@@ -67,7 +67,7 @@ export default function BeneficiariosPagina() {
   periodos={periodosDisponibles}
   periodo={periodo}  
 />
-        <BeneficiarioTabla beneficiarios={beneficiarios} onRefresh={refetch} />
+        <BeneficiarioTabla beneficiarios={beneficiarios} onRefresh={refetch}  periodo={periodo}/>
         {loading && (
           <div className="flex flex-col items-center gap-2">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>

@@ -13,7 +13,7 @@ const COLUMNS = [
     { key: "escuela", label: "Escuela/grado" },
     { key: "acciones", label: "Acciones" },
 ];
-export default function beneficiariosTabla({ beneficiarios = [], onRefresh }) {
+export default function beneficiariosTabla({ beneficiarios = [], onRefresh, periodo }) {
     const [openEdit, setOpenEdit] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
     console.log("dt", beneficiarios)
@@ -51,18 +51,32 @@ export default function beneficiariosTabla({ beneficiarios = [], onRefresh }) {
                 );
             case "estatus": {
                 const estatus = item.estatus?.toLowerCase();
+
                 const configEstatus = {
                     activo: "bg-amber-100 text-amber-700 border-amber-200",
                     inactivo: "bg-blue-100 text-blue-700 border-blue-200",
                     graduado: "bg-rose-100 text-rose-700 border-rose-200",
                     pausa: "bg-emerald-100 text-emerald-700 border-emerald-200",
                 };
-                const estilo = configEstatus[estatus] || "bg-slate-100 text-slate-600 border-slate-200";
+
+                const estilo =
+                    configEstatus[estatus] ||
+                    "bg-slate-100 text-slate-600 border-slate-200";
 
                 return (
-                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${estilo}`}>
-                        {item.estatus}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                        <span
+                            className={`inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${estilo}`}
+                        >
+                            {item.estatus}
+                        </span>
+
+                        {periodo === "actual" && (
+                            <span className="text-[11px] text-slate-500 font-medium">
+                                {item.cicloEscolar}
+                            </span>
+                        )}
+                    </div>
                 );
             }
             case "promedio": {
