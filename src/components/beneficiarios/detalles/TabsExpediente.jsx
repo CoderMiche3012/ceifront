@@ -8,6 +8,7 @@ export default function TabsExpediente({ tab, setTab }) {
     { id: "generales", label: "Datos generales" },
     { id: "familia", label: "Familia" },
     { id: "escuela", label: "Escuela" },
+    { id: "obligaciones", label: "Obligaciones" },
   ];
 
   const beneficiosTabs = [

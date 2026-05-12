@@ -123,7 +123,7 @@ export default function SeguimientoLinea({ data }) {
       <div className="flex items-center justify-between mb-6">
         <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800">
           <Clock className="w-4 h-4 text-teal-600" />
-          Seguimiento por periodo
+          Seguimiento por Ciclo Escolar
         </h3>
       </div>
 

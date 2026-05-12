@@ -9,6 +9,8 @@ import { useBeneficiariosPage } from "../../hooks/beneficiarios/useBeneficiarios
 import { useQueryClient } from "@tanstack/react-query";
 import HistorialEscolarCard from "../../components/beneficiarios/detalles/seguimiento/informacionEscolar/HistorialEscolar";
 import HistorialServicios from "../../components/beneficiarios/detalles/seguimiento/Servicios/HistorialServicios";
+import HistorialEconomicoCard from "../../components/beneficiarios/detalles/seguimiento/ApoyosEconomicos/HistorialEconomico";
+import HistorialObligaciones from "../../components/beneficiarios/detalles/seguimiento/Obligaciones/HistorialObligaciones";
 
 export default function ExpedientePagina() {
   const { id } = useParams();
@@ -134,21 +136,8 @@ export default function ExpedientePagina() {
         {tab === "generales" && <DatosGenerales data={data} />}
         {tab === "familia" && <FamiliaCard data={data} />}
         {tab === "escuela" && <HistorialEscolarCard data={data} />}
-        {tab === "apoyos" && (
-          <div className="space-y-4">
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-800 mb-2">
-                Apoyos económicos
-              </h3>
-
-              <p className="text-sm text-slate-500">
-                Aquí puedes mostrar becas, apoyos activos, montos,
-                historial de entregas, etc.
-              </p>
-            </div>
-          </div>
-        )}
-
+        {tab === "apoyos" && <HistorialEconomicoCard data={data} />}
+        {tab === "obligaciones" && <HistorialObligaciones data={data} />}
         {tab === "asistencias" && <HistorialServicios data={data} />}
       </main>
     </section>

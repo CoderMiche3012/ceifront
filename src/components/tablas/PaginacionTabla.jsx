@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
+
 export default function PaginacionTabla({currentPage, totalPages, totalItems, pageSize, onPageChange,}) {
   const start = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1
   const end = Math.min(currentPage * pageSize, totalItems)
