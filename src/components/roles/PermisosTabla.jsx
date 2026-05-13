@@ -19,7 +19,7 @@ export default function PermisosTabla({
 
   const modulesFiltrados = modules.filter((module) => {
     if (module.key === "usuarios") {
-      return isAdminRole; // 👈 SOLO si el rol editado es admin
+      return isAdminRole; 
     }
     return true;
   });

@@ -18,8 +18,8 @@ export default function ExpedientePagina() {
 
   const {
     data,
-    loading,      
-    isFetching,   
+    loading,
+    isFetching,
     error,
     tab,
     setTab,

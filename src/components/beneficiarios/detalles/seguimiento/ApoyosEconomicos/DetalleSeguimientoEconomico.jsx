@@ -1,30 +1,13 @@
 import { HandCoins } from "lucide-react";
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-
-import {
-  useState,
-  useMemo,
-} from "react";
-
+import { useQuery, useMutation, useQueryClient,} from "@tanstack/react-query";
+import {useState,useMemo,} from "react";
 import { obtenerSeguimiento } from "../../../../../services/seguimientoService";
-
-import {
-  crearApoyo,
-  actualizarApoyo,
-  eliminarApoyo,
-} from "../../../../../services/apoyosService";
-
+import {crearApoyo,actualizarApoyo,eliminarApoyo,} from "../../../../../services/apoyosService";
 import ApoyoTabla from "./tabla/ApoyoTabla";
 import ApoyoFiltros from "./tabla/ApoyoFiltros";
 import PaginacionTabla from "../../../../tablas/PaginacionTabla";
-
 import Boton from "../../../../ui/BotonInterno";
 import Alerta from "../../../../ui/AlertaError";
-
 import ModalConfirmacion from "../../../../shared/ModalConfirmacion";
 import ModalResultado from "../../../../shared/ModalResultado";
 
@@ -42,7 +25,6 @@ export default function DetalleSeguimientoEconomico({
     setCurrentPage,
   ] = useState(1);
 
-  // ALERTA
   const [alerta, setAlerta] =
     useState({
       open: false,
@@ -50,17 +32,13 @@ export default function DetalleSeguimientoEconomico({
       tipo: "error",
     });
 
-  // MODAL CREAR
-  const [modalCrear, setModalCrear] =
-    useState(false);
+  const [modalCrear, setModalCrear] =useState(false);
 
-  // MODAL CONFIRMACION
   const [
     modalConfirmacion,
     setModalConfirmacion,
   ] = useState(false);
 
-  // MODAL RESULTADO
   const [
     modalResultado,
     setModalResultado,
@@ -71,14 +49,12 @@ export default function DetalleSeguimientoEconomico({
     message: "",
   });
 
-  // FORMULARIO
   const [formData, setFormData] =
     useState({
       concepto: "",
       monto: "",
     });
 
-  // EDICION
   const [
     modoEdicion,
     setModoEdicion,
@@ -111,7 +87,6 @@ export default function DetalleSeguimientoEconomico({
       enabled: !!idSeguimiento,
     });
 
-  // CREAR
   const crearApoyoMutation =
     useMutation({
       mutationFn: crearApoyo,
@@ -167,7 +142,6 @@ export default function DetalleSeguimientoEconomico({
       },
     });
 
-  // EDITAR
   const actualizarApoyoMutation =
     useMutation({
       mutationFn: ({
@@ -226,7 +200,6 @@ export default function DetalleSeguimientoEconomico({
       },
     });
 
-  // ELIMINAR
   const eliminarApoyoMutation =
     useMutation({
       mutationFn:
@@ -266,7 +239,6 @@ export default function DetalleSeguimientoEconomico({
       },
     });
 
-  // ENTREGAR
   const entregarApoyoMutation =
     useMutation({
       mutationFn: ({
@@ -315,7 +287,6 @@ export default function DetalleSeguimientoEconomico({
     data?.apoyos_economicos ||
     [];
 
-  // FILTRO
   const apoyosFiltrados =
     useMemo(() => {
       return apoyos
@@ -328,7 +299,6 @@ export default function DetalleSeguimientoEconomico({
         )
 
         .sort((a, b) => {
-          // Pendientes primero
           if (
             a.estatus ===
               "Pendiente" &&

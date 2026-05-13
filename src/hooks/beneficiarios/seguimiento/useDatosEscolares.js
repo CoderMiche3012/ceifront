@@ -30,7 +30,7 @@ export default function useDatosEscolares(
     modalidad_educativa: "",
     especialidad: "",
     id_escolaridad: "",
-    nivel_educativo: "", // 👈 SOLO VISUAL
+    nivel_educativo: "", 
   });
 
   const [institucionSeleccionada,
@@ -124,7 +124,7 @@ const obtenerNombreMunicipio = (inst) => {
         municipio_escuela: municipioId,
       };
 
-      console.log("Enviando a API:", payload); // 👈 Revisa esto en tu consola
+      console.log("Enviando a API:", payload); 
 
       const nueva = await crearInstitucion(payload);
 
@@ -526,16 +526,10 @@ setBusqueda(
     handleCrearEscuela,
     refEscuela,
     institucionSeleccionada,
-      obtenerNombreMunicipio, // 👈 agrega esto
-
-
-    // escolaridad
+      obtenerNombreMunicipio, 
     gradosMock:
       gradosFiltrados,
-
     mostrarEspecialidad,
-
-    // submit
     handleSubmit,
     municipios,
 

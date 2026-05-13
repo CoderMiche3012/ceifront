@@ -26,7 +26,7 @@ export default function BeneficiariosPagina() {
     setCurrentPage,
     PAGE_SIZE,
     refetch,
-    periodosDisponibles,  
+    periodosDisponibles,
     periodo,
     setPeriodo
   } = useBeneficiariosPage();
@@ -34,7 +34,7 @@ export default function BeneficiariosPagina() {
   const handleCreateSuccess = () => {
     setIsModalOpen(false);
     queryClient.invalidateQueries({ queryKey: ["beneficiarios"] });
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   return (
@@ -53,21 +53,21 @@ export default function BeneficiariosPagina() {
       />
       <div className="rounded-[24px] border border-[#dbe3eb] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] relative">
         <BeneficiarioFiltros
-  search={search}
-  filters={filters}
-  onSearchChange={handleSearchChange}
-  onFilterChange={(key, value) => {
-    if (key === "periodo") {
-      setPeriodo(value);
-    } else {
-      handleFilterChange(key, value);
-    }
-  }}
-  onClearFilters={handleClearFilters}
-  periodos={periodosDisponibles}
-  periodo={periodo}  
-/>
-        <BeneficiarioTabla beneficiarios={beneficiarios} onRefresh={refetch}  periodo={periodo}/>
+          search={search}
+          filters={filters}
+          onSearchChange={handleSearchChange}
+          onFilterChange={(key, value) => {
+            if (key === "periodo") {
+              setPeriodo(value);
+            } else {
+              handleFilterChange(key, value);
+            }
+          }}
+          onClearFilters={handleClearFilters}
+          periodos={periodosDisponibles}
+          periodo={periodo}
+        />
+        <BeneficiarioTabla beneficiarios={beneficiarios} onRefresh={refetch} periodo={periodo} />
         {loading && (
           <div className="flex flex-col items-center gap-2">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>

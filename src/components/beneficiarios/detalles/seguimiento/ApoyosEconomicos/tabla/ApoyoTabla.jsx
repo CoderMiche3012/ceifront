@@ -1,10 +1,5 @@
 import DatosTabla from "../../../../../tablas/DatosTabla";
-import {
-  Pencil,
-  LockKeyhole,
-  Trash2,
-  Check,
-} from "lucide-react";
+import {Pencil,LockKeyhole,Trash2,Check,} from "lucide-react";
 import { formatMoney } from "../../../../../../utils/formatMoney";
 
 const COLUMNS = [
@@ -108,7 +103,6 @@ export default function ApoyoTabla({
         <Pencil size={18} />
       </button>
 
-      {/* ELIMINAR */}
       <button
         onClick={() =>
           onEliminar?.(item)
