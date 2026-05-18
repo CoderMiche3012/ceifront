@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SubMenu from "./SubMenu";
-import ModalPerfil from "./../usuarios/modales/ModalPerfil";
-import { obtenerPerfil, guardarUsuarioLocal } from "../../services/usuariosService";
+import ModalPerfil from "../../features/usuarios/components/modales/ModalPerfil";
+import { obtenerPerfil, guardarUsuarioLocal } from "../../features/usuarios/services/usuariosService";
 
 export default function Encabezado({ setSidebarOpen }) {
   const navigate = useNavigate();

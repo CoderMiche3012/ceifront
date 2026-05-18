@@ -5,10 +5,11 @@ export const formatError = (err) => {
         const etiquetas = {
             'nom_usuario': 'El nombre de usuario',
             'password': 'La contraseña',
-            'correo': 'El correo electrónico',
-            'telefono': 'El teléfono',
+            'correo': 'Correo electrónico: ',
+            'telefono': 'El teléfono debe tener',
             'nombre': 'El nombre',
-            'apellido_p': 'El apellido paterno'
+            'apellido_p': 'El apellido paterno solo debe tener',
+            'apellido_m': 'El apellido materno solo debe tener'
         };
         const mensajes = Object.keys(err).map(campo => {
             let mensaje = Array.isArray(err[campo]) ? err[campo].join(" ") : String(err[campo]);

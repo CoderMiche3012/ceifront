@@ -2,11 +2,11 @@ import { UserPlus } from "lucide-react";
 import { useState } from "react";
 import Boton from "../../components/ui/Boton";
 import EncabezadoPagina from "../../components/shared/EncabezadoPagina";
-import BeneficiarioCrearModal from "../../components/beneficiarios/modales/BeneficiarioCrearModal";
-import BeneficiarioTabla from "../../components/beneficiarios/tabla/BeneficiarioTabla";
-import BeneficiarioFiltros from "../../components/beneficiarios/tabla/BeneficiarioFiltros";
+import BeneficiarioCrearModal from "../../features/beneficiarios/components/modales/BeneficiarioCrearModal";
+import BeneficiarioTabla from "../../features/beneficiarios/components/tabla/BeneficiarioTabla";
+import BeneficiarioFiltros from "../../features/beneficiarios/components/tabla/BeneficiarioFiltros";
 import PaginacionTabla from "../../components/tablas/PaginacionTabla";
-import { useBeneficiariosPage } from "../../hooks/beneficiarios/useBeneficiariosPage";
+import { useBeneficiariosPage } from "../../features/beneficiarios/hooks/useBeneficiariosPage";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function BeneficiariosPagina() {

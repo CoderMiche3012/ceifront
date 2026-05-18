@@ -54,7 +54,7 @@ export default function SubMenu({ user, onLogout, onOpenProfile }) {
             {nombreCompleto}
           </p>
           <p className="text-xs font-bold uppercase tracking-wider text-[#1F8A8A]">
-            {user?.rol?.nombre || user?.rol || "Invitado"}
+            {user?.rol?.nombre || user?.rol || "SuperAdmin"}
           </p>
         </div>
         {/* Avatar */}

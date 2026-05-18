@@ -2,11 +2,11 @@ import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { Calendar, Upload, Plus } from "lucide-react";
 import AvatarGeneral from "../../components/shared/AvatarGeneral";
-import TabsExpediente from "../../components/postulantes/detalles/TabsExpediente";
-import ResultadosCard from "../../components/postulantes/detalles/resultados/ResultadosCard";
-import VisitasCard from "../../components/postulantes/detalles/visitas/VisitasCard";
-import { useExpedienteData } from "./../../hooks/postulantes/useExpedienteData";
-import DatosGenerales from "../../components/postulantes/detalles/generales/DatosGenerales";
+import TabsExpediente from "../../features/postulantes/components/detalles/TabsExpediente";
+import ResultadosCard from "../../features/postulantes/components/detalles/resultados/ResultadosCard";
+import VisitasCard from "../../features/postulantes/components/detalles/visitas/VisitasCard";
+import { useExpedienteData } from "../../features/postulantes/hooks/useExpedienteData";
+import DatosGenerales from "../../features/postulantes/components/detalles/generales/DatosGenerales";
 export default function ExpedientePagina() {
   const { id } = useParams();
   const {
@@ -16,6 +16,7 @@ export default function ExpedientePagina() {
     tab,
     setTab,
     visitasFiltradas,
+    refetchVisitas,
     estatusInfo,
     edad,
   } = useExpedienteData(id);
@@ -154,7 +155,7 @@ export default function ExpedientePagina() {
 
         {tab === "Visita" && (
           <div className="space-y-6">
-            <VisitasCard data={data} visitas={visitasFiltradas} setData={setData} />
+            <VisitasCard data={data} visitas={visitasFiltradas} setData={setData} onRefresh={refetchVisitas} />
           </div>
         )}
         {tab === "Resultados" && (

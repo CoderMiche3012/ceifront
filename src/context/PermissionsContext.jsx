@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { cargarPermisosUsuario } from "../services/permisosService";
+import { cargarPermisosUsuario } from "../features/usuarios/services/permisosService";
 
 const PermissionsContext = createContext();
 

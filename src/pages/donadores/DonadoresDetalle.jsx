@@ -2,11 +2,11 @@ import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { Calendar, Upload, Plus } from "lucide-react";
 import AvatarGeneral from "../../components/shared/AvatarGeneral";
-import { useDonadorData } from "../../hooks/donadores/useDonadorData";
+import { useDonadorData } from "../../features/donadores/hooks/useDonadorData";
 import BotonInterno from "../../components/ui/BotonInterno";
-import TabsDonador from "../../components/donadores/detalles/TabsDonador";
-import DatosGenerales from "../../components/donadores/detalles/DatosGenerales";
-import Donativos from "../../components/donadores/detalles/Donativos";
+import TabsDonador from "../../features/donadores/components/detalles/TabsDonador";
+import DatosGenerales from "../../features/donadores/components/detalles/DatosGenerales";
+import Donativos from "../../features/donadores/components/detalles/Donativos";
 export default function DonadoresDetalle() {
   const { id } = useParams();
   const {

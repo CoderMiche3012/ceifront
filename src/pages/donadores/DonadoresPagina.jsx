@@ -1,12 +1,12 @@
 import { useState, useRef } from "react";
 import Boton from "../../components/ui/Boton";
-import { useDonadoresPage } from "../../hooks/donadores/useDonadoresPage";
-import DonadorFiltros from "../../components/donadores/tabla/DonadorFiltros";
-import DonadoresTabla from "../../components/donadores/tabla/DonadorTabla";
+import { useDonadoresPage } from "../../features/donadores/hooks/useDonadoresPage";
+import DonadorFiltros from "../../features/donadores/components/tabla/DonadorFiltros";
+import DonadoresTabla from "../../features/donadores/components/tabla/DonadorTabla";
 import EncabezadoPagina from "../../components/shared/EncabezadoPagina";
 import PaginacionTabla from "../../components/tablas/PaginacionTabla";
-import DonadorCrearModal from "../../components/donadores/modales/DonadorCrearModal";
-import EditarDatosGenerales from "../../components/donadores/modales/EditarDatosGenerales";
+import DonadorCrearModal from "../../features/donadores/components/modales/DonadorCrearModal";
+import EditarDatosGenerales from "../../features/donadores/components/modales/EditarDatosGenerales";
 import { UserPlus, Users, UserCheck, UserX, Building2, HeartHandshake, HandHeart } from "lucide-react";
 export default function DonadoresPagina() {
 
@@ -28,7 +28,6 @@ export default function DonadoresPagina() {
         setCurrentPage,
         PAGE_SIZE
     } = useDonadoresPage();
-    console.log("aa", donadores)
     const handleEditar = (donador) => {
         setDonadorSeleccionado(donador);
         setModalEditar(true);

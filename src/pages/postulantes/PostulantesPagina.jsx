@@ -3,12 +3,12 @@ import { UserPlus } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import Boton from "../../components/ui/Boton";
 import EncabezadoPagina from "../../components/shared/EncabezadoPagina";
-import PostulanteCrearModal from "../../components/postulantes/modales/PostulanteCrearModal";
-import { usePostulantesPage } from "../../hooks/postulantes/usePostulantesPage";
-import PostulanteTabla from "../../components/postulantes/tabla/PostulanteTabla";
-import PostulanteFiltros from "../../components/postulantes/tabla/PostulanteFiltros";
+import PostulanteCrearModal from "../../features/postulantes/components/modales/PostulanteCrearModal";
+import { usePostulantesPage } from "../../features/postulantes/hooks/usePostulantesPage";
+import PostulanteTabla from "../../features/postulantes/components/tabla/PostulanteTabla";
+import PostulanteFiltros from "../../features/postulantes/components/tabla/PostulanteFiltros";
 import PaginacionTabla from "../../components/tablas/PaginacionTabla";
-import { FormatoImpresion } from "../../components/postulantes/FormatoSocioeconomico";
+import { FormatoImpresion } from "../../features/postulantes/components/FormatoSocioeconomico";
 
 
 export default function PostulantesPagina() {

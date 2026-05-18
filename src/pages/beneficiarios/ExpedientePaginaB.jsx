@@ -1,16 +1,16 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Calendar, ArrowLeft, RefreshCw, AlertCircle } from "lucide-react";
 import AvatarGeneral from "../../components/shared/AvatarGeneral";
-import TabsExpediente from "../../components/beneficiarios/detalles/TabsExpediente";
-import DatosGenerales from "../../components/beneficiarios/detalles/DatosGenerales";
-import FamiliaCard from "../../components/beneficiarios/detalles/FamiliaCard";
-import { useExpedienteData } from "../../hooks/beneficiarios/useExpedienteData";
-import { useBeneficiariosPage } from "../../hooks/beneficiarios/useBeneficiariosPage";
+import TabsExpediente from "../../features/beneficiarios/components/detalles/TabsExpediente";
+import DatosGenerales from "../../features/beneficiarios/components/detalles/DatosGenerales";
+import FamiliaCard from "../../features/beneficiarios/components/detalles/FamiliaCard";
+import { useExpedienteData } from "../../features/beneficiarios/hooks/useExpedienteData";
+import { useBeneficiariosPage } from "../../features/beneficiarios/hooks/useBeneficiariosPage";
 import { useQueryClient } from "@tanstack/react-query";
-import HistorialEscolarCard from "../../components/beneficiarios/detalles/seguimiento/informacionEscolar/HistorialEscolar";
-import HistorialServicios from "../../components/beneficiarios/detalles/seguimiento/Servicios/HistorialServicios";
-import HistorialEconomicoCard from "../../components/beneficiarios/detalles/seguimiento/ApoyosEconomicos/HistorialEconomico";
-import HistorialObligaciones from "../../components/beneficiarios/detalles/seguimiento/Obligaciones/HistorialObligaciones";
+import HistorialEscolarCard from "../../features/beneficiarios/components/detalles/seguimiento/informacionEscolar/HistorialEscolar";
+import HistorialServicios from "../../features/beneficiarios/components/detalles/seguimiento//Servicios/HistorialServicios";
+import HistorialEconomicoCard from "../../features/beneficiarios/components/detalles/seguimiento/ApoyosEconomicos/HistorialEconomico";
+import HistorialObligaciones from "../../features/beneficiarios/components/detalles/seguimiento/Obligaciones/HistorialObligaciones";
 
 export default function ExpedientePagina() {
   const { id } = useParams();
