@@ -134,7 +134,9 @@ export default function ExpedientePagina() {
 
       <main className="min-h-[400px] mt-4">
         {tab === "generales" && <DatosGenerales data={data} />}
-        {tab === "familia" && <FamiliaCard data={data} />}
+        {tab === "familia" && (
+          <FamiliaCard data={data} refetch={refetch} />
+        )}
         {tab === "escuela" && <HistorialEscolarCard data={data} />}
         {tab === "apoyos" && <HistorialEconomicoCard data={data} />}
         {tab === "obligaciones" && <HistorialObligaciones data={data} />}

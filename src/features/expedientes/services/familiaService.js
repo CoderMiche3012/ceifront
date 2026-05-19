@@ -7,12 +7,7 @@ export const obtenerFamilia = async () => {
     const res = await API.get(`${BASE_URL}/`);
     return res.data;
   } catch (error) {
-    console.log(error)
-    const errorData = error.response?.data || error;
-    if (errorData) {
-      throw new Error(formatError(errorData));
-    }
-    throw new Error(formatError(error.message));
+    throw error;
   }
 };
 
@@ -21,13 +16,7 @@ export const crearFamilia = async (payload) => {
     const res = await API.post(`${BASE_URL}/`, payload);
     return res.data;
   } catch (error) {
-    console.log("ERROR ORIGINAL:", error);
-    const errorData = error.response?.data || error;
-    throw {
-      original: error, 
-      response: error.response, 
-      message: formatError(errorData) 
-    };
+    throw error;
   }
 };
 
@@ -36,29 +25,16 @@ export const actualizarFamilia = async (id, payload) => {
     const res = await API.patch(`${BASE_URL}/${id}/`, payload);
     return res.data;
   } catch (error) {
-    console.log(error);
-    const errorData = error.response?.data || error;
-    if (errorData) {
-      throw new Error(formatError(errorData));
-    }
-    throw new Error(formatError(error.message));
+    throw error;
   }
 };
 
 export const eliminarFamilia = async (id) => {
   try {
     const res = await API.delete(`${BASE_URL}/${id}/`);
-    return res.data; 
+    return res.data;
   } catch (error) {
-    console.log(error);
-
-    const errorData = error.response?.data || error;
-
-    if (errorData) {
-      throw new Error(formatError(errorData));
-    }
-
-    throw new Error(formatError(error.message));
+    throw error;
   }
 };
 

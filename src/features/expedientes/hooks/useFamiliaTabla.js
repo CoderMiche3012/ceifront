@@ -1,11 +1,28 @@
 import { useState } from "react";
-import { actualizarFamilia, eliminarFamilia } from "../services/familiaService";
+import { crearFamilia, actualizarFamilia, eliminarFamilia } from "../services/familiaService";
+import { formatErrorAnidado } from "../../../utils/errorHandlers";
+import { useQueryClient } from "@tanstack/react-query";
 
-export const useFamiliaTabla = (familia, onUpdate) => {
+const getErrorMessage = (err) => {
+
+    if (err?.response?.data) {
+        return formatErrorAnidado(err.response.data);
+    }
+
+    if (err?.message) {
+        return formatErrorAnidado(err);
+    }
+
+    return "Error inesperado";
+};
+
+
+
+export const useFamiliaTabla = (familia) => {
     const [modalCrearOpen, setModalCrearOpen] = useState(false);
     const [modalEditarOpen, setModalEditarOpen] = useState(false);
     const [familiarEnEdicion, setFamiliarEnEdicion] = useState(null);
-
+    const queryClient = useQueryClient();
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 5;
@@ -17,7 +34,7 @@ export const useFamiliaTabla = (familia, onUpdate) => {
             ...familiar,
             vive_en_casa:
                 familiar.vive_en_casa === true ? "true" :
-                familiar.vive_en_casa === false ? "false" : "",
+                    familiar.vive_en_casa === false ? "false" : "",
         });
         setModalEditarOpen(true);
     };
@@ -25,29 +42,32 @@ export const useFamiliaTabla = (familia, onUpdate) => {
     const handleEliminar = async (row) => {
         try {
             const id = row.id_familia || row.id;
-            await eliminarFamilia(id);
-            const nuevaLista = familia.filter((f) => (f.id_familia || f.id) !== id);
-            onUpdate(nuevaLista);
+
+    await eliminarFamilia(id);
+
+    queryClient.invalidateQueries({ queryKey: ["expediente"] });
         } catch (error) {
-            console.error("Error al eliminar:", error.message);
+            throw new Error(
+                getErrorMessage(error)
+            );
         }
     };
 
-    const handleCreated = (nuevo) => {
-        onUpdate([...familia, nuevo]);
-    };
-
+    const handleCreated = async (nuevo) => {
+    await crearFamilia(nuevo); // si lo haces aquí
+    queryClient.invalidateQueries({ queryKey: ["expediente", nuevo.expedienteId] });
+};
     const handleSaveEditar = async (dataFinal) => {
         try {
             const id = dataFinal.id_familia || dataFinal.id;
-            const res = await actualizarFamilia(id, dataFinal);
-            const nuevaLista = familia.map((f) =>
-                (f.id_familia === id || f.id === id) ? res : f
-            );
-            onUpdate(nuevaLista);
-            setModalEditarOpen(false);
+
+            await actualizarFamilia(id, dataFinal);
+
+            queryClient.invalidateQueries({ queryKey: ["expediente"] });
         } catch (error) {
-            throw error; 
+            throw new Error(
+                getErrorMessage(error)
+            );
         }
     };
 

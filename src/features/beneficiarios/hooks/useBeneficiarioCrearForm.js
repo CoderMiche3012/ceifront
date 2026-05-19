@@ -4,10 +4,20 @@ import { crearBeneficiario, eliminarBeneficiario, } from "../services/beneficiar
 import { crearExpediente, eliminarExpediente, } from "../../expedientes/services/expedientesService";
 import { crearSeguimiento } from "../services/seguimientoService";
 import { obtenerPeriodos } from "../../periodos/services/periodoService";
-const getErrorMessage = (err) =>
-  err?.response?.data?.message ||
-  err?.message ||
-  "Error inesperado";
+import { formatErrorAnidado } from "../../../utils/errorHandlers";
+const getErrorMessage = (err) => {
+  // Si Axios nos devolvió una respuesta del servidor, decodificamos el JSON que viene dentro
+  if (err?.response?.data) {
+    return formatErrorAnidado(err.response.data);
+  }
+
+  // Si no hay respuesta del servidor (error de red o el throw modificado de antes)
+  if (err?.message) {
+    return formatErrorAnidado(err); 
+  }
+
+  return "Error inesperado";
+};
 const initialForm = {
   fecha_ingreso: new Date().toISOString().split("T")[0],
   id_usuario: null,

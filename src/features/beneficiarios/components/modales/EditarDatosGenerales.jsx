@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { X, Save, Loader2, User } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import ModalConfirmacion from '../../../../components/shared/ModalConfirmacion';
@@ -6,13 +5,114 @@ import ModalResultado from '../../../../components/shared/ModalResultado';
 import Input from '../../../../components/ui/InputG';
 import Field from '../../../../components/ui/Field';
 import { actualizarExpediente, actualizarDireccion } from '../../../expedientes/services/expedientesService';
+import { buscarCPCompleto } from "../../../expedientes/services/expedientesService";
+import { useState, useEffect } from 'react';
+import { formatErrorAnidado } from '../../../../utils/errorHandlers';
+const getErrorMessage = (err) => {
+
+  if (err?.response?.data) {
+    return formatErrorAnidado(err.response.data);
+  }
+
+  if (err?.message) {
+    return formatErrorAnidado(err);
+  }
+
+  return "Error inesperado";
+};
 
 export default function EditarDatosGenerales({ isOpen, onClose, data }) {
   const queryClient = useQueryClient();
   const [showConfirm, setShowConfirm] = useState(false);
   const [formDataCache, setFormDataCache] = useState(null);
   const [resultado, setResultado] = useState({ open: false, type: 'success', title: '', message: '' });
+  const [colonias, setColonias] = useState([]);
+  const [loadingCP, setLoadingCP] = useState(false);
+  const [cpEncontrado, setCpEncontrado] =
+    useState(false);
+  const [otraColonia, setOtraColonia] =
+    useState(false);
+  const [direccionForm, setDireccionForm] = useState({
+    calle: data?.direccion?.calle || "",
+    numero: data?.direccion?.numero || "",
+    colonia: data?.direccion?.colonia || "",
+    municipio: data?.direccion?.municipio || "",
+    cp: data?.direccion?.cp || "",
+  });
+  const updateDireccion = (field, value) => {
+    setDireccionForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  useEffect(() => {
 
+    if (!isOpen) return;
+
+    // RESET COMPLETO DEL FORMULARIO
+    setDireccionForm({
+      calle: data?.direccion?.calle || "",
+      numero: data?.direccion?.numero || "",
+      colonia: data?.direccion?.colonia || "",
+      municipio: data?.direccion?.municipio || "",
+      cp: data?.direccion?.cp || "",
+    });
+
+    setOtraColonia(false);
+    setCpEncontrado(false);
+    setColonias([]);
+
+    const cargarCPInicial = async () => {
+
+      const cp = data?.direccion?.cp;
+
+      if (!cp || String(cp).length !== 5) return;
+
+      try {
+
+        setLoadingCP(true);
+
+        const dataCP = await buscarCPCompleto(cp);
+
+        setColonias(dataCP?.colonias || []);
+
+        if (dataCP?.municipio) {
+
+          setCpEncontrado(true);
+
+          setDireccionForm(prev => ({
+            ...prev,
+            municipio: dataCP.municipio
+          }));
+
+        }
+
+        const coloniaActual = data?.direccion?.colonia;
+
+        if (
+          coloniaActual &&
+          dataCP?.colonias &&
+          !dataCP.colonias.includes(coloniaActual)
+        ) {
+
+          setOtraColonia(true);
+
+        }
+
+      } catch (error) {
+
+        console.log(error);
+
+      } finally {
+
+        setLoadingCP(false);
+
+      }
+    };
+
+    cargarCPInicial();
+
+  }, [isOpen, data]);
   const mutation = useMutation({
     mutationFn: async (payload) => {
       const id_expediente = data?.id_expediente;
@@ -34,11 +134,11 @@ export default function EditarDatosGenerales({ isOpen, onClose, data }) {
       if (id_direccion) {
         promesas.push(
           actualizarDireccion(id_direccion, {
-            calle: payload.calle,
-            numero: payload.numero,
-            colonia: payload.colonia,
-            municipio: payload.municipio,
-            cp: payload.cp,
+            calle: direccionForm.calle,
+            numero: direccionForm.numero,
+            colonia: direccionForm.colonia,
+            municipio: direccionForm.municipio,
+            cp: direccionForm.cp,
           })
         );
       }
@@ -59,12 +159,14 @@ export default function EditarDatosGenerales({ isOpen, onClose, data }) {
       setShowConfirm(false);
     },
     onError: (error) => {
+
       setResultado({
         open: true,
         type: 'error',
         title: 'Error de actualización',
-        message: error.message || 'Hubo un problema al conectar con el servidor.'
+        message: getErrorMessage(error)
       });
+
       setShowConfirm(false);
     }
   });
@@ -92,7 +194,7 @@ export default function EditarDatosGenerales({ isOpen, onClose, data }) {
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4">
         <div className="bg-[#F8FAFC] rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-white">
-          
+
           {/* Header */}
           <div className="flex items-center justify-between p-8 bg-white border-b border-slate-100">
             <div className="flex items-center gap-4">
@@ -143,23 +245,197 @@ export default function EditarDatosGenerales({ isOpen, onClose, data }) {
                   <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0E5F63]">Ubicación y Domicilio</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Field label="C.P.">
+                    <Input
+                      value={direccionForm.cp}
+                      placeholder="68000"
+                      onChange={async (e) => {
+
+                        const cp = e.target.value;
+
+                        updateDireccion("cp", cp);
+
+                        if (!/^\d{5}$/.test(cp)) {
+
+                          setColonias([]);
+                          setCpEncontrado(false);
+
+                          updateDireccion("municipio", "");
+                          updateDireccion("colonia", "");
+
+                          return;
+                        }
+
+                        try {
+
+                          setLoadingCP(true);
+
+                          const dataCP = await buscarCPCompleto(cp);
+
+                          setColonias(dataCP?.colonias || []);
+
+                          if (dataCP?.municipio) {
+
+                            setCpEncontrado(true);
+
+                            updateDireccion(
+                              "municipio",
+                              dataCP.municipio
+                            );
+
+                          } else {
+
+                            setCpEncontrado(false);
+
+                          }
+
+                        } catch (error) {
+
+                          console.log(error);
+
+                          setCpEncontrado(false);
+                          setColonias([]);
+
+                        } finally {
+
+                          setLoadingCP(false);
+
+                        }
+                      }}
+                    />
+                  </Field>
+
+                  <Field label="Municipio">
+
+                    <Input
+                      value={direccionForm.municipio}
+                      disabled={
+                        direccionForm.cp.length === 5 &&
+                        cpEncontrado
+                      }
+                      placeholder={
+                        cpEncontrado
+                          ? "Municipio detectado automáticamente"
+                          : "Escribe el municipio"
+                      }
+                      onChange={(e) =>
+                        updateDireccion(
+                          "municipio",
+                          e.target.value
+                        )
+                      }
+                    />
+
+                  </Field>
+
+                  <Field label="Colonia">
+
+                    {!otraColonia ? (
+
+                      <select
+                        className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-[#0E5F63]"
+                        value={direccionForm.colonia}
+                        disabled={loadingCP}
+                        onChange={(e) => {
+
+                          const value = e.target.value;
+
+                          if (value === "__otra__") {
+
+                            setOtraColonia(true);
+
+                            updateDireccion(
+                              "colonia",
+                              ""
+                            );
+
+                            return;
+                          }
+
+                          updateDireccion(
+                            "colonia",
+                            value
+                          );
+                        }}
+                      >
+
+                        <option value="">
+                          Seleccionar colonia...
+                        </option>
+
+                        {colonias.map((colonia) => (
+
+                          <option
+                            key={colonia}
+                            value={colonia}
+                          >
+                            {colonia}
+                          </option>
+
+                        ))}
+
+                        <option value="__otra__">
+                          Otra colonia...
+                        </option>
+
+                      </select>
+
+                    ) : (
+
+                      <div className="space-y-2">
+
+                        <Input
+                          value={direccionForm.colonia}
+                          placeholder="Escribe la colonia"
+                          onChange={(e) =>
+                            updateDireccion(
+                              "colonia",
+                              e.target.value
+                            )
+                          }
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => {
+
+                            setOtraColonia(false);
+
+                            updateDireccion(
+                              "colonia",
+                              ""
+                            );
+                          }}
+                          className="text-xs text-[#0E5F63] hover:underline"
+                        >
+                          Volver a sugerencias
+                        </button>
+
+                      </div>
+
+                    )}
+
+                  </Field>
                   <div className="md:col-span-2">
                     <Field label="Calle">
-                      <Input name="calle" defaultValue={data.direccion.calle} placeholder="Nombre de la vialidad" />
+                      <Input
+                        value={direccionForm.calle}
+                        onChange={(e) =>
+                          updateDireccion("calle", e.target.value)
+                        }
+                      />
                     </Field>
                   </div>
                   <Field label="Número">
-                    <Input name="numero" defaultValue={data.direccion.numero} placeholder="Ext/Int" />
+                    <Input
+                      value={direccionForm.numero}
+                      onChange={(e) =>
+                        updateDireccion("numero", e.target.value)
+                      }
+                    />
                   </Field>
-                  <Field label="Colonia">
-                    <Input name="colonia" defaultValue={data.direccion.colonia} placeholder="Ej. Centro" />
-                  </Field>
-                  <Field label="Municipio">
-                    <Input name="municipio" defaultValue={data.direccion.municipio} placeholder="Oaxaca" />
-                  </Field>
-                  <Field label="C.P.">
-                    <Input name="cp" defaultValue={data.direccion.cp} placeholder="68000" />
-                  </Field>
+
+
                 </div>
               </section>
             </div>

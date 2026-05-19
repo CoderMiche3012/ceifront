@@ -21,8 +21,8 @@ export default function ModalCrearFamiliar({ open, onClose, onCreated, expedient
 
   const selectStyle = (error) => `
     w-full rounded-xl border px-4 py-3 text-sm transition-all duration-200
-    ${error 
-      ? "border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-200" 
+    ${error
+      ? "border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-200"
       : "border-slate-300 focus:border-[#0E5F63] focus:ring-2 focus:ring-[#0E5F63]/20 bg-white"}
   `;
 
@@ -45,7 +45,7 @@ export default function ModalCrearFamiliar({ open, onClose, onCreated, expedient
         <div className="p-6 overflow-y-auto">
           <AlertaError mensaje={generalError} />
           <form id="familiar-form" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-            <Field label="Nombre(s) *" error={fieldErrors.nombre}>
+            <Field label="Nombre(s) *" >
               <InputG name="nombre" value={formData.nombre} onChange={handleChange} ref={el => fieldRefs.current.nombre = el} placeholder="Ej. Juan" />
             </Field>
 
@@ -71,7 +71,13 @@ export default function ModalCrearFamiliar({ open, onClose, onCreated, expedient
             </Field>
 
             <Field label="Teléfono (10 dígitos) *" error={fieldErrors.telefono}>
-              <InputG name="telefono" value={formData.telefono} onChange={handleChange} placeholder="5512345678" />
+              <InputG
+                name="telefono"
+                value={formData.telefono}
+                onChange={handleChange}
+                placeholder="5512345678"
+                maxLength={10}
+              />
             </Field>
 
             <Field label="Ocupación / Actividad *" error={fieldErrors.actividad_principal}>

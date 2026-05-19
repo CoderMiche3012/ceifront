@@ -7,11 +7,17 @@ import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
 import { useBeneficiarioCrearForm } from "../../hooks/useBeneficiarioCrearForm";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { buscarCPCompleto } from "../../../expedientes/services/expedientesService";
 
 
 export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
   const [step, setStep] = useState(1);
-
+  const [colonias, setColonias] = useState([]);
+  const [loadingCP, setLoadingCP] = useState(false);
+  const [cpEncontrado, setCpEncontrado] =
+    useState(false);
+  const [otraColonia, setOtraColonia] =
+    useState(false);
   const {
     form, setForm, error, loading, showConfirm, setShowConfirm,
     resultModal, handlePreSubmit, handleConfirmSave, handleFinalClose
@@ -41,7 +47,44 @@ export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
     nuevaFamilia[index] = { ...nuevaFamilia[index], [field]: value };
     updateExpediente("familia", nuevaFamilia);
   };
+  const handleBuscarCP = async (cp) => {
 
+    if (cp.length !== 5) {
+      setColonias([]);
+      return;
+    }
+
+    try {
+
+      setLoadingCP(true);
+
+      const data = await buscarCPCompleto(cp);
+
+      if (data) {
+
+        // solo llenar municipio si está vacío
+        if (
+          !form.id_expediente.id_direccion.municipio
+        ) {
+          updateDireccion(
+            "municipio",
+            data.municipio || ""
+          );
+        }
+
+        setColonias(data.colonias || []);
+      }
+
+    } catch (error) {
+
+      console.log(error);
+
+    } finally {
+
+      setLoadingCP(false);
+
+    }
+  };
   // --- Clases de Estilo Reutilizables ---
   const inputClass = "h-9 text-sm rounded-lg border-slate-200 focus:ring-[#0E5F63] transition-all";
   const selectClass = "w-full h-9 px-3 rounded-lg border border-slate-200 bg-white text-sm outline-none focus:ring-1 focus:ring-[#0E5F63] transition-all";
@@ -127,9 +170,196 @@ export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
                     <span className="w-4 h-[1px] bg-[#0E5F63]/30"></span> Ubicación de Domicilio
                   </h3>
                   <div className="grid grid-cols-12 gap-4 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
-                    <div className="col-span-6 md:col-span-4"><Field label="Municipio" required><InputG className={inputClass} placeholder="Ej: Oaxaca de Juárez" value={form.id_expediente.id_direccion.municipio} onChange={(e) => updateDireccion("municipio", e.target.value)} /></Field></div>
-                    <div className="col-span-6 md:col-span-4"><Field label="Colonia" required><InputG className={inputClass} placeholder="Ej: Centro" value={form.id_expediente.id_direccion.colonia} onChange={(e) => updateDireccion("colonia", e.target.value)} /></Field></div>
-                    <div className="col-span-6 md:col-span-2"><Field label="CP" required><InputG className={inputClass} placeholder="68000" value={form.id_expediente.id_direccion.cp} onChange={(e) => updateDireccion("cp", e.target.value)} /></Field></div>
+                    <div className="col-span-6 md:col-span-2"><Field label="CP" required>
+                      <InputG
+                        className={inputClass}
+                        placeholder="68000"
+                        value={form.id_expediente.id_direccion.cp}
+                        onChange={async (e) => {
+
+                          const cp = e.target.value;
+
+                          updateDireccion("cp", cp);
+
+                          // limpiar si aún no son 5 dígitos
+                          if (!/^\d{5}$/.test(cp)) {
+
+                            setColonias([]);
+                            updateDireccion("municipio", "");
+                            updateDireccion("colonia", "");
+                            setOtraColonia(false);
+                            updateDireccion("colonia", "");
+                            setCpEncontrado(false);
+                            return;
+                          }
+
+                          try {
+
+                            const data =
+                              await buscarCPCompleto(cp);
+
+                            // municipio automático SOLO si viene info
+                            if (data?.municipio) {
+
+                              updateDireccion(
+                                "municipio",
+                                data.municipio
+                              );
+
+                            }
+
+                            // colonias sugeridas
+                            setColonias(
+                              data?.colonias || []
+                            );
+
+                            if (data?.municipio) {
+
+                              setCpEncontrado(true);
+
+                              updateDireccion(
+                                "municipio",
+                                data.municipio
+                              );
+
+                            } else {
+
+                              setCpEncontrado(false);
+
+                            }
+
+                          } catch (error) {
+                            setCpEncontrado(false);
+                            console.log(error);
+
+                            // fallback manual
+                            setColonias([]);
+
+                          }
+                        }}
+                      />
+                    </Field>
+                    </div>
+                    <div className="col-span-6 md:col-span-4">
+                      <Field label="Municipio" required>
+
+                        <InputG
+                          className={inputClass}
+                          disabled={
+                            form.id_expediente.id_direccion.cp.length !== 5 ||
+                            cpEncontrado
+                          }
+                          placeholder={
+                            form.id_expediente.id_direccion.cp.length !== 5
+                              ? "Primero ingresa CP"
+                              : cpEncontrado
+                                ? "Municipio detectado automáticamente"
+                                : "Escribe el municipio"
+                          }
+                          value={form.id_expediente.id_direccion.municipio}
+                          onChange={(e) =>
+                            updateDireccion(
+                              "municipio",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </Field>
+                    </div>
+                    <div className="col-span-6 md:col-span-4">
+                      <Field label="Colonia" required>
+
+                        {!otraColonia ? (
+
+                          <select
+                            className={selectClass}
+                            disabled={
+                              form.id_expediente.id_direccion.cp.length !== 5
+                            }
+                            value={form.id_expediente.id_direccion.colonia}
+                            onChange={(e) => {
+
+                              const value = e.target.value;
+
+                              if (value === "__otra__") {
+
+                                setOtraColonia(true);
+
+                                updateDireccion(
+                                  "colonia",
+                                  ""
+                                );
+
+                                return;
+                              }
+
+                              updateDireccion(
+                                "colonia",
+                                value
+                              );
+                            }}
+                          >
+
+                            <option value="">
+                              Seleccionar colonia...
+                            </option>
+
+                            {colonias.map((colonia) => (
+
+                              <option
+                                key={colonia}
+                                value={colonia}
+                              >
+                                {colonia}
+                              </option>
+
+                            ))}
+
+                            <option value="__otra__">
+                              Otra colonia...
+                            </option>
+
+                          </select>
+
+                        ) : (
+
+                          <div className="space-y-2">
+
+                            <InputG
+                              className={inputClass}
+                              placeholder="Escribe la colonia"
+                              value={form.id_expediente.id_direccion.colonia}
+                              onChange={(e) =>
+                                updateDireccion(
+                                  "colonia",
+                                  e.target.value
+                                )
+                              }
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => {
+
+                                setOtraColonia(false);
+
+                                updateDireccion(
+                                  "colonia",
+                                  ""
+                                );
+                              }}
+                              className="text-xs text-[#0E5F63] hover:underline"
+                            >
+                              Volver a sugerencias
+                            </button>
+
+                          </div>
+
+                        )}
+
+                      </Field>
+                    </div>
+
                     <div className="col-span-6 md:col-span-2"><Field label="Núm." required><InputG className={inputClass} placeholder="101-A" value={form.id_expediente.id_direccion.numero} onChange={(e) => updateDireccion("numero", e.target.value)} /></Field></div>
                     <div className="col-span-12"><Field label="Calle" required><InputG className={inputClass} placeholder="Ej: Av. Independencia" value={form.id_expediente.id_direccion.calle} onChange={(e) => updateDireccion("calle", e.target.value)} /></Field></div>
                   </div>

@@ -59,11 +59,9 @@ export const formatErrorAnidado = (err) => {
         let mensajes = [];
 
         if (Array.isArray(obj)) {
-            // Si es un array de strings (mensajes directos)
             if (typeof obj[0] === 'string') {
                 return [obj.join(" ")];
             }
-            // Si es un array de objetos (como familia: [{}])
             obj.forEach((item) => {
                 if (typeof item === 'object') {
                     mensajes = mensajes.concat(procesarErrores(item));
@@ -82,7 +80,6 @@ export const formatErrorAnidado = (err) => {
                     msg = msg.replace(/este campo es requerido/i, "es obligatorio");
                     msg = msg.replace(/ya existe un\/a usuario con este\/a/i, "ya está registrado");
                     
-                    // Evitar repetir la etiqueta si el mensaje ya la incluye
                     if (msg.toLowerCase().includes(etiqueta.toLowerCase())) {
                         mensajes.push(msg.charAt(0).toUpperCase() + msg.slice(1).trim());
                     } else {
@@ -100,13 +97,20 @@ export const formatErrorAnidado = (err) => {
         return mensajes;
     };
 
-    if (typeof err === 'object' && !err.message) {
-        const mensajes = procesarErrores(err);
-        // Eliminar mensajes duplicados y unir
+    // --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
+    // Si el error es un objeto, primero verificamos si contiene el diccionario de errores detallados de validación
+    const objetivoAProcesar = err.errors ? err.errors : err;
+
+    // Ejecutamos el procesador si es el objeto 'errors' o si es un objeto sin un mensaje genérico
+    if (typeof err === 'object' && (err.errors || !err.message)) {
+        const mensajes = procesarErrores(objetivoAProcesar);
         const mensajesUnicos = [...new Set(mensajes)];
-        return mensajesUnicos.join(". ") + (mensajesUnicos.length > 0 ? "." : "");
+        if (mensajesUnicos.length > 0) {
+            return mensajesUnicos.join(". ") + ".";
+        }
     }
 
+    // Manejo secundario si no se encontraron errores específicos en el objeto interno
     const mensaje = typeof err === 'string' ? err : err.message || "";
     if (mensaje.includes("Network Error") || mensaje.includes("Failed to fetch")) {
         return "No se pudo conectar con el servidor. Revisa tu conexión.";
