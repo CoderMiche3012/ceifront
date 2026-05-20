@@ -1,6 +1,7 @@
 import { UserPlus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Boton from "../../components/ui/Boton";
+import { useLocation, useNavigate } from "react-router-dom";
 import EncabezadoPagina from "../../components/shared/EncabezadoPagina";
 import BeneficiarioCrearModal from "../../features/beneficiarios/components/modales/BeneficiarioCrearModal";
 import BeneficiarioTabla from "../../features/beneficiarios/components/tabla/BeneficiarioTabla";
@@ -30,7 +31,16 @@ export default function BeneficiariosPagina() {
     periodo,
     setPeriodo
   } = useBeneficiariosPage();
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (location.state?.openModal) {
+      setIsModalOpen(true);
 
+      // Limpiamos el estado del historial para que no se reabra al actualizar la página
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
   const handleCreateSuccess = () => {
     setIsModalOpen(false);
     queryClient.invalidateQueries({ queryKey: ["beneficiarios"] });

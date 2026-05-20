@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef , useEffect} from "react";
 import Boton from "../../components/ui/Boton";
 import { useDonadoresPage } from "../../features/donadores/hooks/useDonadoresPage";
 import DonadorFiltros from "../../features/donadores/components/tabla/DonadorFiltros";
@@ -8,6 +8,8 @@ import PaginacionTabla from "../../components/tablas/PaginacionTabla";
 import DonadorCrearModal from "../../features/donadores/components/modales/DonadorCrearModal";
 import EditarDatosGenerales from "../../features/donadores/components/modales/EditarDatosGenerales";
 import { UserPlus, Users, UserCheck, UserX, Building2, HeartHandshake, HandHeart } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+
 export default function DonadoresPagina() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,6 +30,17 @@ export default function DonadoresPagina() {
         setCurrentPage,
         PAGE_SIZE
     } = useDonadoresPage();
+const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (location.state?.openModal) {
+      setIsModalOpen(true);
+
+      // Limpiamos el estado del historial para que no se reabra al actualizar la página
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
+
     const handleEditar = (donador) => {
         setDonadorSeleccionado(donador);
         setModalEditar(true);

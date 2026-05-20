@@ -10,12 +10,13 @@ import PostulanteFiltros from "../../features/postulantes/components/tabla/Postu
 import PaginacionTabla from "../../components/tablas/PaginacionTabla";
 import { FormatoImpresion } from "../../features/postulantes/components/FormatoSocioeconomico";
 
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function PostulantesPagina() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [postulanteAImprimir, setPostulanteAImprimir] = useState(null);
   const componenteRef = useRef(null);
-  const nombreArchivo =postulanteAImprimir?.id_expediente?.nombre?.replace(/\s+/g, "_")?.replace(/[^\w-]/g, "") || "Postulante";
+  const nombreArchivo = postulanteAImprimir?.id_expediente?.nombre?.replace(/\s+/g, "_")?.replace(/[^\w-]/g, "") || "Postulante";
   const handlePrint = useReactToPrint({
     contentRef: componenteRef,
     documentTitle: `Estudio_${nombreArchivo}`,
@@ -25,14 +26,24 @@ export default function PostulantesPagina() {
     },
     onPrintError: (error) => {
       console.error("Error al imprimir:", error);
-      setPostulanteAImprimir(null); 
+      setPostulanteAImprimir(null);
     },
   })
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (location.state?.openModal) {
+      setIsModalOpen(true);
+
+      // Limpiamos el estado del historial para que no se reabra al actualizar la página
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
   useEffect(() => {
     if (postulanteAImprimir && componenteRef.current) {
       const timer = setTimeout(() => {
         handlePrint();
-      }, 300); 
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [postulanteAImprimir, handlePrint]);
