@@ -4,11 +4,25 @@ import InputG from "../../../../components/ui/InputG";
 import AlertaError from "../../../../components/ui/AlertaError";
 import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import { useEditarFamiliar } from "../../hooks/useEditarFamiliar";
+import ModalResultado from "../../../../components/shared/ModalResultado";
 
 export default function ModalEditarFamiliar({ open, onClose, onSave, editando, setEditando }) {
   const {
-    handleChange,handleConfirm,validate,confirmOpen,setConfirmOpen,loading,
-    fieldErrors,generalError,fieldRefs} = useEditarFamiliar(editando, setEditando, onSave, onClose);
+    handleChange,
+    handleConfirm,
+    validate,
+    confirmOpen,
+    setConfirmOpen,
+    loading,
+    fieldErrors,
+    generalError,
+    fieldRefs,
+    resultOpen,
+    resultType,
+    resultTitle,
+    resultMessage,
+    handleCloseResult
+  } = useEditarFamiliar(editando, setEditando, onSave, onClose);
   if (!open || !editando) return null;
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -23,7 +37,7 @@ export default function ModalEditarFamiliar({ open, onClose, onSave, editando, s
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
       <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col max-h-[95vh] animate-in fade-in zoom-in duration-200">
-        
+
         {/* Header */}
         <div className="p-6 border-b border-slate-100 flex justify-between items-center">
           <div>
@@ -39,7 +53,7 @@ export default function ModalEditarFamiliar({ open, onClose, onSave, editando, s
         <div className="p-6 overflow-y-auto">
           <AlertaError mensaje={generalError} />
           <form id="edit-form" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
+
             <Field label="Nombre *" error={fieldErrors.nombre}>
               <InputG name="nombre" value={editando.nombre || ""} onChange={handleChange} ref={el => fieldRefs.current.nombre = el} />
             </Field>
@@ -60,8 +74,36 @@ export default function ModalEditarFamiliar({ open, onClose, onSave, editando, s
               </select>
             </Field>
 
-            <Field label="Edad *" error={fieldErrors.edad}>
-              <InputG type="number" name="edad" value={editando.edad || ""} onChange={handleChange} />
+            <Field label="Fecha de nacimiento *" error={fieldErrors.edad}>
+              <InputG
+                type="date"
+                value={
+                  editando.edad
+                    ? `${new Date().getFullYear() - editando.edad}-01-01`
+                    : ""
+                }
+                onChange={(e) => {
+                  const fecha = new Date(e.target.value);
+                  const hoy = new Date();
+
+                  let edad = hoy.getFullYear() - fecha.getFullYear();
+                  const mes = hoy.getMonth() - fecha.getMonth();
+
+                  if (
+                    mes < 0 ||
+                    (mes === 0 && hoy.getDate() < fecha.getDate())
+                  ) {
+                    edad--;
+                  }
+
+                  handleChange({
+                    target: {
+                      name: "edad",
+                      value: edad
+                    }
+                  });
+                }}
+              />
             </Field>
 
             <Field label="Teléfono *" error={fieldErrors.telefono}>
@@ -107,6 +149,14 @@ export default function ModalEditarFamiliar({ open, onClose, onSave, editando, s
           onConfirm={handleConfirm}
           onClose={() => setConfirmOpen(false)}
           loading={loading}
+        />
+        <ModalResultado
+          open={resultOpen}
+          type={resultType}
+          title={resultTitle}
+          message={resultMessage}
+          buttonText="Entendido"
+          onClose={handleCloseResult}
         />
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { HiOutlineUser, HiCheck } from "react-icons/hi";
 import AlertaError from "../../../../components/ui/AlertaError";
 import Field from "../../../../components/ui/Field";
@@ -6,12 +7,18 @@ import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
 import { useDonadorCrearForm } from "../../hooks/useDonadorCrearForm";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { buscarCPZippopotam } from "../../services/donadoresService";
+import { countries } from "../../../../utils/countries";
 
 export default function DonadorCrearModal({ open, onClose, onSuccess }) {
   const {
     form,
     setForm,
     loading,
+    loadingCP,
+    cpEncontrado,
+    setLoadingCP,
+    setCpEncontrado,
     error,
     showConfirm,
     setShowConfirm,
@@ -20,6 +27,11 @@ export default function DonadorCrearModal({ open, onClose, onSuccess }) {
     handleConfirmSave,
     handleFinalClose,
   } = useDonadorCrearForm(onSuccess, onClose);
+  const [otroPais, setOtroPais] = useState(false);
+  const [otraLocalidad, setOtraLocalidad] = useState(false);
+
+  const [localidades, setLocalidades] = useState([]);
+
 
   if (!open) return null;
 
@@ -35,7 +47,42 @@ export default function DonadorCrearModal({ open, onClose, onSuccess }) {
       [field]: value,
     }));
   };
+  const handleBuscarCP = async (cpValue = form.cp) => {
+    if (!form.pais || !cpValue) return;
 
+    try {
+      setLoadingCP(true);
+
+      const data = await buscarCPZippopotam(
+        form.pais,
+        cpValue
+      );
+
+      const lista =
+        data?.places?.map(
+          p => p["place name"]
+        ) || [];
+
+      setLocalidades(lista);
+
+      if (lista.length > 0) {
+        updateField("localidad", lista[0]);
+        updateField(
+          "colonia",
+          data?.places?.[0]?.state || ""
+        );
+        setCpEncontrado(true);
+      }
+
+    } catch (error) {
+      setLocalidades([]);
+      updateField("localidad", "");
+      updateField("colonia", "");
+      setCpEncontrado(false); // importante
+    } finally {
+      setLoadingCP(false);
+    }
+  };
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
@@ -172,62 +219,209 @@ export default function DonadorCrearModal({ open, onClose, onSuccess }) {
 
               <div className="grid grid-cols-12 gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
 
+                {/* PAÍS */}
                 <div className="col-span-12 md:col-span-4">
-                  <Field label="Calle" required> 
+                  <Field label="País" required>
+                    {!otroPais ? (
+                      <select
+                        className={selectClass}
+                        value={form.pais}
+                        onChange={(e) => {
+                          const value = e.target.value;
+
+                          if (value === "__otro__") {
+                            setOtroPais(true);
+                            updateField("pais", "");
+                            return;
+                          }
+
+                          updateField("pais", value); 
+                          updateField("cp", "");
+                          updateField("localidad", "");
+                          updateField("colonia", "");
+                          setLocalidades([]);
+                          setCpEncontrado(false);
+                        }}
+                      >
+                        <option value="">Selecciona país...</option>
+
+                        {countries.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.name}
+                          </option>
+                        ))}
+
+                        <option value="__otro__">Otro país...</option>
+                      </select>
+                    ) : (
+                      <div className="space-y-2">
+                        <InputG
+                          className={inputClass}
+                          value={form.pais}
+                          placeholder="Escribe el país"
+                          onChange={(e) =>
+                            updateField("pais", e.target.value)
+                          }
+                        />
+
+                        <button
+                          type="button"
+                          className="text-xs text-[#0E5F63] hover:underline"
+                          onClick={() => {
+                            setOtroPais(false);
+                            updateField("pais", "");
+                          }}
+                        >
+                          Volver a lista
+                        </button>
+                      </div>
+                    )}
+                  </Field>
+                </div>
+
+
+                {/* CP */}
+                <div className="col-span-12 md:col-span-4">
+                  <Field label="Código Postal" required>
                     <InputG
                       className={inputClass}
-                      value={form.calle}
-                      onChange={(e) => updateField("calle", e.target.value)}
+                      disabled={!form.pais}
+                      placeholder={
+                        form.pais
+                          ? "Escribe el CP"
+                          : "Primero selecciona país"
+                      }
+                      value={form.cp}
+                      onChange={async (e) => {
+                        const cp = e.target.value;
+
+                        updateField("cp", cp);
+
+                        if (!cp) {
+                          setLocalidades([]);
+                          updateField("localidad", "");
+                          updateField("colonia", "");
+                          setCpEncontrado(false);
+                          return;
+                        }
+
+                        // espera 5 caracteres
+                        if (cp.length === 5) {
+                          await handleBuscarCP(cp);
+                        }
+                      }}
                     />
                   </Field>
                 </div>
 
+
+                {/* ESTADO (se guarda en colonia) */}
+                <div className="col-span-12 md:col-span-4">
+                  <Field label="Estado">
+                    <InputG
+                      className={inputClass}
+                      value={form.colonia}
+                      disabled={cpEncontrado}
+                      placeholder={
+                        cpEncontrado
+                          ? "Autocompletado"
+                          : "Escribe el estado"
+                      }
+                      onChange={(e) =>
+                        updateField("colonia", e.target.value)
+                      }
+                    />
+                  </Field>
+                </div>
+
+
+                {/* LOCALIDAD */}
+                <div className="col-span-12 md:col-span-4">
+                  <Field label="Localidad / Ciudad" required>
+                    {!otraLocalidad && localidades.length > 0 ? (
+                      <select
+                        className={selectClass}
+                        value={form.localidad}
+                        onChange={(e) => {
+                          const value = e.target.value;
+
+                          if (value === "__otra__") {
+                            setOtraLocalidad(true);
+                            updateField("localidad", "");
+                            return;
+                          }
+
+                          updateField("localidad", value);
+                        }}
+                      >
+                        {localidades.map((l) => (
+                          <option key={l} value={l}>
+                            {l}
+                          </option>
+                        ))}
+
+                        <option value="__otra__">
+                          Otra localidad...
+                        </option>
+                      </select>
+                    ) : (
+                      <div className="space-y-2">
+                        <InputG
+                          className={inputClass}
+                          value={form.localidad}
+                          placeholder="Escribe localidad"
+                          onChange={(e) =>
+                            updateField(
+                              "localidad",
+                              e.target.value
+                            )
+                          }
+                        />
+
+                        {localidades.length > 0 && (
+                          <button
+                            type="button"
+                            className="text-xs text-[#0E5F63] hover:underline"
+                            onClick={() => {
+                              setOtraLocalidad(false);
+                              updateField(
+                                "localidad",
+                                localidades[0]
+                              );
+                            }}
+                          >
+                            Volver a sugerencias
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </Field>
+                </div>
+
+
+                {/* CALLE */}
+                <div className="col-span-12 md:col-span-4">
+                  <Field label="Calle" required>
+                    <InputG
+                      className={inputClass}
+                      value={form.calle}
+                      onChange={(e) =>
+                        updateField("calle", e.target.value)
+                      }
+                    />
+                  </Field>
+                </div>
+
+
+                {/* NÚMERO */}
                 <div className="col-span-12 md:col-span-4">
                   <Field label="Número" required>
                     <InputG
                       className={inputClass}
                       value={form.numero}
-                      onChange={(e) => updateField("numero", e.target.value)}
-                    />
-                  </Field>
-                </div>
-
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Colonia" required>
-                    <InputG
-                      className={inputClass}
-                      value={form.colonia}
-                      onChange={(e) => updateField("colonia", e.target.value)}
-                    />
-                  </Field>
-                </div>
-
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Código Postal" required>
-                    <InputG
-                      className={inputClass}
-                      value={form.cp}
-                      onChange={(e) => updateField("cp", e.target.value)}
-                    />
-                  </Field>
-                </div>
-
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Localidad" required>
-                    <InputG
-                      className={inputClass}
-                      value={form.localidad}
-                      onChange={(e) => updateField("localidad", e.target.value)}
-                    />
-                  </Field>
-                </div>
-
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="País">
-                    <InputG
-                      className={inputClass}
-                      value={form.pais}
-                      onChange={(e) => updateField("pais", e.target.value)}
+                      onChange={(e) =>
+                        updateField("numero", e.target.value)
+                      }
                     />
                   </Field>
                 </div>

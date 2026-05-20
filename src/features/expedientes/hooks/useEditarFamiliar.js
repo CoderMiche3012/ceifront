@@ -5,6 +5,10 @@ export const useEditarFamiliar = (editando, setEditando, onSave, onClose) => {
   const [generalError, setGeneralError] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resultOpen, setResultOpen] = useState(false);
+  const [resultType, setResultType] = useState("success");
+  const [resultTitle, setResultTitle] = useState("");
+  const [resultMessage, setResultMessage] = useState("");
   const fieldRefs = useRef({});
   useEffect(() => {
     setFieldErrors({});
@@ -48,9 +52,16 @@ export const useEditarFamiliar = (editando, setEditando, onSave, onClose) => {
         vive_en_casa: String(editando.vive_en_casa) === "true",
       };
       await onSave(dataFinal);
-      onClose();
+
+      setResultType("success");
+      setResultTitle("Actualización exitosa");
+      setResultMessage("El familiar fue actualizado correctamente.");
+      setResultOpen(true);
     } catch (error) {
-      setGeneralError(error.message || "Error al actualizar");
+      setResultType("error");
+      setResultTitle("Error");
+      setResultMessage(error.message || "No se pudo actualizar el familiar.");
+      setResultOpen(true);
       if (error.response?.data) {
         const backendErrors = {};
         Object.entries(error.response.data).forEach(([key, val]) => {
@@ -62,7 +73,13 @@ export const useEditarFamiliar = (editando, setEditando, onSave, onClose) => {
       setLoading(false);
     }
   };
+  const handleCloseResult = () => {
+    setResultOpen(false);
 
+    if (resultType === "success") {
+      onClose();
+    }
+  };
   return {
     handleChange,
     handleConfirm,
@@ -72,6 +89,11 @@ export const useEditarFamiliar = (editando, setEditando, onSave, onClose) => {
     loading,
     fieldErrors,
     generalError,
-    fieldRefs
+    fieldRefs,
+    resultOpen,
+    resultType,
+    resultTitle,
+    resultMessage,
+    handleCloseResult
   };
 };

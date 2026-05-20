@@ -1,17 +1,31 @@
-import { X } from "lucide-react";
 import Field from "../../../../components/ui/Field";
 import InputG from "../../../../components/ui/InputG";
 import AlertaError from "../../../../components/ui/AlertaError";
 import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import { useFamiliarForm } from "../../hooks/useFamiliarForm";
-
+import { useState } from "react";
+import { X } from "lucide-react";
+import ModalResultado from "../../../../components/shared/ModalResultado";
 
 export default function ModalCrearFamiliar({ open, onClose, onCreated, expedienteId }) {
+  const [resultadoModal, setResultadoModal] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: ""
+  });
+
   const {
     formData, handleChange, handleConfirm, validate,
     confirmOpen, setConfirmOpen, loading, fieldErrors,
     generalError, fieldRefs
-  } = useFamiliarForm(expedienteId, onCreated, onClose);
+  } = useFamiliarForm(
+    expedienteId,
+    onCreated,
+    onClose,
+    setResultadoModal
+  );
+
 
   if (!open) return null;
   const handleSubmit = (e) => {
@@ -66,8 +80,31 @@ export default function ModalCrearFamiliar({ open, onClose, onCreated, expedient
               </select>
             </Field>
 
-            <Field label="Edad *" error={fieldErrors.edad}>
-              <InputG type="number" name="edad" value={formData.edad} onChange={handleChange} placeholder="0" />
+            <Field label="Fecha de nacimiento *" error={fieldErrors.edad}>
+              <InputG
+                type="date"
+                onChange={(e) => {
+                  const fecha = new Date(e.target.value);
+                  const hoy = new Date();
+
+                  let edad = hoy.getFullYear() - fecha.getFullYear();
+                  const mes = hoy.getMonth() - fecha.getMonth();
+
+                  if (
+                    mes < 0 ||
+                    (mes === 0 && hoy.getDate() < fecha.getDate())
+                  ) {
+                    edad--;
+                  }
+
+                  handleChange({
+                    target: {
+                      name: "edad",
+                      value: edad
+                    }
+                  });
+                }}
+              />
             </Field>
 
             <Field label="Teléfono (10 dígitos) *" error={fieldErrors.telefono}>
@@ -119,6 +156,19 @@ export default function ModalCrearFamiliar({ open, onClose, onCreated, expedient
           onConfirm={handleConfirm}
           onClose={() => setConfirmOpen(false)}
           loading={loading}
+        />
+        <ModalResultado
+          open={resultadoModal.open}
+          type={resultadoModal.type}
+          title={resultadoModal.title}
+          message={resultadoModal.message}
+          onClose={() => {
+            setResultadoModal({
+              ...resultadoModal,
+              open: false
+            });
+            onClose();
+          }}
         />
       </div>
     </div>

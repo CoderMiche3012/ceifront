@@ -4,7 +4,6 @@ const BASE_URL2 = "/api/beneficiarios/direcciones";
 import { formatErrorAnidado } from "../../../utils/errorHandlers";
 import sepomex from "../../../data/sepomex_oaxaca.json";
 
-
 export const obtenerExpediente = async () => {
   try {
     const res = await API.get(`${BASE_URL}/`);

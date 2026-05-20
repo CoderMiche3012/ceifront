@@ -1,20 +1,103 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Save, Loader2, User, MapPin, GraduationCap, Phone, Mail } from 'lucide-react';
 import ModalConfirmacion from '../../../../components/shared/ModalConfirmacion';
 import ModalResultado from '../../../../components/shared/ModalResultado';
-import Input from '../../../../components/ui/InputG'; 
-import Field from '../../../../components/ui/Field'; 
-import { actualizarExpediente, actualizarDireccion } from '../../../expedientes/services/expedientesService';
+import Input from '../../../../components/ui/InputG';
+import Field from '../../../../components/ui/Field';
+import { actualizarExpediente, actualizarDireccion, buscarCPCompleto } from '../../../expedientes/services/expedientesService';
 import { actualizarEstudio } from '../../services/estudiosService';
 import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { formatErrorAnidado } from '../../../../utils/errorHandlers';
+const getErrorMessage = (err) => {
 
+  if (err?.response?.data) {
+    return formatErrorAnidado(err.response.data);
+  }
+
+  if (err?.message) {
+    return formatErrorAnidado(err);
+  }
+
+  return "Error inesperado";
+};
 export default function EditarDatosGenerales({ isOpen, onClose, data, setData }) {
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [resultado, setResultado] = useState({ open: false, type: 'success', title: '', message: '' });
   const [formDataCache, setFormDataCache] = useState(null);
-  if (!isOpen) return null;
+  const [colonias, setColonias] = useState([]);
+  const [loadingCP, setLoadingCP] = useState(false);
+  const [cpEncontrado, setCpEncontrado] = useState(false);
+  const [otraColonia, setOtraColonia] = useState(false);
 
+  const [direccionForm, setDireccionForm] = useState({
+    calle: data?.calle || "",
+    numero: data?.numero || "",
+    colonia: data?.colonia || "",
+    municipio: data?.municipio || "",
+    cp: data?.cp || "",
+  });
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setDireccionForm({
+      calle: data?.calle || "",
+      numero: data?.numero || "",
+      colonia: data?.colonia || "",
+      municipio: data?.municipio || "",
+      cp: data?.cp || "",
+    });
+
+    setOtraColonia(false);
+    setCpEncontrado(false);
+    setColonias([]);
+
+    const cargarCPInicial = async () => {
+      const cp = data?.cp;
+
+      if (!cp || String(cp).length !== 5) return;
+
+      try {
+        setLoadingCP(true);
+
+        const dataCP = await buscarCPCompleto(cp);
+
+        setColonias(dataCP?.colonias || []);
+
+        if (dataCP?.municipio) {
+          setCpEncontrado(true);
+
+          setDireccionForm(prev => ({
+            ...prev,
+            municipio: dataCP.municipio
+          }));
+        }
+
+        if (
+          data?.colonia &&
+          dataCP?.colonias &&
+          !dataCP.colonias.includes(data.colonia)
+        ) {
+          setOtraColonia(true);
+        }
+
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoadingCP(false);
+      }
+    };
+
+    cargarCPInicial();
+  }, [isOpen, data]);
+  if (!isOpen) return null;
+  const updateDireccion = (field, value) => {
+    setDireccionForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  
   const preSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -38,11 +121,11 @@ export default function EditarDatosGenerales({ isOpen, onClose, data, setData })
           genero: formDataCache.genero
         }),
         actualizarDireccion(id_direccion, {
-          calle: formDataCache.calle,
-          numero: formDataCache.numero,
-          colonia: formDataCache.colonia,
-          municipio: formDataCache.municipio,
-          cp: formDataCache.cp
+          calle: direccionForm.calle,
+          numero: direccionForm.numero,
+          colonia: direccionForm.colonia,
+          municipio: direccionForm.municipio,
+          cp: direccionForm.cp
         }),
         actualizarEstudio(id_estudio, {
           nivel_escolar_inicial: formDataCache.nivel_escolar_inicial,
@@ -66,7 +149,7 @@ export default function EditarDatosGenerales({ isOpen, onClose, data, setData })
         open: true,
         type: 'error',
         title: 'Error de red',
-        message: error.message || 'Hubo un problema al conectar con el servidor.'
+        message: getErrorMessage(error)
       });
     } finally {
       setLoading(false);
@@ -84,7 +167,7 @@ export default function EditarDatosGenerales({ isOpen, onClose, data, setData })
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4">
         <div className="bg-[#F8FAFC] rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-white">
-          
+
           {/* Header */}
           <div className="flex items-center justify-between p-8 bg-white border-b border-slate-100">
             <div className="flex items-center gap-4">
@@ -104,12 +187,12 @@ export default function EditarDatosGenerales({ isOpen, onClose, data, setData })
           <form onSubmit={preSubmit} className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
             <div className="space-y-10">
               <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-              <HiOutlineExclamationCircle className="text-[#0E5F63]" size={18} />
-              <span>
-                Los campos con <span className="font-semibold text-red-500">*</span> son obligatorios
-              </span>
-            </div>
-              
+                <HiOutlineExclamationCircle className="text-[#0E5F63]" size={18} />
+                <span>
+                  Los campos con <span className="font-semibold text-red-500">*</span> son obligatorios
+                </span>
+              </div>
+
               {/* SECCIÓN PERSONAL */}
               <section>
                 <div className="flex items-center gap-2 mb-6">
@@ -139,22 +222,160 @@ export default function EditarDatosGenerales({ isOpen, onClose, data, setData })
                   <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0E5F63]">Ubicación y Domicilio</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                  <Field label="C.P.">
+                    <Input
+                      value={direccionForm.cp}
+                      onChange={async (e) => {
+                        const cp = e.target.value;
+
+                        updateDireccion("cp", cp);
+
+                        if (!/^\d{5}$/.test(cp)) {
+                          setColonias([]);
+                          setCpEncontrado(false);
+                          updateDireccion("municipio", "");
+                          updateDireccion("colonia", "");
+                          return;
+                        }
+
+                        try {
+                          setLoadingCP(true);
+
+                          const dataCP =
+                            await buscarCPCompleto(cp);
+
+                          setColonias(dataCP?.colonias || []);
+
+                          if (dataCP?.municipio) {
+                            setCpEncontrado(true);
+
+                            updateDireccion(
+                              "municipio",
+                              dataCP.municipio
+                            );
+                          } else {
+                            setCpEncontrado(false);
+                          }
+
+                        } catch (error) {
+                          console.log(error);
+                          setCpEncontrado(false);
+                          setColonias([]);
+                        } finally {
+                          setLoadingCP(false);
+                        }
+                      }}
+                    />
+                  </Field>
+
+
+                  <Field label="Municipio">
+                    <Input
+                      value={direccionForm.municipio}
+                      disabled={
+                        direccionForm.cp.length === 5 &&
+                        cpEncontrado
+                      }
+                      onChange={(e) =>
+                        updateDireccion(
+                          "municipio",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </Field>
+
+
+                  <Field label="Colonia">
+                    {!otraColonia ? (
+                      <select
+                        className="w-full h-11 px-3 rounded-xl border border-slate-200"
+                        value={direccionForm.colonia}
+                        disabled={loadingCP}
+                        onChange={(e) => {
+                          const value = e.target.value;
+
+                          if (value === "__otra__") {
+                            setOtraColonia(true);
+                            updateDireccion("colonia", "");
+                            return;
+                          }
+
+                          updateDireccion(
+                            "colonia",
+                            value
+                          );
+                        }}
+                      >
+                        <option value="">
+                          Seleccionar colonia...
+                        </option>
+
+                        {colonias.map((colonia) => (
+                          <option
+                            key={colonia}
+                            value={colonia}
+                          >
+                            {colonia}
+                          </option>
+                        ))}
+
+                        <option value="__otra__">
+                          Otra colonia...
+                        </option>
+                      </select>
+                    ) : (
+                      <div className="space-y-2">
+                        <Input
+                          value={direccionForm.colonia}
+                          onChange={(e) =>
+                            updateDireccion(
+                              "colonia",
+                              e.target.value
+                            )
+                          }
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOtraColonia(false);
+                            updateDireccion("colonia", "");
+                          }}
+                          className="text-xs text-[#0E5F63]"
+                        >
+                          Volver a sugerencias
+                        </button>
+                      </div>
+                    )}
+                  </Field>
+
+
                   <div className="md:col-span-2">
                     <Field label="Calle">
-                      <Input name="calle" defaultValue={data.calle} placeholder="Nombre de la vialidad" />
+                      <Input
+                        value={direccionForm.calle}
+                        onChange={(e) =>
+                          updateDireccion(
+                            "calle",
+                            e.target.value
+                          )
+                        }
+                      />
                     </Field>
                   </div>
+
                   <Field label="Número">
-                    <Input name="numero" defaultValue={data.numero} placeholder="Ext/Int" />
-                  </Field>
-                  <Field label="Colonia">
-                    <Input name="colonia" defaultValue={data.colonia} placeholder="Ej. Centro" />
-                  </Field>
-                  <Field label="Municipio">
-                    <Input name="municipio" defaultValue={data.municipio} placeholder="Oaxaca" />
-                  </Field>
-                  <Field label="C.P.">
-                    <Input name="cp" defaultValue={data.cp} placeholder="68000" />
+                    <Input
+                      value={direccionForm.numero}
+                      onChange={(e) =>
+                        updateDireccion(
+                          "numero",
+                          e.target.value
+                        )
+                      }
+                    />
                   </Field>
                 </div>
               </section>
@@ -167,8 +388,8 @@ export default function EditarDatosGenerales({ isOpen, onClose, data, setData })
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Field label="Nivel Escolar">
-                    <select 
-                      name="nivel_escolar_inicial" 
+                    <select
+                      name="nivel_escolar_inicial"
                       defaultValue={data.nivel_escolar_inicial}
                       className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[15px] focus:border-[#0E5F63] focus:ring-[5px] focus:ring-[#0E5F63]/5 focus:outline-none transition-all"
                     >

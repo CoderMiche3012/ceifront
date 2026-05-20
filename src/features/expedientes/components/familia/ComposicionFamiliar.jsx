@@ -16,7 +16,7 @@ export default function ComposicionFamiliar({ familia = [], onUpdate, expediente
     const [confirmarEliminar, setConfirmarEliminar] = useState({ open: false, data: null });
     const [resultadoModal, setResultadoModal] = useState({ open: false, type: "success", title: "", message: "" });
     const [isDeleting, setIsDeleting] = useState(false);
-    
+
     const {
         modalCrearOpen, setModalCrearOpen,
         modalEditarOpen, setModalEditarOpen,
@@ -110,7 +110,7 @@ export default function ComposicionFamiliar({ familia = [], onUpdate, expediente
 
             case "acciones":
                 const index = familia.findIndex(
-                    (f) => (f.id_familia || f.id) === (row.id_familia || row.id)
+                    (f) => (f.id_familiar || f.id) === (row.id_familiar || row.id)
                 );
 
                 return (
@@ -142,7 +142,7 @@ export default function ComposicionFamiliar({ familia = [], onUpdate, expediente
 
     return (
         <div className="rounded-3xl bg-white shadow-sm border border-slate-100 overflow-hidden mt-6">
-            
+
             <div className="flex justify-between items-center p-6 border-b border-slate-50">
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <div className="p-2 bg-teal-50 rounded-lg">
@@ -172,7 +172,7 @@ export default function ComposicionFamiliar({ familia = [], onUpdate, expediente
                 columns={columns}
                 data={paginatedData}
                 renderCell={renderCell}
-                rowKey="id_familia"
+                rowKey="id_familiar"
             />
 
             <PaginacionTabla

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { crearDonador } from "../services/donadoresService";
+import { countries } from "../../../utils/countries";
 
 export const useDonadorCrearForm = (onSuccess, onClose) => {
   const getInitialForm = () => ({
@@ -20,12 +21,15 @@ export const useDonadorCrearForm = (onSuccess, onClose) => {
     pais: "",
   });
 
+
+
   const [form, setForm] = useState(getInitialForm());
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
-
+  const [loadingCP, setLoadingCP] = useState(false);
+  const [cpEncontrado, setCpEncontrado] = useState(false);
   const [resultModal, setResultModal] = useState({
     open: false,
     type: "success",
@@ -74,7 +78,13 @@ export const useDonadorCrearForm = (onSuccess, onClose) => {
       setLoading(true);
       setShowConfirm(false);
 
-      await crearDonador(form);
+      const payload = {
+        ...form,
+        pais: form.pais,
+      };
+
+
+      await crearDonador(payload);
 
       setResultModal({
         open: true,
@@ -112,6 +122,10 @@ export const useDonadorCrearForm = (onSuccess, onClose) => {
     form,
     setForm,
     loading,
+    loadingCP,
+    cpEncontrado,
+    setLoadingCP,
+    setCpEncontrado,
     error,
     showConfirm,
     setShowConfirm,

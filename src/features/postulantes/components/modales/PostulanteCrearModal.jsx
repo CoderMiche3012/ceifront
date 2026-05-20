@@ -7,10 +7,15 @@ import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
 import { usePostulanteCrearForm } from "../../hooks/usePostulanteCrearForm";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { buscarCPCompleto } from "../../../expedientes/services/expedientesService";
 
 
 export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
   const [step, setStep] = useState(1);
+  const [colonias, setColonias] = useState([]);
+  const [loadingCP, setLoadingCP] = useState(false);
+  const [cpEncontrado, setCpEncontrado] = useState(false);
+  const [otraColonia, setOtraColonia] = useState(false);
   const {
     form, setForm, error, loading, showConfirm, setShowConfirm,
     resultModal, handlePreSubmit, handleConfirmSave, handleFinalClose
@@ -85,16 +90,213 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
                 </div>
 
                 {/* Sección: Dirección */}
+                {/* Sección: Dirección */}
                 <div className="pt-4 border-t border-slate-50">
-                  <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em] mb-4">Dirección</h3>
+                  <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em] mb-4">
+                    Dirección
+                  </h3>
+
                   <div className="grid grid-cols-12 gap-x-4 gap-y-3 bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
-                    <div className="col-span-6 md:col-span-4"><Field label="Municipio" required><InputG className={inputClass} placeholder="Ej: Oaxaca de Juárez" value={form.id_expediente.id_direccion.municipio} onChange={(e) => updateDireccion("municipio", e.target.value)} /></Field></div>
-                    <div className="col-span-6 md:col-span-4"><Field label="Colonia" required><InputG className={inputClass} placeholder="Ej: Centro" value={form.id_expediente.id_direccion.colonia} onChange={(e) => updateDireccion("colonia", e.target.value)} /></Field></div>
-                    <div className="col-span-6 md:col-span-2"><Field label="CP" required><InputG className={inputClass} placeholder="68000" value={form.id_expediente.id_direccion.cp} onChange={(e) => updateDireccion("cp", e.target.value)} /></Field></div>
-                    <div className="col-span-6 md:col-span-2"><Field label="Núm." required><InputG className={inputClass} placeholder="101-A" value={form.id_expediente.id_direccion.numero} onChange={(e) => updateDireccion("numero", e.target.value)} /></Field></div>
-                    <div className="col-span-12"><Field label="Calle" required><InputG className={inputClass} placeholder="Ej: Av. Independencia" value={form.id_expediente.id_direccion.calle} onChange={(e) => updateDireccion("calle", e.target.value)} /></Field></div>
-                    <div className="col-span-12 md:col-span-6"><Field label="Referencia de la dirección" required><InputG className={inputClass} placeholder="Ej: 1°" value={form.referencia_casa} onChange={(e) => setForm(p => ({ ...p, referencia_casa: e.target.value }))} /></Field></div>
-                    <div className="col-span-12 md:col-span-6"><Field label="Referencia de ingreso o como conocio el programa" required><InputG className={inputClass} placeholder="Ej: 1°" value={form.referencia_ingreso} onChange={(e) => setForm(p => ({ ...p, referencia_ingreso: e.target.value }))} /></Field></div>
+
+                    {/* CP */}
+                    <div className="col-span-6 md:col-span-2">
+                      <Field label="CP" required>
+                        <InputG
+                          className={inputClass}
+                          placeholder="68000"
+                          value={form.id_expediente.id_direccion.cp}
+                          onChange={async (e) => {
+                            const cp = e.target.value;
+
+                            updateDireccion("cp", cp);
+
+                            if (!/^\d{5}$/.test(cp)) {
+                              setColonias([]);
+                              updateDireccion("municipio", "");
+                              updateDireccion("colonia", "");
+                              setOtraColonia(false);
+                              setCpEncontrado(false);
+                              return;
+                            }
+
+                            try {
+                              setLoadingCP(true);
+
+                              const data = await buscarCPCompleto(cp);
+
+                              if (data?.municipio) {
+                                updateDireccion("municipio", data.municipio);
+                                setCpEncontrado(true);
+                              } else {
+                                setCpEncontrado(false);
+                              }
+
+                              setColonias(data?.colonias || []);
+
+                            } catch (error) {
+                              console.log(error);
+                              setCpEncontrado(false);
+                              setColonias([]);
+                            } finally {
+                              setLoadingCP(false);
+                            }
+                          }}
+                        />
+                      </Field>
+                    </div>
+
+                    {/* Municipio */}
+                    <div className="col-span-6 md:col-span-4">
+                      <Field label="Municipio" required>
+                        <InputG
+                          className={inputClass}
+                          disabled={
+                            form.id_expediente.id_direccion.cp.length !== 5 ||
+                            cpEncontrado
+                          }
+                          placeholder={
+                            form.id_expediente.id_direccion.cp.length !== 5
+                              ? "Primero ingresa CP"
+                              : cpEncontrado
+                                ? "Municipio detectado automáticamente"
+                                : "Escribe el municipio"
+                          }
+                          value={form.id_expediente.id_direccion.municipio}
+                          onChange={(e) =>
+                            updateDireccion("municipio", e.target.value)
+                          }
+                        />
+                      </Field>
+                    </div>
+
+                    {/* Colonia */}
+                    <div className="col-span-6 md:col-span-4">
+                      <Field label="Colonia" required>
+                        {!otraColonia ? (
+                          <select
+                            className={selectClass}
+                            disabled={
+                              form.id_expediente.id_direccion.cp.length !== 5
+                            }
+                            value={form.id_expediente.id_direccion.colonia}
+                            onChange={(e) => {
+                              const value = e.target.value;
+
+                              if (value === "__otra__") {
+                                setOtraColonia(true);
+                                updateDireccion("colonia", "");
+                                return;
+                              }
+
+                              updateDireccion("colonia", value);
+                            }}
+                          >
+                            <option value="">
+                              Seleccionar colonia...
+                            </option>
+
+                            {colonias.map((colonia) => (
+                              <option
+                                key={colonia}
+                                value={colonia}
+                              >
+                                {colonia}
+                              </option>
+                            ))}
+
+                            <option value="__otra__">
+                              Otra colonia...
+                            </option>
+                          </select>
+                        ) : (
+                          <div className="space-y-2">
+                            <InputG
+                              className={inputClass}
+                              placeholder="Escribe la colonia"
+                              value={form.id_expediente.id_direccion.colonia}
+                              onChange={(e) =>
+                                updateDireccion(
+                                  "colonia",
+                                  e.target.value
+                                )
+                              }
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOtraColonia(false);
+                                updateDireccion("colonia", "");
+                              }}
+                              className="text-xs text-[#0E5F63] hover:underline"
+                            >
+                              Volver a sugerencias
+                            </button>
+                          </div>
+                        )}
+                      </Field>
+                    </div>
+
+                    {/* Número */}
+                    <div className="col-span-6 md:col-span-2">
+                      <Field label="Núm." required>
+                        <InputG
+                          className={inputClass}
+                          placeholder="101-A"
+                          value={form.id_expediente.id_direccion.numero}
+                          onChange={(e) =>
+                            updateDireccion("numero", e.target.value)
+                          }
+                        />
+                      </Field>
+                    </div>
+
+                    {/* Calle */}
+                    <div className="col-span-12">
+                      <Field label="Calle" required>
+                        <InputG
+                          className={inputClass}
+                          placeholder="Ej: Av. Independencia"
+                          value={form.id_expediente.id_direccion.calle}
+                          onChange={(e) =>
+                            updateDireccion("calle", e.target.value)
+                          }
+                        />
+                      </Field>
+                    </div>
+
+                    <div className="col-span-12 md:col-span-6">
+                      <Field label="Referencia de la dirección" required>
+                        <InputG
+                          className={inputClass}
+                          value={form.referencia_casa}
+                          onChange={(e) =>
+                            setForm(p => ({
+                              ...p,
+                              referencia_casa: e.target.value
+                            }))
+                          }
+                        />
+                      </Field>
+                    </div>
+
+                    <div className="col-span-12 md:col-span-6">
+                      <Field
+                        label="Referencia de ingreso o como conoció el programa"
+                        required
+                      >
+                        <InputG
+                          className={inputClass}
+                          value={form.referencia_ingreso}
+                          onChange={(e) =>
+                            setForm(p => ({
+                              ...p,
+                              referencia_ingreso: e.target.value
+                            }))
+                          }
+                        />
+                      </Field>
+                    </div>
                   </div>
                 </div>
               </div>

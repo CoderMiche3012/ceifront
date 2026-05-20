@@ -18,7 +18,7 @@ const getErrorMessage = (err) => {
 
 
 
-export const useFamiliaTabla = (familia) => {
+export const useFamiliaTabla = (familia, onUpdate = null) => {
     const [modalCrearOpen, setModalCrearOpen] = useState(false);
     const [modalEditarOpen, setModalEditarOpen] = useState(false);
     const [familiarEnEdicion, setFamiliarEnEdicion] = useState(null);
@@ -43,25 +43,7 @@ export const useFamiliaTabla = (familia) => {
         try {
             const id = row.id_familia || row.id;
 
-    await eliminarFamilia(id);
-
-    queryClient.invalidateQueries({ queryKey: ["expediente"] });
-        } catch (error) {
-            throw new Error(
-                getErrorMessage(error)
-            );
-        }
-    };
-
-    const handleCreated = async (nuevo) => {
-    await crearFamilia(nuevo); // si lo haces aquí
-    queryClient.invalidateQueries({ queryKey: ["expediente", nuevo.expedienteId] });
-};
-    const handleSaveEditar = async (dataFinal) => {
-        try {
-            const id = dataFinal.id_familia || dataFinal.id;
-
-            await actualizarFamilia(id, dataFinal);
+            await eliminarFamilia(id);
 
             queryClient.invalidateQueries({ queryKey: ["expediente"] });
         } catch (error) {
@@ -71,6 +53,38 @@ export const useFamiliaTabla = (familia) => {
         }
     };
 
+    const handleCreated = (nuevoFamiliar) => {
+        if (onUpdate) {
+            onUpdate([...familia, nuevoFamiliar]);
+        }
+
+        queryClient.invalidateQueries({
+            queryKey: ["expediente"],
+        });
+    };
+    const handleSaveEditar = async (dataFinal) => {
+        try {
+            const id = dataFinal.id_familia || dataFinal.id;
+
+            const actualizado = await actualizarFamilia(id, dataFinal);
+
+            if (onUpdate) {
+                const nuevaFamilia = familia.map((f) =>
+                    (f.id_familia || f.id) === (actualizado.id_familia || actualizado.id)
+                        ? actualizado
+                        : f
+                );
+
+                onUpdate(nuevaFamilia);
+            }
+
+            queryClient.invalidateQueries({
+                queryKey: ["expediente"],
+            });
+        } catch (error) {
+            throw new Error(getErrorMessage(error));
+        }
+    };
     const filteredData = familia.filter((f) =>
         `${f.nombre} ${f.apellido_p} ${f.apellido_m} ${f.parentesco} ${f.telefono}`
             .toLowerCase()

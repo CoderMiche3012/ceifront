@@ -64,3 +64,15 @@ export const obtenerDonadorIndividual = async (id) => {
     throw new Error(formatErrorAnidado(error.message));
   }
 };
+
+export const buscarCPZippopotam = async (pais, cp) => {
+  const response = await fetch(
+    `https://api.zippopotam.us/${pais}/${cp}`
+  );
+
+  if (!response.ok) {
+    throw new Error("CP no encontrado");
+  }
+
+  return await response.json();
+};

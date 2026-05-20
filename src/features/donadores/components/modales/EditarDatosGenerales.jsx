@@ -6,6 +6,10 @@ import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
 import { useDonadorEditarForm } from "../../hooks/useDonadorEditarForm";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { useEffect, useState } from "react";
+import { countries } from "../../../../utils/countries";
+import { buscarCPZippopotam } from "../../services/donadoresService";
+
 
 export default function EditarDatosGenerales({ open, onClose, onSuccess, donador, }) {
   const {
@@ -20,6 +24,87 @@ export default function EditarDatosGenerales({ open, onClose, onSuccess, donador
     handleConfirmSave,
     handleFinalClose,
   } = useDonadorEditarForm(donador, onSuccess, onClose);
+  const [cpEncontrado, setCpEncontrado] = useState(false);
+  const [loadingCP, setLoadingCP] = useState(false);
+  const [localidades, setLocalidades] = useState([]);
+  const [otraLocalidad, setOtraLocalidad] = useState(false);
+  const [otroPais, setOtroPais] = useState(false);
+  const [initLoaded, setInitLoaded] = useState(false);
+
+  const handleBuscarCP = async (cpValue, paisValue) => {
+    const pais = paisValue || form.pais;
+
+    if (!pais || !cpValue) return;
+
+    try {
+      setLoadingCP(true);
+
+      const data = await buscarCPZippopotam(pais, cpValue);
+
+      const lista = data?.places?.map((p) => p["place name"]) || [];
+
+      setLocalidades(lista);
+
+      if (lista.length > 0) {
+        setForm((prev) => ({
+          ...prev,
+          localidad: lista[0],
+          colonia: data?.places?.[0]?.state || "",
+        }));
+
+        setCpEncontrado(true);
+        setOtraLocalidad(false);
+      } else {
+        setCpEncontrado(false);
+        setOtraLocalidad(true);
+
+        setForm((prev) => ({
+          ...prev,
+          localidad: "",
+          colonia: "",
+        }));
+      }
+    } catch (err) {
+      setLocalidades([]);
+      setCpEncontrado(false);
+      setOtraLocalidad(true);
+    } finally {
+      setLoadingCP(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!donador || initLoaded) return;
+
+    const match = countries.find(
+      (c) =>
+        c.code === donador.pais ||
+        c.name?.toLowerCase() === donador.pais?.toLowerCase()
+    );
+
+    const paisFinal = match?.code || donador.pais || "";
+
+    setForm((prev) => ({
+      ...prev,
+      pais: paisFinal,
+      cp: donador.cp || "",
+      localidad: donador.localidad || "",
+      colonia: donador.colonia || "",
+    }));
+
+    setOtroPais(false);
+    setInitLoaded(true);
+  }, [donador]);
+  useEffect(() => {
+    if (!form.cp || form.cp.length < 4) return;
+    if (!form.pais) return;
+
+    const timer = setTimeout(() => {
+      handleBuscarCP(form.cp, form.pais);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [form.cp, form.pais]);
 
   if (!open) return null;
 
@@ -35,6 +120,7 @@ export default function EditarDatosGenerales({ open, onClose, onSuccess, donador
       [field]: value,
     }));
   };
+
 
   return (
     <>
@@ -181,6 +267,131 @@ export default function EditarDatosGenerales({ open, onClose, onSuccess, donador
               </h3>
 
               <div className="grid grid-cols-12 gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+
+                <div className="col-span-12 md:col-span-4">
+                  <Field label="País" required>
+                    <select
+                      className={selectClass}
+                      value={otroPais ? "__otro__" : form.pais}
+                      onChange={(e) => {
+                        const value = e.target.value;
+
+                        if (value === "__otro__") {
+                          setOtroPais(true);
+                          setForm((prev) => ({ ...prev, pais: "" }));
+                          return;
+                        }
+
+                        setOtroPais(false);
+
+                        const newPais = value;
+
+                        updateField("pais", newPais);
+
+                        updateField("cp", "");
+                        updateField("localidad", "");
+                        updateField("colonia", "");
+
+                        setLocalidades([]);
+                        setCpEncontrado(false);
+                        setOtraLocalidad(false);
+                      }}
+                    >
+                      <option value="">Selecciona país...</option>
+
+                      {countries.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.name}
+                        </option>
+                      ))}
+
+                      <option value="__otro__">Otro país...</option>
+                    </select>
+                  </Field>
+                </div>
+
+                <div className="col-span-12 md:col-span-4">
+                  <Field label="Código Postal" required>
+                    <InputG
+                      className={inputClass}
+                      value={form.cp}
+                      disabled={!form.pais && !otroPais}
+                      placeholder={
+                        form.pais ? "Escribe CP" : "Primero selecciona país"
+                      }
+                      onChange={(e) => {
+                        updateField("cp", e.target.value);
+                      }}
+                    />
+                  </Field>
+                </div>
+
+                <div className="col-span-12 md:col-span-4">
+                  <Field label="Estado">
+                    <InputG
+                      className={inputClass}
+                      value={form.colonia}
+                      disabled={cpEncontrado}
+                      placeholder={
+                        cpEncontrado
+                          ? "Autocompletado por CP"
+                          : "Escribe estado manual"
+                      }
+                      onChange={(e) =>
+                        updateField("colonia", e.target.value)
+                      }
+                    />
+                  </Field>
+                </div>
+
+                <div className="col-span-12 md:col-span-4">
+                  <Field label="Localidad / Ciudad">
+                    {!otraLocalidad && localidades.length > 0 ? (
+                      <select
+                        className={selectClass}
+                        value={form.localidad}
+                        onChange={(e) => {
+                          const value = e.target.value;
+
+                          if (value === "__otra__") {
+                            setOtraLocalidad(true);
+                            return;
+                          }
+
+                          updateField("localidad", value);
+                        }}
+                      >
+                        {localidades.map((l) => (
+                          <option key={l} value={l}>{l}</option>
+                        ))}
+
+                        <option value="__otra__">Otra localidad...</option>
+                      </select>
+                    ) : (
+                      <div className="space-y-2">
+                        <InputG
+                          className={inputClass}
+                          value={form.localidad}
+                          onChange={(e) => updateField("localidad", e.target.value)}
+                        />
+
+                        {localidades.length > 0 && (
+                          <button
+                            type="button"
+                            className="text-xs text-[#0E5F63] hover:underline"
+                            onClick={() => {
+                              setOtraLocalidad(false);
+                              updateField("localidad", localidades[0]); // 🔥 vuelve a sugerencia
+                            }}
+                          >
+                            Volver a sugerencias
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </Field>
+                </div>
+
                 <div className="col-span-12 md:col-span-4">
                   <Field label="Calle" required>
                     <InputG
@@ -205,53 +416,6 @@ export default function EditarDatosGenerales({ open, onClose, onSuccess, donador
                   </Field>
                 </div>
 
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Colonia" required>
-                    <InputG
-                      className={inputClass}
-                      value={form.colonia}
-                      onChange={(e) =>
-                        updateField("colonia", e.target.value)
-                      }
-                    />
-                  </Field>
-                </div>
-
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Código Postal" required>
-                    <InputG
-                      className={inputClass}
-                      value={form.cp}
-                      onChange={(e) =>
-                        updateField("cp", e.target.value)
-                      }
-                    />
-                  </Field>
-                </div>
-
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Localidad" required>
-                    <InputG
-                      className={inputClass}
-                      value={form.localidad}
-                      onChange={(e) =>
-                        updateField("localidad", e.target.value)
-                      }
-                    />
-                  </Field>
-                </div>
-
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="País" required>
-                    <InputG
-                      className={inputClass}
-                      value={form.pais}
-                      onChange={(e) =>
-                        updateField("pais", e.target.value)
-                      }
-                    />
-                  </Field>
-                </div>
               </div>
             </div>
           </div>

@@ -1,7 +1,12 @@
 import { useState, useRef } from "react";
 import { crearFamilia } from "../services/familiaService";
 
-export const useFamiliarForm = (expedienteId, onCreated, onClose) => {
+export const useFamiliarForm = (
+  expedienteId,
+  onCreated,
+  onClose,
+  setResultadoModal
+) => {
   const initialState = {
     nombre: "",
     apellido_p: "",
@@ -34,34 +39,34 @@ export const useFamiliarForm = (expedienteId, onCreated, onClose) => {
   };
 
   const validate = () => {
-  const required = [
-    "nombre",
-    "apellido_p",
-    "parentesco",
-    "edad",
-    "telefono",
-    "actividad_principal",
-    "salario",
-    "vive_en_casa"
-  ];
+    const required = [
+      "nombre",
+      "apellido_p",
+      "parentesco",
+      "edad",
+      "telefono",
+      "actividad_principal",
+      "salario",
+      "vive_en_casa"
+    ];
 
-  const faltantes = required.filter(
-    field => !formData[field] || formData[field].toString().trim() === ""
-  );
+    const faltantes = required.filter(
+      field => !formData[field] || formData[field].toString().trim() === ""
+    );
 
-  if (faltantes.length > 0) {
-    setGeneralError("Faltan campos obligatorios por completar");
-    return false;
-  }
+    if (faltantes.length > 0) {
+      setGeneralError("Faltan campos obligatorios por completar");
+      return false;
+    }
 
-  if (formData.telefono && formData.telefono.length !== 10) {
-    setGeneralError("El teléfono debe tener exactamente 10 dígitos");
-    return false;
-  }
+    if (formData.telefono && formData.telefono.length !== 10) {
+      setGeneralError("El teléfono debe tener exactamente 10 dígitos");
+      return false;
+    }
 
-  setGeneralError("");
-  return true;
-};
+    setGeneralError("");
+    return true;
+  };
 
   const handleConfirm = async () => {
     setConfirmOpen(false);
@@ -75,9 +80,20 @@ export const useFamiliarForm = (expedienteId, onCreated, onClose) => {
       const res = await crearFamilia(dataFinal);
       onCreated(res);
       setFormData(initialState);
-      onClose();
+
+      setResultadoModal({
+        open: true,
+        type: "success",
+        title: "Registro exitoso",
+        message: "El familiar fue agregado correctamente."
+      });
     } catch (error) {
-      setGeneralError(error.message || "Error al guardar");
+      setResultadoModal({
+        open: true,
+        type: "error",
+        title: "Error al guardar",
+        message: error.message || "No se pudo guardar el familiar."
+      });
       if (error.response?.data) {
         const backendErrors = {};
         Object.entries(error.response.data).forEach(([key, val]) => {
