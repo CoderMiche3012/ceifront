@@ -57,7 +57,6 @@ export default function Encabezado({
   };
   //manejador para actualizaciones manuales
   const handleUserUpdate = useCallback((updatedUser) => {
-      console.log("UPDATED USER:", updatedUser);
 
     if (!updatedUser) return;
 

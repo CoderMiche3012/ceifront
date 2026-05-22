@@ -1,132 +1,192 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import InicioSesion from "../pages/InicioSesion";
 import Inicio from "../pages/Inicio";
-import UsuariosPagina from "../pages/UsuariosPagina";
+
+//import UsuariosPagina from "../pages/UsuariosPagina";
 import RolesPagina from "../pages/RolesPagina";
+//import PeriodosPagina from "../pages/PeriodosPagina";
+
+//import PostulantesPagina from "../pages/postulantes/PostulantesPagina";
+//import ExpedientePagina from "../pages/postulantes/ExpedientePagina";
+
+//import BeneficiariosPagina from "../pages/beneficiarios/BeneficiariosPagina";
+//import ExpedientePaginaB from "../pages/beneficiarios/ExpedientePaginaB";
+
+//import DonadoresPagina from "../pages/donadores/DonadoresPagina";
+//import DonadoresDetalle from "../pages/donadores/DonadoresDetalle";
+
+//import AsistenciasPagina from "../pages/AsistenciasPagina";
+
 import AppLayout from "../components/layout/AppLayout";
+
 import PrivateRoute from "./PrivateRoute";
 import AdminRoute from "./AdminRoute";
-import PeriodosPagina from "./../pages/PeriodosPagina"
-import PostulantesPagina from "./../pages/postulantes/PostulantesPagina"
-import ExpedientePagina from "../pages/postulantes/ExpedientePagina";
-import { PermissionsProvider } from "../context/PermissionsContext";
 import PermissionRoute from "./PermissionRoute";
-import BeneficiariosPagina from "../pages/beneficiarios/BeneficiariosPagina";
-import ExpedientePaginaB from "../pages/beneficiarios/ExpedientePaginaB";
-import DonadoresPagina from "../pages/donadores/DonadoresPagina";
-import DonadoresDetalle from "../pages/donadores/DonadoresDetalle";
-import AsistenciasPagina from "../pages/AsistenciasPagina";
-//define las rutas principales 
+
+import { PermissionsProvider } from "../context/PermissionsContext";
+
+// define las rutas principales
 export default function AppRouter() {
+
   return (
     <BrowserRouter>
-      <Routes>
-        {/*ruta publica*/}
-        <Route path="/" element={<InicioSesion />} />
-        <Route path="/login" element={<InicioSesion />} />
-        {/*rutas protegidas dentro de /app */}
-        <Route
-          path="/app"
-          element={
-            <PrivateRoute>
-              <PermissionsProvider>
+
+      <PermissionsProvider>
+
+        <Routes>
+
+          {/* rutas públicas */}
+          <Route path="/" element={<InicioSesion />} />
+          <Route path="/login" element={<InicioSesion />} />
+
+          {/* rutas privadas */}
+          <Route
+            path="/app"
+            element={
+              <PrivateRoute>
                 <AppLayout />
-              </PermissionsProvider>
-            </PrivateRoute>
-          }
-        >
-          {/*pagina principal*/}
-          <Route index element={<Inicio />} />
-          {/*gestión de Periodos */}
-          <Route
-            path="periodos"
-            element={
-              <PermissionRoute permiso="Ver Periodos">
-                <PeriodosPagina />
-              </PermissionRoute>
+              </PrivateRoute>
             }
-          />
-          <Route
-            path="beneficiarios"
-            element={
-              <PermissionRoute permiso="Ver Beneficiarios">
-                <BeneficiariosPagina />
-              </PermissionRoute>
-            }
-          />
+          >
 
-          <Route
-            path="asistencias"
-            element={
-              <PermissionRoute permiso="Ver Beneficiarios">
-                <AsistenciasPagina />
-              </PermissionRoute>
-            }
-          />
+            {/* inicio */}
+            <Route index element={<Inicio />} />
 
-          <Route
-            path="beneficiarios/expediente/:id"
-            element={
-              <PermissionRoute permiso="Ver Beneficiarios">
-                <ExpedientePaginaB />
-              </PermissionRoute>
-            }
-          />
-
-
-          <Route
-            path="donadores"
-            element={
-              <PermissionRoute permiso="Ver Donadores">
-                <DonadoresPagina />
-              </PermissionRoute>
-            }
-          />
-
-          <Route
-            path="donadores/donador/:id"
-            element={
-              <PermissionRoute permiso="Ver Donadores">
-                <DonadoresDetalle />
-              </PermissionRoute>
-            }
-          />
-          {/*gestión de usuarios */}
-          <Route
-            path="usuarios"
-            element={
-              <PermissionRoute permiso="Ver Usuarios">
-                <UsuariosPagina />
-              </PermissionRoute>
-            }
-          />
-          {/* gestión de roles */}
-          <Route
-            path="roles"
-            element={
-              <AdminRoute>
-                <RolesPagina />
-              </AdminRoute>
-            }
-          />
-          <Route path="ingresos">
-            <Route index element={
-              <PermissionRoute permiso="Ver Postulantes">
-                <PostulantesPagina />
-              </PermissionRoute>
-            } />
-
+            {/* periodos 
             <Route
-              path="expediente/:id"
+              path="periodos"
               element={
-                <PermissionRoute permiso="Ver Postulantes">
-                  <ExpedientePagina />
+                <PermissionRoute
+                  modulo="periodos"
+                  accion="ver"
+                >
+                  <PeriodosPagina />
                 </PermissionRoute>
               }
             />
+*/}
+            {/* beneficiarios 
+            <Route
+              path="beneficiarios"
+              element={
+                <PermissionRoute
+                  modulo="beneficiarios"
+                  accion="ver"
+                >
+                  <BeneficiariosPagina />
+                </PermissionRoute>
+              }
+            />
+
+            <Route
+              path="beneficiarios/expediente/:id"
+              element={
+                <PermissionRoute
+                  modulo="beneficiarios"
+                  accion="ver"
+                >
+                  <ExpedientePaginaB />
+                </PermissionRoute>
+              }
+            />
+*/}
+            {/* asistencias 
+            <Route
+              path="asistencias"
+              element={
+                <PermissionRoute
+                  modulo="beneficiarios"
+                  accion="ver"
+                >
+                  <AsistenciasPagina />
+                </PermissionRoute>
+              }
+            />
+*/}
+            {/* donadores 
+            <Route
+              path="donadores"
+              element={
+                <PermissionRoute
+                  modulo="donadores"
+                  accion="ver"
+                >
+                  <DonadoresPagina />
+                </PermissionRoute>
+              }
+            />
+
+            <Route
+              path="donadores/donador/:id"
+              element={
+                <PermissionRoute
+                  modulo="donadores"
+                  accion="ver"
+                >
+                  <DonadoresDetalle />
+                </PermissionRoute>
+              }
+            />
+*/}
+            {/* usuarios 
+            <Route
+              path="usuarios"
+              element={
+                <PermissionRoute
+                  modulo="usuarios"
+                  accion="ver"
+                >
+                  <UsuariosPagina />
+                </PermissionRoute>
+              }
+            />
+*/}
+            {/* roles */}
+            <Route
+              path="roles"
+              element={
+                <AdminRoute>
+                  <RolesPagina />
+                </AdminRoute>
+              }
+            />
+
+            {/* postulantes 
+            <Route path="ingresos">
+
+              <Route
+                index
+                element={
+                  <PermissionRoute
+                    modulo="postulantes"
+                    accion="ver"
+                  >
+                    <PostulantesPagina />
+                  </PermissionRoute>
+                }
+              />
+
+              <Route
+                path="expediente/:id"
+                element={
+                  <PermissionRoute
+                    modulo="postulantes"
+                    accion="ver"
+                  >
+                    <ExpedientePagina />
+                  </PermissionRoute>
+                }
+              />
+
+            </Route>
+*/}
           </Route>
-        </Route>
-      </Routes>
+
+        </Routes>
+
+      </PermissionsProvider>
+
     </BrowserRouter>
   );
 }

@@ -109,7 +109,6 @@ export default function ModalPerfil({
     onUserUpdated,
     setResultado,
   });
-  console.log("USER:", user);
   if (!open) return null;
 
   return (
@@ -306,10 +305,10 @@ export default function ModalPerfil({
           onClose={() => setConfirmOpen(false)}
           onConfirm={async () => {
             const ok = await handleSubmit();
-
+            // cerrar siempre el modal confirmación
+            setConfirmOpen(false);
+            // si salió bien cerrar el modal principal
             if (ok) {
-              setConfirmOpen(false);
-
               setTimeout(() => {
                 onClose();
               }, 800);
@@ -323,3 +322,6 @@ export default function ModalPerfil({
     </div>
   );
 }
+
+
+ 

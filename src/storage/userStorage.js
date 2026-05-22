@@ -15,3 +15,12 @@ export const limpiarSesionLocal = () => {
   localStorage.removeItem("access");
   localStorage.removeItem("refresh");
 };
+
+export const obtenerUsuario = () => {
+  try {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user) : null;
+  } catch {
+    return null;
+  }
+};

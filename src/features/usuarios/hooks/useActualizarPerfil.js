@@ -1,13 +1,17 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { actualizarUsuario } from "../services/usuariosService";
-
+import { mapearUsuario } from "../../auth/services/mapper";
 
 export const useActualizarPerfil = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ userId, payload }) =>
-      actualizarUsuario(userId, payload),
+    mutationFn: async ({ userId, payload }) => {
+      const data = await actualizarUsuario(userId, payload);
+
+      // normalizar respuesta
+      return mapearUsuario(data);
+    },
 
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

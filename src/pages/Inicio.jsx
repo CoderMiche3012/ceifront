@@ -3,41 +3,69 @@ import { useNavigate } from "react-router-dom";
 import { useBeneficiariosPage } from "../features/beneficiarios/hooks/useBeneficiariosPage";
 import { obtenerVisita } from "../features/postulantes/services/visitasService";
 import { usePermissions } from "../context/PermissionsContext";
-import { hasPermission } from "../utils/menuPermissions";
 
 
-import { Calendar, Sparkles, Inbox, Clock, Users, User, UserX, UserPlus, UserMinus, CalendarDays, PlusCircle, AlertTriangle, LayoutGrid, ChevronRight } from "lucide-react";
+import {
+  Calendar,
+  Sparkles,
+  Inbox,
+  Clock,
+  Users,
+  UserX,
+  UserPlus,
+  UserMinus,
+  CalendarDays,
+  PlusCircle,
+  AlertTriangle,
+  LayoutGrid,
+  ChevronRight
+} from "lucide-react";
+
 export default function Inicio() {
   const navigate = useNavigate();
-  const { beneficiarios, loading: loadingBeneficiarios, periodo: periodoActual } = useBeneficiariosPage();
+
+  const {
+    beneficiarios,
+    loading: loadingBeneficiarios,
+  } = useBeneficiariosPage();
+
   const [visitas, setVisitas] = useState([]);
   const [loadingVisitas, setLoadingVisitas] = useState(true);
-  const { permissions } = usePermissions();
+
+  const { hasModulePermission } = usePermissions();
+
+  // permisos
   const canCreatePostulantes = useMemo(
-    () => hasPermission(permissions, "Crear Postulantes"),
-    [permissions]
+    () => hasModulePermission("postulantes", "crear"),
+    [hasModulePermission]
   );
   const canCreateDonadores = useMemo(
-    () => hasPermission(permissions, "Crear Donadores"),
-    [permissions]
+    () => hasModulePermission("donadores", "crear"),
+    [hasModulePermission]
   );
+
   const canCreateBeneficiarios = useMemo(
-    () => hasPermission(permissions, "Crear Beneficiarios"),
-    [permissions]
+    () => hasModulePermission("beneficiarios", "crear"),
+    [hasModulePermission]
   );
   useEffect(() => {
     let isMounted = true;
+
     async function cargarVisitas() {
       try {
         setLoadingVisitas(true);
+
         const respuesta = await obtenerVisita();
-        const dataVisitas = Array.isArray(respuesta) ? respuesta : respuesta?.data || [];
+
+        const dataVisitas = Array.isArray(respuesta)
+          ? respuesta
+          : respuesta?.data || [];
 
         if (isMounted) {
           setVisitas(dataVisitas);
         }
       } catch (error) {
-        console.error("Error al obtener las visitas del día:", error);
+        console.error("Error al obtener visitas:", error);
       } finally {
         if (isMounted) {
           setLoadingVisitas(false);
@@ -46,9 +74,11 @@ export default function Inicio() {
     }
 
     cargarVisitas();
-    return () => { isMounted = false; };
-  }, []);
 
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   //metricas
   const metrics = useMemo(() => {
     if (!beneficiarios || beneficiarios.length === 0) {
@@ -270,13 +300,13 @@ export default function Inicio() {
                 </button>
               )}
               {canCreatePostulantes && (
-              <button
-                onClick={() => navigate("/app/ingresos", { state: { openModal: true } })}
-                className="w-full flex items-center justify-between rounded-xl border border-slate-200 text-slate-700 px-4 py-2.5 font-medium hover:bg-slate-50 active:scale-[0.99] transition"
-              >
-                <span>Registrar Postulante</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </button>
+                <button
+                  onClick={() => navigate("/app/ingresos", { state: { openModal: true } })}
+                  className="w-full flex items-center justify-between rounded-xl border border-slate-200 text-slate-700 px-4 py-2.5 font-medium hover:bg-slate-50 active:scale-[0.99] transition"
+                >
+                  <span>Registrar Postulante</span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
               )}
             </div>
           </div>

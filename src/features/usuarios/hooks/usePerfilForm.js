@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { formatError } from "../../../utils/errorHandlers";
+import { formatErrorAnidado } from "../../../utils/errorHandlers";
 import { useActualizarPerfil } from "./useActualizarPerfil";
 
 export function usePerfilForm({
@@ -45,7 +45,7 @@ export function usePerfilForm({
     if (!open || !user) return;
 
     setNombre(user.nombre ?? "");
-    setNomUsuario(user.nom_usuario ?? "");
+    setNomUsuario(user.nombreUsuario ?? "");
     setApellidoP(user.apellido_p ?? "");
     setApellidoM(user.apellido_m ?? "");
     setCorreo(user.correo ?? "");
@@ -98,7 +98,7 @@ export function usePerfilForm({
         payload.nombre = nombre.trim();
 
       if (nom_usuario !== user.nombreUsuario)
-        payload.nombreUsuario = nom_usuario.trim();
+        payload.nom_usuario = nom_usuario.trim();
 
       if (apellidoP !== user.apellido_p)
         payload.apellido_p = apellidoP.trim();
@@ -137,7 +137,7 @@ export function usePerfilForm({
       }
 
       const data = await mutation.mutateAsync({
-        userId: user.id_usuario,
+        userId: user.id,
         payload,
       });
 
@@ -153,7 +153,17 @@ export function usePerfilForm({
 
       return true; // importante
     } catch (err) {
-      setError(formatError(err));
+      const mensaje = formatErrorAnidado(err);
+
+      setError(mensaje);
+
+      setResultado({
+        open: true,
+        type: "error",
+        title: "Error al actualizar",
+        message: mensaje,
+      });
+
       return false;
     }
   };

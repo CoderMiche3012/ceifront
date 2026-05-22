@@ -1,12 +1,20 @@
 import { Navigate } from "react-router-dom";
-//protege rutas que requieren autenticación
+import {
+  obtenerAccessToken,
+  obtenerUsuario,
+} from "../storage/userStorage";
+
+// protege rutas que requieren autenticación
 export default function PrivateRoute({ children }) {
-  const token = localStorage.getItem("access");
-  const userJson = localStorage.getItem("user");
-  //si no hay token o usuario, redirige al login
-  if (!token || !userJson) {
+
+  const token = obtenerAccessToken();
+  const usuario = obtenerUsuario();
+
+  // si no existe sesión válida
+  if (!token || !usuario) {
     return <Navigate to="/" replace />;
   }
-  //si está autenticado, permite el acceso
+
+  // si está autenticado permite acceso
   return children;
 }

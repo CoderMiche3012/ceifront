@@ -1,40 +1,14 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Outlet } from "react-router-dom"
 import Menu from "./Menu"
 import Encabezado from "./Encabezado"
-import { cargarPermisosUsuario } from "../../features/usuarios/services/permisosService"
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [userPermissions, setUserPermissions] = useState([])
-  const [loadingPermissions, setLoadingPermissions] = useState(true)
-
-  useEffect(() => {
-    const obtenerPermisos = async () => {
-      setLoadingPermissions(true); 
-      try {
-        const permisos = await cargarPermisosUsuario();
-        setUserPermissions(permisos);
-      } catch (error) {
-        setUserPermissions([]);
-      } finally {
-        setLoadingPermissions(false);
-      }
-    };
-
-    obtenerPermisos();
-  }, [localStorage.getItem("user")]);
-
-  if (loadingPermissions) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-[#f3f1f4]">
-        <p className="text-sm text-slate-600">Cargando permisos...</p>
-      </div>
-    )
-  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f3f1f4]">
+
       {sidebarOpen && (
         <button
           type="button"
@@ -45,18 +19,17 @@ export default function AppLayout() {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-200 bg-white transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+        className={`fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-200 bg-white transform transition-transform duration-300 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        <Menu
-          sidebarOpen={sidebarOpen}
-          userPermissions={userPermissions}
-        />
+        <Menu sidebarOpen={sidebarOpen} />
       </aside>
 
       <div
-        className={`flex min-w-0 flex-1 flex-col transition-all duration-300 ${sidebarOpen ? "lg:ml-72" : "lg:ml-0"
-          }`}
+        className={`flex min-w-0 flex-1 flex-col transition-all duration-300 ${
+          sidebarOpen ? "lg:ml-72" : "lg:ml-0"
+        }`}
       >
         <Encabezado
           sidebarOpen={sidebarOpen}
