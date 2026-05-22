@@ -1,12 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu } from "lucide-react";
+
 import { ui } from "../../styles/uiClasses";
 import SubMenu from "./SubMenu";
 import ModalPerfil from "../../features/usuarios/components/modales/ModalPerfil";
-import { obtenerPerfil, guardarUsuarioLocal, } from "../../features/usuarios/services/usuariosService";
+
+import { usePerfil } from "../../features/auth/hooks/usePerfil";
+import { limpiarSesionLocal, guardarSesionLocal } from "../../storage/userStorage";
 
 import logoCei from "../../assets/imagenes/logo.png";
+
 
 export default function Encabezado({
   setSidebarOpen,
@@ -14,7 +18,7 @@ export default function Encabezado({
 }) {
   const navigate = useNavigate();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-
+  //estado inicial del usuario
   const [fullUser, setFullUser] = useState(() => {
     try {
       const stored = localStorage.getItem("user");
@@ -25,57 +29,46 @@ export default function Encabezado({
     }
   });
 
-  const cerrarSesion = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-    navigate("/", { replace: true });
-  };
+  //sincronizacion con el perfil 
+  const userId = fullUser?.id;
+  const { data: perfilActualizado } = usePerfil(userId);
+  useEffect(() => {
+    if (!perfilActualizado) return;
 
+    setFullUser((prev) => {
+      if (JSON.stringify(prev) === JSON.stringify(perfilActualizado)) {
+        return prev;
+      }
+
+      guardarSesionLocal({
+        usuario: perfilActualizado,
+        access: localStorage.getItem("access"),
+        refresh: localStorage.getItem("refresh"),
+      });
+
+      return perfilActualizado;
+    });
+  }, [perfilActualizado]);
+
+  //cerrar sesion
+  const cerrarSesion = () => {
+    limpiarSesionLocal();
+    navigate("/login", { replace: true });
+  };
+  //manejador para actualizaciones manuales
   const handleUserUpdate = useCallback((updatedUser) => {
+      console.log("UPDATED USER:", updatedUser);
+
     if (!updatedUser) return;
 
-    const usuarioActualizado = guardarUsuarioLocal(updatedUser);
-    setFullUser(usuarioActualizado);
+    setFullUser(updatedUser);
 
-    window.dispatchEvent(new Event("storage"));
+    guardarSesionLocal({
+      usuario: updatedUser,
+      access: localStorage.getItem("access"),
+      refresh: localStorage.getItem("refresh"),
+    });
   }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const syncUser = async () => {
-      const token = localStorage.getItem("access");
-      const storedData = localStorage.getItem("user");
-
-      if (!storedData || !token) return;
-
-      try {
-        const userLocal = JSON.parse(storedData);
-
-        const data = await obtenerPerfil(
-          userLocal.id_usuario || userLocal.id,
-          token
-        );
-
-        if (data && isMounted) {
-          handleUserUpdate(data);
-        }
-      } catch (error) {
-        console.error("Error sincronizando perfil:", error);
-
-        if (error.response?.status === 401) {
-          cerrarSesion();
-        }
-      }
-    };
-
-    syncUser();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [handleUserUpdate]);
 
   return (
     <>
@@ -92,11 +85,11 @@ export default function Encabezado({
 
           {!sidebarOpen && (
             <div className={ui.headerBar.brand}>
-                <img
-                  src={logoCei}
-                  alt="CEI"
-                  className={ui.headerBar.logo}
-                />
+              <img
+                src={logoCei}
+                alt="CEI"
+                className={ui.headerBar.logo}
+              />
 
               <div className={ui.headerBar.brandText}>
                 <p className={ui.headerBar.brandTitle}>

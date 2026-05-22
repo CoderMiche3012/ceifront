@@ -1,17 +1,27 @@
 import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { useInicioSesion } from "../features/auth/hooks/useLogin";
 //componentes
 import Input from "../components/ui/Input";
 import BotonInicio from "../components/ui/BotonInicio";
 import AlertaError from "../components/ui/AlertaError";
 //servicios y Utilidades
 import { formatError } from "../utils/errorHandlers";
-import { obtenerInicioSesion, guardarUsuarioLocal } from "../features/usuarios/services/usuariosService";
 //imagenes
 import inicio from "../assets/imagenes/inicio.png";
 import logoCei from "../assets/imagenes/logo.png";
+
+// para el bloqueo
+const getBloqueo = (username) => {
+  const bloqueo = localStorage.getItem(`bloqueo_${username}`);
+  return bloqueo ? Number(bloqueo) : null;
+};
+const estaBloqueado = (username) => {
+  const bloqueo = getBloqueo(username);
+  return !!bloqueo && Date.now() < bloqueo;
+};
+
 export default function InicioSesion() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -19,49 +29,7 @@ export default function InicioSesion() {
   const [mostrarRecuperacion, setMostrarRecuperacion] = useState(false);
   const [bloqueoMsg, setBloqueoMsg] = useState(null);
 
-  const loginMutation = useMutation({
-    mutationFn: obtenerInicioSesion,
-    onSuccess: (response, variables) => {
-      console.log("response completo:", response);
-      console.log("usuario:", response.user);
-      console.log("status:", response.user?.status);
-      const cleanUsername = variables.username;
-      if (response.user?.estatus === false) {
-        setBloqueoMsg("Esta cuenta está inactiva. Contacta al administrador.");
-
-        // limpiar tokens por si llegaron
-        localStorage.removeItem("access");
-        localStorage.removeItem("refresh");
-        return;
-      }
-      localStorage.setItem("access", response.access);
-      localStorage.setItem("refresh", response.refresh);
-      guardarUsuarioLocal(response.user);
-      // Limpiar rastros de intentos fallidos
-      localStorage.removeItem(`intentos_${cleanUsername}`);
-      localStorage.removeItem(`bloqueo_${cleanUsername}`);
-      navigate("/app", { replace: true });
-    },
-    onError: (err, variables) => {
-      // si está inactivo, no contar intentos
-      if (err.message === "Usuario inactivo") {
-        setBloqueoMsg("Esta cuenta está inactiva. Contacta al administrador.");
-        return;
-      }
-
-      const cleanUsername = variables.username;
-      const key = `intentos_${cleanUsername}`;
-
-      let intentos = Number(localStorage.getItem(key) || 0) + 1;
-      localStorage.setItem(key, intentos);
-
-      if (intentos >= 3) {
-        const tiempoBloqueo = Date.now() + 15 * 60 * 1000;
-        localStorage.setItem(`bloqueo_${cleanUsername}`, tiempoBloqueo);
-        localStorage.removeItem(key);
-      }
-    },
-  });
+  const loginMutation = useInicioSesion();
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -70,23 +38,57 @@ export default function InicioSesion() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const cleanUsername = formData.username.trim();
-    const cleanPassword = formData.password.trim();
 
-    if (!cleanUsername || !cleanPassword) {
+    const username = formData.username.trim();
+    const password = formData.password.trim();
+
+    if (!username || !password) {
       setBloqueoMsg("Por favor, completa todos los campos.");
       return;
     }
-    // Verificar si está bloqueado antes de la petición
-    const bloqueo = localStorage.getItem(`bloqueo_${cleanUsername}`);
-    if (bloqueo && Date.now() < Number(bloqueo)) {
-      const minutos = Math.ceil((Number(bloqueo) - Date.now()) / 60000);
+
+    if (estaBloqueado(username)) {
+      const minutos = Math.ceil((getBloqueo(username) - Date.now()) / 60000);
       setBloqueoMsg(`Cuenta bloqueada. Intenta en ${minutos} min.`);
       return;
     }
-    loginMutation.mutate({ username: cleanUsername, password: cleanPassword });
+
+    loginMutation.mutate(
+      { username, password },
+      {
+        onSuccess: () => {
+          localStorage.removeItem(`intentos_${username}`);
+          localStorage.removeItem(`bloqueo_${username}`);
+          setBloqueoMsg(null);
+
+          navigate("/app", { replace: true });
+        },
+
+        onError: (err) => {
+          if (err?.message === "Usuario inactivo") {
+            setBloqueoMsg("Esta cuenta está inactiva. Contacta al administrador.");
+            return;
+          }
+
+          const key = `intentos_${username}`;
+          let intentos = Number(localStorage.getItem(key) || 0) + 1;
+
+          localStorage.setItem(key, intentos);
+
+          if (intentos >= 3) {
+            const bloqueo = Date.now() + 15 * 60 * 1000;
+            localStorage.setItem(`bloqueo_${username}`, bloqueo);
+            localStorage.removeItem(key);
+          }
+        },
+      }
+    );
   };
-  const errorAMostrar = bloqueoMsg || (loginMutation.isError ? formatError(loginMutation.error) : null);
+  const errorAMostrar =
+    bloqueoMsg ||
+    (loginMutation.isError
+      ? formatError(loginMutation.error)
+      : null);
 
   const visualPanel = useMemo(() => (
     <div className="relative hidden min-h-screen lg:block" aria-hidden="true">

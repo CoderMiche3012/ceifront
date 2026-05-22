@@ -23,6 +23,7 @@ export default function AppRouter() {
       <Routes>
         {/*ruta publica*/}
         <Route path="/" element={<InicioSesion />} />
+        <Route path="/login" element={<InicioSesion />} />
         {/*rutas protegidas dentro de /app */}
         <Route
           path="/app"

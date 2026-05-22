@@ -1,9 +1,5 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import {
-  HiOutlineUser,
-  HiOutlineLogout,
-  HiChevronDown,
-} from "react-icons/hi";
+import { HiOutlineUser, HiOutlineLogout, HiChevronDown, } from "react-icons/hi";
 import { ui } from "../../styles/uiClasses";
 
 export default function SubMenu({ user, onLogout, onOpenProfile }) {
@@ -17,9 +13,11 @@ export default function SubMenu({ user, onLogout, onOpenProfile }) {
     const apellido_p = user.apellido_p || "";
     const apellido_m = user.apellido_m || "";
 
-    return `${nombre} ${apellido_p} ${apellido_m}`
+    const completo = `${nombre} ${apellido_p} ${apellido_m}`
       .replace(/\s+/g, " ")
-      .trim() || "Usuario";
+      .trim();
+
+    return completo || user.nombreUsuario || "Usuario";
   }, [user]);
 
   const initials = useMemo(() => {
@@ -43,11 +41,14 @@ export default function SubMenu({ user, onLogout, onOpenProfile }) {
       }
     };
 
-    document.addEventListener("click", handleClickOutside);
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
 
     return () =>
       document.removeEventListener(
-        "click",
+        "mousedown",
         handleClickOutside
       );
   }, []);
@@ -88,9 +89,8 @@ export default function SubMenu({ user, onLogout, onOpenProfile }) {
         </div>
 
         <HiChevronDown
-          className={`${ui.userMenu.chevron} ${
-            menuOpen ? "rotate-180" : ""
-          }`}
+          className={`${ui.userMenu.chevron} ${menuOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
 
@@ -166,3 +166,4 @@ export default function SubMenu({ user, onLogout, onOpenProfile }) {
     </div>
   );
 }
+

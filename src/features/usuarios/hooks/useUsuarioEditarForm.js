@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { actualizarUsuarioCompleto } from "../services/usuariosService";
+import { actualizarUsuario } from "../services/usuariosService";
 
 const initialFormData = {
   nombre: "",
@@ -187,7 +187,7 @@ export function useUsuarioEditarModal({
         setLoading(false);
         return;
       }
-      await actualizarUsuarioCompleto(user.id_usuario, payload);
+      await actualizarUsuario(user.id_usuario, payload);
       setIsConfirming(false);
       if (onSuccess) await onSuccess();
       onClose?.();
