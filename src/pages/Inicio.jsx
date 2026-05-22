@@ -2,13 +2,29 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBeneficiariosPage } from "../features/beneficiarios/hooks/useBeneficiariosPage";
 import { obtenerVisita } from "../features/postulantes/services/visitasService";
+import { usePermissions } from "../context/PermissionsContext";
+import { hasPermission } from "../utils/menuPermissions";
 
-import {Calendar,Sparkles,Inbox,Clock,Users,User,UserX,UserPlus,UserMinus,CalendarDays,PlusCircle,AlertTriangle,LayoutGrid,ChevronRight} from "lucide-react";
+
+import { Calendar, Sparkles, Inbox, Clock, Users, User, UserX, UserPlus, UserMinus, CalendarDays, PlusCircle, AlertTriangle, LayoutGrid, ChevronRight } from "lucide-react";
 export default function Inicio() {
   const navigate = useNavigate();
-  const {beneficiarios,loading: loadingBeneficiarios,periodo: periodoActual  } = useBeneficiariosPage();
+  const { beneficiarios, loading: loadingBeneficiarios, periodo: periodoActual } = useBeneficiariosPage();
   const [visitas, setVisitas] = useState([]);
   const [loadingVisitas, setLoadingVisitas] = useState(true);
+  const { permissions } = usePermissions();
+  const canCreatePostulantes = useMemo(
+    () => hasPermission(permissions, "Crear Postulantes"),
+    [permissions]
+  );
+  const canCreateDonadores = useMemo(
+    () => hasPermission(permissions, "Crear Donadores"),
+    [permissions]
+  );
+  const canCreateBeneficiarios = useMemo(
+    () => hasPermission(permissions, "Crear Beneficiarios"),
+    [permissions]
+  );
   useEffect(() => {
     let isMounted = true;
     async function cargarVisitas() {
@@ -47,7 +63,7 @@ export default function Inicio() {
         ? b.seguimientos[b.seguimientos.length - 1]
         : null;
 
-      const esActivo = ultimoSeguimiento?.estatus === "Activo" || b.estatus === "Activo";
+      const esActivo = ultimoSeguimiento?.e === "Activo" || b.e === "Activo";
       if (esActivo) acc.activos++;
 
       const tieneDonador = b.id_donador || b.donador || b.tieneDonador;
@@ -60,7 +76,7 @@ export default function Inicio() {
         }
       }
 
-      const esBaja = ultimoSeguimiento?.estatus === "Inactivo" || b.estatus === "Inactivo";
+      const esBaja = ultimoSeguimiento?.e === "Inactivo" || b.e === "Inactivo";
       if (esBaja) acc.bajas++;
 
       return acc;
@@ -235,22 +251,25 @@ export default function Inicio() {
             </div>
 
             <div className="mt-5 space-y-3">
-              <button
-                onClick={() => navigate("/app/beneficiarios", { state: { openModal: true } })}
-                className="w-full flex items-center justify-between rounded-xl bg-teal-600 text-white px-4 py-2.5 font-medium hover:bg-teal-700 active:scale-[0.99] transition shadow-sm"
-              >
-                <span>Registrar Beneficiario</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-
-              <button
-                onClick={() => navigate("/app/donadores", { state: { openModal: true } })}
-                className="w-full flex items-center justify-between rounded-xl border border-slate-200 text-slate-700 px-4 py-2.5 font-medium hover:bg-slate-50 active:scale-[0.99] transition"
-              >
-                <span>Registrar Donador</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </button>
-
+              {canCreateBeneficiarios && (
+                <button
+                  onClick={() => navigate("/app/beneficiarios", { state: { openModal: true } })}
+                  className="w-full flex items-center justify-between rounded-xl bg-teal-600 text-white px-4 py-2.5 font-medium hover:bg-teal-700 active:scale-[0.99] transition shadow-sm"
+                >
+                  <span>Registrar Beneficiario</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
+              {canCreateDonadores && (
+                <button
+                  onClick={() => navigate("/app/donadores", { state: { openModal: true } })}
+                  className="w-full flex items-center justify-between rounded-xl border border-slate-200 text-slate-700 px-4 py-2.5 font-medium hover:bg-slate-50 active:scale-[0.99] transition"
+                >
+                  <span>Registrar Donador</span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+              )}
+              {canCreatePostulantes && (
               <button
                 onClick={() => navigate("/app/ingresos", { state: { openModal: true } })}
                 className="w-full flex items-center justify-between rounded-xl border border-slate-200 text-slate-700 px-4 py-2.5 font-medium hover:bg-slate-50 active:scale-[0.99] transition"
@@ -258,6 +277,7 @@ export default function Inicio() {
                 <span>Registrar Postulante</span>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </button>
+              )}
             </div>
           </div>
         </div>
@@ -274,10 +294,10 @@ export default function Inicio() {
               </div>
             </div>
             <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border shadow-sm ${agendaVisitas.tipo === "hoy"
-                ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                : agendaVisitas.tipo === "futuro"
-                  ? "bg-indigo-50 text-indigo-700 border-indigo-100"
-                  : "bg-slate-50 text-slate-500 border-slate-200"
+              ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+              : agendaVisitas.tipo === "futuro"
+                ? "bg-indigo-50 text-indigo-700 border-indigo-100"
+                : "bg-slate-50 text-slate-500 border-slate-200"
               }`}>
               {agendaVisitas.tipo === "hoy" && "Acción requerida"}
               {agendaVisitas.tipo === "futuro" && "Al día"}

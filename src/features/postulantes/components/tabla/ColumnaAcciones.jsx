@@ -101,9 +101,6 @@ export default function AccionesPostulante({ item, onRefresh, abrirHaciaArriba }
           }}
         >
           <div className="py-1">
-            <button className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-              <UserPen size={16} /> Editar Perfil
-            </button>
             <div className="my-1 border-t border-slate-100" />
             {renderOpciones()}
           </div>

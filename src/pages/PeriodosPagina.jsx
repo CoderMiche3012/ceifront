@@ -11,32 +11,34 @@ import PeriodoActivo from "../features/periodos/components/PeriodoActivo";
 import { hasPermission } from "../utils/menuPermissions";
 import { usePermissions } from "../context/PermissionsContext";
 import { useMemo } from "react";
+import { ui } from "../styles/uiClasses";
 
 export default function PeriodosPagina() {
-  const { permissions, loading: isPermsLoading } = usePermissions();  
+  const { permissions, loading: isPermsLoading } = usePermissions();
 
   const {
-    periodoActivo,periodos, loading, error, fetchPeriodos,
+    periodoActivo, periodos, loading, error, fetchPeriodos,
     search, handleSearchChange, handleClearFilters,
     currentPage, totalPages, filteredPeriodos, PAGE_SIZE, setCurrentPage,
     isCreateModalOpen, isEditModalOpen, selectedPeriodo,
     handleOpenCreate, handleCloseCreate, handleOpenEdit, handleCloseEdit
   } = usePeriodosPage();
 
-  const canCreate = useMemo(() => 
-    hasPermission(permissions, "Crear Periodos"), 
-  [permissions]);
+  const canCreate = useMemo(() =>
+    hasPermission(permissions, "Crear Periodos"),
+    [permissions]);
 
   return (
-    <section className="space-y-6">
+    <section className={ui.page}>
       <EncabezadoPagina
-        titulo="Gestión de Periodos" 
+        titulo="Gestión de Periodos"
         descripcion="Monitorea y organiza los periodos escolares"
         accion={
           !isPermsLoading && canCreate && ( 
-            <Boton onClick={handleOpenCreate} icon={<CalendarPlus size={18} />}>
+            <Boton size="md" onClick={handleOpenCreate} icon={<CalendarPlus size={18} />}>
               Registrar Periodo
             </Boton>
+            
           )
         }
       />
@@ -46,16 +48,17 @@ export default function PeriodosPagina() {
       {/* Solo mostrar alerta si realmente hay un error de datos */}
       {error && <Alerta mensaje={error} tipo="error" />}
 
-      <div className="overflow-hidden rounded-[24px] border border-[#dbe3eb] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+      <div className={ui.card}>
+
         <PeriodoFiltros
           search={search}
           onSearchChange={handleSearchChange}
           onClearFilters={handleClearFilters}
         />
-        
-        <PeriodoTabla 
-          periodos={periodos} 
-          isLoading={loading} 
+
+        <PeriodoTabla
+          periodos={periodos}
+          isLoading={loading}
         />
 
         {!loading && !error && filteredPeriodos.length > 0 && (

@@ -1,5 +1,6 @@
 import DatosTabla from "../../../../components/tablas/DatosTabla";
 import InsigniaEstatus from "../../../usuarios/components/insignias/InsigniaEstatus";
+import { ui } from "../../../../styles/uiClasses";
 
 // columnas de periodos
 const columns = [
@@ -15,21 +16,21 @@ export default function PeriodoTabla({ periodos }) {
     switch (key) {
       case "ciclo_escolar":
         return (
-          <span className="text-sm font-semibold text-slate-800">
+          <span className={ui.text.body}>
             {periodo.ciclo_escolar}
           </span>
         );
 
       case "fecha_inicio":
         return (
-          <span className="text-sm text-slate-500">
+          <span className={ui.text.body}>
             {periodo.fecha_inicio}
           </span>
         );
 
       case "fecha_fin":
         return (
-          <span className="text-sm text-slate-500">
+          <span className={ui.text.body}>
             {periodo.fecha_fin}
           </span>
         );

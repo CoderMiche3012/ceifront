@@ -1,4 +1,4 @@
-import { useState, useRef , useEffect} from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Boton from "../../components/ui/Boton";
 import { useDonadoresPage } from "../../features/donadores/hooks/useDonadoresPage";
 import DonadorFiltros from "../../features/donadores/components/tabla/DonadorFiltros";
@@ -9,12 +9,19 @@ import DonadorCrearModal from "../../features/donadores/components/modales/Donad
 import EditarDatosGenerales from "../../features/donadores/components/modales/EditarDatosGenerales";
 import { UserPlus, Users, UserCheck, UserX, Building2, HeartHandshake, HandHeart } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { usePermissions } from "../../context/PermissionsContext";
+import { hasPermission } from "../../utils/menuPermissions";
 
 export default function DonadoresPagina() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalEditar, setModalEditar] = useState(false);
     const [donadorSeleccionado, setDonadorSeleccionado] = useState(null);
+    const { permissions } = usePermissions();
+    const canCreate = useMemo(
+        () => hasPermission(permissions, "Crear Donadores"),
+        [permissions]
+    );
     const {
         filters,
         donadores,
@@ -30,16 +37,16 @@ export default function DonadoresPagina() {
         setCurrentPage,
         PAGE_SIZE
     } = useDonadoresPage();
-const location = useLocation();
-  const navigate = useNavigate();
-  useEffect(() => {
-    if (location.state?.openModal) {
-      setIsModalOpen(true);
+    const location = useLocation();
+    const navigate = useNavigate();
+    useEffect(() => {
+        if (location.state?.openModal) {
+            setIsModalOpen(true);
 
-      // Limpiamos el estado del historial para que no se reabra al actualizar la página
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [location, navigate]);
+            // Limpiamos el estado del historial para que no se reabra al actualizar la página
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location, navigate]);
 
     const handleEditar = (donador) => {
         setDonadorSeleccionado(donador);
@@ -56,12 +63,14 @@ const location = useLocation();
                 titulo="Gestión de Donadores"
                 descripcion="Monitoreo y organizacion de donadores"
                 accion={
-                    <Boton
-                        icon={<UserPlus size={18} />}
-                        onClick={() => setIsModalOpen(true)}
-                    >
-                        Registrar Donador
-                    </Boton>
+                    canCreate && (
+                        <Boton
+                            icon={<UserPlus size={18} />}
+                            onClick={() => setIsModalOpen(true)}
+                        >
+                            Registrar Donador
+                        </Boton>
+                    )
                 }
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">

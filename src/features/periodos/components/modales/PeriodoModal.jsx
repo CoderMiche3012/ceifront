@@ -9,14 +9,12 @@ export default function PeriodoModal({
 }) {
   return (
     <>
-      {/* Modal: editar periodo */}
       <PeriodoEditarModal
         open={isEditModalOpen}
         periodo={selectedPeriodo}
         onClose={onCloseEditModal}
         onSuccess={onPeriodoUpdated}
       />
-      {/* Modal: crear periodo */}
       <PeriodoCrearModal
         open={isCreateModalOpen}
         onClose={onCloseCreateModal}

@@ -1,37 +1,24 @@
-export default function DatosTabla({
-  columns,
-  data,
-  renderCell,
-  rowKey = "id",
-}) {
+import { ui } from "../../styles/uiClasses";
+export default function DatosTabla({columns,data,renderCell,rowKey = "id",}) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[980px]">
-
-        {/* HEADER */}
+    <div className={ui.table.wrapper}>
+      <table className={ui.table.table}>
         <thead>
-          <tr className="border-b border-[#edf2f7] text-left">
+          <tr className={ui.table.headerRow}>
             {columns.map((column) => (
-              <th
-                key={column.key}
-                className="px-6 py-5 text-[11px] font-bold uppercase tracking-wide text-slate-400"
-              >
+              <th key={column.key} className={ui.table.headerCell}>
                 {column.label}
               </th>
             ))}
           </tr>
         </thead>
-
-        {/* BODY */}
         <tbody>
           {data.length > 0 ? (
             data.map((row) => (
-              <tr
-                key={row[rowKey] ?? JSON.stringify(row)}
-                className="border-b border-[#f1f5f9] last:border-b-0"
+              <tr key={row[rowKey] ?? JSON.stringify(row)} className={ui.table.row}
               >
                 {columns.map((column) => (
-                  <td key={column.key} className="px-6 py-5 align-middle">
+                  <td key={column.key}  className={ui.table.cell}>
                     {renderCell(row, column.key)}
                   </td>
                 ))}
@@ -39,9 +26,7 @@ export default function DatosTabla({
             ))
           ) : (
             <tr>
-              <td
-                colSpan={columns.length}
-                className="px-6 py-10 text-center text-sm text-slate-400"
+              <td colSpan={columns.length} className={ui.table.empty}
               >
                 No se encontraron registros.
               </td>

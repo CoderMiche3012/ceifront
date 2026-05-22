@@ -1,8 +1,8 @@
 import { HandCoins } from "lucide-react";
-import { useQuery, useMutation, useQueryClient,} from "@tanstack/react-query";
-import {useState,useMemo,} from "react";
+import { useQuery, useMutation, useQueryClient, } from "@tanstack/react-query";
+import { useState, useMemo, } from "react";
 import { obtenerSeguimiento } from "../../../../services/seguimientoService";
-import {crearApoyo,actualizarApoyo,eliminarApoyo,} from "../../../../services/apoyosService";
+import { crearApoyo, actualizarApoyo, eliminarApoyo, } from "../../../../services/apoyosService";
 import ApoyoTabla from "./tabla/ApoyoTabla";
 import ApoyoFiltros from "./tabla/ApoyoFiltros";
 import PaginacionTabla from "../../../../../../components/tablas/PaginacionTabla";
@@ -32,7 +32,7 @@ export default function DetalleSeguimientoEconomico({
       tipo: "error",
     });
 
-  const [modalCrear, setModalCrear] =useState(false);
+  const [modalCrear, setModalCrear] = useState(false);
 
   const [
     modalConfirmacion,
@@ -93,11 +93,13 @@ export default function DetalleSeguimientoEconomico({
 
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: [
-            "seguimiento",
-            idSeguimiento,
-          ],
+          queryKey: ["seguimiento", idSeguimiento],
         });
+
+        queryClient.invalidateQueries({
+          queryKey: ["seguimientos", data?.id_beneficiario],
+        });
+
 
         setModalConfirmacion(
           false
@@ -155,10 +157,11 @@ export default function DetalleSeguimientoEconomico({
 
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: [
-            "seguimiento",
-            idSeguimiento,
-          ],
+          queryKey: ["seguimiento", idSeguimiento],
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: ["seguimientos", data?.id_beneficiario],
         });
 
         setModalConfirmacion(
@@ -207,10 +210,11 @@ export default function DetalleSeguimientoEconomico({
 
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: [
-            "seguimiento",
-            idSeguimiento,
-          ],
+          queryKey: ["seguimiento", idSeguimiento],
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: ["seguimientos", data?.id_beneficiario],
         });
 
         setModalConfirmacion(
@@ -252,10 +256,11 @@ export default function DetalleSeguimientoEconomico({
 
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: [
-            "seguimiento",
-            idSeguimiento,
-          ],
+          queryKey: ["seguimiento", idSeguimiento],
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: ["seguimientos", data?.id_beneficiario],
         });
 
         setModalConfirmacion(
@@ -301,18 +306,18 @@ export default function DetalleSeguimientoEconomico({
         .sort((a, b) => {
           if (
             a.estatus ===
-              "Pendiente" &&
+            "Pendiente" &&
             b.estatus !==
-              "Pendiente"
+            "Pendiente"
           ) {
             return -1;
           }
 
           if (
             a.estatus !==
-              "Pendiente" &&
+            "Pendiente" &&
             b.estatus ===
-              "Pendiente"
+            "Pendiente"
           ) {
             return 1;
           }
@@ -325,7 +330,7 @@ export default function DetalleSeguimientoEconomico({
   const totalPages =
     Math.ceil(
       apoyosFiltrados.length /
-        PAGE_SIZE
+      PAGE_SIZE
     );
 
   const apoyosPaginados =
@@ -536,7 +541,7 @@ export default function DetalleSeguimientoEconomico({
             onSearchChange={
               handleSearchChange
             }
-            onFilterChange={() => {}}
+            onFilterChange={() => { }}
             onClearFilters={() => {
               setSearch("");
               setCurrentPage(1);
@@ -756,39 +761,39 @@ export default function DetalleSeguimientoEconomico({
         }
         title={
           accionPendiente ===
-          "editar"
+            "editar"
             ? "Editar apoyo"
             : accionPendiente ===
               "eliminar"
-            ? "Eliminar apoyo"
-            : accionPendiente ===
-              "entregar"
-            ? "Confirmar entrega"
-            : "Agregar apoyo económico"
+              ? "Eliminar apoyo"
+              : accionPendiente ===
+                "entregar"
+                ? "Confirmar entrega"
+                : "Agregar apoyo económico"
         }
         description={
           accionPendiente ===
-          "editar"
+            "editar"
             ? "¿Deseas guardar los cambios del apoyo?"
             : accionPendiente ===
               "eliminar"
-            ? "¿Deseas eliminar este apoyo económico?"
-            : accionPendiente ===
-              "entregar"
-            ? "¿Deseas marcar este apoyo como entregado?"
-            : "¿Deseas registrar este apoyo económico?"
+              ? "¿Deseas eliminar este apoyo económico?"
+              : accionPendiente ===
+                "entregar"
+                ? "¿Deseas marcar este apoyo como entregado?"
+                : "¿Deseas registrar este apoyo económico?"
         }
         confirmText={
           accionPendiente ===
-          "editar"
+            "editar"
             ? "Guardar"
             : accionPendiente ===
               "eliminar"
-            ? "Eliminar"
-            : accionPendiente ===
-              "entregar"
-            ? "Confirmar"
-            : "Agregar"
+              ? "Eliminar"
+              : accionPendiente ===
+                "entregar"
+                ? "Confirmar"
+                : "Agregar"
         }
         cancelText="Cancelar"
         onClose={() =>
@@ -807,12 +812,12 @@ export default function DetalleSeguimientoEconomico({
         }
         color={
           accionPendiente ===
-          "eliminar"
+            "eliminar"
             ? "red"
             : accionPendiente ===
               "entregar"
-            ? "green"
-            : "teal"
+              ? "green"
+              : "teal"
         }
       />
 
@@ -840,3 +845,4 @@ export default function DetalleSeguimientoEconomico({
     </>
   );
 }
+

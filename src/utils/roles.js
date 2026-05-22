@@ -5,7 +5,6 @@ export const modules = [
   { key: "beneficiarios", name: "Beneficiarios", icon: Users },
   { key: "donadores", name: "Donadores", icon: Heart },
   { key: "postulantes", name: "Postulantes", icon: ClipboardList },
-  { key: "cursos", name: "Cursos", icon: GraduationCap },
   { key: "reportes", name: "Reportes", icon: BarChart3 },
   { key: "usuarios", name: "Usuarios", icon: User },
   { key: "periodos", name: "Periodos", icon: CalendarPlus },

@@ -20,17 +20,28 @@ export function useUsuarioCrearModal({ open, roles = [], onClose, onSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const usuarioGuardado = JSON.parse(localStorage.getItem("user"));
+  const tieneRol = !!usuarioGuardado?.id_rol;
   //opciones de roles
   const roleOptions = useMemo(() => {
+    const usuarioGuardado = JSON.parse(localStorage.getItem("user"));
+    const tieneRol = !!usuarioGuardado?.id_rol;
+
     const uniqueRoles = new Map();
+
     roles.forEach((rol) => {
       const value = String(rol?.id || rol?.id_rol || rol?.pk_id_rol || "").trim();
       const label = String(rol?.nombre || rol?.nombre_rol || rol?.rol || "").trim();
+
       if (!value || !label) return;
+
+      if (tieneRol && label.toLowerCase() === "administrador") return;
+
       if (!uniqueRoles.has(value)) {
         uniqueRoles.set(value, { value, label });
       }
     });
+
     return Array.from(uniqueRoles.values());
   }, [roles]);
 
@@ -107,7 +118,7 @@ export function useUsuarioCrearModal({ open, roles = [], onClose, onSuccess }) {
         nom_usuario: formData.nom_usuario.trim(),
         id_rol: Number(formData.id_rol),
         password: formData.password,
-        confirm_password: formData.confirm_password, 
+        confirm_password: formData.confirm_password,
         estatus: 1,
       };
       await crearUsuario(payload);

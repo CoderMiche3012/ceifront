@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { UserPlus } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import Boton from "../../components/ui/Boton";
@@ -9,10 +9,16 @@ import PostulanteTabla from "../../features/postulantes/components/tabla/Postula
 import PostulanteFiltros from "../../features/postulantes/components/tabla/PostulanteFiltros";
 import PaginacionTabla from "../../components/tablas/PaginacionTabla";
 import { FormatoImpresion } from "../../features/postulantes/components/FormatoSocioeconomico";
-
+import { usePermissions } from "../../context/PermissionsContext";
+import { hasPermission } from "../../utils/menuPermissions";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export default function PostulantesPagina() {
+  const { permissions } = usePermissions();
+    const canCreate = useMemo(
+        () => hasPermission(permissions, "Crear Postulantes"),
+        [permissions]
+    );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [postulanteAImprimir, setPostulanteAImprimir] = useState(null);
   const componenteRef = useRef(null);
@@ -73,12 +79,14 @@ export default function PostulantesPagina() {
         titulo="Gestión de Nuevos Ingresos"
         descripcion="Monitoreo y organización de posibles nuevos beneficiarios"
         accion={
+          canCreate && (
           <Boton
             icon={<UserPlus size={18} />}
             onClick={() => setIsModalOpen(true)}
           >
             Registrar Ingreso
           </Boton>
+          )
         }
       />
 

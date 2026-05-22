@@ -1,5 +1,5 @@
 import { UserPlus } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Boton from "../../components/ui/Boton";
 import { useLocation, useNavigate } from "react-router-dom";
 import EncabezadoPagina from "../../components/shared/EncabezadoPagina";
@@ -9,10 +9,17 @@ import BeneficiarioFiltros from "../../features/beneficiarios/components/tabla/B
 import PaginacionTabla from "../../components/tablas/PaginacionTabla";
 import { useBeneficiariosPage } from "../../features/beneficiarios/hooks/useBeneficiariosPage";
 import { useQueryClient } from "@tanstack/react-query";
+import { usePermissions } from "../../context/PermissionsContext";
+import { hasPermission } from "../../utils/menuPermissions";
 
 export default function BeneficiariosPagina() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { permissions } = usePermissions();
+  const canCreate = useMemo(
+    () => hasPermission(permissions, "Crear Beneficiarios"),
+    [permissions]
+  );
   const {
     filters,
     beneficiarios,
@@ -53,12 +60,14 @@ export default function BeneficiariosPagina() {
         titulo="Gestión de Beneficiarios"
         descripcion="Monitoreo y organizacion de beneficiarios"
         accion={
-          <Boton
-            icon={<UserPlus size={18} />}
-            onClick={() => setIsModalOpen(true)}
-          >
-            Registrar Beneficiario
-          </Boton>
+          canCreate && (
+            <Boton
+              icon={<UserPlus size={18} />}
+              onClick={() => setIsModalOpen(true)}
+            >
+              Registrar Beneficiario
+            </Boton>
+          )
         }
       />
       <div className="rounded-[24px] border border-[#dbe3eb] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] relative">

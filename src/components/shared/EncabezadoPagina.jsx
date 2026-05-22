@@ -1,16 +1,17 @@
+import { ui } from "../../styles/uiClasses";
 export default function EncabezadoPagina({
   titulo,
   descripcion,
   accion,
 }) {
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <div className={ui.header.container}>
       <div>
-        <h1 className="text-3xl font-extrabold text-slate-800">
+        <h1 className={ui.text.h1}>
           {titulo}
         </h1>
         {descripcion ? (
-          <p className="mt-1 text-base text-slate-500">
+          <p className={ui.text.subtitle + " mt-1"}>
             {descripcion}
           </p>
         ) : null}

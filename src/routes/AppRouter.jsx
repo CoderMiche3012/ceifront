@@ -76,14 +76,18 @@ export default function AppRouter() {
           <Route
             path="donadores"
             element={
+              <PermissionRoute permiso="Ver Donadores">
                 <DonadoresPagina />
+              </PermissionRoute>
             }
           />
 
           <Route
             path="donadores/donador/:id"
             element={
+              <PermissionRoute permiso="Ver Donadores">
                 <DonadoresDetalle />
+              </PermissionRoute>
             }
           />
           {/*gestión de usuarios */}
@@ -105,11 +109,19 @@ export default function AppRouter() {
             }
           />
           <Route path="ingresos">
-            <Route index element={<PostulantesPagina />} />
+            <Route index element={
+              <PermissionRoute permiso="Ver Postulantes">
+                <PostulantesPagina />
+              </PermissionRoute>
+            } />
 
             <Route
               path="expediente/:id"
-              element={<ExpedientePagina />}
+              element={
+                <PermissionRoute permiso="Ver Postulantes">
+                  <ExpedientePagina />
+                </PermissionRoute>
+              }
             />
           </Route>
         </Route>
