@@ -9,10 +9,12 @@ export const useInicioSesion = () => {
   return useMutation({
     mutationFn: async (payload) => {
       const data = await iniciarSesion(payload);
+      console.log(mapearInicioSesion(data));
       return mapearInicioSesion(data);
     },
     onSuccess: (data) => {
       guardarSesionLocal(data);
+      window.dispatchEvent(new Event("storage"));
       queryClient.clear();
     },
   });

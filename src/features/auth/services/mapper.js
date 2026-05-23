@@ -7,14 +7,15 @@ export const mapearUsuario = (data) => {
     apellido_p: data.apellido_p ?? "",
     apellido_m: data.apellido_m ?? "",
     correo: data.correo ?? "",
+    telefono: data.telefono ?? "",
 
     rol: data.rol?.nombre || data.rol || "",
     permisos: Array.isArray(data.permisos)
       ? data.permisos
       : [],
 
-    esAdmin: data.is_admin ?? false,
-    esStaff: data.es_staff ?? false,
+    esAdmin: data.is_admin,
+    esStaff: data.es_staff,
   };
 };
 

@@ -6,7 +6,6 @@ export default function PermissionRoute({
   modulo,
   accion,
 }) {
-
   const {
     hasModulePermission,
     loading,
@@ -19,7 +18,9 @@ export default function PermissionRoute({
       </div>
     );
   }
-
+ console.log("ROUTE", modulo, accion);
+  console.log("ADMIN ROUTE", hasModulePermission(modulo, accion));
+ 
   if (!hasModulePermission(modulo, accion)) {
     return <Navigate to="/app" replace />;
   }

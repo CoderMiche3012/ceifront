@@ -36,17 +36,30 @@ export default function Encabezado({
     if (!perfilActualizado) return;
 
     setFullUser((prev) => {
-      if (JSON.stringify(prev) === JSON.stringify(perfilActualizado)) {
+      const mergedUser = {
+        ...prev,
+        ...perfilActualizado,
+
+        esAdmin:
+          perfilActualizado?.esAdmin ??
+          prev?.esAdmin,
+
+        esStaff:
+          perfilActualizado?.esStaff ??
+          prev?.esStaff,
+      };
+
+      if (JSON.stringify(prev) === JSON.stringify(mergedUser)) {
         return prev;
       }
 
       guardarSesionLocal({
-        usuario: perfilActualizado,
+        usuario: mergedUser,
         access: localStorage.getItem("access"),
         refresh: localStorage.getItem("refresh"),
       });
 
-      return perfilActualizado;
+      return mergedUser;
     });
   }, [perfilActualizado]);
 

@@ -31,8 +31,8 @@ export default function Menu({ sidebarOpen, onLogout }) {
       if (!item.permission) return true;
 
       return hasModulePermission(
-        item.permission.modulo,
-        item.permission.accion
+        item.permission.module,
+        item.permission.action
       );
 
     });
@@ -47,22 +47,23 @@ export default function Menu({ sidebarOpen, onLogout }) {
       if (!item.permission) return true;
 
       return hasModulePermission(
-        item.permission.modulo,
-        item.permission.accion
+        item.permission.module,
+        item.permission.action
       );
 
     });
 
   }, [hasModulePermission]);
-
+  //console.log("ADMIN?", hasModulePermission("usuarios", "ver"));
+  //console.log("SUBMENU", visibleConfigSubmenu);
   // permiso reportes
   const canViewReportes = useMemo(() => {
 
     if (!reportesMenu.permission) return true;
 
     return hasModulePermission(
-      reportesMenu.permission.modulo,
-      reportesMenu.permission.accion
+      reportesMenu.permission.module,
+      reportesMenu.permission.action
     );
 
   }, [hasModulePermission]);

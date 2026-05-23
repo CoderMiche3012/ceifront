@@ -2,6 +2,8 @@ import {
   createContext,
   useContext,
   useMemo,
+  useEffect,
+  useState,
 } from "react";
 
 import {
@@ -16,11 +18,29 @@ const PermissionsContext = createContext();
 
 export function PermissionsProvider({ children }) {
 
-  const usuario = obtenerUsuario();
+  const [usuario, setUsuario] = useState(obtenerUsuario());
+
+  useEffect(() => {
+
+    const syncUser = () => {
+      setUsuario(obtenerUsuario());
+    };
+
+    window.addEventListener("storage", syncUser);
+
+    syncUser();
+
+    return () => {
+      window.removeEventListener("storage", syncUser);
+    };
+
+  }, []);
+
+  console.log("USUARIO CONTEXT", usuario);
+  console.log("IS ADMIN", usuario?.esAdmin);
 
   const isAdmin = usuario?.esAdmin === true;
 
-  // permisos vienen desde login
   const permissions = Array.isArray(usuario?.permisos)
     ? usuario.permisos
     : [];
@@ -29,7 +49,7 @@ export function PermissionsProvider({ children }) {
 
     return (modulo, accion) => {
 
-      // superadmin tiene acceso total
+      // superadmin acceso total
       if (isAdmin) return true;
 
       return permissions.some((permiso) => {
