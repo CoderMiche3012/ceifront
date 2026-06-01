@@ -6,7 +6,7 @@ const COLUMNS = [
   { key: "concepto", label: "Concepto" },
   { key: "estatus", label: "Estatus" },
   { key: "monto", label: "Monto" },
-  { key: "fecha", label: "Fecha Entrega" },
+  { key: "fecha", label: "Fecha de rembolso" },
   { key: "acciones", label: "Acciones" },
 ];
 

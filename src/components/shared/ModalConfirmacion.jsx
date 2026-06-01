@@ -1,34 +1,23 @@
 import { TriangleAlert } from "lucide-react";
-import { ui } from "../../styles/uiClasses";
+import { ui } from "../../styles/ui/uiClasses";
 
 export default function ModalConfirmacion({
-  open,
-  title,
-  description,
+  open, title, description,
   confirmText = "Confirmar",
   cancelText = "Cancelar",
-  onConfirm,
-  onClose,
+  onConfirm, onClose,
   loading = false,
   color = "teal",
 }) {
   if (!open) return null;
-
-  const styles =
-    ui.modal.colors[color] ||
-    ui.modal.colors.teal;
+  const styles = ui.modal.colors[color] || ui.modal.colors.teal;
 
   return (
     <div className={ui.modal.overlay}>
       <div className={ui.modal.container}>
 
         <div className={ui.modal.header}>
-          <div
-            className={`
-              ${ui.modal.iconWrapper}
-              ${styles.icon}
-            `}
-          >
+          <div className={`${ui.modal.iconWrapper} ${styles.icon}`}>
             <TriangleAlert size={22} />
           </div>
 
@@ -57,10 +46,7 @@ export default function ModalConfirmacion({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className={`
-              ${ui.modal.confirmButton}
-              ${styles.button}
-            `}
+            className={`${ui.modal.confirmButton} ${styles.button}`}
           >
             {loading
               ? "Procesando..."

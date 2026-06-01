@@ -1,221 +1,398 @@
-import { Pencil, Plus, Users, Check, X, Trash2 } from "lucide-react";
-import React, { useState } from 'react';
+import {
+  Pencil,
+  Plus,
+  Users,
+  Check,
+  X,
+  Trash2,
+} from "lucide-react";
+
+import React, { useState } from "react";
+
 import BotonInterno from "../../../../components/ui/BotonInterno";
 import DatosTabla from "../../../../components/tablas/DatosTabla";
 import FiltrosTabla from "../../../../components/tablas/FiltrosTabla";
 import PaginacionTabla from "../../../../components/tablas/PaginacionTabla";
 import AccionesTabla from "../../../../components/tablas/AccionesTabla";
+
 import ModalEditarFamiliar from "./ModalEditarFamiliar";
 import ModalCrearFamiliar from "./ModalCrearFamiliar";
+
 import { useFamiliaTabla } from "../../hooks/useFamiliaTabla";
+
 import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
 
-export default function ComposicionFamiliar({ familia = [], onUpdate, expedienteId }) {
+export default function ComposicionFamiliar({
+  familia = [],
+  expedienteId,
+  postulanteId,
+}) {
 
-    const [confirmarEliminar, setConfirmarEliminar] = useState({ open: false, data: null });
-    const [resultadoModal, setResultadoModal] = useState({ open: false, type: "success", title: "", message: "" });
-    const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmarEliminar, setConfirmarEliminar] =
+    useState({
+      open: false,
+      data: null,
+    });
 
-    const {
-        modalCrearOpen, setModalCrearOpen,
-        modalEditarOpen, setModalEditarOpen,
-        familiarEnEdicion, setFamiliarEnEdicion,
-        search, setSearch,
-        currentPage, setCurrentPage,
-        paginatedData, totalPages, totalItems,
-        pageSize,
-        abrirCrear, abrirEditar, handleEliminar, handleCreated, handleSaveEditar
-    } = useFamiliaTabla(familia, onUpdate);
+  const [resultadoModal, setResultadoModal] =
+    useState({
+      open: false,
+      type: "success",
+      title: "",
+      message: "",
+    });
 
-    const preHandleEliminar = (f) => {
-        setConfirmarEliminar({ open: true, data: f });
-    };
+  const {
+    modalCrearOpen,
+    setModalCrearOpen,
 
-    const ejecutarEliminacion = async () => {
-        setIsDeleting(true);
-        try {
-            await handleEliminar(confirmarEliminar.data);
-            setConfirmarEliminar({ open: false, data: null });
-            setResultadoModal({
-                open: true,
-                type: "success",
-                title: "Eliminado con éxito",
-                message: "El miembro de la familia ha sido removido del expediente."
-            });
-        } catch (error) {
-            setResultadoModal({
-                open: true,
-                type: "error",
-                title: "Error al eliminar",
-                message: error.message || "No se pudo eliminar al integrante."
-            });
-        } finally {
-            setIsDeleting(false);
-        }
-    };
+    modalEditarOpen,
+    setModalEditarOpen,
 
-    // Columnas exactas que tenías originalmente
-    const columns = [
-        { key: "nombre", label: "Nombre" },
-        { key: "parentesco", label: "Parentesco" },
-        { key: "telefono", label: "Teléfono" },
-        { key: "actividad", label: "Ocupación / Área" },
-        { key: "salario", label: "Salario o Escuela" },
-        { key: "vive", label: "Vive en casa" },
-        { key: "tutor", label: "Tutor" },
-        { key: "acciones", label: "Acciones" },
-    ];
+    familiarEnEdicion,
+    setFamiliarEnEdicion,
 
-    const renderCell = (row, key) => {
-        switch (key) {
-            case "nombre":
-                return (
-                    <div>
-                        <div className="font-semibold text-slate-800 uppercase text-xs">
-                            {row.nombre} {row.apellido_p} {row.apellido_m}
-                        </div>
-                        <div className="text-xs text-slate-500">
-                            {row.edad} años
-                        </div>
-                    </div>
-                );
+    search,
+    setSearch,
 
-            case "parentesco": return row.parentesco;
-            case "telefono": return row.telefono;
+    currentPage,
+    setCurrentPage,
 
-            case "actividad":
-                return (
-                    <div>
-                        <div className="text-slate-700 font-medium">{row.actividad_principal}</div>
-                        <div className="text-[11px] text-slate-400 italic">{row.area_laboral_escuela}</div>
-                    </div>
-                );
+    paginatedData,
+    totalPages,
+    totalItems,
+    pageSize,
 
-            case "salario": return row.salario;
+    loadingEliminar,
+    loadingEditar,
 
-            case "vive":
-                return row.vive_en_casa ? (
-                    <Check className="text-green-600 mx-auto" size={18} />
-                ) : (
-                    <X className="text-red-500 mx-auto" size={18} />
-                );
+    abrirCrear,
+    abrirEditar,
 
-            case "tutor":
-                return row.es_tutor_principal ? (
-                    <Check className="text-green-600 mx-auto" size={18} />
-                ) : (
-                    <X className="text-red-500 mx-auto" size={18} />
-                );
+    handleEliminar,
+    handleCreated,
+    handleSaveEditar,
 
-            case "acciones":
-                const index = familia.findIndex(
-                    (f) => (f.id_familiar || f.id) === (row.id_familiar || row.id)
-                );
+  } = useFamiliaTabla(
+    familia,
+    expedienteId,
+    postulanteId,
+  );
 
-                return (
-                    <AccionesTabla
-                        row={row}
-                        actions={[
-                            {
-                                label: "Editar",
-                                icon: <Pencil size={18} />,
-                                onClick: (f) => abrirEditar(f),
-                                className: "p-2 rounded-lg bg-slate-100 hover:bg-teal-100 text-slate-500 hover:text-teal-600 transition",
-                            },
-                            ...(index !== 0 ? [
-                                {
-                                    label: "Eliminar",
-                                    icon: <Trash2 size={18} />,
-                                    onClick: (f) => preHandleEliminar(f),
-                                    className: "p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 transition",
-                                },
-                            ] : []),
-                        ]}
-                    />
-                );
+  const preHandleEliminar = (familiar) => {
+    setConfirmarEliminar({
+      open: true,
+      data: familiar,
+    });
+  };
 
-            default:
-                return row[key];
-        }
-    };
+  const ejecutarEliminacion = async () => {
 
-    return (
-        <div className="rounded-3xl bg-white shadow-sm border border-slate-100 overflow-hidden mt-6">
+    try {
 
-            <div className="flex justify-between items-center p-6 border-b border-slate-50">
-                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <div className="p-2 bg-teal-50 rounded-lg">
-                        <Users size={20} className="text-teal-600" />
-                    </div>
-                    Composición Familiar
-                </h3>
+      await handleEliminar(
+        confirmarEliminar.data,
+      );
 
-                <BotonInterno icon={<Plus size={18} />} onClick={abrirCrear}>
-                    Agregar Miembro
-                </BotonInterno>
+      setConfirmarEliminar({
+        open: false,
+        data: null,
+      });
+
+      setResultadoModal({
+        open: true,
+        type: "success",
+        title: "Eliminado con éxito",
+        message:
+          "El miembro de la familia ha sido removido del expediente.",
+      });
+
+    } catch (error) {
+
+      setResultadoModal({
+        open: true,
+        type: "error",
+        title: "Error al eliminar",
+        message:
+          error.message ||
+          "No se pudo eliminar al integrante.",
+      });
+    }
+  };
+
+  const columns = [
+    {
+      key: "nombre",
+      label: "Nombre",
+    },
+
+    {
+      key: "parentesco",
+      label: "Parentesco",
+    },
+
+    {
+      key: "telefono",
+      label: "Teléfono",
+    },
+
+    {
+      key: "actividad",
+      label: "Ocupación / Área",
+    },
+
+    {
+      key: "salario",
+      label: "Salario o Escuela",
+    },
+
+    {
+      key: "vive",
+      label: "Vive en casa",
+    },
+
+    {
+      key: "tutor",
+      label: "Tutor",
+    },
+
+    {
+      key: "acciones",
+      label: "Acciones",
+    },
+  ];
+
+  const renderCell = (row, key) => {
+
+    switch (key) {
+
+      case "nombre":
+        return (
+          <div>
+
+            <div className="font-semibold text-slate-800 uppercase text-xs">
+              {row.nombre}{" "}
+              {row.apellido_p}{" "}
+              {row.apellido_m}
             </div>
 
-            <FiltrosTabla
-                searchValue={search}
-                onSearchChange={(value) => {
-                    setSearch(value);
-                    setCurrentPage(1);
-                }}
-                onClearFilters={() => {
-                    setSearch("");
-                    setCurrentPage(1);
-                }}
-            />
+            <div className="text-xs text-slate-500">
+              {row.edad} años
+            </div>
+          </div>
+        );
 
-            <DatosTabla
-                columns={columns}
-                data={paginatedData}
-                renderCell={renderCell}
-                rowKey="id_familiar"
-            />
+      case "parentesco":
+        return row.parentesco;
 
-            <PaginacionTabla
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={totalItems}
-                pageSize={pageSize}
-                onPageChange={setCurrentPage}
-            />
+      case "telefono":
+        return row.telefono;
 
-            {/* Modales utilizando los datos del Hook */}
-            <ModalCrearFamiliar
-                open={modalCrearOpen}
-                onClose={() => setModalCrearOpen(false)}
-                onCreated={handleCreated}
-                expedienteId={expedienteId}
-            />
+      case "actividad":
+        return (
+          <div>
 
-            <ModalEditarFamiliar
-                open={modalEditarOpen}
-                onClose={() => setModalEditarOpen(false)}
-                onSave={handleSaveEditar}
-                editando={familiarEnEdicion}
-                setEditando={setFamiliarEnEdicion}
-            />
-            <ModalConfirmacion
-                open={confirmarEliminar.open}
-                title="¿Eliminar miembro familiar?"
-                description={`¿Estás seguro de que deseas eliminar a ${confirmarEliminar.data?.nombre}? Esta acción no se puede deshacer.`}
-                confirmText="Eliminar integrante"
-                color="red"
-                loading={isDeleting}
-                onClose={() => setConfirmarEliminar({ open: false, data: null })}
-                onConfirm={ejecutarEliminacion}
-            />
+            <div className="text-slate-700 font-medium">
+              {row.actividad_principal}
+            </div>
 
-            <ModalResultado
-                open={resultadoModal.open}
-                type={resultadoModal.type}
-                title={resultadoModal.title}
-                message={resultadoModal.message}
-                onClose={() => setResultadoModal({ ...resultadoModal, open: false })}
+            <div className="text-[11px] text-slate-400 italic">
+              {row.area_laboral_escuela}
+            </div>
+          </div>
+        );
+
+      case "salario":
+        return row.salario;
+
+      case "vive":
+        return row.vive_en_casa ? (
+          <Check
+            className="text-green-600 mx-auto"
+            size={18}
+          />
+        ) : (
+          <X
+            className="text-red-500 mx-auto"
+            size={18}
+          />
+        );
+
+      case "tutor":
+        return row.es_tutor_principal ? (
+          <Check
+            className="text-green-600 mx-auto"
+            size={18}
+          />
+        ) : (
+          <X
+            className="text-red-500 mx-auto"
+            size={18}
+          />
+        );
+
+      case "acciones": {
+
+        const esTutor =
+          row.es_tutor_principal;
+
+        return (
+          <AccionesTabla
+            row={row}
+            actions={[
+              {
+                label: "Editar",
+
+                icon: (
+                  <Pencil size={18} />
+                ),
+
+                onClick: abrirEditar,
+
+                className:
+                  "p-2 rounded-lg bg-slate-100 hover:bg-teal-100 text-slate-500 hover:text-teal-600 transition",
+              },
+
+              ...(!esTutor
+                ? [{
+                  label: "Eliminar",
+
+                  icon: (
+                    <Trash2 size={18} />
+                  ),
+
+                  onClick:
+                    preHandleEliminar,
+
+                  className:
+                    "p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 transition",
+                }]
+                : []),
+            ]}
+          />
+        );
+      }
+
+      default:
+        return row[key];
+    }
+  };
+
+  return (
+    <div className="rounded-3xl bg-white shadow-sm border border-slate-100 overflow-hidden mt-6">
+
+      {/* header */}
+      <div className="flex justify-between items-center p-6 border-b border-slate-50">
+
+        <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+
+          <div className="p-2 bg-teal-50 rounded-lg">
+            <Users
+              size={20}
+              className="text-teal-600"
             />
-        </div>
-    );
+          </div>
+
+          Composición Familiar
+        </h3>
+
+        <BotonInterno
+          icon={<Plus size={18} />}
+          onClick={abrirCrear}
+        >
+          Agregar Miembro
+        </BotonInterno>
+      </div>
+
+      {/* filtros */}
+      <FiltrosTabla
+        searchValue={search}
+
+        onSearchChange={(value) => {
+          setSearch(value);
+          setCurrentPage(1);
+        }}
+
+        onClearFilters={() => {
+          setSearch("");
+          setCurrentPage(1);
+        }}
+      />
+
+      {/* tabla */}
+      <DatosTabla
+        columns={columns}
+        data={paginatedData}
+        renderCell={renderCell}
+        rowKey="id_familia"
+      />
+
+      {/* paginacion */}
+      <PaginacionTabla
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+      />
+
+      {/* crear */}
+      <ModalCrearFamiliar
+        open={modalCrearOpen}
+        onClose={() =>
+          setModalCrearOpen(false)
+        }
+        onCreated={handleCreated}
+        expedienteId={expedienteId}
+        postulanteId={postulanteId}
+      />
+
+      {/* editar */}
+      <ModalEditarFamiliar
+        open={modalEditarOpen}
+        onClose={() =>
+          setModalEditarOpen(false)
+        }
+        onSave={handleSaveEditar}
+        loading={loadingEditar}
+        editando={familiarEnEdicion}
+        setEditando={
+          setFamiliarEnEdicion
+        }
+        postulanteId={postulanteId}
+      />
+
+      {/* confirmar eliminar */}
+      <ModalConfirmacion
+        open={confirmarEliminar.open}
+        title="¿Eliminar miembro familiar?"
+        description={`¿Estás seguro de que deseas eliminar a ${confirmarEliminar.data?.nombre}? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar integrante"
+        color="red"
+        loading={loadingEliminar}
+        onClose={() =>
+          setConfirmarEliminar({
+            open: false,
+            data: null,
+          })
+        }
+        onConfirm={ejecutarEliminacion}
+      />
+
+      {/* resultado */}
+      <ModalResultado
+        open={resultadoModal.open}
+        type={resultadoModal.type}
+        title={resultadoModal.title}
+        message={resultadoModal.message}
+        onClose={() =>
+          setResultadoModal({
+            ...resultadoModal,
+            open: false,
+          })
+        }
+      />
+    </div>
+  );
 }

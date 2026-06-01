@@ -1,9 +1,8 @@
-import { ui } from "../../styles/uiClasses";
-export default function EncabezadoPagina({
-  titulo,
-  descripcion,
-  accion,
-}) {
+// componente para los titulos de las paginas principales
+
+import { ui } from "../../styles/ui/uiClasses";
+
+export default function EncabezadoPagina({ titulo, descripcion, accion, }) {
   return (
     <div className={ui.header.container}>
       <div>

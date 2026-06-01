@@ -1,32 +1,30 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import InicioSesion from "../pages/InicioSesion";
-import Inicio from "../pages/Inicio";
+import PrivateRoute from "./PrivateRoute";
+import AdminRoute from "./AdminRoute";
 
-//import UsuariosPagina from "../pages/UsuariosPagina";
-import RolesPagina from "../pages/RolesPagina";
-//import PeriodosPagina from "../pages/PeriodosPagina";
-
-//import PostulantesPagina from "../pages/postulantes/PostulantesPagina";
-//import ExpedientePagina from "../pages/postulantes/ExpedientePagina";
-
-//import BeneficiariosPagina from "../pages/beneficiarios/BeneficiariosPagina";
-//import ExpedientePaginaB from "../pages/beneficiarios/ExpedientePaginaB";
-
-//import DonadoresPagina from "../pages/donadores/DonadoresPagina";
-//import DonadoresDetalle from "../pages/donadores/DonadoresDetalle";
-
-//import AsistenciasPagina from "../pages/AsistenciasPagina";
+import PermissionRoute from "./PermissionRoute";
+import { PermissionsProvider } from "../context/PermissionsContext";
 
 import AppLayout from "../components/layout/AppLayout";
 
-import PrivateRoute from "./PrivateRoute";
-import AdminRoute from "./AdminRoute";
-import PermissionRoute from "./PermissionRoute";
+import InicioSesion from "../pages/InicioSesion";
+import Inicio from "../pages/Inicio";
+import RolesPagina from "../pages/RolesPagina";
+import UsuariosPagina from "../pages/UsuariosPagina";
+import PeriodosPagina from "../pages/PeriodosPagina";
 
-import { PermissionsProvider } from "../context/PermissionsContext";
+import DonadoresPagina from "../pages/donadores/DonadoresPagina";
+import DonadoresDetalle from "../pages/donadores/DonadoresDetalle";
 
-// define las rutas principales
+import PostulantesPagina from "../pages/postulantes/PostulantesPagina";
+import ExpedientePagina from "../pages/postulantes/ExpedientePagina";
+
+import BeneficiariosPagina from "../pages/beneficiarios/BeneficiariosPagina";
+import ExpedientePaginaB from "../pages/beneficiarios/ExpedientePaginaB";
+
+//import AsistenciasPagina from "../pages/AsistenciasPagina";
+
 export default function AppRouter() {
 
   return (
@@ -53,7 +51,30 @@ export default function AppRouter() {
             {/* inicio */}
             <Route index element={<Inicio />} />
 
-            {/* periodos 
+            {/* roles */}
+            <Route
+              path="roles"
+              element={
+                <AdminRoute>
+                  <RolesPagina />
+                </AdminRoute>
+              }
+            />
+
+            {/* usuarios */}
+            <Route
+              path="usuarios"
+              element={
+                <PermissionRoute
+                  modulo="usuarios"
+                  accion="ver"
+                >
+                  <UsuariosPagina />
+                </PermissionRoute>
+              }
+            />
+
+            {/* periodos */}
             <Route
               path="periodos"
               element={
@@ -65,46 +86,7 @@ export default function AppRouter() {
                 </PermissionRoute>
               }
             />
-*/}
-            {/* beneficiarios 
-            <Route
-              path="beneficiarios"
-              element={
-                <PermissionRoute
-                  modulo="beneficiarios"
-                  accion="ver"
-                >
-                  <BeneficiariosPagina />
-                </PermissionRoute>
-              }
-            />
-
-            <Route
-              path="beneficiarios/expediente/:id"
-              element={
-                <PermissionRoute
-                  modulo="beneficiarios"
-                  accion="ver"
-                >
-                  <ExpedientePaginaB />
-                </PermissionRoute>
-              }
-            />
-*/}
-            {/* asistencias 
-            <Route
-              path="asistencias"
-              element={
-                <PermissionRoute
-                  modulo="beneficiarios"
-                  accion="ver"
-                >
-                  <AsistenciasPagina />
-                </PermissionRoute>
-              }
-            />
-*/}
-            {/* donadores 
+            {/* donadores */}
             <Route
               path="donadores"
               element={
@@ -128,31 +110,7 @@ export default function AppRouter() {
                 </PermissionRoute>
               }
             />
-*/}
-            {/* usuarios 
-            <Route
-              path="usuarios"
-              element={
-                <PermissionRoute
-                  modulo="usuarios"
-                  accion="ver"
-                >
-                  <UsuariosPagina />
-                </PermissionRoute>
-              }
-            />
-*/}
-            {/* roles */}
-            <Route
-              path="roles"
-              element={
-                <AdminRoute>
-                  <RolesPagina />
-                </AdminRoute>
-              }
-            />
-
-            {/* postulantes 
+            {/* postulantes */}
             <Route path="ingresos">
 
               <Route
@@ -178,9 +136,32 @@ export default function AppRouter() {
                   </PermissionRoute>
                 }
               />
-
             </Route>
-*/}
+            /* beneficiarios
+            <Route
+              path="beneficiarios"
+              element={
+                <PermissionRoute
+                  modulo="beneficiarios"
+                  accion="ver"
+                >
+                  <BeneficiariosPagina />
+                </PermissionRoute>
+              }
+            />
+
+            <Route
+              path="beneficiarios/expediente/:id"
+              element={
+                <PermissionRoute
+                  modulo="beneficiarios"
+                  accion="ver"
+                >
+                  <ExpedientePaginaB />
+                </PermissionRoute>
+              }
+            />
+
           </Route>
 
         </Routes>

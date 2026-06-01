@@ -1,36 +1,147 @@
 import { useParams } from "react-router-dom";
 import { useState } from "react";
-import { Calendar, Upload, Plus } from "lucide-react";
-import AvatarGeneral from "../../components/shared/AvatarGeneral";
+import { Calendar, Upload } from "lucide-react";
+
+import EncabezadoDetalle from "../../components/ui/EncabezadoDetalle";
 import TabsExpediente from "../../features/postulantes/components/detalles/TabsExpediente";
 import ResultadosCard from "../../features/postulantes/components/detalles/resultados/ResultadosCard";
 import VisitasCard from "../../features/postulantes/components/detalles/visitas/VisitasCard";
-import { useExpedienteData } from "../../features/postulantes/hooks/useExpedienteData";
 import DatosGenerales from "../../features/postulantes/components/detalles/generales/DatosGenerales";
+
+import { useExpedienteData } from "../../features/postulantes/hooks/useExpedienteData";
+import { ui } from "../../styles/ui/uiClasses";
+
+import { subirDocumentoEstudio } from "../../features/expedientes/services/documentosService";
+import { actualizarEstudio } from "../../features/postulantes/services/estudiosService";
+
 export default function ExpedientePagina() {
   const { id } = useParams();
+
   const {
     data,
-    setData,
     loading,
     tab,
     setTab,
     visitasFiltradas,
-    refetchVisitas,
     estatusInfo,
     edad,
   } = useExpedienteData(id);
+  
 
   const [mostrarSubida, setMostrarSubida] = useState(false);
   const [archivo, setArchivo] = useState(null);
-  // pantalla carga
+  const guardarDocumentoEstudio =
+    async () => {
+      if (
+        !archivo ||
+        !data?.id_estudio
+      ) {
+        return;
+      }
+
+      try {
+        const formData =
+          new FormData();
+
+        // archivo
+        formData.append(
+          "archivo",
+          archivo
+        );
+        const nombreLimpio =
+          archivo.name
+            .replace(/\.[^/.]+$/, "") // quitar extensión
+            .normalize("NFD")
+            .replace(
+              /[\u0300-\u036f]/g,
+              ""
+            ) // quitar acentos
+            .replace(
+              /[^a-zA-Z0-9 _-]/g,
+              ""
+            ) // dejar básicos
+            .trim();
+
+        // campos requeridos
+        formData.append(
+          "id_expediente",
+          data.id_expediente
+        );
+
+        formData.append(
+          "nombre_documento",
+           "nuevo"
+        );
+
+        formData.append(
+          "tipo_documento",
+          "Estudio"
+        );
+
+        // subir
+        const documento =
+          await subirDocumentoEstudio(
+            formData
+          );
+
+        console.log(
+          "documento:",
+          documento
+        );
+
+        const urlDocumento =
+          documento.url ||
+          documento.link_documento ||
+          documento.archivo;
+
+        // ligar al estudio
+        await actualizarEstudio(
+          data.id_estudio,
+          {
+            link_documento:
+              urlDocumento,
+
+            estatus_estudio:
+              "Completo",
+          }
+        );
+
+        setMostrarSubida(
+          false
+        );
+
+        setArchivo(null);
+
+        window.location.reload();
+      } catch (error) {
+        console.log("ERROR COMPLETO:", error);
+
+        console.log(
+          "response:",
+          error.response
+        );
+
+        console.log(
+          "data:",
+          error.response?.data
+        );
+
+        console.log(
+          "status:",
+          error.response?.status
+        );
+
+      }
+    };
+  // loading
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
       </div>
     );
   }
+
   // no encontrado
   if (!data) {
     return (
@@ -39,129 +150,131 @@ export default function ExpedientePagina() {
       </div>
     );
   }
-  // subir documento
-  const handleSubirDocumento = () => {
-    if (!archivo) return;
-    setSubiendo(true);
-    setTimeout(() => {
-      const nuevoDocumento = {
-        nombre: archivo.name,
-        fecha: new Date().toISOString(),
-      };
-      setData((prev) => ({
-        ...prev,
-        estatus_estudio: "Completo",
-        documento_estudio: nuevoDocumento,
-      }));
-      setMostrarSubida(false);
-      setArchivo(null);
-      setSubiendo(false);
-    }, 800); // 800ms de "carga" simulada
-  };
-  const estudioCompleto =
-    data.estatus_estudio?.toLowerCase() === "completo";
+
+  const estudioCompleto = data.estatus_estudio?.toLowerCase() === "completo";
+
   return (
-    <section className="space-y-6">
-      <header className="rounded-2xl bg-white p-6 flex items-center justify-between shadow border border-slate-200">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <AvatarGeneral
-              nombre={data.nombre}
-              apellidoP={data.apellido_p}
-            />
-            <div className="absolute bottom-0 right-0 h-5 w-5 rounded-full bg-teal-500 border-2 border-white"></div>
-          </div>
-          <div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h2 className="text-lg font-semibold text-slate-800">
-                {data.nombre} {data.apellido_p}
-              </h2>
-              <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${estatusInfo.className}`}>
-                {estatusInfo.text}
-              </span>
-              {/* Estado estudio */}
-              <span
-                className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${estudioCompleto
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-amber-100 text-amber-700"
-                  }`}
-              >
-                Estudio: {data.estatus_estudio || "Pendiente"}
-              </span>
-            </div>
-            <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
-              <span className="flex items-center gap-1">
-                <Calendar size={14} />
-                {edad} años
-              </span>
-              <span>
-                Tutor:{" "}
-                <span className="font-medium text-slate-700">
-                  {data.tutor_nombre}
-                </span>
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
+    <section className={`${ui.layout.page} flex flex-col h-full`}>
 
-      {/* Caja subir documento */}
-      {mostrarSubida && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow space-y-4">
-          <h3 className="text-base font-semibold text-slate-800">
-            Subir documento de estudio
-          </h3>
+      {/* encabezado */}
+      <div
+        className={`sticky top-0 z-10 pb-2 bg-[#f3f1f4] ${ui.layout.page}`}
+      >
 
-          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 p-6 hover:bg-slate-50">
-            <Upload size={18} />
-            <span className="text-sm text-slate-600">
-              {archivo ? archivo.name : "Seleccionar archivo"}
+        <EncabezadoDetalle
+          nombre={data.nombre}
+          apellidoP={data.apellido_p}
+          apellidoM={data.apellido_m}
+          estatus={estatusInfo.text}
+          badgeClass={estatusInfo.className}
+          avatarClassName="h-16 w-16 text-3xl"
+        >
+          <div className="flex items-center gap-4 flex-wrap">
+
+            <span className="flex items-center gap-1">
+              <Calendar size={14} />
+              {edad} años
             </span>
 
-            <input
-              type="file"
-              className="hidden"
-              onChange={(e) => setArchivo(e.target.files[0])}
-            />
-          </label>
+            <span>
+              Tutor:{" "}
+              <span className="font-medium text-slate-700">
+                {data.tutor_nombre}
+              </span>
+            </span>
 
-          <div className="flex gap-3">
-            <button
-              onClick={handleSubirDocumento}
-              className="rounded-xl bg-emerald-600 px-4 py-2 text-white text-sm font-semibold hover:bg-emerald-700"
+            <span
+              className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${estudioCompleto
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-amber-100 text-amber-700"
+                }`}
             >
-              Guardar y completar
-            </button>
-
-            <button
-              onClick={() => {
-                setMostrarSubida(false);
-                setArchivo(null);
-              }}
-              className="rounded-xl bg-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-300"
-            >
-              Cancelar
-            </button>
+              Estudio: {data.estatus_estudio || "Pendiente"}
+            </span>
           </div>
-        </div>
-      )}
+        </EncabezadoDetalle>
 
-      <TabsExpediente tab={tab} setTab={setTab} />
+        <TabsExpediente
+          tab={tab}
+          setTab={setTab}
+        />
+      </div>
 
-      <main className="mt-6">
+      {/* contenido */}
+      <main className="flex-1 overflow-y-auto pr-2 custom-scroll pb-10 space-y-6">
+
+        {/* subir documento */}
+        {mostrarSubida && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow space-y-4">
+
+            <h3 className="text-base font-semibold text-slate-800">
+              Subir documento de estudio
+            </h3>
+
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 p-6 hover:bg-slate-50">
+
+              <Upload size={18} />
+
+              <span className="text-sm text-slate-600">
+                {archivo
+                  ? archivo.name
+                  : "Seleccionar archivo"}
+              </span>
+
+              <input
+                type="file"
+                className="hidden"
+                onChange={(e) =>
+                  setArchivo(e.target.files[0])
+                }
+              />
+            </label>
+
+            <div className="flex gap-3">
+              <button
+                onClick={
+                  guardarDocumentoEstudio
+                }
+                className="rounded-xl bg-emerald-600 px-4 py-2 text-white text-sm font-semibold hover:bg-emerald-700"
+              >
+                Guardar y completar
+              </button>
+
+              <button
+                onClick={() => {
+                  setMostrarSubida(
+                    false
+                  );
+
+                  setArchivo(null);
+                }}
+                className="rounded-xl bg-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-300"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* generales */}
         {tab === "generales" && (
-          <DatosGenerales data={data} setData={setData} />
+          <DatosGenerales data={data} />
         )}
 
+        {/* visitas */}
         {tab === "Visita" && (
-          <div className="space-y-6">
-            <VisitasCard data={data} visitas={visitasFiltradas} setData={setData} onRefresh={refetchVisitas} />
-          </div>
+          <VisitasCard
+            data={data}
+            visitas={visitasFiltradas}
+            setMostrarSubida={
+              setMostrarSubida
+            }
+          />
         )}
+
+        {/* resultados */}
         {tab === "Resultados" && (
-          <div className="space-y-6">
-            <ResultadosCard data={data} setData={setData} />
-          </div>
+          <ResultadosCard data={data} />
         )}
       </main>
     </section>

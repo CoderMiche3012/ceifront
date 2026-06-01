@@ -1,70 +1,38 @@
-import { useState, useEffect } from "react";
-import { obtenerBeneficiario } from "../../beneficiarios/services/beneficiariosService";
-import { obtenerDonador } from "../services/donadoresService";
-export const useDonadorData = (id) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState("generales");
-  const [error, setError] = useState(null);
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        //obtener lista de donadores
-        const donadoresRes = await obtenerDonador();
+// por corregir
+import { useMemo, useState, } from "react";
 
-        const listaDonadores = Array.isArray(donadoresRes)
-          ? donadoresRes
-          : donadoresRes?.results || [];
+import { useDonadores } from "./useDonadores";
+import { useBeneficiarios } from "../../beneficiarios/hooks/useBeneficiarios";
 
-        //buscar el donador por ID
-        const donador = listaDonadores.find(
-          (d) => String(d.id_donador) === String(id)
-        );
-        if (!donador) {
-          setData(null);
-          return;
-        }
-        //obtener IDs de beneficiarios
-        const idsRelacionados =
-          donador.beneficiarios_apoyados?.map((b) =>
-            typeof b === "object" ? b.id_beneficiario : b
-          ) || [];
+export const useDonadorData = ( id ) => {
 
-        //obtener beneficiarios SOLO si hay IDs
-        let beneficiarios = [];
+  const [tab, setTab] = useState( "generales" );
+  const { data: donadores = [], isLoading: loadingDonadores, error: errorDonadores, } = useDonadores();
+  const { data: beneficiarios = [], isLoading: loadingBeneficiarios, error: errorBeneficiarios,} = useBeneficiarios();
 
-        if (idsRelacionados.length > 0) {
-          beneficiarios = await Promise.all(
-            idsRelacionados.map((id_beneficiario) =>
-              obtenerBeneficiario(id_beneficiario)
-            )
-          );
-        }
+  const data =
+    useMemo(() => {
+      if (!id) return null;
+      // busca el donador especifico
+      const donador = donadores.find( (d) => String( d.id_donador ) === String( id ) );
+      if (!donador)  return null;
+      // id de las personas que apoya
+      const idsRelacionados = ( donador.beneficiarios_apoyados || [] ).map( (b) => typeof b === "object" ? b.id_beneficiario : b );
+      // Buscar la información real de esos beneficiarios
+      const beneficiariosRelacionados = beneficiarios.filter( (b) => idsRelacionados.includes( b.id_beneficiario ) );
 
-        setData({
-          ...donador,
-          beneficiarios,
-          total_beneficiarios: beneficiarios.length,
-        });
-
-      } catch (err) {
-        console.error("Error cargando donador:", err);
-        setError(err.message || "Error inesperado");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) fetchData();
-  }, [id]);
+      return {
+        ...donador,
+        beneficiarios: beneficiariosRelacionados,
+        total_beneficiarios: beneficiariosRelacionados.length,
+      };
+    }, [ id, donadores, beneficiarios, ]);
 
   return {
     data,
-    setData,
-    loading,
-    error,
+    setData: () => {},
+    loading: loadingDonadores || loadingBeneficiarios,
+    error: errorDonadores || errorBeneficiarios,
     tab,
     setTab,
   };

@@ -1,244 +1,259 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { emptyPermissions, getEmptyPermissions, permissionsObjectToIds, roleToPermissionsObject, isProtectedRole, } from "../../../../../utils/roles";
-import { getRoles, getPermissions, updateRole, createRole, deleteRole, } from "../services/rolesService";
-import { formatError } from "../../../../../utils/errorHandlers";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+import { obtenerRoles, obtenerPermisos, actualizarRol, crearRol, eliminarRol, } from "../services/rolesService";
+import { rolesKeys } from "./queryKeys";
+import { authKeys } from "../../../../auth/services/keys";
+
+import {
+  emptyPermissions, getEmptyPermissions, permissionsObjectToIds,
+  roleToPermissionsObject, isProtectedRole,
+} from "../../../../../utils/roles";
+import { formatErrorAnidado } from "../../../../../utils/errorHandlers";
+
 
 export default function useRoles() {
-  //estados
-  const [roles, setRoles] = useState([]);
-  const [permissionsCatalog, setPermissionsCatalog] = useState([]);
+
+  const queryClient = useQueryClient();
   const [selectedRole, setSelectedRole] = useState(null);
-  const [editMode, setEditMode] = useState(false);
-  const [draftPermissions, setDraftPermissions] = useState(null);
-  const [draftRole, setDraftRole] = useState(null);
-  const [createRoleForm, setCreateRoleForm] = useState({
+
+  //estados para crear o editar
+  const [modalMode, setModalMode] = useState(null);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+
+  const [roleForm, setRoleForm] = useState({
     nombre_rol: "",
     descripcion: "",
     permisos: getEmptyPermissions(),
   });
-  //estados de carga y feedback
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [creatingRole, setCreatingRole] = useState(false);
-  const [deletingRole, setDeletingRole] = useState(false);
+
+  const [showConfirmRoleModal, setShowConfirmRoleModal] = useState(false);
+  const [showConfirmDeleteRoleModal, setShowConfirmDeleteRoleModal] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  //modales
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showConfirmSaveEditModal, setShowConfirmSaveEditModal] = useState(false);
-  const [showConfirmCreateRoleModal, setShowConfirmCreateRoleModal] = useState(false);
-  const [showConfirmDeleteRoleModal, setShowConfirmDeleteRoleModal] = useState(false);
-  const loadInitialData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const [rolesResponse, permissionsResponse] = await Promise.all([
-        getRoles(),
-        getPermissions(),
-      ]);
-      const rolesData = Array.isArray(rolesResponse) ? rolesResponse : rolesResponse?.data || [];
-      const permissionsData = Array.isArray(permissionsResponse) ? permissionsResponse : permissionsResponse?.data || [];
-      setRoles(rolesData);
-      setPermissionsCatalog(permissionsData);
-      if (rolesData.length > 0) {
-        setSelectedRole(rolesData[0]);
-      }
-    } catch (err) {
-      setError(formatError(err) || "No se pudo sincronizar la información");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // consultas 
+  const { data: roles = [], isLoading: loadingRoles, } = useQuery({
+    queryKey: rolesKeys.all,
+    queryFn: obtenerRoles,
+  });
+  const { data: permissionsCatalog = [], isLoading: loadingPermissions, } = useQuery({
+    queryKey: rolesKeys.permisos,
+    queryFn: obtenerPermisos,
+  });
 
   useEffect(() => {
-    loadInitialData();
-  }, [loadInitialData]);
-  //acciones UI
-  const clearMessages = useCallback(() => {
-    setError("");
-    setSuccess("");
-  }, []);
-
-  const handleSelectRole = useCallback((role) => {
-    if (editMode) return;
-    setSelectedRole(role);
-    clearMessages();
-  }, [editMode, clearMessages]);
-
-  const handleEditPermissions = useCallback(() => {
-    if (!selectedRole) return;
-    setDraftPermissions(roleToPermissionsObject(selectedRole, permissionsCatalog));
-    setDraftRole({ descripcion: selectedRole.descripcion || "" });
-    setEditMode(true);
-    clearMessages();
-  }, [selectedRole, permissionsCatalog, clearMessages]);
-
-  const handleCancelEdit = useCallback(() => {
-    setDraftPermissions(null);
-    setDraftRole(null);
-    setEditMode(false);
-    setShowConfirmSaveEditModal(false);
-    clearMessages();
-  }, [clearMessages]);
-  //manejo de cambios
-  const handlePermissionChange = useCallback((moduleKey, action) => {
-    if (!editMode) return;
-
-    // RESTRICCIÓN: Solo administradores pueden tener editar/eliminar en usuarios
-    const isUserModule = moduleKey === "usuarios";
-    const isRestrictedAction = action === "editar" || action === "eliminar";
-    const isNotAdmin = !isProtectedRole(selectedRole);
-
-    if (isUserModule && isRestrictedAction && isNotAdmin) {
-      return setError("Solo el rol de Administrador puede gestionar permisos de edición/eliminación de usuarios");
+    if (roles.length && !selectedRole) {
+      setSelectedRole(roles[0]);
     }
+  }, [roles, selectedRole]);
 
-    setDraftPermissions((prev) => ({
-      ...prev,
-      [moduleKey]: {
-        ...prev[moduleKey],
-        [action]: !prev[moduleKey][action],
-      },
-    }));
-  }, [editMode, selectedRole, setError]);
-
-  const handleDraftRoleChange = useCallback((value) => {
-    setDraftRole((prev) => ({ ...prev, descripcion: value }));
-  }, []);
-
-  const handleSavePermissions = useCallback(async () => {
-    if (!selectedRole || !draftPermissions || !draftRole) return;
-    try {
-      setSaving(true);
-      clearMessages();
-      const permisosIds = permissionsObjectToIds(draftPermissions, permissionsCatalog);
-      const payload = {
-        nombre_rol: selectedRole.nombre_rol,
-        descripcion: draftRole.descripcion.trim(),
-        permisos: permisosIds,
-      };
-      await updateRole(selectedRole.id_rol, payload);
-      const updatedRole = {
-        ...selectedRole,
-        descripcion: payload.descripcion,
-        permisos: permisosIds,
-      };
-      setRoles((prev) => prev.map((r) => (r.id_rol === selectedRole.id_rol ? updatedRole : r)));
+  useEffect(() => {
+    if (!selectedRole) return;
+    const updatedRole = roles.find(
+      (r) => r.id_rol === selectedRole.id_rol
+    );
+    if (updatedRole) {
       setSelectedRole(updatedRole);
-      setEditMode(false);
-      setShowConfirmSaveEditModal(false);
-      setSuccess("Cambios guardados exitosamente");
-    } catch (err) {
-      setError(formatError(err) || "Error al actualizar el rol");
-    } finally {
-      setSaving(false);
     }
-  }, [selectedRole, draftPermissions, draftRole, permissionsCatalog, clearMessages]);
+  }, [roles, selectedRole]);
+  const loading = loadingRoles || loadingPermissions;
 
-  const handleCreateRole = useCallback(async () => {
-    const { nombre_rol, descripcion, permisos } = createRoleForm;
-    if (!nombre_rol.trim()) return setError("El nombre es requerido");
+  // crear rol
+  const createMutation = useMutation({
+    mutationFn: crearRol,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: rolesKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: rolesKeys.permisos,
+      });
 
-    try {
-      setCreatingRole(true);
-      clearMessages();
+      queryClient.invalidateQueries({
+        queryKey: authKeys.perfil(),
+      });
 
-      const permisosIds = permissionsObjectToIds(permisos, permissionsCatalog);
-      const payload = {
-        nombre_rol: nombre_rol.trim(),
-        descripcion: descripcion.trim(),
-        permisos: permisosIds
-      };
+      setSuccess("Rol creado correctamente");
+      setShowRoleModal(false);
+      setShowConfirmRoleModal(false);
+    },
 
-      const response = await createRole(payload);
-      const newRole = response?.data || response;
+    onError: (err) => {
+      setShowConfirmRoleModal(false);
+      setError(formatErrorAnidado(err));
+    },
+  });
+  // editar rol
+  const updateMutation = useMutation({
+    mutationFn: actualizarRol,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: rolesKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: rolesKeys.permisos,
+      });
 
-      setRoles((prev) => [...prev, newRole]);
-      setSelectedRole(newRole);
-      setShowCreateModal(false);
-      setShowConfirmCreateRoleModal(false);
-      setSuccess(`Rol "${newRole.nombre_rol}" creado con éxito`);
-    } catch (err) {
-      setError(formatError(err));
-    } finally {
-      setCreatingRole(false);
-    }
-  }, [createRoleForm, permissionsCatalog, clearMessages]);
+      queryClient.invalidateQueries({
+        queryKey: authKeys.perfil(),
+      });
 
-  const handleDeleteRole = useCallback(async () => {
-    if (!selectedRole) return;
-    try {
-      setDeletingRole(true);
-      clearMessages();
-      await deleteRole(selectedRole.id_rol);
+      setSuccess("Rol actualizado correctamente");
+      setShowRoleModal(false);
+      setShowConfirmRoleModal(false);
+    },
+    onError: (err) => {
+      setShowConfirmRoleModal(false);
+      setError(formatErrorAnidado(err));
+    },
+  });
+  //eliminar rol
+  const deleteMutation = useMutation({
+    mutationFn: eliminarRol,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: rolesKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: rolesKeys.permisos,
+      });
 
-      const updatedRoles = roles.filter((r) => r.id_rol !== selectedRole.id_rol);
-      setRoles(updatedRoles);
-      setSelectedRole(updatedRoles.length > 0 ? updatedRoles[0] : null);
+      queryClient.invalidateQueries({
+        queryKey: authKeys.perfil(),
+      });
+
+      setSuccess("Rol eliminado");
       setShowConfirmDeleteRoleModal(false);
-      setSuccess("Rol eliminado del sistema");
-    } catch (err) {
-      setError(formatError(err) || "No se pudo eliminar. Verifique si tiene usuarios asociados.");
-    } finally {
-      setDeletingRole(false);
-    }
-  }, [selectedRole, roles, clearMessages]);
+      setSelectedRole(null);
+    },
+    onError: (err) => {
 
-  const openCreateModal = useCallback(() => {
-    setCreateRoleForm({
+      setShowConfirmDeleteRoleModal(false);
+      setError(formatErrorAnidado(err));
+    },
+  });
+
+  //para borrar los letreros de éxito o error
+  const clearMessages = useCallback(() => { setError(""); setSuccess(""); }, []);
+  const handleSelectRole = useCallback((role) => { setSelectedRole(role); }, []);
+  //modal crear
+  const openCreateModal = () => {
+    setModalMode("create");
+    setRoleForm({
       nombre_rol: "",
       descripcion: "",
       permisos: getEmptyPermissions(),
     });
-    setShowCreateModal(true);
-    clearMessages();
-  }, [clearMessages]);
+    setShowRoleModal(true);
+  };
 
-  const openConfirmDeleteRoleModal = useCallback(() => {
-    if (isProtectedRole(selectedRole)) {
-      return setError("Este rol es vital para el sistema y no puede ser eliminado");
+  // modal editar
+  const openEditModal = () => {
+    if (!selectedRole) return;
+    setModalMode("edit");
+    setRoleForm({
+      nombre_rol: selectedRole.nombre_rol,
+      descripcion: selectedRole.descripcion || "",
+      permisos: roleToPermissionsObject(selectedRole, permissionsCatalog),
+    });
+    setShowRoleModal(true);
+  };
+
+  // manejo de cambios en el Formulario
+  const handleFormChange = (field, value) => {
+    setRoleForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handlePermissionChange = (
+    moduleKey,
+    action,
+    childKey = null
+  ) => {
+    setRoleForm((prev) => {
+
+      const permisos = structuredClone(prev.permisos);
+
+      // Permiso de submódulo
+      if (childKey) {
+        permisos[moduleKey].children[childKey][action] = !permisos[moduleKey].children[childKey][action];
+      } else {
+        // Permiso de módulo principal
+        permisos[moduleKey][action] = !permisos[moduleKey][action];
+      }
+      return {
+        ...prev,
+        permisos,
+      };
+    });
+  };
+  //guardar
+  const handleSaveRole = () => {
+    const permisos = permissionsObjectToIds(roleForm.permisos, permissionsCatalog);
+    if (modalMode === "create") {
+      createMutation.mutate({ ...roleForm, permisos, });
+      return;
     }
-    setShowConfirmDeleteRoleModal(true);
-    clearMessages();
-  }, [selectedRole, clearMessages]);
 
+    updateMutation.mutate({
+      id: selectedRole.id_rol,
+      payload: { ...roleForm, permisos, },
+    });
+  };
+
+  // eliminar
+  const handleDeleteRole = () => {
+    if (isProtectedRole(selectedRole)) {
+      setError("Este rol está protegido");
+      return;
+    }
+    deleteMutation.mutate(selectedRole.id_rol);
+  };
+  // vista detalle
   const currentPermissions = useMemo(() => {
-    if (!selectedRole) return emptyPermissions;
-    if (editMode) return draftPermissions || emptyPermissions;
-    return roleToPermissionsObject(selectedRole, permissionsCatalog);
-  }, [selectedRole, permissionsCatalog, editMode, draftPermissions]);
+    if (!selectedRole) { return getEmptyPermissions(); }
 
-
+    return roleToPermissionsObject(
+      selectedRole,
+      permissionsCatalog
+    );
+  }, [selectedRole, permissionsCatalog]);
 
   return {
-    //estados
-    roles, permissionsCatalog, selectedRole, editMode, draftRole, loading,
-    saving, creatingRole, deletingRole, error, success, showCreateModal,
-    showConfirmSaveEditModal, showConfirmCreateRoleModal, showConfirmDeleteRoleModal,
-    createRoleForm, currentPermissions,
-    setShowConfirmSaveEditModal, setShowConfirmCreateRoleModal, setShowConfirmDeleteRoleModal,
-    handleSelectRole, handleEditPermissions, handleCancelEdit, handlePermissionChange,
-    handleDraftRoleChange, handleSavePermissions, openCreateModal,
-    closeCreateModal: () => !creatingRole && setShowCreateModal(false),
-    handleCreateFormChange: (field, value) => setCreateRoleForm(p => ({ ...p, [field]: value })),
-    handleCreatePermissionChange: (mod, act) => {
-      //validar nombre del rol 
-      const isUserModule = mod === "usuarios";
-      const isRestrictedAction = act === "editar" || act === "eliminar";
-      const roleName = createRoleForm.nombre_rol.toLowerCase();
-      const isNotAdminName = !roleName.includes("admin");
-      if (isUserModule && isRestrictedAction && isNotAdminName) {
-        return setError("Para asignar estos permisos, el nombre del rol debe ser Administrativo");
-      }
-      setCreateRoleForm(p => ({
-        ...p,
-        permisos: {
-          ...p.permisos,
-          [mod]: { ...p.permisos[mod], [act]: !p.permisos[mod][act] }
-        }
-      }));
-    },
-    openConfirmCreateRoleModal: () => createRoleForm.nombre_rol.trim() ? setShowConfirmCreateRoleModal(true) : setError("Asigna un nombre al rol"),
-    handleCreateRole, openConfirmDeleteRoleModal, handleDeleteRole, clearMessages
+    roles,
+    selectedRole,
+    currentPermissions,
+
+    roleForm,
+    modalMode,
+
+    loading,
+
+    saving: createMutation.isPending || updateMutation.isPending,
+
+    creatingRole: createMutation.isPending,
+    deletingRole: deleteMutation.isPending,
+
+    error,
+    success,
+    clearMessages,
+
+    showRoleModal,
+    showConfirmRoleModal,
+    showConfirmDeleteRoleModal,
+
+    setShowRoleModal,
+    setShowConfirmRoleModal,
+    setShowConfirmDeleteRoleModal,
+
+    handleSelectRole,
+    openCreateModal,
+    openEditModal,
+    handleFormChange,
+    handlePermissionChange,
+    handleSaveRole,
+    handleDeleteRole,
   };
 }

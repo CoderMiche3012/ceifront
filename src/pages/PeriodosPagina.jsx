@@ -1,32 +1,31 @@
 import { CalendarPlus } from "lucide-react";
+import { useMemo } from "react";
+import { ui } from "../styles/ui/uiClasses";
 import Boton from "../components/ui/Boton";
 import EncabezadoPagina from "../components/shared/EncabezadoPagina";
-import PeriodoTabla from "../features/periodos/components/tabla/PeriodoTabla";
 import Alerta from "../components/ui/AlertaError";
+
+import PeriodoTabla from "../features/periodos/components/tabla/PeriodoTabla";
 import PeriodoFiltros from "../features/periodos/components/tabla/PeriodoFiltros";
-import usePeriodosPage from "../features/periodos/hooks/usePeriodosPage";
 import PaginacionTabla from "../components/tablas/PaginacionTabla";
+
+import usePeriodosPage from "../features/periodos/hooks/usePeriodosPage";
 import PeriodoModal from "../features/periodos/components/modales/PeriodoModal";
 import PeriodoActivo from "../features/periodos/components/PeriodoActivo";
-import { hasPermission } from "../utils/menuPermissions";
+
 import { usePermissions } from "../context/PermissionsContext";
-import { useMemo } from "react";
-import { ui } from "../styles/uiClasses";
+
 
 export default function PeriodosPagina() {
-  const { permissions, loading: isPermsLoading } = usePermissions();
-
+  const { hasModulePermission, loading: isPermsLoading } = usePermissions();
+  const canCreate = hasModulePermission("periodos", "crear");
   const {
-    periodoActivo, periodos, loading, error, fetchPeriodos,
+    periodoActivo, periodos, loading, error,
     search, handleSearchChange, handleClearFilters,
     currentPage, totalPages, filteredPeriodos, PAGE_SIZE, setCurrentPage,
     isCreateModalOpen, isEditModalOpen, selectedPeriodo,
     handleOpenCreate, handleCloseCreate, handleOpenEdit, handleCloseEdit
   } = usePeriodosPage();
-
-  const canCreate = useMemo(() =>
-    hasPermission(permissions, "Crear Periodos"),
-    [permissions]);
 
   return (
     <section className={ui.page}>
@@ -34,11 +33,14 @@ export default function PeriodosPagina() {
         titulo="Gestión de Periodos"
         descripcion="Monitorea y organiza los periodos escolares"
         accion={
-          !isPermsLoading && canCreate && ( 
-            <Boton size="md" onClick={handleOpenCreate} icon={<CalendarPlus size={18} />}>
+          !isPermsLoading && hasModulePermission("periodos", "create") && (
+            <Boton
+              size="md"
+              onClick={handleOpenCreate}
+              icon={<CalendarPlus size={18} />}
+            >
               Registrar Periodo
             </Boton>
-            
           )
         }
       />
@@ -76,10 +78,10 @@ export default function PeriodosPagina() {
         selectedPeriodo={selectedPeriodo}
         isCreateModalOpen={isCreateModalOpen}
         onCloseCreateModal={handleCloseCreate}
-        onPeriodoCreated={fetchPeriodos}
+        onPeriodoCreated={handleCloseCreate}
         isEditModalOpen={isEditModalOpen}
         onCloseEditModal={handleCloseEdit}
-        onPeriodoUpdated={fetchPeriodos}
+        onPeriodoUpdated={handleCloseEdit}
       />
     </section>
   );

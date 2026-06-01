@@ -1,6 +1,6 @@
 import axios from "axios";
 import { QueryClient } from "@tanstack/react-query";
-import { obtenerAccessToken, obtenerRefreshToken, limpiarSesionLocal, } from "../storage/userStorage";
+import { obtenerAccessToken, obtenerRefreshToken, limpiarSesionLocal } from "../storage/userStorage";
 
 //configuracion de React Query
 export const queryClient = new QueryClient({
@@ -12,51 +12,40 @@ export const queryClient = new QueryClient({
     },
   },
 });
-
 //creación de la instancia de Axios
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
-
-//sincronización del Logout entre Pestañas
+//sincronización de cerrar sesion entre Pestañas
 if (typeof window !== "undefined") {
   window.addEventListener("storage", (event) => {
     if (event.key === "logout" && event.newValue) {
-      if (window.location.pathname !== "/login") {
+      if (window.location.pathname !== "/" && window.location.pathname !== "/login") {
         window.location.href = "/login";
       }
     }
   });
 }
-
 //funcion de cierre de sesion Global
 const logoutGlobal = () => {
   limpiarSesionLocal();
   queryClient.clear();
   localStorage.removeItem("logout");
   localStorage.setItem("logout", Date.now().toString());
-  if (window.location.pathname !== "/login") {
-    window.location.href = "/login";
-  }
+  if (window.location.pathname !== "/login") { window.location.href = "/login"; }
 };
-
 //interceptor de peticiones
 API.interceptors.request.use(
   (config) => {
     const token = obtenerAccessToken();
-
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
   (error) => Promise.reject(error)
 );
-
 //cola de peticiones
 let isRefreshing = false;
 let queue = [];
@@ -68,17 +57,14 @@ const processQueue = (error, token = null) => {
       prom.resolve(token);
     }
   });
-
   queue = [];
 };
-
-//manejo de errores y refresh token
+// Manejo de errores y refresh token
 API.interceptors.response.use(
-  //si todo sale bien o no hay conexión
   (response) => response,
   async (error) => {
     const originalRequest = error.config || {};
-    // sin respuesta del servidor
+
     if (!error.response) {
       return Promise.reject({
         status: 0,
@@ -86,16 +72,24 @@ API.interceptors.response.use(
         errors: null,
       });
     }
+
     const { status, data } = error.response;
 
-    //si el token de acceso ya no sirve.
+    // si el error es un 401 en la ruta de LOGIN, no buscar refresh token.
+    if (status === 401 && originalRequest.url?.includes("/login/")) {
+      return Promise.reject({
+        status,
+        message: data?.detail || data?.message || "Credenciales inválidas",
+        errors: data || null,
+        original: error,
+      });
+    }
+    // Si el token de acceso ya no sirve (para el resto de la app)
     if (status === 401 && !originalRequest._retry) {
-
       if (originalRequest.url?.includes("refresh")) {
         logoutGlobal();
         return Promise.reject(error);
       }
-
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           queue.push({ resolve, reject });
@@ -105,30 +99,21 @@ API.interceptors.response.use(
           return API(originalRequest);
         });
       }
-
       originalRequest._retry = true;
       isRefreshing = true;
       const refresh = obtenerRefreshToken();
-
       if (!refresh) {
         logoutGlobal();
         return Promise.reject(error);
       }
-
-      //solicitud del nuevo token y reintento
       try {
-
-        const { data } = await API.post("/api/cuentas/login/refresh/", {
-          refresh,
-        });
-
+        const { data } = await API.post("/api/cuentas/login/refresh/", { refresh });
         const newAccess = data.access;
         localStorage.setItem("access", newAccess);
         processQueue(null, newAccess);
         originalRequest.headers ||= {};
         originalRequest.headers.Authorization = `Bearer ${newAccess}`;
         return API(originalRequest);
-
       } catch (err) {
         processQueue(err, null);
         logoutGlobal();
@@ -137,18 +122,14 @@ API.interceptors.response.use(
         isRefreshing = false;
       }
     }
-
-    //formateador de errores normales
+    // Formateador de errores normales
     return Promise.reject({
-      
       status,
       message: data?.detail || data?.message || "Error del servidor",
       errors: data || null,
       original: error,
-
     });
   }
 );
-
 export default API;
 

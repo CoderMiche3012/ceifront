@@ -1,77 +1,34 @@
 import API from "../../../config/apiClient";
-const BASE_URL = "/api/beneficiarios/beneficiarios";
 import { formatError } from "../../../utils/errorHandlers";
+
+const BASE_URL = "/api/beneficiarios/beneficiarios";
+
+// obtener todos
+export const obtenerBeneficiarios = async () => {
+  const { data } = await API.get(`${BASE_URL}/`);
+  return data;
+};
+
+// obtener uno
+export const obtenerBeneficiarioId = async (id) => {
+  const { data } = await API.get(`${BASE_URL}/${id}/`);
+  return data;
+};
+
+// crear
 export const crearBeneficiario = async (payload) => {
-  try {
-    const res = await API.post(`${BASE_URL}/`, payload);
-    return res.data;
-  } catch (error) {
-    console.log(error)
-    const errorData = error.response?.data || error;
-    if (errorData) {
-      throw new Error(formatError(errorData));
-    }
-
-    throw new Error(formatError(error.message));
-  }
+  const { data } = await API.post(`${BASE_URL}/`, payload);
+  return data;
 };
-export const obtenerBeneficiario = async () => {
-  try {
-    const res = await API.get(`${BASE_URL}/`);
-    return res.data;
-  } catch (error) {
-    console.log(error)
-    const errorData = error.response?.data || error;
 
-    if (errorData) {
-      throw new Error(formatError(errorData));
-    }
-
-    throw new Error(formatError(error.message));
-  }
-};
-export const obtenerBeneficiarioIndividual = async (id) => {
-  try {
-    const res = await API.get(`${BASE_URL}/${id}/`);
-    return res.data;
-  } catch (error) {
-    console.log(error)
-    const errorData = error.response?.data || error;
-
-    if (errorData) {
-      throw new Error(formatError(errorData));
-    }
-
-    throw new Error(formatError(error.message));
-  }
-};
-export const eliminarBeneficiario = async (id) => {
-  try {
-    const res = await API.delete(`${BASE_URL}/${id}/`);
-    return res.data;
-  } catch (error) {
-    console.log(error)
-    const errorData = error.response?.data || error;
-
-    if (errorData) {
-      throw new Error(formatError(errorData));
-    }
-
-    throw new Error(formatError(error.message));
-  }
-};
+// actualizar
 export const actualizarBeneficiario = async (id, payload) => {
-  try {
-    const res = await API.patch(`${BASE_URL}/${id}/`, payload);
-    return res.data;
-  } catch (error) {
-    console.log(error)
-    const errorData = error.response?.data || error;
+  const { data } = await API.patch(`${BASE_URL}/${id}/`, payload);
+  return data;
+};
 
-    if (errorData) {
-      throw new Error(formatErrorAnidado(errorData));
-    }
-
-    throw new Error(formatErrorAnidado(error.message));
-  }
+// eliminar
+export const eliminarBeneficiario = async (id) => {
+  const { data } = await API.delete(`${BASE_URL}/${id}/`);
+  return data;
 };

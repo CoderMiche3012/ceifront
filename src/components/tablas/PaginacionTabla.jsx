@@ -1,21 +1,11 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { ui } from "../../styles/uiClasses";
+import { ui } from "../../styles/ui/uiClasses";
 
 export default function PaginacionTabla({currentPage,totalPages,totalItems,pageSize,onPageChange,}) {
-  const start =
-    totalItems === 0
-      ? 0
-      : (currentPage - 1) * pageSize + 1;
 
-  const end = Math.min(
-    currentPage * pageSize,
-    totalItems
-  );
-
-  const pages = Array.from(
-    { length: totalPages },
-    (_, i) => i + 1
-  );
+  const start = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const end = Math.min( currentPage * pageSize, totalItems );
+  const pages = Array.from( { length: totalPages }, (_, i) => i + 1 );
 
   return (
     <div className={ui.pagination.container}>

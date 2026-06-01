@@ -1,70 +1,31 @@
-import API from "./../../../config/apiClient";
+import API from "../../../config/apiClient";
 const BASE_URL = "/api/donadores/donadores";
-import { formatError } from "../../../utils/errorHandlers";
 
+// obtener todos
+export const obtenerDonadores = async () => {
+  const { data } = await API.get(`${BASE_URL}/`);
+  return Array.isArray(data) ? data : data?.data ?? [];
+};
+
+// obtener por id
+export const obtenerDonadorPorId = async (id) => {
+  const { data } = await API.get(`${BASE_URL}/${id}/`);
+  return data;
+};
+
+// crear donador
 export const crearDonador = async (payload) => {
-  try {
-    const res = await API.post(`${BASE_URL}/`, payload);
-    return res.data;
-  } catch (error) {
-    console.log(error)
-    const errorData = error.response?.data || error;
-    if (errorData) {
-      throw new Error(formatError(errorData));
-    }
-
-    throw new Error(formatError(error.message));
-  }
+  const { data } = await API.post(`${BASE_URL}/`, payload);
+  return data;
 };
 
-export const obtenerDonador = async () => {
-  try {
-    const res = await API.get(`${BASE_URL}/`);
-    return res.data;
-  } catch (error) {
-    console.log(error)
-    const errorData = error.response?.data || error;
-
-    if (errorData) {
-      throw new Error(formatError(errorData));
-    }
-
-    throw new Error(formatError(error.message));
-  }
-};
-
+// actualizar donador
 export const actualizarDonador = async (id, payload) => {
-  try {
-    const res = await API.patch(`${BASE_URL}/${id}/`, payload);
-    return res.data;
-  } catch (error) {
-    console.log(error)
-    const errorData = error.response?.data || error;
-
-    if (errorData) {
-      throw new Error(formatErrorAnidado(errorData));
-    }
-
-    throw new Error(formatErrorAnidado(error.message));
-  }
+  const { data } = await API.patch(`${BASE_URL}/${id}/`, payload);
+  return data;
 };
 
-export const obtenerDonadorIndividual = async (id) => {
-  try {
-    const res = await API.get(`${BASE_URL}/${id}/`);
-    return res.data;
-  } catch (error) {
-    console.log(error)
-    const errorData = error.response?.data || error;
-
-    if (errorData) {
-      throw new Error(formatErrorAnidado(errorData));
-    }
-
-    throw new Error(formatErrorAnidado(error.message));
-  }
-};
-
+// buscar CP
 export const buscarCPZippopotam = async (pais, cp) => {
   const response = await fetch(
     `https://api.zippopotam.us/${pais}/${cp}`
@@ -74,5 +35,5 @@ export const buscarCPZippopotam = async (pais, cp) => {
     throw new Error("CP no encontrado");
   }
 
-  return await response.json();
+  return response.json();
 };

@@ -1,4 +1,5 @@
-import { ui } from "../../styles/uiClasses";
+import { ui } from "../../styles/ui/uiClasses";
+
 export default function DatosTabla({columns,data,renderCell,rowKey = "id",}) {
   return (
     <div className={ui.table.wrapper}>
@@ -15,8 +16,7 @@ export default function DatosTabla({columns,data,renderCell,rowKey = "id",}) {
         <tbody>
           {data.length > 0 ? (
             data.map((row) => (
-              <tr key={row[rowKey] ?? JSON.stringify(row)} className={ui.table.row}
-              >
+              <tr key={row[rowKey] ?? JSON.stringify(row)} className={ui.table.row} >
                 {columns.map((column) => (
                   <td key={column.key}  className={ui.table.cell}>
                     {renderCell(row, column.key)}
@@ -26,8 +26,7 @@ export default function DatosTabla({columns,data,renderCell,rowKey = "id",}) {
             ))
           ) : (
             <tr>
-              <td colSpan={columns.length} className={ui.table.empty}
-              >
+              <td colSpan={columns.length} className={ui.table.empty} >
                 No se encontraron registros.
               </td>
             </tr>

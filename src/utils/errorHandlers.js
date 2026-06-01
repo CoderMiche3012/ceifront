@@ -9,7 +9,11 @@ export const formatError = (err) => {
             'telefono': 'El teléfono debe tener',
             'nombre': 'El nombre',
             'apellido_p': 'El apellido paterno solo debe tener',
-            'apellido_m': 'El apellido materno solo debe tener'
+            'apellido_m': 'El apellido materno solo debe tener',
+            // Roles
+            nombre_rol: "El nombre del rol",
+            descripcion: "La descripción",
+            permisos: "Los permisos"
         };
         const mensajes = Object.keys(err).map(campo => {
             let mensaje = Array.isArray(err[campo]) ? err[campo].join(" ") : String(err[campo]);
@@ -52,7 +56,11 @@ export const formatErrorAnidado = (err) => {
         'numero': 'el número',
         'cp': 'el código postal',
         'familia': 'en los datos de la familia',
-        'id_expediente': 'en el expediente'
+        'id_expediente': 'en el expediente',
+        // Roles
+        nombre_rol: "El nombre del rol",
+        descripcion: "La descripción",
+        permisos: "Los permisos"
     };
 
     const procesarErrores = (obj) => {
@@ -79,7 +87,7 @@ export const formatErrorAnidado = (err) => {
                     let msg = valor.join(" ");
                     msg = msg.replace(/este campo es requerido/i, "es obligatorio");
                     msg = msg.replace(/ya existe un\/a usuario con este\/a/i, "ya está registrado");
-                    
+
                     if (msg.toLowerCase().includes(etiqueta.toLowerCase())) {
                         mensajes.push(msg.charAt(0).toUpperCase() + msg.slice(1).trim());
                     } else {

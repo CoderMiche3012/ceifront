@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBeneficiariosPage } from "../features/beneficiarios/hooks/useBeneficiariosPage";
-import { obtenerVisita } from "../features/postulantes/services/visitasService";
+import { obtenerVisitas } from "../features/postulantes/services/visitasService";
 import { usePermissions } from "../context/PermissionsContext";
 
 
@@ -55,7 +55,7 @@ export default function Inicio() {
       try {
         setLoadingVisitas(true);
 
-        const respuesta = await obtenerVisita();
+        const respuesta = await obtenerVisitas();
 
         const dataVisitas = Array.isArray(respuesta)
           ? respuesta

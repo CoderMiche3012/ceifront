@@ -1,6 +1,5 @@
 import FiltrosTabla from "../../../../components/tablas/FiltrosTabla";
 
-
 export default function DonadorFiltros({
   search,
   filters,

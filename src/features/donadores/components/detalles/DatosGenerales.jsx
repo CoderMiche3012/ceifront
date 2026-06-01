@@ -1,29 +1,22 @@
 import DatosDonador from "./DatosDonador";
+
 import ResumenCard from "./ResumenCard";
 import NotasSeguimientoCard from "./NotasSeguimientoCard";
 import BeneficiariosVinculadosCard from "./BeneficiariosVinculadosCard";
 
+import { ui } from "../../../../styles/ui/uiClasses";
+
 export default function DatosGenerales({ data, setData }) {
-  
-  const handleUpdateEstatus = (nuevoEstatus) => {
-    if (!setData) return;
-    setData((prev) => ({
-      ...prev,
-      estatus: nuevoEstatus,
-    }));
-  };
   return (
-    <div className="grid grid-cols-3 gap-6">
-      
-      <div className="col-span-2 space-y-6">
+    <div className={ui.layout.twoColumn}>
+      <div className={ui.layout.twoColumnMain}>
         <DatosDonador data={data} setData={setData} />
         <NotasSeguimientoCard data={data} setData={setData} />
       </div>
 
-      <div className="col-span-1 space-y-6">
+      <div className={ui.layout.twoColumnAside}>
         <ResumenCard data={data} setData={setData} />
         <BeneficiariosVinculadosCard data={data} setData={setData} />
-
       </div>
     </div>
   );

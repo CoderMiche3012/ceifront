@@ -12,8 +12,7 @@ export default function DatosTablaCheck({
             {columns.map((column) => (
               <th
                 key={column.key}
-                className={`px-6 py-5 text-[11px] font-bold uppercase tracking-wide text-slate-400 ${column.className || "text-left"
-                  }`}
+                className={`px-6 py-5 text-[11px] font-bold uppercase tracking-wide text-slate-400 ${column.className || "text-left" }`}
               >
                 {column.label}
               </th>
@@ -30,8 +29,7 @@ export default function DatosTablaCheck({
                 {columns.map((column) => (
                   <td
                     key={column.key}
-                    className={`px-6 py-5 align-middle ${column.className || ""
-                      }`}
+                    className={`px-6 py-5 align-middle ${column.className || "" }`}
                   >
                     {renderCell(row, column.key)}
                   </td>

@@ -1,8 +1,16 @@
-import { User, PencilLine } from 'lucide-react';
-import React, { useState } from 'react';
-import EditarResumen from '../modales/EditarResumen';
+import { User } from "lucide-react";
+import { useState } from "react";
+import { ui } from "../../../../styles/ui/uiClasses";
+
+import Card from "../../../../components/ui/Card";
+
+import BotonEditar from "../../../../components/ui/BotonEditar";
+import EditarResumen from "../modales/EditarResumen";
+
 export default function ResumenCard({ data = {}, setData }) {
+  // estados
   const [modalAbierto, setModalAbierto] = useState(false);
+  // transformar fecha
   const formatearFecha = (fecha) => {
     if (!fecha) return "--";
 
@@ -15,9 +23,9 @@ export default function ResumenCard({ data = {}, setData }) {
       year: "numeric",
     });
   };
+  // calcular el tiempo en base a la fecha en que ingresaron
   const calcularTiempo = (fecha) => {
     if (!fecha) return "--";
-
     const [year, month, day] = fecha.split("-");
     const inicio = new Date(year, month - 1, day);
     const hoy = new Date();
@@ -43,57 +51,59 @@ export default function ResumenCard({ data = {}, setData }) {
       meses += 12;
     }
 
-    return `${años > 0 ? años + " año" + (años !== 1 ? "s " : " ") : ""}${meses > 0 ? meses + " mes" + (meses !== 1 ? "es " : " ") : ""
-      }${dias} día${dias !== 1 ? "s" : ""}`;
+    return `${años > 0 ? años + " año" + (años !== 1 ? "s " : " ") : ""}${
+      meses > 0 ? meses + " mes" + (meses !== 1 ? "es " : " ") : ""
+    }${dias} día${dias !== 1 ? "s" : ""}`;
   };
-  return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
 
+  return (
+    <Card>
       <div className="flex items-center justify-between mb-6">
         <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800">
           <User className="w-4 h-4 text-teal-600" />
-          Resumen 
+          Resumen
         </h3>
 
-        <button
-          onClick={() => setModalAbierto(true)}
-          className="flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors group"
-        >
-          <PencilLine className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+        <BotonEditar onClick={() => setModalAbierto(true)}>
           Editar datos
-        </button>
+        </BotonEditar>
       </div>
 
-      <div className="grid grid-cols-1 gap-y-6 gap-x-8 text-sm">
-
+      <div className="grid grid-cols-1 gap-y-6 text-sm">
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Estatus</p>
+          <p className={ui.text.label}>
+            Estatus
+          </p>
           <p className="text-slate-700 font-medium">
             {data?.estatus || "--"}
           </p>
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Fecha de ingreso</p>
+          <p className={ui.text.label}>
+            Fecha de ingreso
+          </p>
           <p className="text-slate-700 font-medium">
-            {formatearFecha(data?.fecha_ingreso) || "--"}
+            {formatearFecha(data?.fecha_ingreso)}
           </p>
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Tiempo en el programa</p>
+          <p className={ui.text.label}>
+            Tiempo en el programa
+          </p>
           <p className="text-slate-700 font-medium">
-            {calcularTiempo(data?.fecha_ingreso) || "--"}
+            {calcularTiempo(data?.fecha_ingreso)}
           </p>
         </div>
-
       </div>
-<EditarResumen
+
+      <EditarResumen
         isOpen={modalAbierto}
         onClose={() => setModalAbierto(false)}
         data={data}
         setData={setData}
       />
-    </div>
+    </Card>
   );
 }

@@ -1,40 +1,32 @@
 import API from "../../../config/apiClient";
 const BASE_URL = "/api/estudios/familia";
-import { formatError } from "../../../utils/errorHandlers";
 
+// obtener familias
 export const obtenerFamilia = async () => {
-  try {
-    const res = await API.get(`${BASE_URL}/`);
-    return res.data;
-  } catch (error) {
-    throw error;
-  }
+  const { data } = await API.get(`${BASE_URL}/`);
+  return Array.isArray(data) ? data : data?.data ?? [];
 };
 
+// obtener familia por id
+export const obtenerFamiliaId = async (id) => {
+  const { data } = await API.get( `${BASE_URL}/${id}/` );
+  return data;
+};
+
+// crear familia
 export const crearFamilia = async (payload) => {
-  try {
-    const res = await API.post(`${BASE_URL}/`, payload);
-    return res.data;
-  } catch (error) {
-    throw error;
-  }
+  const { data } = await API.post( `${BASE_URL}/`,payload );
+  return data;
 };
 
-export const actualizarFamilia = async (id, payload) => {
-  try {
-    const res = await API.patch(`${BASE_URL}/${id}/`, payload);
-    return res.data;
-  } catch (error) {
-    throw error;
-  }
+// actualizar familia
+export const actualizarFamilia = async ( id, payload ) => {
+  const { data } = await API.patch( `${BASE_URL}/${id}/`, payload );
+  return data;
 };
 
+// eliminar familia
 export const eliminarFamilia = async (id) => {
-  try {
-    const res = await API.delete(`${BASE_URL}/${id}/`);
-    return res.data;
-  } catch (error) {
-    throw error;
-  }
+  const { data } = await API.delete( `${BASE_URL}/${id}/` );
+  return data;
 };
-

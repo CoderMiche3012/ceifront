@@ -1,7 +1,7 @@
 import { HandHeart, ChevronRight, Loader2, Heart } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { obtenerDonador } from "../../../donadores/services/donadoresService";
+import { obtenerDonadores } from "../../../donadores/services/donadoresService";
 
 export default function DonadorCard({ data }) {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ export default function DonadorCard({ data }) {
 
     try {
       setLoading(true);
-      const response = await obtenerDonador();      
+      const response = await obtenerDonadores();      
       const lista = Array.isArray(response) ? response : response.results || [];
       const encontrados = lista.filter((item) =>
         item.beneficiarios_apoyados?.includes(data.id_beneficiario)

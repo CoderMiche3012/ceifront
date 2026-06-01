@@ -1,134 +1,157 @@
-import { useState } from 'react';
-import { X, Save, Loader2, User, MapPin, GraduationCap, Phone, Mail } from 'lucide-react';
-import ModalConfirmacion from '../../../../components/shared/ModalConfirmacion';
-import ModalResultado from '../../../../components/shared/ModalResultado';
-import Input from '../../../../components/ui/InputG';
-import Field from '../../../../components/ui/Field';
-import { actualizarDonador } from '../../services/donadoresService';
+import { useEffect, useState } from "react";
+import { HiOutlineDocumentText, HiOutlineX, } from "react-icons/hi";
 
-export default function EditarNotaGeneral({ isOpen, onClose, data, setData }) {
-    const [loading, setLoading] = useState(false);
-    const [showConfirm, setShowConfirm] = useState(false);
-    const [resultado, setResultado] = useState({ open: false, type: 'success', title: '', message: '' });
-    const [formDataCache, setFormDataCache] = useState(null);
-    if (!isOpen) return null;
+import { ui } from "../../../../styles/ui/uiClasses";
 
-    const preSubmit = (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const payload = Object.fromEntries(formData.entries());
-        setFormDataCache(payload);
-        setShowConfirm(true);
-    };
-    const handleFinalConfirm = async () => {
-        setLoading(true);
-        try {
-            const { id_donador } = data;
-            await actualizarDonador(id_donador, {
-                nota: formDataCache.nota,
-            });
-            setData((prev) => ({ ...prev, ...formDataCache }));
-            setShowConfirm(false);
-            setResultado({
-                open: true,
-                type: 'success',
-                title: '¡Actualización Exitosa!',
-                message: 'Los datos se han guardado correctamente en el sistema.'
-            });
-        } catch (error) {
-            setShowConfirm(false);
-            setResultado({
-                open: true,
-                type: 'error',
-                title: 'Error de red',
-                message: error.message || 'Hubo un problema al conectar con el servidor.'
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+import Field from "../../../../components/ui/Field";
+import Boton from "../../../../components/ui/Boton";
 
-    const handleCloseSuccess = () => {
-        setResultado({ ...resultado, open: false });
-        if (resultado.type === 'success') {
-            onClose();
-        }
-    };
+import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
+import ModalResultado from "../../../../components/shared/ModalResultado";
 
-    return (
-        <>
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4">
-                <div className="bg-[#F8FAFC] rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-white">
+import { useActualizarDonador } from "../../hooks/useDonadores";
 
-                    {/* Header */}
-                    <div className="flex items-center justify-between p-8 bg-white border-b border-slate-100">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-[#0E5F63]/10 rounded-2xl">
-                                <User className="w-6 h-6 text-[#0E5F63]" />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Agregar nota</h2>
-                                <p className="text-sm text-slate-500 font-medium">Incluye alguna observacion del beneficiario</p>
-                            </div>
-                        </div>
-                        <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-all active:scale-90">
-                            <X className="w-6 h-6 text-slate-400" />
-                        </button>
-                    </div>
+export default function EditarNotaGeneral({ isOpen, onClose, data, }) {
+  // estado
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [nota, setNota] = useState("");
+  const [resultado, setResultado] =
+    useState({
+      open: false,
+      type: "success",
+      title: "",
+      message: "",
+    });
+  // mutacion
+  const actualizarMutation = useActualizarDonador();
 
-                    <form onSubmit={preSubmit} className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                        <div className="space-y-6">
-                            <section>
-                                <Field label="Nota">
-                                    <textarea
-                                        name="nota"
-                                        defaultValue={data.nota || ''} 
-                                        placeholder="Escribe una nota..."
-                                        rows={4}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0E5F63] resize-none"
-                                    />
-                                </Field>
-                            </section>
-                        </div>
+  // precargar nota
+  useEffect(() => {
+    if (isOpen) {
+      setNota(data?.nota || "");
+    }
+  }, [isOpen, data]);
 
-                        <div className="flex justify-end gap-4 mt-12">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-8 py-3.5 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-2xl transition-all"
-                            >
-                                Descartar
-                            </button>
-                            <button
-                                type="submit"
-                                className="flex items-center gap-3 px-10 py-3.5 bg-[#0E5F63] text-white text-sm font-bold rounded-2xl hover:bg-[#0A4D50] shadow-xl shadow-[#0E5F63]/20 transition-all active:scale-95 disabled:opacity-50"
-                            >
-                                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                                Confirmar Cambios
-                            </button>
-                        </div>
-                    </form>
-                </div>
+  if (!isOpen) return null;
+
+  const handleGuardar = async () => {
+    try {
+
+      await actualizarMutation.mutateAsync({ id: data.id_donador, data: { nota, }, });
+      setShowConfirm(false);
+      setResultado({
+        open: true,
+        type: "success",
+        title: "Nota actualizada",
+        message: "La nota se guardó correctamente.",
+      });
+    } catch (error) {
+      setShowConfirm(false);
+      setResultado({
+        open: true,
+        type: "error",
+        title: "Error",
+        message: error.message || "Ocurrió un problema al guardar la nota.",
+      });
+    }
+  };
+
+  const handleCloseResultado = () => {
+    setResultado((prev) => ({
+      ...prev,
+      open: false,
+    }));
+
+    if (resultado.type === "success") {
+      onClose();
+    }
+  };
+
+  return (
+    <>
+      <div className={ui.modal.formOverlay}>
+        <div className="w-full max-w-2xl">
+          <div className={ui.modal.formContainer}>
+
+            <div className={ui.modal.formHeader}>
+              <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63] `} >
+                <HiOutlineDocumentText size={24} />
+              </div>
+
+              <div className="flex-1">
+                <h2 className={ui.modal.title}>
+                  Editar Nota
+                </h2>
+
+                <p className={ui.modal.description}>
+                  Agrega observaciones o comentarios del donador
+                </p>
+              </div>
+
+              <button
+                onClick={onClose}
+                className=" p-2 rounded-xl hover:bg-slate-100 transition "
+              >
+                <HiOutlineX size={20} />
+              </button>
             </div>
 
-            <ModalConfirmacion
-                open={showConfirm}
-                title="¿Guardar cambios?"
-                description="La información del expediente será actualizada de forma permanente en la base de datos."
-                confirmText="Guardar Ahora"
-                onConfirm={handleFinalConfirm}
-                onClose={() => setShowConfirm(false)}
-                loading={loading}
-                color="teal"
-            />
+            <div className={ui.modal.formBody}>
+              <div className={ui.modal.formScroll}>
+                <Field label="Nota">
+                  <textarea
+                    value={nota}
+                    onChange={(e) => setNota(e.target.value)}
+                    rows={8}
+                    placeholder="Escribe una nota..."
+                    className="
+                      w-full rounded-2xl border border-slate-300 bg-white px-4 py-3
+                      text-sm text-slate-700 resize-none outline-none transition focus:ring-2 focus:ring-[#0E5F63]
+                    "
+                  />
+                </Field>
+              </div>
 
-            <ModalResultado
-                open={resultado.open}
-                type={resultado.type}
-                title={resultado.title}
-                message={resultado.message}
-                onClose={handleCloseSuccess}
-            />
-        </>
-    );
+              {/* ACTIONS */}
+              <div className={ui.modal.formActions}>
+                <Boton
+                  variant="secondary"
+                  onClick={onClose}
+                >
+                  Cancelar
+                </Boton>
+
+                <Boton
+                  onClick={() =>  setShowConfirm(true) }
+                  disabled={ actualizarMutation.isPending }
+                >
+                  {actualizarMutation.isPending ? "Guardando..." : "Guardar Nota"}
+                </Boton>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ModalConfirmacion
+        open={showConfirm}
+        title="Guardar cambios"
+        description="¿Deseas actualizar la nota?"
+        confirmText="Guardar"
+        cancelText="Cancelar"
+        onConfirm={handleGuardar}
+        onClose={() => setShowConfirm(false) }
+        loading={ actualizarMutation.isPending  }
+        color="teal"
+      />
+
+      <ModalResultado
+        open={resultado.open}
+        type={resultado.type}
+        title={resultado.title}
+        message={resultado.message}
+        onClose={handleCloseResultado}
+      />
+    </>
+  );
 }

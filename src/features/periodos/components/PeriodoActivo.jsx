@@ -1,13 +1,13 @@
 import { Calendar, Edit3 } from "lucide-react";
-import { ui } from "../../../styles/uiClasses";
-import InsigniaEstatus from "../../usuarios/components/insignias/InsigniaEstatus";
-import { hasPermission } from "../../../utils/menuPermissions";
+import { ui } from "../../../styles/ui/uiClasses";
+
+import Insignia from "../../../components/ui/Insignia";
+
 import { usePermissions } from "../../../context/PermissionsContext";
 
 export default function PeriodoActivo({ periodoActivo, onEdit }) {
-  const { permissions, loading: isPermsLoading } = usePermissions();
-
-  const canEdit = hasPermission(permissions, "Editar Periodos");
+  const { hasModulePermission, loading: isPermsLoading } = usePermissions();
+  const canEdit = hasModulePermission("periodos", "editar");
 
   if (!periodoActivo) return null;
 
@@ -20,7 +20,7 @@ export default function PeriodoActivo({ periodoActivo, onEdit }) {
 
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <InsigniaEstatus
+            <Insignia
               status={periodoActivo.estado ? "Activo" : "Inactivo"}
             />
 

@@ -1,30 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
-import { obtenerPeriodos } from "../services/periodoService";
+//para optener el periodo que se encuentra activo en el momento
+
+import { usePeriodos } from "./usePeriodos";
 
 export const usePeriodoActivo = () => {
-  return useQuery({
-    queryKey: ["periodo-activo"],
-
-    queryFn: async () => {
-      const res = await obtenerPeriodos();
-
-      const periodos = Array.isArray(res)
-        ? res
-        : res?.data || [];
-
-      const periodoActivo = periodos.find(
-        (p) => p.estado
-      );
-
-      return {
-        periodoActivo,
-        idPeriodoActivo: periodoActivo
-          ? String(periodoActivo.id_periodo)
-          : null,
-      };
-    },
-
-    staleTime: 1000 * 60 * 10,
-    refetchOnWindowFocus: false,
-  });
+  const { data: periodos = [] } = usePeriodos();
+  const periodoActivo = periodos.find( (p) => Number(p.estado) === 1 );
+  return {
+    periodoActivo,
+    idPeriodoActivo: periodoActivo ? String(periodoActivo.id_periodo) : null,
+  };
 };

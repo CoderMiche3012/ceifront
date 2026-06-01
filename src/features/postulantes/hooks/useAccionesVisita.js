@@ -1,56 +1,83 @@
 import { useState, useEffect } from "react";
-import { crearVisita, actualizarVisita } from "../services/visitasService";
+import { useQueryClient } from "@tanstack/react-query";
 
-export const useAccionesVisita = (item, onRefresh) => {
-  const [modalMode, setModalMode] = useState(null); 
+import { useCrearVisita, useActualizarVisita } from "../hooks/useVisitas";
+import { visitasKeys } from "../services/visitasKeys";
+
+export const useAccionesVisita = (item) => {
+  const queryClient = useQueryClient();
+
+  const crearVisitaMutation = useCrearVisita();
+  const actualizarVisitaMutation = useActualizarVisita();
+
+  const [modalMode, setModalMode] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({ fecha: "", hora: "", nota: "" });
+
+  const [formData, setFormData] = useState({
+    fecha: "",
+    hora: "",
+    nota: "",
+  });
+
   const [result, setResult] = useState({
     open: false,
     type: "success",
     title: "",
-    message: ""
+    message: "",
   });
-  const resetForm = () => setFormData({ fecha: "", hora: "", nota: "" });
 
+  const resetForm = () =>
+    setFormData({ fecha: "", hora: "", nota: "" });
+
+  // =========================
+  // INIT FORM
+  // =========================
   useEffect(() => {
     if (modalMode === "agendar") {
       if (item?.id_visita && item?.fecha_visita) {
-        const [fecha, resto] = item.fecha_visita.split("T");
-        const hora = resto ? resto.substring(0, 5) : "";
+        const [fecha, resto] =
+          item.fecha_visita.split("T");
+
+        const hora = resto
+          ? resto.substring(0, 5)
+          : "";
 
         setFormData({
           fecha,
           hora,
-          nota: ""
+          nota: "",
         });
       } else {
         resetForm();
       }
     }
 
-    if (modalMode === "finalizar") {
-      setFormData(prev => ({
+    if (
+      modalMode === "finalizar" ||
+      modalMode === "cancelar"
+    ) {
+      setFormData((prev) => ({
         ...prev,
-        nota: ""
+        nota: "",
       }));
     }
+  }, [modalMode, item]);
 
-    if (modalMode === "finalizar" || modalMode === "cancelar") {
-      setFormData(prev => ({
-        ...prev,
-        nota: "" 
-      }));
-    }
-  }, [modalMode]); 
-
+  // =========================
+  // EXECUTE ACTION
+  // =========================
   const ejecutarAccion = async () => {
     setLoading(true);
 
     try {
+      // =====================
+      // AGENDAR / REPROGRAMAR
+      // =====================
       if (modalMode === "agendar") {
         if (!formData.fecha || !formData.hora) {
-          throw new Error("Fecha y hora son obligatorias");
+          throw new Error(
+            "Fecha y hora son obligatorias"
+          );
         }
 
         const fechaIso = `${formData.fecha}T${formData.hora}:00-06:00`;
@@ -58,60 +85,74 @@ export const useAccionesVisita = (item, onRefresh) => {
         const payload = {
           id_postulante: item.id_postulante,
           fecha_visita: fechaIso,
-          estado_visita: "Programada"
+          estado_visita: "Programada",
         };
 
         if (item.id_visita) {
-          await actualizarVisita(item.id_visita, payload);
+          await actualizarVisitaMutation.mutateAsync({
+            id: item.id_visita,
+            data: payload,
+          });
         } else {
-          await crearVisita(payload);
+          await crearVisitaMutation.mutateAsync(payload);
         }
       }
 
+      // =====================
+      // FINALIZAR
+      // =====================
       else if (modalMode === "finalizar") {
         if (!formData.nota) {
-          throw new Error("La nota es obligatoria para finalizar");
-        }
-        if (!item.id_visita) {
-          throw new Error("No se encontró ID de visita para finalizar");
+          throw new Error(
+            "La nota es obligatoria para finalizar"
+          );
         }
 
-        await actualizarVisita(item.id_visita, {
-          estado_visita: "Realizada",
-          nota_visita: formData.nota
+        await actualizarVisitaMutation.mutateAsync({
+          id: item.id_visita,
+          data: {
+            estado_visita: "Realizada",
+            nota_visita: formData.nota,
+          },
         });
       }
 
+      // =====================
+      // CANCELAR
+      // =====================
       else if (modalMode === "cancelar") {
-        if (!item.id_visita) {
-          throw new Error("No se encontró ID de visita para cancelar");
-        }
-
-        await actualizarVisita(item.id_visita, {
-          estado_visita: "Cancelada",
-          nota_visita: formData.nota
+        await actualizarVisitaMutation.mutateAsync({
+          id: item.id_visita,
+          data: {
+            estado_visita: "Cancelada",
+            nota_visita: formData.nota,
+          },
         });
       }
 
+      // =====================
+      // SUCCESS UI
+      // =====================
       setResult({
         open: true,
         type: "success",
         title: "¡Éxito!",
-        message: `La visita ha sido ${item.id_visita ? "actualizada" : "agendada"
-          } correctamente.`
+        message: "La visita se actualizó correctamente.",
       });
 
       setModalMode(null);
       resetForm();
 
-      if (onRefresh) onRefresh();
-
+      // 🔥 seguridad extra (opcional)
+      queryClient.invalidateQueries({
+        queryKey: visitasKeys.all,
+      });
     } catch (error) {
       setResult({
         open: true,
         type: "error",
         title: "Error",
-        message: error.message
+        message: error.message,
       });
     } finally {
       setLoading(false);
@@ -126,6 +167,6 @@ export const useAccionesVisita = (item, onRefresh) => {
     setFormData,
     result,
     setResult,
-    ejecutarAccion
+    ejecutarAccion,
   };
 };

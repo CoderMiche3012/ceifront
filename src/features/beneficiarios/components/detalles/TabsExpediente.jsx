@@ -9,10 +9,13 @@ export default function TabsExpediente({ tab, setTab }) {
     { id: "familia", label: "Familia" },
     { id: "escuela", label: "Escuela" },
     { id: "obligaciones", label: "Obligaciones" },
+    { id: "fotografias", label: "Fotografias" },
+    { id: "documentos", label: "Documentos" },
+    { id: "estudio", label: "Estudio Socioeconomico" },
   ];
 
   const beneficiosTabs = [
-    { id: "apoyos", label: "Apoyos económicos" },
+    { id: "apoyos", label: "Reembolsos" },
     { id: "asistencias", label: "Comedor y psicología" },
   ];
 

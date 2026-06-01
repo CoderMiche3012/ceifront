@@ -1,6 +1,12 @@
-export default function Card({ children }) {
+import { ui } from "../../styles/ui/uiClasses";
+
+// para las tarjetas en detalle de donadores, postulantes y beneficiarios
+export default function Card({
+  children,
+  className = "",
+}) {
   return (
-    <div className="bg-white shadow-md rounded-xl p-6 w-full max-w-sm">
+    <div className={`${ui.card} ${className}`}>
       {children}
     </div>
   );

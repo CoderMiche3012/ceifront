@@ -1,24 +1,41 @@
-import DatosTabla from "../../../../components/tablas/DatosTabla";
+import { useMemo } from "react";
 import { Pencil } from "lucide-react";
-import  {formatMoney} from "../../../../utils/formatMoney";
 
-const COLUMNS = [
-  { key: "concepto", label: "Concepto" },
-  { key: "monto", label: "Monto" },
-  { key: "fecha", label: "Fecha" },
-  { key: "acciones", label: "Acciones" },
-];
+import { ui } from "../../../../styles/ui/uiClasses";
 
-export default function DonativoTabla({
-  donativos = [],
-  onEditar,
-}) {
+import DatosTabla from "../../../../components/tablas/DatosTabla";
+import AccionesTabla from "../../../../components/tablas/AccionesTabla";
 
-  const renderCell = (item, key) => {
+import { formatMoney } from "../../../../utils/formatMoney";
+
+export default function DonativoTabla({ donativos = [], onEditar, }) {
+  const columns =
+    useMemo(() => {
+      return [
+        {
+          key: "concepto",
+          label: "Concepto",
+        },
+        {
+          key: "monto",
+          label: "Monto",
+        },
+        {
+          key: "fecha",
+          label: "Fecha",
+        },
+        {
+          key: "acciones",
+          label: "Acciones",
+        },
+      ];
+    }, []);
+
+  const renderCell = ( item, key ) => {
     switch (key) {
       case "concepto":
         return (
-          <span className="text-sm font-semibold text-slate-800">
+          <span className={`${ui.text.body} font-semibold`} >
             {item.concepto || "--"}
           </span>
         );
@@ -26,42 +43,41 @@ export default function DonativoTabla({
       case "monto":
         return (
           <span className="text-sm font-medium text-emerald-600">
-            {formatMoney(item.monto, item.moneda)}
+            {formatMoney( item.monto, item.moneda )}
           </span>
         );
 
       case "fecha":
         return (
-          <span className="text-sm text-slate-700">
+          <span className={ ui.text.muted } >
             {item.fecha || "--"}
           </span>
         );
 
       case "acciones":
         return (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() =>
-                onEditar?.(item)
-              }
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-emerald-600 transition-all"
-              title="Editar donativo"
-            >
-              <Pencil size={18} />
-            </button>
-          </div>
+          <AccionesTabla
+            row={item}
+            actions={[
+              {
+                label: "Editar",
+                icon: ( <Pencil className="h-4 w-4" /> ),
+                onClick: onEditar,
+              },
+            ]}
+          />
         );
 
       default:
         return null;
     }
   };
-  return (
 
+  return (
     <DatosTabla
-      columns={COLUMNS}
-      data={donativos}
-      renderCell={renderCell}
+      columns={ columns }
+      data={ donativos }
+      renderCell={ renderCell }
       rowKey="id_donativo"
     />
   );

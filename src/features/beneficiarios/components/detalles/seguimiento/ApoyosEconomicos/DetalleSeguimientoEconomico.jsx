@@ -500,7 +500,7 @@ export default function DetalleSeguimientoEconomico({
             <div>
               <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800">
                 <HandCoins className="w-4 h-4 text-teal-600" />
-                Apoyos Económicos
+                Reembolsos
               </h3>
 
               <p className="text-xs text-slate-500 mt-1">

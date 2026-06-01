@@ -1,156 +1,349 @@
 import { useState, useEffect, useRef } from "react";
-import { postulantesService } from "../services/postulantesService";
-import { crearEstudio } from "../services/estudiosService";
+import { useCrearPostulante } from "../hooks/usePostulantes";
+import { useCrearEstudio } from "../hooks/useEstudios";
+import { formatErrorAnidado } from "../../../utils/errorHandlers";
+
+
 
 export const usePostulanteCrearForm = (onSuccess, onClose) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [resultModal, setResultModal] = useState({
-    open: false,
-    type: "success",
-    title: "",
-    message: ""
-  });
 
-  const isSubmitting = useRef(false);
-
-  const [form, setForm] = useState({
+  const initialForm = {
     estatus: "En Revisión",
     id_usuario: null,
+    nombre: "",
+    apellido_p: "",
+    apellido_m: "",
+    fecha_nacimiento: "",
+    telefono: "",
+    genero: "",
+    correo: "",
+    calle: "",
+    numero: "",
+    colonia: "",
+    municipio: "",
+    cp: "",
     nivel_escolar_inicial: "",
     grado_escolar_inicial: "",
     referencia_ingreso: "",
     referencia_casa: "",
     prioridad_servicio: "Pendiente",
-    id_expediente: {
-      nombre: "",
-      apellido_p: "",
-      apellido_m: "",
-      fecha_nacimiento: "",
-      telefono: "",
-      genero: "",
-      correo: "",
-      nota_situacion_familiar: "Registro manual desde panel",
-      id_direccion: {
-        calle: "",
-        numero: "",
-        colonia: "",
-        municipio: "",
-        cp: ""
+    familia: [
+      {
+        nombre: "",
+        apellido_p: "",
+        apellido_m: "",
+        parentesco: "",
+        fecha_nacimiento: "",
+        edad: "",
+        actividad_principal: "",
+        area_laboral_escuela: "",
+        salario: "0.00",
+        vive_en_casa: true,
+        telefono: "",
+        es_tutor_principal: true,
       },
-      familia: [
-        {
-          nombre: "",
-          apellido_p: "",
-          apellido_m: "",
-          parentesco: "",
-          edad: "",
-          actividad_principal: "",
-          area_laboral_escuela: "",
-          salario: "0.00",
-          vive_en_casa: true,
-          telefono: "",
-          es_tutor_principal: true
-        }
-      ]
-    }
+    ],
+  };
+
+  const [form, setForm] = useState(initialForm);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [error, setError] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const [resultModal, setResultModal] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: "",
   });
+
+  const isSubmitting = useRef(false);
+
+  const crearPostulanteMutation = useCrearPostulante();
+  const crearEstudioMutation = useCrearEstudio();
+
+  const loading =
+    crearPostulanteMutation.isPending ||
+    crearEstudioMutation.isPending;
+
+
+  const validarFormulario = () => {
+    const errors = {};
+
+    if (!form.nombre.trim()) errors.nombre = "Nombre obligatorio";
+    if (!form.apellido_p.trim()) errors.apellido_p = "Apellido obligatorio";
+    if (!form.correo.trim()) errors.correo = "Correo obligatorio";
+    if (!form.telefono.trim()) errors.telefono = "Teléfono obligatorio";
+    if (!form.genero.trim()) errors.genero = "Selecciona género";
+    if (!form.fecha_nacimiento) errors.fecha_nacimiento = "Selecciona fecha";
+
+    if (!form.cp.trim()) errors.cp = "CP obligatorio";
+    if (!form.municipio.trim()) errors.municipio = "Municipio obligatorio";
+    if (!form.colonia.trim()) errors.colonia = "Colonia obligatoria";
+    if (!form.calle.trim()) errors.calle = "Calle obligatoria";
+    if (!form.numero.trim()) errors.numero = "Número obligatorio";
+    if (!form.referencia_casa.trim())
+      errors.referencia_casa = "Referencia obligatoria";
+    if (!form.referencia_ingreso.trim())
+      errors.referencia_ingreso = "Referencia obligatoria";
+
+    if (!form.nivel_escolar_inicial.trim())
+      errors.nivel_escolar_inicial = "Nivel obligatorio";
+
+    if (!form.grado_escolar_inicial.trim())
+      errors.grado_escolar_inicial = "Grado obligatorio";
+
+    form.familia.forEach((fam, idx) => {
+      if (!fam.nombre?.trim())
+        errors[`familia.${idx}.nombre`] = "Nombre obligatorio";
+
+      if (!fam.apellido_p?.trim())
+        errors[`familia.${idx}.apellido_p`] = "Apellido obligatorio";
+
+      if (!fam.apellido_m?.trim())
+        errors[`familia.${idx}.apellido_m`] = "Apellido obligatorio";
+
+      if (!fam.parentesco?.trim())
+        errors[`familia.${idx}.parentesco`] = "Parentesco obligatorio";
+
+      if (!fam.fecha_nacimiento)
+        errors[`familia.${idx}.fecha_nacimiento`] = "Fecha obligatoria";
+
+      if (!fam.actividad_principal?.trim())
+        errors[`familia.${idx}.actividad_principal`] =
+          "Actividad obligatoria";
+    });
+
+    return errors;
+  };
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
+
     if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        const userId = user.id_usuario || user.id;
-        if (userId) setForm(prev => ({ ...prev, id_usuario: userId }));
-      } catch (e) {
-        console.error("Error cargando user:", e);
-      }
+      const user = JSON.parse(userData);
+
+      setForm((prev) => ({
+        ...prev,
+        id_usuario: user.id_usuario || user.id,
+      }));
     }
   }, []);
+  useEffect(() => {
+    const campos = Object.keys(fieldErrors);
 
+    if (campos.length > 0) {
+      const nombresBonitos = campos.map((campo) =>
+        campo
+          .replace(/\.\d+\./g, " ") // familia.0.nombre -> familia nombre
+          .replace(/\./g, " ")
+          .replace(/_/g, " ")
+      );
+
+      setError(
+        `Revisa los campos: ${nombresBonitos.join(", ")}`
+      );
+    } else {
+      setError(null);
+    }
+  }, [fieldErrors]);
   const handlePreSubmit = (e) => {
     if (e) e.preventDefault();
-    setError(null);
 
-    const { nombre, apellido_p, correo, fecha_nacimiento, genero, familia } = form.id_expediente;
-    const { calle, municipio, cp } = form.id_expediente.id_direccion;
+    const errors = validarFormulario();
 
-    const tutor = familia[0];
+    setFieldErrors(errors);
 
-    if (!nombre || !apellido_p || !correo || !fecha_nacimiento || !genero || !calle || !municipio || !cp || !form.nivel_escolar_inicial) {
-      setError("Por favor, completa todos los campos obligatorios del nuevo ingreso.");
+    if (Object.keys(errors).length > 0) {
+      setError(null);
       return;
     }
 
-    if (!tutor.nombre || !tutor.apellido_p || !tutor.parentesco) {
-      setError("Los datos del Tutor Principal son obligatorios.");
-      return;
-    }
-
+    setError("");
     setShowConfirm(true);
+  };
+
+  const handleChange = (field, value) => {
+    setForm((prev) => {
+      const updated = { ...prev };
+
+      if (field.includes(".")) {
+        const keys = field.split(".");
+        let current = updated;
+
+        for (let i = 0; i < keys.length - 1; i++) {
+          const key = isNaN(keys[i]) ? keys[i] : Number(keys[i]);
+
+          current[key] = Array.isArray(current[key])
+            ? [...current[key]]
+            : { ...current[key] };
+
+          current = current[key];
+        }
+
+        current[keys[keys.length - 1]] = value;
+      } else {
+        updated[field] = value;
+      }
+
+      return updated;
+    });
+
+    setFieldErrors((prev) => {
+      const nuevos = { ...prev };
+      delete nuevos[field];
+      return nuevos;
+    });
   };
 
   const handleConfirmSave = async () => {
     if (isSubmitting.current) return;
+
     isSubmitting.current = true;
-    setLoading(true);
     setShowConfirm(false);
-    setError(null);
 
     try {
-      const resPostulante = await postulantesService.crearPostulante(form);
-      const dataPostulante = resPostulante.data || resPostulante;
-      const idExpedienteGenerado =
-        dataPostulante.id_expediente?.id_expediente ||
-        dataPostulante.id_expediente;
+      const payload = {
+        estatus: form.estatus,
+        id_usuario: form.id_usuario,
+        id_expediente: {
+          nombre: form.nombre,
+          apellido_p: form.apellido_p,
+          apellido_m: form.apellido_m,
+          fecha_nacimiento: form.fecha_nacimiento,
+          telefono: form.telefono,
+          genero: form.genero,
+          correo: form.correo,
+          nota_situacion_familiar: "Registro manual desde panel",
+          id_direccion: {
+            calle: form.calle,
+            numero: form.numero,
+            colonia: form.colonia,
+            municipio: form.municipio,
+            cp: form.cp,
+          },
+          familia: form.familia,
+        },
+      };
 
-      if (!idExpedienteGenerado) {
-        throw new Error("No se recibió ID de expediente");
-      }
-      await crearEstudio({
-        id_expediente: idExpedienteGenerado,
+      const dataPostulante =
+        await crearPostulanteMutation.mutateAsync(payload);
+
+      const idExpediente =
+        dataPostulante?.id_expediente?.id_expediente ||
+        dataPostulante?.id_expediente;
+
+      await crearEstudioMutation.mutateAsync({
+        id_expediente: idExpediente,
         nivel_escolar_inicial: form.nivel_escolar_inicial,
         grado_escolar_inicial: form.grado_escolar_inicial,
         referencia_ingreso: form.referencia_ingreso,
         referencia_casa: form.referencia_casa,
         prioridad_servicio: "Pendiente",
-        estatus_estudio: "En revision"
+        estatus_estudio: "En revision",
       });
+
       setResultModal({
         open: true,
         type: "success",
         title: "¡Éxito!",
-        message: "Registro completado correctamente."
+        message: "Registro completado correctamente.",
       });
-
     } catch (err) {
-      console.error("Error al registrar:", err);
-      setError(err.message);
+      console.error(err);
+
+      const backendErrors =
+        err?.errors ||
+        err?.response?.data?.errors ||
+        {};
+
+      const parsedErrors = {};
+
+      const flattenErrors = (obj, prefix = "") => {
+        Object.entries(obj).forEach(([key, value]) => {
+          let newKey = prefix
+            ? `${prefix}.${key}`
+            : key;
+
+          newKey = newKey
+            .replace(/^id_expediente\./, "")
+            .replace(/^id_expediente\.id_direccion\./, "")
+            .replace(/^id_direccion\./, "");
+
+          if (
+            Array.isArray(value) &&
+            typeof value[0] === "string"
+          ) {
+            parsedErrors[newKey] = value[0];
+          } else if (Array.isArray(value)) {
+            value.forEach((item, index) => {
+              if (typeof item === "object") {
+                flattenErrors(
+                  item,
+                  `${newKey}.${index}`
+                );
+              }
+            });
+          } else if (
+            typeof value === "object" &&
+            value !== null
+          ) {
+            flattenErrors(value, newKey);
+          }
+        });
+      };
+
+      flattenErrors(backendErrors);
+
+      console.log(parsedErrors);
+
+      if (Object.keys(parsedErrors).length > 0) {
+        setFieldErrors(parsedErrors);
+        setError(null);
+        return; // <- aquí evita modal
+      }
+
       setResultModal({
         open: true,
         type: "error",
         title: "Error",
-        message: err.message
+        message:
+          formatErrorAnidado(err) ||
+          err.message,
       });
     } finally {
-      setLoading(false);
       isSubmitting.current = false;
     }
   };
 
   const handleFinalClose = () => {
-    if (resultModal.type === "success") {
-      onSuccess?.();
-      onClose();
-    }
-    setResultModal(p => ({ ...p, open: false }));
-  };
+  const wasSuccess = resultModal.type === "success";
+
+  setResultModal({
+    open: false,
+    type: "",
+    title: "",
+    message: "",
+  });
+
+  if (wasSuccess) {
+    setForm(initialForm);
+    setFieldErrors({});
+    setError(null);
+    setShowConfirm(false);
+    onSuccess?.(); // Notifica la actualización de la lista en segundo plano
+  }
+  
+  // Sacamos esto de la condicional para asegurar que ante cualquier 
+  // cierre del ModalResultado, la ventana de creación también se destruya.
+  onClose?.(); 
+};
 
   return {
     form,
     setForm,
+    handleChange,
+    fieldErrors,
     error,
     loading,
     showConfirm,
@@ -158,6 +351,7 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
     resultModal,
     handlePreSubmit,
     handleConfirmSave,
-    handleFinalClose
+    handleFinalClose,
   };
 };
+

@@ -1,10 +1,6 @@
 import {
-  HiOutlineHome,
-  HiOutlineUserGroup,
-  HiOutlineUserAdd,
-  HiOutlineHeart,
-  HiOutlineUsers,
-  HiOutlineChartBar,
+  HiOutlineHome, HiOutlineUserGroup, HiOutlineUserAdd,
+  HiOutlineHeart, HiOutlineUsers, HiOutlineChartBar,
 } from "react-icons/hi";
 
 export const mainMenu = [

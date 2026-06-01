@@ -1,154 +1,191 @@
-import { useState, useEffect } from 'react';
-import { X, Save, Loader2, User, MapPin, GraduationCap, Phone, Mail } from 'lucide-react';
-import ModalConfirmacion from '../../../../components/shared/ModalConfirmacion';
-import ModalResultado from '../../../../components/shared/ModalResultado';
-import Input from '../../../../components/ui/InputG';
-import Field from '../../../../components/ui/Field';
-import { actualizarExpediente, actualizarDireccion, buscarCPCompleto } from '../../../expedientes/services/expedientesService';
-import { actualizarEstudio } from '../../services/estudiosService';
+import { useEffect, useState } from "react";
+import { X, Save, Loader2 } from "lucide-react";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
-import { formatErrorAnidado } from '../../../../utils/errorHandlers';
+
+import InputG from "../../../../components/ui/InputG";
+import Select from "../../../../components/ui/Select";
+import Field from "../../../../components/ui/Field";
+
+import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
+import ModalResultado from "../../../../components/shared/ModalResultado";
+
+import {
+  actualizarExpediente,
+  actualizarDireccion,
+  buscarCPCompleto
+} from "../../../expedientes/services/expedientesService";
+
+import { actualizarEstudio } from "../../services/estudiosService";
+import { formatErrorAnidado } from "../../../../utils/errorHandlers";
+
 const getErrorMessage = (err) => {
-
-  if (err?.response?.data) {
-    return formatErrorAnidado(err.response.data);
-  }
-
-  if (err?.message) {
-    return formatErrorAnidado(err);
-  }
-
+  if (err?.response?.data) return formatErrorAnidado(err.response.data);
+  if (err?.message) return formatErrorAnidado(err);
   return "Error inesperado";
 };
-export default function EditarDatosGenerales({ isOpen, onClose, data, setData }) {
+
+export default function EditarDatosGenerales({ isOpen, onClose, data }) {
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [resultado, setResultado] = useState({ open: false, type: 'success', title: '', message: '' });
-  const [formDataCache, setFormDataCache] = useState(null);
+  const [resultado, setResultado] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: ""
+  });
+
+  const [form, setForm] = useState({
+    nombre: "",
+    apellido_p: "",
+    apellido_m: "",
+    telefono: "",
+    correo: "",
+    fecha_nacimiento: "",
+    genero: "",
+
+    nivel_escolar_inicial: "",
+    grado_escolar_inicial: "",
+    referencia_ingreso: "",
+    referencia_casa: "",
+
+    calle: "",
+    numero: "",
+    colonia: "",
+    municipio: "",
+    cp: ""
+  });
+
   const [colonias, setColonias] = useState([]);
   const [loadingCP, setLoadingCP] = useState(false);
   const [cpEncontrado, setCpEncontrado] = useState(false);
   const [otraColonia, setOtraColonia] = useState(false);
 
-  const [direccionForm, setDireccionForm] = useState({
-    calle: data?.calle || "",
-    numero: data?.numero || "",
-    colonia: data?.colonia || "",
-    municipio: data?.municipio || "",
-    cp: data?.cp || "",
-  });
+  // =========================
+  // INIT DATA
+  // =========================
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !data) return;
 
-    setDireccionForm({
-      calle: data?.calle || "",
-      numero: data?.numero || "",
-      colonia: data?.colonia || "",
-      municipio: data?.municipio || "",
-      cp: data?.cp || "",
+    setForm({
+      nombre: data.nombre || "",
+      apellido_p: data.apellido_p || "",
+      apellido_m: data.apellido_m || "",
+      telefono: data.telefono || "",
+      correo: data.correo || "",
+      fecha_nacimiento: data.fecha_nacimiento || "",
+      genero: data.genero || "",
+
+      nivel_escolar_inicial: data.nivel_escolar_inicial || "",
+      grado_escolar_inicial: data.grado_escolar_inicial || "",
+      referencia_ingreso: data.referencia_ingreso || "",
+      referencia_casa: data.referencia_casa || "",
+
+      calle: data.calle || "",
+      numero: data.numero || "",
+      colonia: data.colonia || "",
+      municipio: data.municipio || "",
+      cp: data.cp || ""
     });
 
     setOtraColonia(false);
-    setCpEncontrado(false);
     setColonias([]);
+    setCpEncontrado(false);
 
-    const cargarCPInicial = async () => {
-      const cp = data?.cp;
-
-      if (!cp || String(cp).length !== 5) return;
+    const cargarCP = async () => {
+      if (!data?.cp || String(data.cp).length !== 5) return;
 
       try {
         setLoadingCP(true);
 
-        const dataCP = await buscarCPCompleto(cp);
+        const res = await buscarCPCompleto(data.cp);
 
-        setColonias(dataCP?.colonias || []);
+        setColonias(res?.colonias || []);
 
-        if (dataCP?.municipio) {
+        if (res?.municipio) {
           setCpEncontrado(true);
-
-          setDireccionForm(prev => ({
+          setForm((prev) => ({
             ...prev,
-            municipio: dataCP.municipio
+            municipio: res.municipio
           }));
         }
 
         if (
           data?.colonia &&
-          dataCP?.colonias &&
-          !dataCP.colonias.includes(data.colonia)
+          res?.colonias &&
+          !res.colonias.includes(data.colonia)
         ) {
           setOtraColonia(true);
         }
-
-      } catch (error) {
-        console.log(error);
+      } catch (e) {
+        console.log(e);
       } finally {
         setLoadingCP(false);
       }
     };
 
-    cargarCPInicial();
+    cargarCP();
   }, [isOpen, data]);
+
   if (!isOpen) return null;
-  const updateDireccion = (field, value) => {
-    setDireccionForm(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-  
-  const preSubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const payload = Object.fromEntries(formData.entries());
-    setFormDataCache(payload);
-    setShowConfirm(true);
+
+  // =========================
+  // HELPERS
+  // =========================
+  const update = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleFinalConfirm = async () => {
+  // =========================
+  // SUBMIT
+  // =========================
+  const handleSave = async () => {
     setLoading(true);
+
     try {
       const { id_expediente, id_direccion, id_estudio } = data;
+
       await Promise.all([
         actualizarExpediente(id_expediente, {
-          nombre: formDataCache.nombre,
-          apellido_p: formDataCache.apellido_p,
-          apellido_m: formDataCache.apellido_m,
-          telefono: formDataCache.telefono,
-          correo: formDataCache.correo,
-          fecha_nacimiento: formDataCache.fecha_nacimiento,
-          genero: formDataCache.genero
+          nombre: form.nombre,
+          apellido_p: form.apellido_p,
+          apellido_m: form.apellido_m,
+          telefono: form.telefono,
+          correo: form.correo,
+          fecha_nacimiento: form.fecha_nacimiento,
+          genero: form.genero
         }),
+
         actualizarDireccion(id_direccion, {
-          calle: direccionForm.calle,
-          numero: direccionForm.numero,
-          colonia: direccionForm.colonia,
-          municipio: direccionForm.municipio,
-          cp: direccionForm.cp
+          calle: form.calle,
+          numero: form.numero,
+          colonia: form.colonia,
+          municipio: form.municipio,
+          cp: form.cp
         }),
+
         actualizarEstudio(id_estudio, {
-          nivel_escolar_inicial: formDataCache.nivel_escolar_inicial,
-          grado_escolar_inicial: formDataCache.grado_escolar_inicial,
-          referencia_ingreso: formDataCache.referencia_ingreso,
-          referencia_casa: formDataCache.referencia_casa
+          nivel_escolar_inicial: form.nivel_escolar_inicial,
+          grado_escolar_inicial: form.grado_escolar_inicial,
+          referencia_ingreso: form.referencia_ingreso,
+          referencia_casa: form.referencia_casa
         })
       ]);
 
-      setData((prev) => ({ ...prev, ...formDataCache }));
-      setShowConfirm(false);
       setResultado({
         open: true,
-        type: 'success',
-        title: '¡Actualización Exitosa!',
-        message: 'Los datos se han guardado correctamente en el sistema.'
+        type: "success",
+        title: "Actualización exitosa",
+        message: "Los datos se actualizaron correctamente"
       });
+
+      setShowConfirm(false);
     } catch (error) {
       setShowConfirm(false);
+
       setResultado({
         open: true,
-        type: 'error',
-        title: 'Error de red',
+        type: "error",
+        title: "Error",
         message: getErrorMessage(error)
       });
     } finally {
@@ -156,299 +193,188 @@ export default function EditarDatosGenerales({ isOpen, onClose, data, setData })
     }
   };
 
-  const handleCloseSuccess = () => {
-    setResultado({ ...resultado, open: false });
-    if (resultado.type === 'success') {
-      onClose();
-    }
-  };
-
   return (
     <>
+      {/* OVERLAY */}
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4">
-        <div className="bg-[#F8FAFC] rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-white">
 
-          {/* Header */}
-          <div className="flex items-center justify-between p-8 bg-white border-b border-slate-100">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-[#0E5F63]/10 rounded-2xl">
-                <User className="w-6 h-6 text-[#0E5F63]" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Editar Perfil</h2>
-                <p className="text-sm text-slate-500 font-medium">Actualiza la información general del registro</p>
-              </div>
+        <div className="bg-[#F8FAFC] rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden">
+
+          {/* HEADER */}
+          <div className="flex items-center justify-between p-8 bg-white border-b">
+            <div>
+              <h2 className="text-2xl font-black text-slate-800">
+                Editar Expediente
+              </h2>
+              <p className="text-sm text-slate-500">
+                Actualiza la información del beneficiario
+              </p>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-all active:scale-90">
-              <X className="w-6 h-6 text-slate-400" />
+
+            <button onClick={onClose}>
+              <X className="text-slate-400" />
             </button>
           </div>
 
-          <form onSubmit={preSubmit} className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-            <div className="space-y-10">
-              <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-                <HiOutlineExclamationCircle className="text-[#0E5F63]" size={18} />
-                <span>
-                  Los campos con <span className="font-semibold text-red-500">*</span> son obligatorios
-                </span>
+          {/* FORM */}
+          <div className="p-8 max-h-[70vh] overflow-y-auto space-y-10">
+
+            {/* INFO PERSONAL */}
+            <section>
+              <h3 className="text-xs font-black text-[#0E5F63] mb-4">
+                Información Personal
+              </h3>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <Field label="Nombre">
+                  <InputG value={form.nombre} onChange={(e) => update("nombre", e.target.value)} />
+                </Field>
+
+                <Field label="Apellido Paterno">
+                  <InputG value={form.apellido_p} onChange={(e) => update("apellido_p", e.target.value)} />
+                </Field>
+
+                <Field label="Apellido Materno">
+                  <InputG value={form.apellido_m} onChange={(e) => update("apellido_m", e.target.value)} />
+                </Field>
+
+                <Field label="Teléfono">
+                  <InputG value={form.telefono} onChange={(e) => update("telefono", e.target.value)} />
+                </Field>
+
+                <Field label="Correo">
+                  <InputG value={form.correo} onChange={(e) => update("correo", e.target.value)} />
+                </Field>
               </div>
+            </section>
 
-              {/* SECCIÓN PERSONAL */}
-              <section>
-                <div className="flex items-center gap-2 mb-6">
-                  <span className="h-px w-8 bg-[#0E5F63]/20"></span>
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0E5F63]">Información Personal</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Field label="Nombre(s)" required>
-                    <Input name="nombre" defaultValue={data.nombre} required placeholder="Ej. Juan Manuel" />
-                  </Field>
-                  <Field label="Apellido Paterno">
-                    <Input name="apellido_p" defaultValue={data.apellido_p} placeholder="Ej. García" />
-                  </Field>
-                  <Field label="Teléfono">
-                    <Input name="telefono" defaultValue={data.telefono} placeholder="000 000 0000" />
-                  </Field>
-                  <Field label="Correo Electrónico">
-                    <Input name="correo" type="email" defaultValue={data.correo} placeholder="ejemplo@correo.com" />
-                  </Field>
-                </div>
-              </section>
+            {/* DIRECCIÓN */}
+            <section>
+              <h3 className="text-xs font-black text-[#0E5F63] mb-4">
+                Dirección
+              </h3>
 
-              {/* SECCIÓN DIRECCIÓN */}
-              <section>
-                <div className="flex items-center gap-2 mb-6">
-                  <span className="h-px w-8 bg-[#0E5F63]/20"></span>
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0E5F63]">Ubicación y Domicilio</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-3 gap-4">
 
-                  <Field label="C.P.">
-                    <Input
-                      value={direccionForm.cp}
-                      onChange={async (e) => {
-                        const cp = e.target.value;
+                <Field label="CP">
+                  <InputG
+                    value={form.cp}
+                    onChange={async (e) => {
+                      const cp = e.target.value;
+                      update("cp", cp);
 
-                        updateDireccion("cp", cp);
+                      if (!/^\d{5}$/.test(cp)) return;
 
-                        if (!/^\d{5}$/.test(cp)) {
-                          setColonias([]);
-                          setCpEncontrado(false);
-                          updateDireccion("municipio", "");
-                          updateDireccion("colonia", "");
-                          return;
-                        }
+                      const res = await buscarCPCompleto(cp);
+                      setColonias(res?.colonias || []);
 
-                        try {
-                          setLoadingCP(true);
-
-                          const dataCP =
-                            await buscarCPCompleto(cp);
-
-                          setColonias(dataCP?.colonias || []);
-
-                          if (dataCP?.municipio) {
-                            setCpEncontrado(true);
-
-                            updateDireccion(
-                              "municipio",
-                              dataCP.municipio
-                            );
-                          } else {
-                            setCpEncontrado(false);
-                          }
-
-                        } catch (error) {
-                          console.log(error);
-                          setCpEncontrado(false);
-                          setColonias([]);
-                        } finally {
-                          setLoadingCP(false);
-                        }
-                      }}
-                    />
-                  </Field>
-
-
-                  <Field label="Municipio">
-                    <Input
-                      value={direccionForm.municipio}
-                      disabled={
-                        direccionForm.cp.length === 5 &&
-                        cpEncontrado
+                      if (res?.municipio) {
+                        setCpEncontrado(true);
+                        update("municipio", res.municipio);
                       }
-                      onChange={(e) =>
-                        updateDireccion(
-                          "municipio",
-                          e.target.value
-                        )
-                      }
-                    />
-                  </Field>
+                    }}
+                  />
+                </Field>
 
+                <Field label="Municipio">
+                  <InputG
+                    value={form.municipio}
+                    disabled={cpEncontrado}
+                    onChange={(e) => update("municipio", e.target.value)}
+                  />
+                </Field>
 
-                  <Field label="Colonia">
-                    {!otraColonia ? (
-                      <select
-                        className="w-full h-11 px-3 rounded-xl border border-slate-200"
-                        value={direccionForm.colonia}
-                        disabled={loadingCP}
-                        onChange={(e) => {
-                          const value = e.target.value;
-
-                          if (value === "__otra__") {
-                            setOtraColonia(true);
-                            updateDireccion("colonia", "");
-                            return;
-                          }
-
-                          updateDireccion(
-                            "colonia",
-                            value
-                          );
-                        }}
-                      >
-                        <option value="">
-                          Seleccionar colonia...
-                        </option>
-
-                        {colonias.map((colonia) => (
-                          <option
-                            key={colonia}
-                            value={colonia}
-                          >
-                            {colonia}
-                          </option>
-                        ))}
-
-                        <option value="__otra__">
-                          Otra colonia...
-                        </option>
-                      </select>
-                    ) : (
-                      <div className="space-y-2">
-                        <Input
-                          value={direccionForm.colonia}
-                          onChange={(e) =>
-                            updateDireccion(
-                              "colonia",
-                              e.target.value
-                            )
-                          }
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOtraColonia(false);
-                            updateDireccion("colonia", "");
-                          }}
-                          className="text-xs text-[#0E5F63]"
-                        >
-                          Volver a sugerencias
-                        </button>
-                      </div>
-                    )}
-                  </Field>
-
-
-                  <div className="md:col-span-2">
-                    <Field label="Calle">
-                      <Input
-                        value={direccionForm.calle}
-                        onChange={(e) =>
-                          updateDireccion(
-                            "calle",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </Field>
-                  </div>
-
-                  <Field label="Número">
-                    <Input
-                      value={direccionForm.numero}
-                      onChange={(e) =>
-                        updateDireccion(
-                          "numero",
-                          e.target.value
-                        )
-                      }
-                    />
-                  </Field>
-                </div>
-              </section>
-
-              {/* SECCIÓN ACADÉMICA Y REFERENCIAS */}
-              <section>
-                <div className="flex items-center gap-2 mb-6">
-                  <span className="h-px w-8 bg-[#0E5F63]/20"></span>
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0E5F63]">Estudios y Referencias</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Field label="Nivel Escolar">
-                    <select
-                      name="nivel_escolar_inicial"
-                      defaultValue={data.nivel_escolar_inicial}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[15px] focus:border-[#0E5F63] focus:ring-[5px] focus:ring-[#0E5F63]/5 focus:outline-none transition-all"
+                <Field label="Colonia">
+                  {!otraColonia ? (
+                    <Select
+                      value={form.colonia}
+                      onChange={(e) => update("colonia", e.target.value)}
                     >
-                      <option value="Primaria">Primaria</option>
-                      <option value="Secundaria">Secundaria</option>
-                      <option value="Bachillerato">Bachillerato</option>
-                    </select>
-                  </Field>
-                  <Field label="Grado Escolar">
-                    <Input name="grado_escolar_inicial" defaultValue={data.grado_escolar_inicial} placeholder="Ej. 3er Año" />
-                  </Field>
-                  <Field label="Referencia de la Casa">
-                    <Input name="referencia_casa" defaultValue={data.referencia_casa} placeholder="Ej. Portón café" />
-                  </Field>
-                  <Field label="Referencia de Ingreso">
-                    <Input name="referencia_ingreso" defaultValue={data.referencia_ingreso} placeholder="¿Cómo llegó?" />
-                  </Field>
-                </div>
-              </section>
-            </div>
+                      <option value="">Seleccionar</option>
+                      {colonias.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                      <option value="__otra__">Otra</option>
+                    </Select>
+                  ) : (
+                    <InputG
+                      value={form.colonia}
+                      onChange={(e) => update("colonia", e.target.value)}
+                    />
+                  )}
+                </Field>
 
-            {/* Footer Form */}
-            <div className="flex justify-end gap-4 mt-12">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-8 py-3.5 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-2xl transition-all"
-              >
-                Descartar
-              </button>
-              <button
-                type="submit"
-                className="flex items-center gap-3 px-10 py-3.5 bg-[#0E5F63] text-white text-sm font-bold rounded-2xl hover:bg-[#0A4D50] shadow-xl shadow-[#0E5F63]/20 transition-all active:scale-95 disabled:opacity-50"
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                Confirmar Cambios
-              </button>
-            </div>
-          </form>
+                <Field label="Calle">
+                  <InputG value={form.calle} onChange={(e) => update("calle", e.target.value)} />
+                </Field>
+
+                <Field label="Número">
+                  <InputG value={form.numero} onChange={(e) => update("numero", e.target.value)} />
+                </Field>
+              </div>
+            </section>
+
+            {/* ACADÉMICO */}
+            <section>
+              <h3 className="text-xs font-black text-[#0E5F63] mb-4">
+                Estudios
+              </h3>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <Field label="Nivel">
+                  <Select
+                    value={form.nivel_escolar_inicial}
+                    onChange={(e) => update("nivel_escolar_inicial", e.target.value)}
+                  >
+                    <option>Primaria</option>
+                    <option>Secundaria</option>
+                    <option>Bachillerato</option>
+                  </Select>
+                </Field>
+
+                <Field label="Grado">
+                  <InputG value={form.grado_escolar_inicial} onChange={(e) => update("grado_escolar_inicial", e.target.value)} />
+                </Field>
+              </div>
+            </section>
+          </div>
+
+          {/* FOOTER */}
+          <div className="flex justify-end gap-4 p-6 border-t bg-white">
+            <button onClick={onClose} className="px-6 py-2 text-slate-500">
+              Cancelar
+            </button>
+
+            <button
+              onClick={() => setShowConfirm(true)}
+              className="px-6 py-2 bg-[#0E5F63] text-white rounded-xl flex items-center gap-2"
+            >
+              {loading ? <Loader2 className="animate-spin" /> : <Save />}
+              Guardar
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* CONFIRM */}
       <ModalConfirmacion
         open={showConfirm}
-        title="¿Guardar cambios?"
-        description="La información del expediente será actualizada de forma permanente en la base de datos."
-        confirmText="Guardar Ahora"
-        onConfirm={handleFinalConfirm}
+        title="Confirmar cambios"
+        message="Se actualizará el expediente"
+        onConfirm={handleSave}
         onClose={() => setShowConfirm(false)}
-        loading={loading}
-        color="teal"
       />
 
+      {/* RESULT */}
       <ModalResultado
         open={resultado.open}
         type={resultado.type}
         title={resultado.title}
         message={resultado.message}
-        onClose={handleCloseSuccess}
+        onClose={() => {
+          setResultado((p) => ({ ...p, open: false }));
+          if (resultado.type === "success") onClose();
+        }}
       />
     </>
   );

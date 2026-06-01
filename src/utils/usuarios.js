@@ -11,16 +11,38 @@ export const normalizeStatus = (estatus) => {
 
 //obtener el id del rol del usuario como string para facilitar comparaciones
 export const getRoleId = (user) => {
-  return String(user?.id_rol || "");
+  return String(
+    user?.id_rol ??
+    user?.rol?.id_rol ??
+    user?.rol?.id ??
+    user?.rol ??
+    ""
+  );
 };
 
 //busca y devuelve el nombre del rol según el catálogo recibido
 export const getRoleLabel = (user, roles = []) => {
+
+  if (user?.rol?.nombre) {
+    return user.rol.nombre;
+  }
+
+  if (typeof user?.rol === "string") {
+    return user.rol;
+  }
+
   const roleId = getRoleId(user);
+
   const foundRole = roles.find(
-    (rol) => String(rol?.id_rol || rol?.id || "") === roleId
+    (rol) =>
+      String(rol?.id_rol || rol?.id || "") === roleId
   );
-  return foundRole?.nombre_rol || foundRole?.nombre || "Sin puesto";
+
+  return (
+    foundRole?.nombre_rol ||
+    foundRole?.nombre ||
+    "Sin puesto"
+  );
 };
 
 //construye opciones únicas de roles para filtros

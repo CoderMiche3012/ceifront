@@ -1,12 +1,21 @@
-import { ui } from "../../styles/uiClasses";
+import { ui } from "../../styles/ui/uiClasses";
 
-export default function Input(props) {
+// para los modales
+export default function Input({
+  className = "",
+  error = false,
+  disabled = false,
+  ...props
+}) {
   return (
     <input
       {...props}
+      disabled={disabled}
       className={`
         ${ui.input.base}
-        ${props.className || ""}
+        ${className}
+        ${error ? "border-rose-300" : ""}
+        ${disabled ? "opacity-60 cursor-not-allowed" : ""}
       `}
     />
   );

@@ -1,66 +1,32 @@
 import API from "../../../config/apiClient";
-import { formatErrorAnidado } from "../../../utils/errorHandlers";
+const BASE_URL = "/api/beneficiarios/postulantes";
 
-export const postulantesService = {
-    // Obtener lista
-    obtenerPostulantes: async () => {
-        try {
-            const res = await API.get("/api/beneficiarios/postulantes/");
-            return res.data;
-        } catch (error) {
-            console.log(error)
-            const errorData = error.response?.data || error;
-            if (errorData) {
-                throw new Error(formatErrorAnidado(errorData));
-            }
-            throw new Error(formatErrorAnidado(error.message));
-        }
-    },
+// obtener lista de postulantes
+export const obtenerPostulantes = async () => {
+  const { data } = await API.get(`${BASE_URL}/`);
+  return Array.isArray(data) ? data : data?.data ?? [];
+};
 
-    crearPostulante: async (payload) => {
-        try {
-            const res = await API.post("/api/beneficiarios/postulantes/", payload);
-            return res.data;
-        } catch (error) {
-            console.log(error)
-            const errorData = error.response?.data || error;
-            if (errorData) {
-                throw new Error(formatErrorAnidado(errorData));
-            }
-            throw new Error(formatErrorAnidado(error.message));
-        }
-    },
+// obtener datos del postulante por id
+export const obtenerPostulantePorId = async (id) => {
+  const { data } = await API.get(`${BASE_URL}/${id}/`);
+  return data;
+};
 
-    actualizarPostulante: async (id, payload) => {
-        try {
-            const res = await API.patch(`/api/beneficiarios/postulantes/${id}/`, payload);
-            return res.data;
-        } catch (error) {
-            console.log(error)
-            const errorData = error.response?.data || error;
-            if (errorData) {
-                throw new Error(formatErrorAnidado(errorData));
-            }
-            throw new Error(formatErrorAnidado(error.message));
-        }
-    },
+// crear postulante
+export const crearPostulante = async (payload) => {
+  const { data } = await API.post(`${BASE_URL}/`, payload);
+  return data;
+};
 
-    eliminarPostulante: async (id) => {
-        try {
-            const res = await API.delete(`/api/beneficiarios/postulantes/${id}/`);
-            return res.data;
-        } catch (error) {
-            console.error("Error al eliminar postulante:", error);
-            const errorData = error.response?.data || error;
-            if (errorData) {
-                throw new Error(formatErrorAnidado(errorData));
-            }
-            throw new Error(formatErrorAnidado(error.message));
-        }
-    },
+// actualizar postulante
+export const actualizarPostulante = async (id, payload) => {
+  const { data } = await API.patch(`${BASE_URL}/${id}/`, payload);
+  return data;
+};
 
-    obtenerPostulantePorId: async (id) => {
-        const res = await API.get(`/api/beneficiarios/postulantes/${id}`);
-        return res.data;
-    }
+// eliminar postulante
+export const eliminarPostulante = async (id) => {
+  const { data } = await API.delete(`${BASE_URL}/${id}/`);
+  return data;
 };

@@ -1,5 +1,5 @@
 import { Search, X } from "lucide-react";
-import { ui } from "../../styles/uiClasses";
+import { ui } from "../../styles/ui/uiClasses";
 
 export default function FiltrosTabla({
   searchValue,
@@ -32,9 +32,11 @@ export default function FiltrosTabla({
               onChange={(e) => filter.onChange(e.target.value)}
               className={ui.filters.select}
             >
-              <option value="">
-                {filter.placeholder}
-              </option>
+              {filter.placeholder && (
+                <option value="">
+                  {filter.placeholder}
+                </option>
+              )}
 
               {filter.options.map((opt) => (
                 <option

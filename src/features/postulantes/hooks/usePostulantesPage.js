@@ -1,139 +1,141 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { postulantesService } from "../services/postulantesService";
-import { obtenerVisita } from "../services/visitasService";
-import { obtenerExpediente } from "../../expedientes/services/expedientesService";
-import { obtenerEstudios } from "../services/estudiosService";
+import { useState, useMemo } from "react";
+import { usePostulantes } from "../hooks/usePostulantes";
+import { useVisitas } from "../hooks/useVisitas";
+import { useEstudios } from "../hooks/useEstudios";
 
 export const usePostulantesPage = () => {
-  const [allData, setAllData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     visita: "todos",
     estudio: "todos",
-    decision: "todos"
+    decision: "todos",
   });
+
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
   const PAGE_SIZE = 4;
+
+  // ========================
+  // DATA
+  // ========================
+  const { data: postulantes = [], isLoading, error } = usePostulantes();
+  const { data: visitas = [] } = useVisitas();
+  const { data: estudios = [] } = useEstudios();
+
+  // ========================
+  // FILTERS
+  // ========================
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
-  const fetchPostulantes = useCallback(async () => {
-    setLoading(true);
-    setError(null);
 
-    try {
-      const [resPostulantes, resVisitas, resExpedientes, resEstudios] = await Promise.all([
-        postulantesService.obtenerPostulantes(),
-        obtenerVisita(),
-        obtenerExpediente(),
-        obtenerEstudios()
-      ]);
+  // ========================
+  // NORMALIZACIÓN + JOIN
+  // ========================
+  const allData = useMemo(() => {
+    const listaPostulantes = Array.isArray(postulantes)
+      ? postulantes
+      : postulantes?.results || [];
 
-      const listaEstudios = Array.isArray(resEstudios)
-        ? resEstudios
-        : resEstudios.results || [];
+    const listaVisitas = Array.isArray(visitas)
+      ? visitas
+      : [];
 
-      const listaPostulantes = Array.isArray(resPostulantes)
-        ? resPostulantes
-        : resPostulantes.results || [];
+    const listaEstudios = Array.isArray(estudios)
+      ? estudios
+      : estudios?.results || [];
 
-      const listaVisitas = Array.isArray(resVisitas)
-        ? resVisitas
-        : [];
+    return listaPostulantes.map((postulante) => {
+      const expediente = postulante.id_expediente || null;
 
-      const listaExpedientes = Array.isArray(resExpedientes)
-        ? resExpedientes
-        : resExpedientes.results || [];
+      const visita = listaVisitas.find(
+        (v) => v.id_postulante === postulante.id_postulante
+      );
 
-      const datosCombinados = listaPostulantes.map((postulante) => {
-        const expedienteId =
-          typeof postulante.id_expediente === "object"
-            ? postulante.id_expediente?.id_expediente
-            : postulante.id_expediente;
+      const estudio = listaEstudios.find(
+        (e) =>
+          String(e.id_expediente) ===
+          String(expediente?.id_expediente || expediente)
+      );
 
-        const expediente = listaExpedientes.find(
-          (e) => String(e.id_expediente) === String(expedienteId)
-        );
+      const familia = expediente?.familia || [];
+      const tutor = familia.find((f) => f.es_tutor_principal);
 
-        const visita = listaVisitas.find(
-          (v) => v.id_postulante === postulante.id_postulante
-        );
+      return {
+        ...postulante,
 
-        const estudio = listaEstudios.find(
-          (est) => String(est.id_expediente) === String(expedienteId)
-        );
+        expediente,
 
-        const familia =
-          expediente?.familia ||
-          postulante.id_expediente?.familia ||
-          [];
+        // visita
+        id_visita: visita?.id_visita || null,
+        fecha_visita: visita?.fecha_visita || null,
+        estado_visita: visita?.estado_visita || "No agendada",
+        nota_visita: visita?.nota_visita || "",
 
-        const tutor = familia.find(
-          (f) => f.es_tutor_principal === true
-        );
+        // estudio
+        estatus_estudio: estudio?.estatus_estudio || "Pendiente",
+        nivel_escolar_inicial: estudio?.nivel_escolar_inicial || "--",
+        grado_escolar_inicial: estudio?.grado_escolar_inicial || "--",
 
-        return {
-          ...postulante,
-          expediente: expediente || postulante.id_expediente,
-          // visita
-          id_visita: visita?.id_visita || null,
-          fecha_visita: visita?.fecha_visita || null,
-          estado_visita: visita?.estado_visita || "No agendada",
-          nota_visita: visita?.nota_visita || "",
-          estatus_estudio: estudio?.estatus_estudio || "Pendiente",
-          // tutor
-          tutor_nombre: tutor
-            ? `${tutor.nombre} ${tutor.apellido_p} ${tutor.apellido_m || ""}`
-            : "--",
-          tutor_telefono: tutor?.telefono || "--",
-          nivel_escolar_inicial: estudio?.nivel_escolar_inicial || "--",
-          grado_escolar_inicial: estudio?.grado_escolar_inicial || "--"
-        };
-      });
-      setAllData(datosCombinados);
-    } catch (err) {
-      console.error("Error en la carga de datos:", err);
-      setError(err.message || "Error al obtener la lista");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        // tutor
+        tutor_nombre: tutor
+          ? `${tutor.nombre} ${tutor.apellido_p} ${tutor.apellido_m || ""}`
+          : "--",
+        tutor_telefono: tutor?.telefono || "--",
+      };
+    });
+  }, [postulantes, visitas, estudios]);
 
-  useEffect(() => {
-    fetchPostulantes();
-  }, [fetchPostulantes]);
-
+  // ========================
+  // SEARCH + FILTERS
+  // ========================
   const filteredPostulantes = useMemo(() => {
     const searchLower = search.toLowerCase();
+
     return allData.filter((p) => {
-      //filtro de busqueda
-      const nombrePostulante = `${p.expediente?.nombre || ""} ${p.expediente?.apellido_p || ""}`.toLowerCase();
-      const matchSearch = nombrePostulante.includes(searchLower) || (p.tutor_nombre || "").toLowerCase().includes(searchLower);
-      //filtro de Visita 
-      const matchVisita = filters.visita === "todos" || p.estado_visita?.toLowerCase() === filters.visita.toLowerCase();
-      //filtro de Estudio 
-      const matchEstudio = filters.estudio === "todos" || p.estatus_estudio?.toLowerCase() === filters.estudio.toLowerCase();
-      //filtro de Decision
-      const matchDecision = filters.decision === "todos" || p.estatus_postulante?.toLowerCase() === filters.decision.toLowerCase();
+      const nombrePostulante =
+        `${p.expediente?.nombre || ""} ${p.expediente?.apellido_p || ""}`
+          .toLowerCase();
+
+      const matchSearch =
+        nombrePostulante.includes(searchLower) ||
+        (p.tutor_nombre || "").toLowerCase().includes(searchLower);
+
+      const matchVisita =
+        filters.visita === "todos" ||
+        p.estado_visita?.toLowerCase() === filters.visita.toLowerCase();
+
+      const matchEstudio =
+        filters.estudio === "todos" ||
+        p.estatus_estudio?.toLowerCase() === filters.estudio.toLowerCase();
+
+      const matchDecision =
+        filters.decision === "todos" ||
+        p.estatus_postulante?.toLowerCase() === filters.decision.toLowerCase();
+
       return matchSearch && matchVisita && matchEstudio && matchDecision;
     });
   }, [allData, search, filters]);
 
+  // ========================
+  // PAGINACIÓN
+  // ========================
   const totalPages = Math.ceil(filteredPostulantes.length / PAGE_SIZE);
-  useEffect(() => {
-    if (currentPage > totalPages && totalPages > 0) {
-      setCurrentPage(totalPages);
-    }
-  }, [totalPages, currentPage]);
 
   const paginatedPostulantes = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredPostulantes.slice(start, start + PAGE_SIZE);
   }, [filteredPostulantes, currentPage]);
 
+  // ajuste de página
+  if (currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(totalPages);
+  }
+
+  // ========================
+  // ACTIONS
+  // ========================
   const handleSearchChange = (value) => {
     setSearch(value);
     setCurrentPage(1);
@@ -141,24 +143,31 @@ export const usePostulantesPage = () => {
 
   const handleClearFilters = () => {
     setSearch("");
-    setFilters({ visita: "todos", estudio: "todos", decision: "todos" });
+    setFilters({
+      visita: "todos",
+      estudio: "todos",
+      decision: "todos",
+    });
     setCurrentPage(1);
   };
 
   return {
     postulantes: paginatedPostulantes,
     totalCount: filteredPostulantes.length,
-    loading,
+
+    loading: isLoading,
     error,
-    fetchPostulantes,
+
     search,
     handleSearchChange,
     handleClearFilters,
+
     currentPage,
     totalPages,
     setCurrentPage,
-    PAGE_SIZE, filters,
-    handleFilterChange,
+    PAGE_SIZE,
 
+    filters,
+    handleFilterChange,
   };
 };

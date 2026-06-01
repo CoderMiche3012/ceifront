@@ -1,180 +1,104 @@
 import API from "../../../config/apiClient";
-const BASE_URL = "/api/beneficiarios/expedientes";
-const BASE_URL2 = "/api/beneficiarios/direcciones";
-import { formatErrorAnidado } from "../../../utils/errorHandlers";
 import sepomex from "../../../data/sepomex_oaxaca.json";
 
-export const obtenerExpediente = async () => {
-  try {
-    const res = await API.get(`${BASE_URL}/`);
-    return res.data;
-  } catch (error) {
-    console.log(error);
+const BASE_URL = "/api/beneficiarios/expedientes";
+const DIRECCION_URL = "/api/beneficiarios/direcciones";
 
-    const mensaje = formatErrorAnidado(
-      error.response?.data || error.message
-    );
-
-    throw {
-      ...error,
-      message: mensaje,
-    };
-  }
+// obtener expedientes
+export const obtenerExpedientes = async () => {
+  const { data } = await API.get(`${BASE_URL}/`);
+  return Array.isArray(data) ? data : data?.data ?? [];
 };
 
-export const crearExpediente = async (data) => {
-  try {
-    const res = await API.post(`${BASE_URL}/`, data);
-    return res.data;
-  } catch (error) {
-    throw error;
-  }
+// obtener expediente por id
+export const obtenerExpedientePorId = async (id) => {
+  const { data } = await API.get(`${BASE_URL}/${id}/`);
+  return data;
 };
 
-export const actualizarExpediente = async (id, payload) => {
-  try {
-    const res = await API.patch(`${BASE_URL}/${id}/`, payload);
-    return res.data;
-  } catch (error) {
-    throw error;
-  }
+// crear expediente
+export const crearExpediente = async (payload) => {
+  const { data } = await API.post( `${BASE_URL}/`, payload);
+  return data;
 };
 
-export const actualizarDireccion = async (id, payload) => {
-  try {
-    const res = await API.patch(`${BASE_URL2}/${id}/`, payload);
-    return res.data;
-  } catch (error) {
-    throw error;
-  }
+// actualizar expediente
+export const actualizarExpediente = async ( id, payload ) => {
+  const { data } = await API.patch( `${BASE_URL}/${id}/`, payload );
+  return data;
 };
 
-export const obtenerExpedienteIndividual = async (id) => {
-  try {
-    const res = await API.get(`${BASE_URL}/${id}/`);
-    return res.data;
-  } catch (error) {
-    console.log(error);
-
-    const mensaje = formatErrorAnidado(
-      error.response?.data || error.message
-    );
-
-    throw {
-      ...error,
-      message: mensaje,
-    };
-  }
-};
+// eliminar expediente
 export const eliminarExpediente = async (id) => {
-  try {
-    const res = await API.delete(`${BASE_URL}/${id}/`);
-    return res.data;
-  } catch (error) {
-    console.log(error);
-
-    const mensaje = formatErrorAnidado(
-      error.response?.data || error.message
-    );
-
-    throw {
-      ...error,
-      message: mensaje,
-    };
-  }
+  const { data } = await API.delete( `${BASE_URL}/${id}/` );
+  return data;
 };
 
-export const obtenerDireccion = async () => {
-  try {
-    const res = await API.get(`${BASE_URL2}/`);
-    return res.data;
-  } catch (error) {
-    console.log(error);
-
-    const mensaje = formatErrorAnidado(
-      error.response?.data || error.message
-    );
-
-    throw {
-      ...error,
-      message: mensaje,
-    };
-  }
+// obtener direcciones
+export const obtenerDirecciones = async () => {
+  const { data } = await API.get( `${DIRECCION_URL}/`);
+  return Array.isArray(data) ? data : data?.data ?? [];
 };
 
+// actualizar dirección
+export const actualizarDireccion = async ( id, payload ) => {
+  const { data } = await API.patch( `${DIRECCION_URL}/${id}/`, payload );
+  return data;
+};
+
+// eliminar dirección
+export const eliminarDireccion = async ( id ) => {
+  const { data } = await API.delete( `${DIRECCION_URL}/${id}/` );
+  return data;
+};
+
+// buscar dirección por CP en BD
 export const buscarDireccionPorCP = async (cp) => {
-  try {
-    const direcciones = await obtenerDireccion();
+  const direcciones = await obtenerDirecciones();
 
-    const coincidencias = direcciones.filter(
-      (d) => d.cp === cp
-    );
-
-    if (coincidencias.length > 0) {
-      return {
-        municipio: coincidencias[0].municipio,
-        colonias: [
-          ...new Set(
-            coincidencias.map((d) => d.colonia)
-          ),
-        ],
-        source: "db",
-      };
-    }
-
-    return null;
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
-};
-
-export const buscarCPCompleto = async (cp) => {
-
-  try {
-
-    const coincidencias = sepomex.filter(
-      (d) =>
-        String(d.d_codigo).trim() ===
-        String(cp).trim()
-    );
-
-    if (coincidencias.length === 0) {
-
-      return {
-        municipio: "",
-        estado: "",
-        colonias: [],
-      };
-    }
-
+  const coincidencias = direcciones.filter( (d) => String(d.cp).trim() === String(cp).trim() );
+  if (coincidencias.length > 0) {
     return {
-
-      municipio:
-        coincidencias[0].D_mnpio,
-
-      estado:
-        coincidencias[0].d_estado,
+      municipio: coincidencias[0].municipio,
 
       colonias: [
-
         ...new Set(
-          coincidencias.map(
-            (d) => d.d_asenta
-          )
+          coincidencias.map((d) => d.colonia)
         ),
-
       ],
+
+      source: "db",
     };
+  }
 
-  } catch (error) {
+  return null;
+};
 
-    console.log(error);
+// buscar CP en SEPOMEX
+export const buscarCPCompleto = async (cp) => {
+  const coincidencias = sepomex.filter(
+    (d) => String(d.d_codigo).trim() === String(cp).trim()
+  );
 
+  if (coincidencias.length === 0) {
     return {
       municipio: "",
       estado: "",
       colonias: [],
     };
   }
+
+  return {
+    municipio: coincidencias[0].D_mnpio,
+
+    estado: coincidencias[0].d_estado,
+
+    colonias: [
+      ...new Set(
+        coincidencias.map(
+          (d) => d.d_asenta
+        )
+      ),
+    ],
+  };
 };

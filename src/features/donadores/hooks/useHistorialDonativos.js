@@ -1,203 +1,224 @@
 import { useEffect, useMemo, useState } from "react";
-import { obtenerDonativos, crearDonativo, actualizarDonativo, } from "../services/donativosService";
-import { obtenerPeriodos } from "../../periodos/services/periodoService";
-import { obtenerDonadorIndividual } from "../services/donadoresService";
+import { useDonativos, useCrearDonativo, useActualizarDonativo, } from "./useDonativos";
+import { usePeriodos } from "../../periodos/hooks/usePeriodos";
 
 const PAGE_SIZE = 2;
 
 export default function useHistorialDonativos(data) {
-    const [donativos, setDonativos] = useState([]);
-    const [periodos, setPeriodos] = useState([]);
-    const [modalConf, setModalConf] = useState({ open: false, data: null });
-    const [modalRes, setModalRes] = useState({
-        open: false,
-        type: "success",
-        title: "",
-        message: "",
-    });
-    const [loading, setLoading] = useState(false);
-    const [openId, setOpenId] = useState(null);
-    const [pages, setPages] = useState({});
-    const [searchByPeriodo, setSearchByPeriodo] = useState({});
-    const [showModal, setShowModal] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [showModalEditar, setShowModalEditar] = useState(false);
-    const [donativoEditando, setDonativoEditando] = useState(null);
-    const [errorForm, setErrorForm] = useState("");
-    const [form, setForm] = useState({
-        id_donador: "",
-        id_periodo: "",
-        concepto: "",
-        monto: "",
-        fecha: "",
-        moneda: "MXN",
+
+  const { data: donativosData = [], isLoading, } = useDonativos();
+  const { data: periodos = [], } = usePeriodos();
+  const crearMutation = useCrearDonativo();
+  const actualizarMutation = useActualizarDonativo();
+
+  const [modalConf, setModalConf] =
+    useState({
+      open: false,
+      data: null,
     });
 
-    useEffect(() => {
-        cargarDatos();
-    }, []);
+  const [modalRes, setModalRes] =
+    useState({
+      open: false,
+      type: "success",
+      title: "",
+      message: "",
+    });
 
-    useEffect(() => {
-        if (periodos.length > 0) {
-            const ordenados = [...periodos].sort(
-                (a, b) => new Date(b.fecha_inicio) - new Date(a.fecha_inicio)
-            );
-            setOpenId(ordenados[0]?.id_periodo);
-        }
+  const [openId, setOpenId] = useState(null);
+  const [pages, setPages] = useState({});
+  const [searchByPeriodo, setSearchByPeriodo,] = useState({});
+  const [showModal, setShowModal] = useState(false);
+  const [showModalEditar, setShowModalEditar,] = useState(false);
+  const [donativoEditando, setDonativoEditando,] = useState(null);
+  const [errorForm, setErrorForm] = useState("");
+
+  const [form, setForm] =
+    useState({
+      id_donador: "",
+      id_periodo: "",
+      concepto: "",
+      monto: "",
+      fecha: "",
+      moneda: "MXN",
+    });
+
+  const loading = isLoading || crearMutation.isPending || actualizarMutation.isPending;
+
+  const donativos =
+    useMemo(() => {
+      return donativosData.filter(
+        (item) => Number(item.id_donador) === Number(data?.id_donador)
+      );
+    }, [donativosData, data,]);
+
+  const periodosOrdenados =
+    useMemo(() => {
+      return [...periodos].sort(
+        (a, b) => new Date(b.fecha_inicio) - new Date(a.fecha_inicio)
+      );
     }, [periodos]);
 
-    const cargarDatos = async () => {
-        try {
-            const [resDonativos, resPeriodos] = await Promise.all([
-                obtenerDonativos(),
-                obtenerPeriodos(),
-            ]);
+  useEffect(() => {
+    if (periodosOrdenados.length > 0 && openId === null) {
+      setOpenId(periodosOrdenados[0].id_periodo);
+    }
+  }, [periodosOrdenados]);
 
-            const filtrados = (resDonativos || []).filter(
-                (item) => Number(item.id_donador) === Number(data?.id_donador)
-            );
+  const abrirModal = ( periodo ) => {
+    setErrorForm("");
+    setForm({
+      id_donador: data?.id_donador,
+      id_periodo: periodo.id_periodo,
+      concepto: "",
+      monto: "",
+      fecha: "",
+      moneda: "MXN",
+    });
+    setShowModal(true);
+  };
 
-            setDonativos(filtrados);
-            setPeriodos(resPeriodos || []);
-        } catch (error) {
-        }
-    };
+  const abrirModalEditar = ( donativo ) => {
+    setErrorForm("");
+    setDonativoEditando( donativo );
+    setForm({
+      id_donador: donativo.id_donador,
+      id_periodo: donativo.id_periodo,
+      concepto: donativo.concepto,
+      monto: donativo.monto,
+      fecha: donativo.fecha,
+      moneda: donativo.moneda || "MXN",
+    });
+    setShowModalEditar(
+      true
+    );
+  };
 
-    const abrirModal = (periodo) => {
-        setErrorForm("");
-        setForm({
-            id_donador: data?.id_donador,
-            id_periodo: periodo.id_periodo,
-            concepto: "",
-            monto: "",
-            fecha: "",
-            moneda: "MXN",
-        });
-        setShowModal(true);
-    };
+  const cerrarModal = () => {
+    setShowModal(false);
+    setErrorForm("");
+  };
 
-    const abrirModalEditar = (donativo) => {
+  const handleSubmitClick = ( tipo ) => {
+    if ( data?.estatus?.toLowerCase() === "inactivo" ) {
+      setErrorForm( "No se pueden registrar nuevos donativos para un donador inactivo." );
+      return;
+    }
 
-        setErrorForm("");
-        setDonativoEditando(donativo);
-        setForm({
-            id_donador: donativo.id_donador,
-            id_periodo: donativo.id_periodo,
-            concepto: donativo.concepto,
-            monto: donativo.monto,
-            fecha: donativo.fecha,
-            moneda: donativo.moneda || "MXN",
-        });
-        setShowModalEditar(true);
-    };
+    if ( !form.concepto || !form.monto || !form.fecha ) {
+      setErrorForm( "Todos los campos son obligatorios para registrar el donativo." );
+      return;
+    }
+    setErrorForm("");
+    setModalConf({
+      open: true,
+      data: tipo,
+    });
+  };
 
-    const cerrarModal = () => {
-        setShowModal(false);
-        setErrorForm("");
-    };
-
-    const handleSubmitClick = (tipo) => {
-        if (data?.estatus?.toLowerCase() === "inactivo") {
-            setErrorForm(
-                "No se pueden registrar nuevos donativos para un donador inactivo."
-            );
-            return;
-        }
-        if (!form.concepto || !form.monto || !form.fecha) {
-            setErrorForm("Todos los campos son obligatorios para registrar el donativo.");
-            return;
-        }
-        setErrorForm("");
-        setModalConf({ open: true, data: tipo });
-    };
-
-    const handleConfirmarGuardado = async () => {
-        setLoading(true);
-        try {
-            if (modalConf.data === "CREAR") {
-                await crearDonativo({
-                    id_donador: form.id_donador,
-                    id_periodo: form.id_periodo,
-                    concepto: form.concepto,
-                    monto: Number(Number(form.monto).toFixed(3)),
-                    fecha: form.fecha,
-                    moneda: form.moneda,
-                });
-                cerrarModal();
-            } else {
-                await actualizarDonativo(donativoEditando.id_donativo, {
-                    concepto: form.concepto,
-                    monto: Number(Number(form.monto).toFixed(3)),
-                    fecha: form.fecha,
-                    moneda: form.moneda,
-                });
-                setShowModalEditar(false);
+  const handleConfirmarGuardado =
+    async () => {
+      try {
+        if ( modalConf.data === "CREAR" ) {
+          await crearMutation.mutateAsync(
+            {
+              ...form,
+              monto: Number( Number( form.monto ).toFixed( 3 ) ),
             }
+          );
 
-            await cargarDatos();
-
-            setModalConf({ open: false, data: null });
-            setModalRes({
-                open: true,
-                type: "success",
-                title: "¡Éxito!",
-                message: "El donativo se ha guardado correctamente.",
-            });
-        } catch {
-            setModalConf({ open: false, data: null });
-            setModalRes({
-                open: true,
-                type: "error",
-                title: "Error",
-                message: "No se pudo procesar la solicitud.",
-            });
-        } finally {
-            setLoading(false);
+          cerrarModal();
+        } else {
+          await actualizarMutation.mutateAsync(
+            {
+              id: donativoEditando.id_donativo,
+              data: {
+                concepto: form.concepto,
+                monto: Number( Number( form.monto ).toFixed( 3 ) ),
+                fecha: form.fecha,
+                moneda: form.moneda,
+              },
+            }
+          );
+          setShowModalEditar( false );
         }
+
+        setModalConf({
+          open: false,
+          data: null,
+        });
+
+        setModalRes({
+          open: true,
+          type: "success",
+          title: "¡Éxito!",
+          message: "El donativo se ha guardado correctamente.",
+        });
+      } catch {
+        setModalConf({
+          open: false,
+          data: null,
+        });
+
+        setModalRes({
+          open: true,
+          type: "error",
+          title: "Error",
+          message: "No se pudo procesar la solicitud.",
+        });
+      }
     };
 
-    const periodosOrdenados = useMemo(() => {
-        return [...periodos].sort(
-            (a, b) => new Date(b.fecha_inicio) - new Date(a.fecha_inicio)
-        );
-    }, [periodos]);
+  const changePage = ( idPeriodo, page ) => {
+    setPages((prev) => ({
+      ...prev,
+      [idPeriodo]: page,
+    }));
+  };
 
-    const changePage = (idPeriodo, page) => {
-        setPages((prev) => ({ ...prev, [idPeriodo]: page }));
-    };
+  const handleSearchChange = ( idPeriodo, value ) => {
+    setSearchByPeriodo(
+      (prev) => ({
+        ...prev,
+        [idPeriodo]: value,
+      })
+    );
+  };
 
-    const handleSearchChange = (idPeriodo, value) => {
-        setSearchByPeriodo((prev) => ({ ...prev, [idPeriodo]: value }));
-    };
+  return {
+    PAGE_SIZE,
 
-    return {
-        donativos,
-        periodosOrdenados,
-        modalConf,
-        modalRes,
-        loading,
-        openId,
-        pages,
-        searchByPeriodo,
-        showModal,
-        showModalEditar,
-        saving,
-        form,
+    donativos,
+    periodosOrdenados,
 
-        setOpenId,
-        setModalConf,
-        setModalRes,
-        setShowModalEditar,
-        setForm,
+    modalConf,
+    modalRes,
 
-        abrirModal,
-        abrirModalEditar,
-        cerrarModal,
-        handleSubmitClick,
-        handleConfirmarGuardado,
-        changePage,
-        handleSearchChange,
-        errorForm,
-        setErrorForm
-    };
+    loading,
+    openId,
+
+    pages,
+    searchByPeriodo,
+
+    showModal,
+    showModalEditar,
+
+    form,
+    errorForm,
+
+    setOpenId,
+    setModalConf,
+    setModalRes,
+    setShowModalEditar,
+    setForm,
+    setErrorForm,
+
+    abrirModal,
+    abrirModalEditar,
+    cerrarModal,
+    handleSubmitClick,
+    handleConfirmarGuardado,
+    changePage,
+    handleSearchChange,
+  };
 }

@@ -1,9 +1,10 @@
-export const guardarSesionLocal = ({ usuario, access, refresh }) => {
-  localStorage.setItem("user", JSON.stringify(usuario));
+export const guardarSesionLocal = ({ access, refresh }) => {
   localStorage.setItem("access", access);
   localStorage.setItem("refresh", refresh);
 };
-
+export const guardarUsuarioLocal = (usuario) => {
+  localStorage.setItem( "user", JSON.stringify(usuario) );
+};
 export const obtenerAccessToken = () =>
   localStorage.getItem("access");
 

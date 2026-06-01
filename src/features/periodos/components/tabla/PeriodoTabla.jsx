@@ -1,6 +1,6 @@
 import DatosTabla from "../../../../components/tablas/DatosTabla";
-import InsigniaEstatus from "../../../usuarios/components/insignias/InsigniaEstatus";
-import { ui } from "../../../../styles/uiClasses";
+import Insignia from "../../../../components/ui/Insignia";
+import { ui } from "../../../../styles/ui/uiClasses";
 
 // columnas de periodos
 const columns = [
@@ -37,7 +37,7 @@ export default function PeriodoTabla({ periodos }) {
 
       case "estado":
         return (
-          <InsigniaEstatus status={periodo.estado ? "Activo" : "Inactivo"} />
+          <Insignia status={periodo.estado ? "Activo" : "Inactivo"} />
         );
 
       default:

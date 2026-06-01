@@ -1,27 +1,30 @@
 import { useState } from "react";
-import {crearPeriodo,actualizarPeriodo,obtenerPeriodos,eliminarPeriodo,} from "../services/periodoService";
-import {obtenerSeguimientos,crearSeguimiento,eliminarSeguimiento,} from "../../beneficiarios/services/seguimientoService";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePeriodos, useCrearPeriodo, useActualizarPeriodo, useEliminarPeriodo, } from "./usePeriodos";
+import {useSeguimientos, useCrearSeguimiento,useEliminarSeguimiento, } from "../../beneficiarios/hooks/seguimiento/useSeguimientos";
+import { useCrearDatosEscolares, } from "../../beneficiarios/hooks/seguimiento/useDatosEscolaresK";
 
-import {crearDatosEscolaresInd,} from "../../beneficiarios/services/escuelaService";
-
-export const usePeriodoCrearForm = (
-  onSuccess,
-  onClose
-) => {
-
+export const usePeriodoCrearForm = (onSuccess, onClose) => {
+  // para obtener todos los periodos y seguimientos
+  const { data: periodosActuales = [] } = usePeriodos();
+  const { data: seguimientos = [] } = useSeguimientos();
+  //mutaciones
+  const crearPeriodoMutation = useCrearPeriodo();
+  const actualizarPeriodoMutation = useActualizarPeriodo();
+  const eliminarPeriodoMutation = useEliminarPeriodo();
+  const crearSeguimientoMutation = useCrearSeguimiento();
+  const eliminarSeguimientoMutation = useEliminarSeguimiento();
+  const crearDatosEscolaresMutation = useCrearDatosEscolares();
+  //inicial
   const [form, setForm] = useState({
     ciclo_escolar: "",
     fecha_inicio: "",
     fecha_fin: "",
   });
-
+  //estados iniciales
   const [error, setError] = useState("");
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [showConfirm, setShowConfirm] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const [resultModal, setResultModal] =
     useState({
@@ -30,6 +33,7 @@ export const usePeriodoCrearForm = (
       title: "",
       message: "",
     });
+  // map de escolaridades
   const escolaridades = [
     {
       id_escolaridad: 1,
@@ -146,13 +150,10 @@ export const usePeriodoCrearForm = (
       nivel_escolar: "Universidad",
     },
   ];
-
+ // validacion inicial
   const handlePreSubmit = (e) => {
-
     e.preventDefault();
-
     setError("");
-
     if (
       !form.ciclo_escolar.trim() ||
       !form.fecha_inicio ||
@@ -198,9 +199,6 @@ export const usePeriodoCrearForm = (
     const seguimientosCreados = [];
 
     try {
-
-      const periodosActuales =
-        await obtenerPeriodos();
 
       const nombreNuevo =
         form.ciclo_escolar
@@ -257,58 +255,46 @@ export const usePeriodoCrearForm = (
 
       if (periodoAnterior) {
 
-        await actualizarPeriodo(
-          periodoAnterior.id_periodo,
-          {
+        await actualizarPeriodoMutation.mutateAsync({
+          id: periodoAnterior.id_periodo,
+          data: {
             ...periodoAnterior,
             estado: 0,
-          }
-        );
-      }
-      nuevoPeriodo =
-        await crearPeriodo({
-          ...form,
-          ciclo_escolar:
-            form.ciclo_escolar.trim(),
-          estado: 1,
+          },
         });
+      }
+      nuevoPeriodo = await crearPeriodoMutation.mutateAsync({
+        ...form,
+        ciclo_escolar: form.ciclo_escolar.trim(),
+        estado: 1,
+      });
 
-      const seguimientos =
-        await obtenerSeguimientos();
       const seguimientosActivos =
         seguimientos.filter(
           (s) =>
             s.id_periodo ===
-              periodoAnterior?.id_periodo &&
+            periodoAnterior?.id_periodo &&
             s.estatus === "Activo"
         );
 
       for (const seg of seguimientosActivos) {
 
-        const existe =
-          seguimientos.some(
-            (s) =>
-              s.id_beneficiario ===
-                seg.id_beneficiario &&
-              s.id_periodo ===
-                nuevoPeriodo.id_periodo
-          );
+        const existe = seguimientosActivos.some(
+          (s) =>
+            s.id_beneficiario ===
+            seg.id_beneficiario &&
+            s.id_periodo ===
+            nuevoPeriodo.id_periodo
+        );
 
         if (existe) continue;
 
-        const nuevoSeguimiento =
-          await crearSeguimiento({
-            id_beneficiario:
-              seg.id_beneficiario,
-
-            id_periodo:
-              nuevoPeriodo.id_periodo,
-
-            estatus: "Activo",
-
-            nota_seguimiento:
-              "Seguimiento creado automáticamente",
-          });
+        const nuevoSeguimiento = await crearSeguimientoMutation.mutateAsync({
+          id_beneficiario: seg.id_beneficiario,
+          id_periodo: nuevoPeriodo.id_periodo,
+          estatus: "Activo",
+          nota_seguimiento: "Seguimiento creado automáticamente",
+        });
 
         seguimientosCreados.push(
           nuevoSeguimiento.id_seguimiento
@@ -343,37 +329,15 @@ export const usePeriodoCrearForm = (
             escolaridadFinal?.nivel_escolar
           );
 
-          await crearDatosEscolaresInd({
-
-            id_seguimiento:
-              nuevoSeguimiento.id_seguimiento,
-
-            id_escolaridad:
-              escolaridadFinal?.id_escolaridad,
-
-            id_institucion:
-              seg.datos_escolares
-                .id_institucion
-                ?.id_institucion,
-
-            grupo:
-              seg.datos_escolares.grupo,
-
-            especialidad:
-              seg.datos_escolares
-                .especialidad,
-
-            turno:
-              seg.datos_escolares.turno,
-
-            modalidad_educativa:
-              esBasica
-                ? "ANUAL"
-                : "SEMESTRAL",
-
-            nota_escolar:
-              seg.datos_escolares
-                .nota_escolar || "",
+          await crearDatosEscolaresMutation.mutateAsync({
+            id_seguimiento: nuevoSeguimiento.id_seguimiento,
+            id_escolaridad: escolaridadFinal?.id_escolaridad,
+            id_institucion: seg.datos_escolares.id_institucion?.id_institucion,
+            grupo: seg.datos_escolares.grupo,
+            especialidad: seg.datos_escolares.especialidad,
+            turno: seg.datos_escolares.turno,
+            modalidad_educativa: esBasica ? "ANUAL" : "SEMESTRAL",
+            nota_escolar: seg.datos_escolares.nota_escolar || "",
           });
         }
       }
@@ -398,26 +362,23 @@ export const usePeriodoCrearForm = (
 
         await Promise.all(
           seguimientosCreados.map((id) =>
-            eliminarSeguimiento(id)
+            eliminarSeguimientoMutation.mutateAsync(id)
           )
         );
 
         if (nuevoPeriodo?.id_periodo) {
-
-          await eliminarPeriodo(
-            nuevoPeriodo.id_periodo
-          );
+          await eliminarPeriodoMutation.mutateAsync(nuevoPeriodo.id_periodo);
         }
 
         if (periodoAnterior) {
 
-          await actualizarPeriodo(
-            periodoAnterior.id_periodo,
-            {
+          await actualizarPeriodoMutation.mutateAsync({
+            id: periodoAnterior.id_periodo,
+            data: {
               ...periodoAnterior,
               estado: 1,
-            }
-          );
+            },
+          });
         }
 
       } catch (rollbackError) {
@@ -444,19 +405,16 @@ export const usePeriodoCrearForm = (
   };
 
   const handleFinalClose = () => {
+  setResultModal((prev) => ({
+    ...prev,
+    open: false,
+  }));
 
-    setResultModal({
-      ...resultModal,
-      open: false,
-    });
-
-    if (resultModal.type === "success") {
-
-      onSuccess();
-
-      onClose();
-    }
-  };
+  if (resultModal.type === "success") {
+    onSuccess?.();
+    onClose?.();   
+  }
+};
 
   return {
     form,

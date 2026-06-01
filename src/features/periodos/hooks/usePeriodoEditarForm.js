@@ -1,7 +1,14 @@
 import { useState, useEffect } from "react";
-import { actualizarPeriodo, obtenerPeriodos } from "../services/periodoService";
+import { useQueryClient } from "@tanstack/react-query";
+
+import { usePeriodos, useActualizarPeriodo, } from "./usePeriodos";
 
 export const usePeriodoEditarForm = (periodo, onSuccess, onClose) => {
+  // estados iniciales y mutaciones
+  const actualizarPeriodoMutation = useActualizarPeriodo();
+  const queryClient = useQueryClient();
+  const periodosActuales =
+    queryClient.getQueryData(["periodos"]) || [];
   const [form, setForm] = useState({
     ciclo_escolar: "",
     fecha_inicio: "",
@@ -12,11 +19,11 @@ export const usePeriodoEditarForm = (periodo, onSuccess, onClose) => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [resultModal, setResultModal] = useState({ 
-    open: false, 
-    type: "success", 
-    title: "", 
-    message: "" 
+  const [resultModal, setResultModal] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: ""
   });
 
   // Sincronizar el formulario cuando el periodo llega o cambia
@@ -57,13 +64,12 @@ export const usePeriodoEditarForm = (periodo, onSuccess, onClose) => {
     setError("");
 
     try {
-      const periodosActuales = await obtenerPeriodos();
       const nombreNuevo = form.ciclo_escolar.trim().toLowerCase();
       const idActual = periodo.id_periodo;
 
       // Validar Duplicidad
-      const nombreExiste = periodosActuales.some(p => 
-        p.id_periodo !== idActual && 
+      const nombreExiste = periodosActuales.some(p =>
+        p.id_periodo !== idActual &&
         p.ciclo_escolar.trim().toLowerCase() === nombreNuevo
       );
 
@@ -86,10 +92,14 @@ export const usePeriodoEditarForm = (periodo, onSuccess, onClose) => {
         throw new Error(`Las fechas chocan con el periodo "${conflicto.ciclo_escolar}".`);
       }
 
-      await actualizarPeriodo(idActual, {
-        ...form,
-        ciclo_escolar: form.ciclo_escolar.trim()
+      await actualizarPeriodoMutation.mutateAsync({
+        id: idActual,
+        data: {
+          ...form,
+          ciclo_escolar: form.ciclo_escolar.trim(),
+        },
       });
+
 
       setResultModal({
         open: true,

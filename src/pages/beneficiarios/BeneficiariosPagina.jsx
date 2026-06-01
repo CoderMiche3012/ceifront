@@ -10,16 +10,18 @@ import PaginacionTabla from "../../components/tablas/PaginacionTabla";
 import { useBeneficiariosPage } from "../../features/beneficiarios/hooks/useBeneficiariosPage";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePermissions } from "../../context/PermissionsContext";
-import { hasPermission } from "../../utils/menuPermissions";
+
 
 export default function BeneficiariosPagina() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { permissions } = usePermissions();
-  const canCreate = useMemo(
-    () => hasPermission(permissions, "Crear Beneficiarios"),
-    [permissions]
-  );
+  const {
+    hasModulePermission,
+    loading: isPermsLoading,
+  } = usePermissions();
+
+  const canCreate = hasModulePermission("beneficiarios", "crear");
+
   const {
     filters,
     beneficiarios,

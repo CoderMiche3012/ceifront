@@ -1,12 +1,14 @@
 import { useState, useRef } from "react";
-import { crearFamilia } from "../services/familiaService";
+
+import { useCrearFamilia } from "./useFamilia";
 
 export const useFamiliarForm = (
   expedienteId,
-  onCreated,
+  postulanteId,
   onClose,
-  setResultadoModal
+  setResultadoModal,
 ) => {
+
   const initialState = {
     nombre: "",
     apellido_p: "",
@@ -19,26 +21,73 @@ export const useFamiliarForm = (
     salario: "",
     vive_en_casa: "",
     es_tutor_principal: false,
-    id_expediente: expedienteId
+    id_expediente: expedienteId,
   };
 
-  const [formData, setFormData] = useState(initialState);
-  const [fieldErrors, setFieldErrors] = useState({});
-  const [generalError, setGeneralError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [formData, setFormData] =
+    useState(initialState);
+
+  const [fieldErrors, setFieldErrors] =
+    useState({});
+
+  const [generalError, setGeneralError] =
+    useState("");
+
+  const [confirmOpen, setConfirmOpen] =
+    useState(false);
+
   const fieldRefs = useRef({});
 
+  const crearMutation =
+    useCrearFamilia(
+      expedienteId,
+      postulanteId,
+    );
+
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    let val = type === "checkbox" ? checked : value;
-    if (name === "telefono") val = value.replace(/\D/g, "").slice(0, 10);
-    setFormData(prev => ({ ...prev, [name]: val }));
-    if (fieldErrors[name]) setFieldErrors(prev => ({ ...prev, [name]: "" }));
-    if (generalError) setGeneralError("");
+
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = e.target;
+
+    let val =
+      type === "checkbox"
+        ? checked
+        : value;
+
+    // telefono solo numeros
+    if (name === "telefono") {
+
+      val = value
+        .replace(/\D/g, "")
+        .slice(0, 10);
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: val,
+    }));
+
+    // limpia error del campo
+    if (fieldErrors[name]) {
+
+      setFieldErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+
+    // limpia error general
+    if (generalError) {
+      setGeneralError("");
+    }
   };
 
   const validate = () => {
+
     const required = [
       "nombre",
       "apellido_p",
@@ -47,68 +96,158 @@ export const useFamiliarForm = (
       "telefono",
       "actividad_principal",
       "salario",
-      "vive_en_casa"
+      "vive_en_casa",
     ];
 
-    const faltantes = required.filter(
-      field => !formData[field] || formData[field].toString().trim() === ""
-    );
+    const faltantes =
+      required.filter((field) => {
+
+        const value =
+          formData[field];
+
+        return (
+          value === null ||
+          value === undefined ||
+          value
+            .toString()
+            .trim() === ""
+        );
+      });
 
     if (faltantes.length > 0) {
-      setGeneralError("Faltan campos obligatorios por completar");
+
+      setGeneralError(
+        "Faltan campos obligatorios por completar",
+      );
+
       return false;
     }
 
-    if (formData.telefono && formData.telefono.length !== 10) {
-      setGeneralError("El teléfono debe tener exactamente 10 dígitos");
+    // edad invalida
+    if (
+      Number(formData.edad) < 0
+    ) {
+
+      setGeneralError(
+        "La edad no es válida",
+      );
+
+      return false;
+    }
+
+    // telefono invalido
+    if (
+      formData.telefono &&
+      formData.telefono.length !== 10
+    ) {
+
+      setGeneralError(
+        "El teléfono debe tener exactamente 10 dígitos",
+      );
+
       return false;
     }
 
     setGeneralError("");
+
     return true;
   };
 
   const handleConfirm = async () => {
+
     setConfirmOpen(false);
-    setLoading(true);
+
     try {
+
       const dataFinal = {
         ...formData,
-        edad: Number(formData.edad),
-        vive_en_casa: formData.vive_en_casa === "true",
+
+        edad: Number(
+          formData.edad,
+        ),
+
+        vive_en_casa:
+          formData.vive_en_casa ===
+          "true",
       };
-      const res = await crearFamilia(dataFinal);
-      onCreated(res);
+
+      await crearMutation.mutateAsync(
+        dataFinal,
+      );
+
+      // limpiar formulario
       setFormData(initialState);
 
+      // modal success
       setResultadoModal({
         open: true,
         type: "success",
         title: "Registro exitoso",
-        message: "El familiar fue agregado correctamente."
+        message:
+          "El familiar fue agregado correctamente.",
       });
+
+      // cerrar modal
+      onClose();
+
     } catch (error) {
+
       setResultadoModal({
         open: true,
         type: "error",
         title: "Error al guardar",
-        message: error.message || "No se pudo guardar el familiar."
+        message:
+          error.message ||
+          "No se pudo guardar el familiar.",
       });
+
+      // errores backend
       if (error.response?.data) {
+
         const backendErrors = {};
-        Object.entries(error.response.data).forEach(([key, val]) => {
-          backendErrors[key] = Array.isArray(val) ? val[0] : val;
-        });
-        setFieldErrors(backendErrors);
+
+        Object.entries(
+          error.response.data,
+        ).forEach(
+          ([key, val]) => {
+
+            backendErrors[key] =
+              Array.isArray(val)
+                ? val[0]
+                : val;
+          },
+        );
+
+        setFieldErrors(
+          backendErrors,
+        );
       }
-    } finally {
-      setLoading(false);
     }
   };
 
   return {
-    formData, handleChange, handleConfirm, validate,
-    confirmOpen, setConfirmOpen, loading, fieldErrors,
-    generalError, setGeneralError, fieldRefs
+
+    formData,
+
+    handleChange,
+
+    handleConfirm,
+
+    validate,
+
+    confirmOpen,
+
+    setConfirmOpen,
+
+    loading:
+      crearMutation.isPending,
+
+    fieldErrors,
+
+    generalError,
+
+    setGeneralError,
+
+    fieldRefs,
   };
 };

@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { obtenerExpediente } from "../../expedientes/services/expedientesService";
-import { obtenerBeneficiario } from "../services/beneficiariosService";
-import { obtenerDonador } from "../../donadores/services/donadoresService";
+import { obtenerExpedientes } from "../../expedientes/services/expedientesService";
+import { obtenerBeneficiarios } from "../services/beneficiariosService";
+import { obtenerDonadores } from "../../donadores/services/donadoresService";
 import { obtenerPeriodos } from "../../periodos/services/periodoService";
 
 const INITIAL_FILTERS = {
@@ -28,9 +28,9 @@ export const useBeneficiariosPage = (pageSize = 4) => {
     queryFn: async () => {
       const [beneficiariosRes, expedientesRes, donadoresRes] =
         await Promise.all([
-          obtenerBeneficiario(),
-          obtenerExpediente(),
-          obtenerDonador(),
+          obtenerBeneficiarios(),
+          obtenerExpedientes(),
+          obtenerDonadores(),
         ]);
       const beneficiarios =
         beneficiariosRes?.results || beneficiariosRes || [];

@@ -1,151 +1,181 @@
 import { UserPlus } from "lucide-react";
+import { ui } from "../styles/ui/uiClasses";
+
 import UsuarioTabla from "../features/usuarios/components/tabla/UsuarioTabla";
 import UsuarioFiltros from "../features/usuarios/components/tabla/UsuarioFiltros";
+
 import PaginacionTabla from "../components/tablas/PaginacionTabla";
 import Boton from "../components/ui/Boton";
 import EncabezadoPagina from "../components/shared/EncabezadoPagina";
-import useUsersPage from "../features/usuarios/hooks/useUsersPage";
 import ModalResultado from "../components/shared/ModalResultado";
-import UsuarioEditarModal from "../features/usuarios/components/modales/UsuarioEditarModal";
-import UsuarioVerModal from "../features/usuarios/components/modales/UsuarioVerModal";
-import UsuarioCrearModal from "../features/usuarios/components/modales/UsuarioCrearModal";
 import ModalConfirmacion from "../components/shared/ModalConfirmacion";
-import { hasPermission } from "../utils/menuPermissions"; 
+
+import useUsersPage from "../features/usuarios/hooks/useUsersPage";
+import UsuarioModal from "../features/usuarios/components/modales/UsuarioModal";
 import { usePermissions } from "../context/PermissionsContext";
-import { useMemo } from "react";
 
 export default function UsuariosPagina() {
-  const { permissions, loading: isPermsLoading } = usePermissions();  
   const {
-    //estados de datos
-    PAGE_SIZE, roles, loading, error, filteredUsers, paginatedUsers,
-    //estados de UI
-    search, filters, currentPage, totalPages, selectedUser, userToDeactivate,
-    statusAction, updatingStatus,isSuccessModalOpen, successMessage, 
+    // filtros y paginacion
+    PAGE_SIZE,
+    roles,
+    loading,
+    error,
+    filteredUsers,
+    paginatedUsers,
+    search,
+    filters,
+    currentPage,
+    totalPages,
+    // datos del usuario
+    selectedUser,
+    userToDeactivate,
+    statusAction,
+    updatingStatus,
     //modales
-    isViewModalOpen, isCreateModalOpen, isEditModalOpen, isDeactivateModalOpen,
-    //funciones
-    setCurrentPage, handleSearchChange, handleClearFilters, handleView, 
-    handleEdit, handleDeactivate, handleActivate, handleOpenCreateModal,
-    handleCloseCreateModal, handleCloseEditModal, handleCloseViewModal, handleCloseSuccessModal,
-    handleCloseDeactivateModal, handleConfirmDeactivate, handleUserCreated, handleUserUpdated,
+    isCreateModalOpen,
+    isEditModalOpen,
+    isDeactivateModalOpen,
+    setCurrentPage,
+    handleSearchChange,
+    handleClearFilters,
+    handleEdit,
+    handleDeactivate,
+    handleActivate,
+    handleOpenCreateModal,
+    handleCloseCreateModal,
+    handleCloseEditModal,
+    handleCloseDeactivateModal,
+    handleConfirmDeactivate,
+    handleUserCreated,
+    handleUserUpdated,
+    result,
+    setResult,
+    handleNoChanges
   } = useUsersPage();
-  
-  const canCreate = useMemo(() => hasPermission(permissions, "Crear Usuarios"), [permissions]);
-  const canEdit = useMemo(() => hasPermission(permissions, "Editar Usuarios"), [permissions]);
-  const canView = useMemo(() => hasPermission(permissions, "Ver Usuarios"), [permissions]);
-  const canStatus = useMemo(() => hasPermission(permissions, "Eliminar Usuarios"), [permissions]);
-
-  //para el modal de estatus (Lógica de UI limpia)
+  // permisos
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canCreate = hasModulePermission( "usuarios", "crear" );
+  const canEdit = hasModulePermission( "usuarios", "editar" );
+  const canStatus = hasModulePermission( "usuarios", "eliminar" );
+  // estatus del usuario
   const isActivate = statusAction === "activate";
-  const confirmConfig = {
-    title: isActivate ? "Cambiar usuario a activo" : "Cambiar usuario a inactivo",
+  const estado = isActivate ? "activo" : "inactivo";
+
+  const confirmConfig = { 
+    title: isActivate ? "Activar usuario" : "Desactivar usuario",
     color: isActivate ? "green" : "amber",
     confirmText: isActivate ? "Cambiar a activo" : "Cambiar a inactivo",
-    description: userToDeactivate 
-      ? `¿Seguro que deseas cambiar a ${isActivate ? 'activo' : 'inactivo'} a ${userToDeactivate.nombre}?` 
-      : ""
+    description: userToDeactivate ? `¿Seguro que deseas cambiar el estado de "${userToDeactivate.nombre}" a ${estado}?` : null,
   };
 
   return (
     <>
-      <section className="space-y-6">
+      <section className={ui.section}>
         <EncabezadoPagina
           titulo="Gestión de Usuarios"
           descripcion="Administración de accesos y roles del personal."
           accion={
-            !isPermsLoading && canCreate && (
-              <Boton onClick={handleOpenCreateModal} icon={<UserPlus size={18} />}>
+            !isPermsLoading &&
+            canCreate && (
+              <Boton onClick={ handleOpenCreateModal } icon={ <UserPlus size={18} /> } >
                 Registrar Usuario
               </Boton>
             )
           }
         />
 
-        <div className="overflow-hidden rounded-[24px] border border-[#dbe3eb] bg-white shadow-sm">
+        <div className={ui.card}>
           <UsuarioFiltros
             search={search}
             filters={filters}
-            onSearchChange={handleSearchChange}
-            onClearFilters={handleClearFilters}
+            onSearchChange={ handleSearchChange }
+            onClearFilters={ handleClearFilters }
           />
 
-          {/* Gestión de estados de carga/error en la tabla */}
           {loading ? (
-             <div className="p-20 text-center">Cargando usuarios...</div> 
+            <div className={ui.table.empty}>
+              Cargando usuarios...
+            </div>
+          ) : error ? (
+            <div className={ui.table.empty}>
+              {error}
+            </div>
           ) : (
             <UsuarioTabla
-              users={paginatedUsers}
+              users={ paginatedUsers }
               roles={roles}
-              canView={canView}
               canEdit={canEdit}
-              canStatus={canStatus}
-              onView={handleView}
+              canStatus={ canStatus }
               onEdit={handleEdit}
-              onDeactivate={handleDeactivate}
-              onActivate={handleActivate}
+              onDeactivate={ handleDeactivate }
+              onActivate={ handleActivate }
             />
           )}
 
-          {!loading && !error && (
-            <PaginacionTabla
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={filteredUsers.length}
-              pageSize={PAGE_SIZE}
-              onPageChange={setCurrentPage}
-            />
-          )}
+          {!loading &&
+            !error && (
+              <PaginacionTabla
+                currentPage={currentPage }
+                totalPages={ totalPages }
+                totalItems={ filteredUsers.length }
+                pageSize={ PAGE_SIZE }
+                onPageChange={ setCurrentPage }
+              />
+            )}
         </div>
       </section>
-      
+
       {isCreateModalOpen && (
-        <UsuarioCrearModal
-          open={isCreateModalOpen}
+        <UsuarioModal
+          open={ isCreateModalOpen }
+          mode="create"
           roles={roles}
-          onClose={handleCloseCreateModal}
-          onSuccess={handleUserCreated}
+          onClose={ handleCloseCreateModal }
+          onSuccess={ handleUserCreated }
         />
       )}
 
-      {isEditModalOpen && selectedUser && (
-        <UsuarioEditarModal
-          open={isEditModalOpen}
-          user={selectedUser}
-          roles={roles}
-          onClose={handleCloseEditModal}
-          onSuccess={handleUserUpdated}
-        />
-      )}
-
-      {isViewModalOpen && selectedUser && (
-        <UsuarioVerModal
-          open={isViewModalOpen}
-          user={selectedUser}
-          onClose={handleCloseViewModal}
-        />
-      )}
+      {isEditModalOpen &&
+        selectedUser && (
+          <UsuarioModal
+            open={isEditModalOpen}
+            mode="edit"
+            user={selectedUser}
+            roles={roles}
+            onClose={handleCloseEditModal}
+            onSuccess={handleUserUpdated}
+            onNoChanges={handleNoChanges}
+          />
+        )}
 
       {isDeactivateModalOpen && (
         <ModalConfirmacion
-          open={isDeactivateModalOpen}
-          title={confirmConfig.title}
-          description={confirmConfig.description}
-          confirmText={confirmConfig.confirmText}
+          open={ isDeactivateModalOpen }
+          title={ confirmConfig.title }
+          description={ confirmConfig.description }
+          confirmText={ confirmConfig.confirmText }
           cancelText="Cancelar"
-          onConfirm={handleConfirmDeactivate}
-          onClose={handleCloseDeactivateModal}
-          loading={updatingStatus}
-          color={confirmConfig.color}
+          onConfirm={ handleConfirmDeactivate }
+          onClose={ handleCloseDeactivateModal }
+          loading={ updatingStatus }
+          color={ confirmConfig.color }
         />
       )}
+
       <ModalResultado
-        open={isSuccessModalOpen}
-        type="success"
-        title="¡Operación Exitosa!"
-        message={successMessage}
-        onClose={handleCloseSuccessModal}
+        open={result.open}
+        type={result.type}
+        title={result.title}
+        message={result.message}
+        onClose={() =>
+          setResult((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
       />
     </>
   );
 }
+

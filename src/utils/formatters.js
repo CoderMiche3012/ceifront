@@ -1,4 +1,3 @@
-// utils/formatters.js
 
 export const calcularEdad = (fecha) => {
   if (!fecha) return "--";

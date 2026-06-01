@@ -1,3 +1,4 @@
+// boton interno para crear
 export default function Boton({
   children,
   type = "button",

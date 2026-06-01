@@ -1,13 +1,6 @@
-import {
-  CheckCircle2,
-  AlertCircle,
-  XCircle,
-  Info,
-  X,
-} from "lucide-react";
-
+import {CheckCircle2, AlertCircle, XCircle, Info, X, } from "lucide-react";
 import Boton from "../ui/Boton";
-import { ui } from "../../styles/uiClasses";
+import { ui } from "../../styles/ui/uiClasses";
 
 const icons = {
   success: CheckCircle2,
@@ -26,12 +19,8 @@ export default function ModalResultado({
 }) {
   if (!open) return null;
 
-  const Icon =
-    icons[type] || icons.success;
-
-  const styles =
-    ui.modal.result.colors[type] ||
-    ui.modal.result.colors.success;
+  const Icon = icons[type] || icons.success;
+  const styles = ui.modal.result.colors[type] || ui.modal.result.colors.success;
 
   return (
     <div className={ui.modal.overlay}>

@@ -1,27 +1,22 @@
 import DatosPersonalesCard from "./DatosPersonalesCard";
-import ComposicionFamiliar from "../../../../expedientes/components/familia/ComposicionFamiliar";
-export default function DatosGenerales({ data, setData }) {
-  const handleUpdateFamilia = (nuevaFamilia) => {
-    if (!setData) return;
-    setData((prev) => ({
-      ...prev,
-      familia: nuevaFamilia,
-    }));
-  };
-  const handleUpdateEstatus = (nuevoEstatus) => {
-    if (!setData) return;
-    setData((prev) => ({
-      ...prev,
-      estatus_postulante: nuevoEstatus,
-    }));
-  };
+
+import ComposicionFamiliar from
+  "../../../../expedientes/components/familia/ComposicionFamiliar";
+
+export default function DatosGenerales({
+  data,
+}) {
   return (
     <div className="space-y-6">
-      <DatosPersonalesCard data={data} setData={setData} />
+
+      <DatosPersonalesCard
+        data={data}
+      />
+
       <ComposicionFamiliar
         familia={data?.familia || []}
         expedienteId={data?.id_expediente}
-        onUpdate={handleUpdateFamilia}
+        postulanteId={data?.id_postulante}
       />
     </div>
   );

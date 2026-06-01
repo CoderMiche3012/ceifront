@@ -3,13 +3,18 @@ import { obtenerPerfil } from "../services/authService";
 import { mapearPerfil } from "../services/mapper";
 import { authKeys } from "../services/keys";
 
-export const usePerfil = (userId) => {
+export const usePerfil = () => {
   return useQuery({
-    queryKey: authKeys.perfil(userId),
+    queryKey: authKeys.perfil(),
     queryFn: async () => {
-      const data = await obtenerPerfil(userId);
+      const data = await obtenerPerfil();
       return mapearPerfil(data);
     },
-    enabled: !!userId,
+    // considera inicialemnete los datos viejos
+    staleTime: 0,
+    // recarga el perfil si el usuario cierra o cambia de pestaña
+    refetchOnWindowFocus: true,
+    // pos si se pierde coneccion a internet
+    refetchOnReconnect: true,
   });
 };

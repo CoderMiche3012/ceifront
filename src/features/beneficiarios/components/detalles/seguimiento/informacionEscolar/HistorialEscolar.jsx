@@ -128,7 +128,7 @@ export default function HistorialEscolarCard({ data }) {
                   }`}
               >
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                  <DetalleSeguimientoEscolar idSeguimiento={item.id_seguimiento} />
+                  <DetalleSeguimientoEscolar idSeguimiento={item.id_seguimiento} id_expediente={data?.id_expediente}/>
                 </div>
               </div>
 

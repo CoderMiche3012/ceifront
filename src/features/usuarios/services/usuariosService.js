@@ -1,30 +1,30 @@
 import API from "../../../config/apiClient";
-
-const BASE_URL = "/api/cuentas";
+const BASE_URL = "/api/cuentas/usuarios";
 
 // obtener usuarios
 export const obtenerUsuarios = async () => {
-  const { data } = await API.get(`${BASE_URL}/usuarios/`);
-  return Array.isArray(data) ? data : data?.data || [];
+  const { data } = await API.get(`${BASE_URL}/`);
+  return Array.isArray(data) ? data : data?.data ?? [];
 };
 
 // actualizar estatus
-export const actualizarEstatusUsuario = async (userId, estatus) => {
-  await API.patch(`${BASE_URL}/usuarios/${userId}/`, { estatus });
+export const actualizarEstatusUsuario = async ({ userId, estatus, }) => {
+  await API.patch(`${BASE_URL}/${userId}/`, { estatus, });
   return true;
 };
 
-// activar / desactivar
-export const desactivarUsuario = (userId) =>
-  actualizarEstatusUsuario(userId, 0);
-
+// activar usuario
 export const activarUsuario = (userId) =>
-  actualizarEstatusUsuario(userId, 1);
+  actualizarEstatusUsuario({ userId, estatus: 1, });
 
-// actualizar parcial
+// desactivar usuario
+export const desactivarUsuario = (userId) =>
+  actualizarEstatusUsuario({ userId, estatus: 0, });
+
+// actualizar usuario
 export const actualizarUsuario = async (userId, payload) => {
   const { data } = await API.patch(
-    `${BASE_URL}/usuarios/${userId}/`,
+    `${BASE_URL}/${userId}/`,
     payload
   );
   return data;
@@ -32,6 +32,6 @@ export const actualizarUsuario = async (userId, payload) => {
 
 // crear usuario
 export const crearUsuario = async (payload) => {
-  const { data } = await API.post(`${BASE_URL}/usuarios/`, payload);
+  const { data } = await API.post( `${BASE_URL}/`, payload );
   return data;
 };

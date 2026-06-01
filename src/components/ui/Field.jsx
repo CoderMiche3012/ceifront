@@ -1,18 +1,21 @@
-import { ui } from "../../styles/uiClasses";
+import { ui } from "../../styles/ui/uiClasses";
 
-export default function Field({label,required,children,}) {
+//para los modales
+export default function Field({ label, required, error, children }) {
   return (
     <div className={ui.form.field}>
       <label className={ui.form.label}>
         {label}
-        {required && (
-          <span className={ui.form.required}>
-            {" "}*
-          </span>
-        )}
+        {required && <span className={ui.form.required}> *</span>}
       </label>
 
       {children}
+
+      {error && (
+        <p className="text-sm text-rose-600 mt-1 font-medium">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

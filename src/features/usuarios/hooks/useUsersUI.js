@@ -1,122 +1,147 @@
 import { useState, useCallback } from "react";
-import { activarUsuario, desactivarUsuario } from "../services/usuariosService";
+import { useActivarUsuario, useDesactivarUsuario, } from "../hooks/useUsuarios";
+import { formatErrorAnidado } from "../../../utils/errorHandlers";
 
-export default function useUsersUI(fetchUsers) {
+export default function useUsersUI() {
+  // estados y mutaciones
+  const activarMutation = useActivarUsuario();
+  const desactivarMutation = useDesactivarUsuario();
+  const [result, setResult] = useState({
+    open: false,
+    type: "",
+    title: "",
+    message: "",
+  });
+  // modales
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const [isDeactivateModalOpen, setDeactivateModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [userToDeactivate, setUserToDeactivate] = useState(null);
-  const [statusAction, setStatusAction] = useState("");
-  const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-
-  //handlers de Modales
-  const handleCloseSuccessModal = useCallback(() => {
-    setIsSuccessModalOpen(false);
-    setSuccessMessage("");
-  }, []);
-  const handleUserCreated = useCallback(async () => {
-    await fetchUsers();
-    setSuccessMessage("El usuario ha sido registrado exitosamente en el sistema.");
-    setIsSuccessModalOpen(true);
-  }, [fetchUsers]);
-  const handleUserUpdated = useCallback(async () => {
-    await fetchUsers();
-    setSuccessMessage("Los datos del usuario han sido actualizados correctamente.");
-    setIsSuccessModalOpen(true);
-  }, [fetchUsers]);
-  const handleView = useCallback((user) => {
-    setSelectedUser(user);
-    setIsViewModalOpen(true);
-  }, []);
-  const handleCloseViewModal = useCallback(() => {
+  const [statusAction, setStatusAction] = useState(null);
+  const showResult = (payload) => setResult({ open: true, ...payload });
+  // abrir modal de creacion
+  const openCreateModal = () => {
     setSelectedUser(null);
-    setIsViewModalOpen(false);
-  }, []);
-  const handleOpenCreateModal = useCallback(() => {
-    setSelectedUser(null);
-    setIsCreateModalOpen(true);
-  }, []);
-  const handleCloseCreateModal = useCallback(() => {
-    setSelectedUser(null);
-    setIsCreateModalOpen(false);
-  }, []);
-  const handleEdit = useCallback((user) => {
-    setSelectedUser(user);
-    setIsEditModalOpen(true);
-  }, []);
-  const handleCloseEditModal = useCallback(() => {
-    setSelectedUser(null);
-    setIsEditModalOpen(false);
-  }, []);
-  //Activación/Desactivación
-  const handleDeactivate = useCallback((user) => {
-    if (user.estatus === "Inactivo") return;
-    setUserToDeactivate(user);
-    setStatusAction("deactivate");
-    setIsDeactivateModalOpen(true);
-  }, []);
-
-  const handleActivate = useCallback((user) => {
-    if (user.estatus === "Activo") return;
-    setUserToDeactivate(user);
-    setStatusAction("activate");
-    setIsDeactivateModalOpen(true);
-  }, []);
-
-  const handleCloseDeactivateModal = useCallback(() => {
-    if (updatingStatus) return;
-    setIsDeactivateModalOpen(false);
-    setUserToDeactivate(null);
-    setStatusAction("");
-  }, [updatingStatus]);
-
-  const handleConfirmDeactivate = async () => {
-    if (!userToDeactivate) return;
-    setUpdatingStatus(true);
-    try {
-      if (statusAction === "activate") {
-        await activarUsuario(userToDeactivate);
-      } else {
-        await desactivarUsuario(userToDeactivate);
-      }
-      setIsDeactivateModalOpen(false);
-      setUserToDeactivate(null);
-      setStatusAction("");      
-      await fetchUsers();
-    } catch (err) {
-      console.error("Error en cambio de estatus:", err);
-      alert(err.response?.data?.message || err.message || "Error al procesar la solicitud");
-    } finally {
-      setUpdatingStatus(false);
-    }
+    setCreateModalOpen(true);
   };
-  return {
-    selectedUser,
+  // cerrar modal de creacion
+  const closeCreateModal = () => {
+    setCreateModalOpen(false);
+  };
+
+  // abrir modal de edicion
+  const openEditModal = (user) => {
+    setSelectedUser(user);
+    setEditModalOpen(true);
+  };
+  // cerrar modal de edicion
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setSelectedUser(null);
+  };
+  // modales de activar/desactivar
+  const openDeactivateModal = (user, action) => {
+    setUserToDeactivate(user);
+    setStatusAction(action);
+    setDeactivateModalOpen(true);
+  };
+  const closeDeactivateModal = () => {
+    setDeactivateModalOpen(false);
+    setUserToDeactivate(null);
+    setStatusAction(null);
+  };
+  // para los modales de reustado
+  const handleUserCreated = () =>
+    showResult({
+      type: "success",
+      title: "Operación Exitosa",
+      message: "Usuario registrado correctamente",
+    });
+  const handleUserUpdated = () =>
+    showResult({
+      type: "success",
+      title: "Operación Exitosa",
+      message: "Usuario actualizado correctamente",
+    });
+
+  const handleNoChanges = () =>
+    showResult({
+      type: "info",
+      title: "Sin cambios",
+      message: "No se detectaron modificaciones",
+    });
+
+  const handleError = (message) =>
+    showResult({
+      type: "error",
+      title: "Error",
+      message,
+    });
+
+  // confirmar activacion / desactivar
+  const handleConfirmDeactivate = useCallback(async () => {
+    if (!userToDeactivate) return;
+
+    try {
+      const id = userToDeactivate.id_usuario;
+
+      if (statusAction === "activate") {
+        await activarMutation.mutateAsync(id);
+      } else {
+        await desactivarMutation.mutateAsync(id);
+      }
+
+      setResult({
+        open: true,
+        type: "success",
+        title: "Operación Exitosa",
+        message:
+          statusAction === "activate"
+            ? "Usuario activado correctamente"
+            : "Usuario desactivado correctamente",
+      });
+
+      closeDeactivateModal();
+    } catch (error) {
+      setResult({
+        open: true,
+        type: "error",
+        title: "Error",
+        message: formatErrorAnidado(error),
+      });
+    }
+  }, [
     userToDeactivate,
     statusAction,
-    updatingStatus,
-    isViewModalOpen,
+    activarMutation,
+    desactivarMutation,
+    closeDeactivateModal,
+    setResult
+  ]);
+  return {
+    // resultados
+    result,
+    setResult,
+    // modales
     isCreateModalOpen,
     isEditModalOpen,
     isDeactivateModalOpen,
-    handleView,
-    handleEdit,
-    handleDeactivate,
-    handleActivate,
-    handleOpenCreateModal,
-    handleCloseCreateModal,
-    handleCloseEditModal,
-    handleCloseViewModal,
-    handleCloseDeactivateModal,
+    selectedUser,
+    userToDeactivate,
+    statusAction,
+    // acciones de los modales
+    openCreateModal,
+    closeCreateModal,
+    openEditModal,
+    closeEditModal,
+    openDeactivateModal,
+    closeDeactivateModal,
     handleConfirmDeactivate,
+    //resultados de las acciones
     handleUserCreated,
     handleUserUpdated,
-    isSuccessModalOpen,
-    successMessage,
-    handleCloseSuccessModal,
+    handleNoChanges,
+    handleError,
   };
 }

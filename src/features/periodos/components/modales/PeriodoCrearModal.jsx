@@ -1,12 +1,14 @@
 import { HiOutlineCalendar } from "react-icons/hi";
-import { ui } from "../../../../styles/uiClasses";
+import { ui } from "../../../../styles/ui/uiClasses";
+
 import AlertaError from "../../../../components/ui/AlertaError";
 import Field from "../../../../components/ui/Field";
 import InputG from "../../../../components/ui/InputG";
+import Boton from "../../../../components/ui/Boton";
 import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
+
 import { usePeriodoCrearForm } from "../../hooks/usePeriodoCrearForm";
-import Boton from "../../../../components/ui/Boton";
 
 export default function PeriodoCrearModal({ open, onClose, onSuccess }) {
   const {
@@ -29,11 +31,8 @@ export default function PeriodoCrearModal({ open, onClose, onSuccess }) {
       <div className={ui.modal.formOverlay}>
         <div className={ui.modal.formContainer}>
 
-          {/* Header */}
           <div className={ui.modal.formHeader}>
-            <div
-              className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}
-            >
+            <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`} >
               <HiOutlineCalendar size={24} />
             </div>
 
@@ -53,7 +52,6 @@ export default function PeriodoCrearModal({ open, onClose, onSuccess }) {
             </button>
           </div>
 
-          {/* Body */}
           <form onSubmit={handlePreSubmit} className={ui.modal.formBody}>
             <AlertaError mensaje={error} />
 
@@ -101,7 +99,6 @@ export default function PeriodoCrearModal({ open, onClose, onSuccess }) {
               </Field>
             </div>
 
-            {/* Actions */}
             <div className={ui.modal.formActions}>
               <Boton
                 size="sm"

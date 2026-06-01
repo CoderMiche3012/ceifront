@@ -1,15 +1,27 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { obtenerDonador } from "../services/donadoresService";
-import { obtenerPeriodos } from "../../periodos/services/periodoService";
-import { obtenerDonativos } from "../services/donativosService";
+import { useState, useEffect, useCallback, useMemo, } from "react";
+
+import { useDonadores } from "./useDonadores";
+import { useDonativos } from "./useDonativos";
+import { usePeriodoActivo } from "../../periodos/hooks/usePeriodoActivo";
 
 export const useDonadoresPage = () => {
-  const [allData, setAllData] = useState([]);
-  const [donativos, setDonativos] = useState([]);
-  const [periodos, setPeriodos] = useState([]);
+  const {
+    data: donadores = [],
+    isLoading: loadingDonadores,
+    error: errorDonadores,
+  } = useDonadores();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    data: donativos = [],
+    isLoading: loadingDonativos,
+    error: errorDonativos,
+  } = useDonativos();
+
+  const {
+    periodoActivo,
+    isLoading: loadingPeriodo,
+    error: errorPeriodo,
+  } = usePeriodoActivo();
 
   const [filters, setFilters] = useState({
     estatus: "todos",
@@ -18,127 +30,99 @@ export const useDonadoresPage = () => {
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 3;
+  const loading = loadingDonadores || loadingDonativos || loadingPeriodo;
+  const error = errorDonadores || errorDonativos || errorPeriodo;
 
-  const PAGE_SIZE = 4;
-  //filtros
-  const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
-  };
-  const fetchDonadores = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // filtros
+  const handleFilterChange =
+    useCallback((key, value) => {
+      setFilters((prev) => ({
+        ...prev,
+        [key]: value,
+      }));
+      setCurrentPage(1);
+    }, []);
 
-    try {
-      const [resDonadores, resPeriodos, resDonativos] = await Promise.all([
-        obtenerDonador(),
-        obtenerPeriodos(),
-        obtenerDonativos(),
-      ]);
+  // calcular totales
+  const calcularTotales =
+    useCallback(
+      (donadorId, periodoId) => {
+        const filtrados =
+          donativos.filter(
+            (d) => Number( d.id_donador ) === Number( donadorId ) && Number( d.id_periodo ) === Number( periodoId )
+          );
 
-      setAllData(
-        Array.isArray(resDonadores)
-          ? resDonadores
-          : resDonadores.results || []
-      );
-
-      setPeriodos(resPeriodos || []);
-
-      setDonativos(
-        Array.isArray(resDonativos)
-          ? resDonativos
-          : resDonativos.results || []
-      );
-    } catch (err) {
-      console.error("Error en la carga de datos:", err);
-      setError(err.message || "Error al obtener la lista");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDonadores();
-  }, [fetchDonadores]);
-
-  //periodo activo
-  const periodoActivo = useMemo(() => {
-    return (
-      periodos.find(
-        (p) =>
-          p.estado === true ||
-          p.estado === "true" ||
-          p.estado === 1 ||
-          p.estado === "1"
-      ) || null
+        return filtrados.reduce(
+          (acc, item) => {
+            const moneda = item.moneda || "MXN";
+            acc[moneda] = (acc[ moneda ] || 0) + Number( item.monto || 0 );
+            return acc;
+          },
+          {}
+        );
+      },
+      [donativos]
     );
-  }, [periodos]);
-  const calcularTotales = useCallback(
-    (donadorId, periodoId) => {
-      const filtrados = donativos.filter(
-        (d) =>
-          Number(d.id_donador) === Number(donadorId) &&
-          Number(d.id_periodo) === Number(periodoId)
+
+  // agregar totales al periodo activo
+  const donadoresConTotales =
+    useMemo(() => {
+      return donadores.map(
+        (donador) => ({
+          ...donador,
+          totalesPeriodoActivo: periodoActivo ? calcularTotales( donador.id_donador, periodoActivo.id_periodo ) : {},
+        })
       );
+    }, [ donadores, periodoActivo, calcularTotales, ]);
 
-      return filtrados.reduce((acc, item) => {
-        const moneda = item.moneda || "MXN";
-        acc[moneda] = (acc[moneda] || 0) + Number(item.monto || 0);
-        return acc;
-      }, {});
-    },
-    [donativos]
-  );
-  const donadoresConTotales = useMemo(() => {
-    return allData.map((donador) => ({
-      ...donador,
-      totalesPeriodoActivo: periodoActivo
-        ? calcularTotales(donador.id_donador, periodoActivo.id_periodo)
-        : {},
-    }));
-  }, [allData, periodoActivo, calcularTotales]);
-  //filtros
-  const filteredDonadores = useMemo(() => {
-    const searchLower = search.toLowerCase();
+  // filtros y busqueda
+  const filteredDonadores =
+    useMemo(() => {
 
-    return donadoresConTotales.filter((p) => {
-      const matchSearch = (p.nombre || "")
-        .toLowerCase()
-        .includes(searchLower);
+      const searchLower = search.toLowerCase();
 
-      const matchStatus =
-        filters.estatus === "todos" ||
-        p.estatus?.toLowerCase() === filters.estatus.toLowerCase();
+      return donadoresConTotales.filter(
+        (p) => {
+          const matchSearch = ( p.nombre || "" ) .toLowerCase() .includes( searchLower );
+          const matchStatus = filters.estatus === "todos" || p.estatus?.toLowerCase() === filters.estatus.toLowerCase();
+          const matchTipo = filters.tipo === "todos" || p.tipo?.toLowerCase() ===  filters.tipo.toLowerCase();
+          return ( matchSearch && matchStatus && matchTipo );
+        }
+      );
+    }, [ donadoresConTotales, search, filters, ]);
 
-      const matchTipo =
-        filters.tipo === "todos" ||
-        p.tipo?.toLowerCase() === filters.tipo.toLowerCase();
+  // paginación
+  const totalPages = Math.ceil(  filteredDonadores.length / PAGE_SIZE );
 
-      return matchSearch && matchStatus && matchTipo;
-    });
-  }, [donadoresConTotales, search, filters]);
-  //paginacion
-  const totalPages = Math.ceil(filteredDonadores.length / PAGE_SIZE);
   useEffect(() => {
-    if (currentPage > totalPages && totalPages > 0) {
-      setCurrentPage(totalPages);
+    if ( currentPage > totalPages && totalPages > 0 ) {
+      setCurrentPage( totalPages );
     }
-  }, [totalPages, currentPage]);
-  const paginatedDonadores = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredDonadores.slice(start, start + PAGE_SIZE);
-  }, [filteredDonadores, currentPage]);
-  //busqueda
-  const handleSearchChange = (value) => {
-    setSearch(value);
-    setCurrentPage(1);
-  };
+  }, [ currentPage, totalPages, ]);
 
-  const handleClearFilters = () => {
-    setSearch("");
-    setFilters({ estatus: "todos", tipo: "todos" });
-    setCurrentPage(1);
-  };
+  const paginatedDonadores =
+    useMemo(() => {
+      const start = (currentPage - 1) * PAGE_SIZE;
+      return filteredDonadores.slice( start, start + PAGE_SIZE );
+    }, [ filteredDonadores, currentPage, ]);
+
+  // busqueda
+  const handleSearchChange =
+    useCallback((value) => {
+      setSearch(value);
+      setCurrentPage(1);
+    }, []);
+
+  const handleClearFilters =
+    useCallback(() => {
+      setSearch("");
+      setFilters({
+        estatus: "todos",
+        tipo: "todos",
+      });
+      setCurrentPage(1);
+    }, []);
 
   return {
     donadores: paginatedDonadores,
@@ -146,8 +130,6 @@ export const useDonadoresPage = () => {
 
     loading,
     error,
-
-    fetchDonadores,
 
     search,
     handleSearchChange,

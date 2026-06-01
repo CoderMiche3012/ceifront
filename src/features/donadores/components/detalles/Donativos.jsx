@@ -1,5 +1,5 @@
-
 import HistorialDonativos from "./HistorialDonativos";
+
 export default function Donativos({ data, setData }) {
 
   const handleUpdateEstatus = (nuevoEstatus) => {

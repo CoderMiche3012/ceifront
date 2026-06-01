@@ -1,56 +1,39 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { HiOutlineUser, HiOutlineLogout, HiChevronDown, } from "react-icons/hi";
-import { ui } from "../../styles/uiClasses";
+
+import { ui } from "../../styles/ui/uiClasses";
 
 export default function SubMenu({ user, onLogout, onOpenProfile }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  // para la deteccion de click fuera
   const menuRef = useRef(null);
-
+  //obtener el nombre completo del usuario
   const nombreCompleto = useMemo(() => {
     if (!user) return "Usuario";
-
     const nombre = user.nombre || "";
     const apellido_p = user.apellido_p || "";
     const apellido_m = user.apellido_m || "";
-
     const completo = `${nombre} ${apellido_p} ${apellido_m}`
       .replace(/\s+/g, " ")
       .trim();
-
     return completo || user.nombreUsuario || "Usuario";
   }, [user]);
-
+  // para el avatar
   const initials = useMemo(() => {
     if (!user?.nombre) return "U";
-
     const char1 = user.nombre[0] || "";
-    const char2 =
-      (user.apellido_p && user.apellido_p[0]) ||
-      (user.nombre[1] || "");
-
+    const char2 = (user.apellido_p && user.apellido_p[0]) || (user.nombre[1] || "");
     return (char1 + char2).toUpperCase();
   }, [user]);
-
+  //cerrar al hacer clic afuera
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(event.target)
-      ) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(false);
       }
     };
-
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
-
-    return () =>
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const toggleMenu = useCallback(
@@ -76,11 +59,9 @@ export default function SubMenu({ user, onLogout, onOpenProfile }) {
           <p className={ui.userMenu.name}>
             {nombreCompleto}
           </p>
-
+  
           <p className={ui.userMenu.role}>
-            {user?.rol?.nombre ||
-              user?.rol ||
-              "SuperAdmin"}
+            {user?.rol?.nombre || user?.rol || (user?.esSuperUser ? "Super Administrador" : user?.esAdmin ? "Administrador" : "Sin rol")}
           </p>
         </div>
 
@@ -88,12 +69,9 @@ export default function SubMenu({ user, onLogout, onOpenProfile }) {
           {initials}
         </div>
 
-        <HiChevronDown
-          className={`${ui.userMenu.chevron} ${menuOpen ? "rotate-180" : ""
-            }`}
-        />
+        <HiChevronDown className={`${ui.userMenu.chevron} ${menuOpen ? "rotate-180" : "" }`} />
       </button>
-
+      {/* menu despegable */}
       {menuOpen && (
         <div className={ui.userMenu.dropdown}>
           {/* Header */}

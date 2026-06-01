@@ -1,7 +1,8 @@
+//por corregir
 import { useEffect, useMemo, useState } from "react";
 import { actualizarDonador } from "../services/donadoresService";
-import { obtenerBeneficiario } from "../../beneficiarios/services/beneficiariosService";
-import { obtenerExpedienteIndividual } from "../../expedientes/services/expedientesService";
+import { obtenerBeneficiarios } from "../../beneficiarios/services/beneficiariosService";
+import { obtenerExpedientePorId } from "../../expedientes/services/expedientesService";
 import { obtenerSeguimientosPorBeneficiario } from "../../beneficiarios/services/seguimientoService";
 import { obtenerPeriodos } from "../../periodos/services/periodoService";
 
@@ -37,7 +38,7 @@ export function useBeneficiariosVinculados(data, setData) {
           data.beneficiarios.map(async (item) => {
             if (!item.id_expediente) return item;
 
-            const expediente = await obtenerExpedienteIndividual(
+            const expediente = await obtenerExpedientePorId(
               item.id_expediente
             );
 
@@ -69,7 +70,7 @@ export function useBeneficiariosVinculados(data, setData) {
       setLoading(true);
 
       const [resBeneficiarios, resPeriodos] = await Promise.all([
-        obtenerBeneficiario(),
+        obtenerBeneficiarios(),
         obtenerPeriodos(),
       ]);
 
@@ -114,7 +115,7 @@ export function useBeneficiariosVinculados(data, setData) {
         activos.map(async (item) => {
           if (!item.id_expediente) return item;
 
-          const expediente = await obtenerExpedienteIndividual(
+          const expediente = await obtenerExpedientePorId(
             item.id_expediente
           );
 

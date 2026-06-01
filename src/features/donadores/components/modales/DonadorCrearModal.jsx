@@ -1,19 +1,44 @@
+// por corregir
 import { useState } from "react";
-import { HiOutlineUser, HiCheck } from "react-icons/hi";
-import AlertaError from "../../../../components/ui/AlertaError";
+import { HiOutlineUserCircle, HiOutlineExclamationCircle, } from "react-icons/hi";
+
+import { ui } from "../../../../styles/ui/uiClasses";
+
 import Field from "../../../../components/ui/Field";
-import InputG from "../../../../components/ui/InputG";
+import Input from "../../../../components/ui/InputG";
+import Select from "../../../../components/ui/Select";
+import Boton from "../../../../components/ui/Boton";
+import AlertaError from "../../../../components/ui/AlertaError";
+
 import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
+
 import { useDonadorCrearForm } from "../../hooks/useDonadorCrearForm";
-import { HiOutlineExclamationCircle } from "react-icons/hi";
 import { buscarCPZippopotam } from "../../services/donadoresService";
 import { countries } from "../../../../utils/countries";
 
-export default function DonadorCrearModal({ open, onClose, onSuccess }) {
+export default function DonadorCrearModal({
+  open,
+  onClose,
+  onSuccess,
+}) {
+  const [step, setStep] =
+    useState(1);
+
+  const [otroPais, setOtroPais] =
+    useState(false);
+
+  const [otraLocalidad, setOtraLocalidad] =
+    useState(false);
+
+  const [localidades, setLocalidades] =
+    useState([]);
+
   const {
     form,
     setForm,
+    handleChange,
+    fieldErrors,
     loading,
     loadingCP,
     cpEncontrado,
@@ -26,446 +51,583 @@ export default function DonadorCrearModal({ open, onClose, onSuccess }) {
     handlePreSubmit,
     handleConfirmSave,
     handleFinalClose,
-  } = useDonadorCrearForm(onSuccess, onClose);
-  const [otroPais, setOtroPais] = useState(false);
-  const [otraLocalidad, setOtraLocalidad] = useState(false);
-
-  const [localidades, setLocalidades] = useState([]);
-
+  } = useDonadorCrearForm(
+    onSuccess,
+    onClose
+  );
 
   if (!open) return null;
 
-  const inputClass =
-    "h-10 text-sm rounded-xl border-slate-200 focus:ring-[#0E5F63]";
+  const updateField = (
+  field,
+  value
+) => {
+  handleChange({
+    target: {
+      name: field,
+      value,
+    },
+  });
+};
 
-  const selectClass =
-    "w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-1 focus:ring-[#0E5F63]";
-
-  const updateField = (field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-  const handleBuscarCP = async (cpValue = form.cp) => {
-    if (!form.pais || !cpValue) return;
-
-    try {
-      setLoadingCP(true);
-
-      const data = await buscarCPZippopotam(
-        form.pais,
-        cpValue
-      );
-
-      const lista =
-        data?.places?.map(
-          p => p["place name"]
-        ) || [];
-
-      setLocalidades(lista);
-
-      if (lista.length > 0) {
-        updateField("localidad", lista[0]);
-        updateField(
-          "colonia",
-          data?.places?.[0]?.state || ""
-        );
-        setCpEncontrado(true);
-      }
-
-    } catch (error) {
-      setLocalidades([]);
-      updateField("localidad", "");
-      updateField("colonia", "");
-      setCpEncontrado(false); // importante
-    } finally {
-      setLoadingCP(false);
+  const handleBackdropClick = (e) => {
+    if (
+      e.target ===
+      e.currentTarget
+    ) {
+      setStep(1);
+      onClose();
     }
   };
+
+  const handleBuscarCP =
+    async (
+      cpValue = form.cp
+    ) => {
+      if (
+        !form.pais ||
+        !cpValue
+      )
+        return;
+
+      try {
+        setLoadingCP(true);
+
+        const data =
+          await buscarCPZippopotam(
+            form.pais,
+            cpValue
+          );
+
+        const lista =
+          data?.places?.map(
+            (p) =>
+              p[
+              "place name"
+              ]
+          ) || [];
+
+        setLocalidades(
+          lista
+        );
+
+        if (
+          lista.length > 0
+        ) {
+          updateField(
+            "localidad",
+            lista[0]
+          );
+
+          updateField(
+            "colonia",
+            data?.places?.[0]
+              ?.state || ""
+          );
+
+          setCpEncontrado(
+            true
+          );
+        }
+      } catch {
+        setLocalidades(
+          []
+        );
+        updateField(
+          "localidad",
+          ""
+        );
+        updateField(
+          "colonia",
+          ""
+        );
+        setCpEncontrado(
+          false
+        );
+      } finally {
+        setLoadingCP(
+          false
+        );
+      }
+    };
+
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-        <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
+      <div
+        className={
+          ui.modal
+            .formOverlay
+        }
+        onClick={
+          handleBackdropClick
+        }
+      >
+        <div className={ ui.modal .formContainer }>
+          {/* HEADER */}
+          <div
+            className={
+              ui.modal
+                .formHeader
+            }
+          >
+            <div
+              className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}
+            >
+              <HiOutlineUserCircle size={24} />
+            </div>
 
-          {/* Header */}
-          <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#0E5F63]">
-                <HiOutlineUser size={22} />
-              </div>
+            <div className="flex-1">
+              <h2 className={ui.modal.title}>
+                Nuevo Donador
+              </h2>
 
-              <div>
-                <h2 className="text-lg font-bold text-slate-800">
-                  Registrar Donador
-                </h2>
-                <p className="text-xs text-slate-400 uppercase font-bold tracking-widest">
-                  Nuevo registro
-                </p>
+              <p
+                className={
+                  ui.modal
+                    .description
+                }
+              >
+                Agrega la
+                información del
+                nuevo donador
+              </p>
+
+              <div className="flex items-center gap-3 mt-4">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Paso {step} de 2
+                </span>
+
+                <div className="flex gap-1">
+                  <div
+                    className={`h-1 w-5 rounded-full ${step === 1
+                        ? "bg-[#0E5F63]"
+                        : "bg-slate-200"
+                      }`}
+                  />
+                  <div
+                    className={`h-1 w-5 rounded-full ${step === 2
+                        ? "bg-[#0E5F63]"
+                        : "bg-slate-200"
+                      }`}
+                  />
+                </div>
               </div>
             </div>
 
             <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-slate-700 text-2xl"
+              onClick={() => {
+                setStep(1);
+                onClose();
+              }}
             >
               ×
             </button>
           </div>
 
-          <div className="px-8 py-6 space-y-8 max-h-[78vh] overflow-y-auto">
+          <div
+            className={
+              ui.modal
+                .formBody
+            }
+          >
+            {error && (
+              <div className="mb-4">
+                <AlertaError
+                  mensaje={
+                    error
+                  }
+                />
+              </div>
+            )}
 
-            <AlertaError mensaje={error} />
-            <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-              <HiOutlineExclamationCircle className="text-[#0E5F63]" size={18} />
+            <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
+              <HiOutlineExclamationCircle
+                className="text-[#0E5F63]"
+                size={18}
+              />
+
               <span>
-                Los campos con <span className="font-semibold text-red-500">*</span> son obligatorios
+                Los campos
+                con{" "}
+                <span className="text-red-500 font-semibold">
+                  *
+                </span>{" "}
+                son
+                obligatorios
               </span>
             </div>
-            {/* Datos generales */}
-            <div>
-              <h3 className="text-[10px] font-black text-[#0E5F63]/70 uppercase tracking-[0.2em] mb-4">
-                Información General
-              </h3>
 
-              <div className="grid grid-cols-12 gap-4">
+            <div
+              className={
+                ui.modal
+                  .formScroll
+              }
+            >
+              {/* PASO 1 */}
+              {step ===
+                1 && (
+                  <>
+                    <h3 className="text-xs font-bold text-[#0E5F63] mb-4 uppercase tracking-wider">
+                      Información
+                      General
+                    </h3>
 
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Nombre" required>
-                    <InputG
-                      className={inputClass}
-                      value={form.nombre}
-                      onChange={(e) => updateField("nombre", e.target.value)}
-                    />
-                  </Field>
-                </div>
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Apellido Paterno" required>
-                    <InputG
-                      className={inputClass}
-                      value={form.apellido_p}
-                      onChange={(e) => updateField("apellido_p", e.target.value)}
-                    />
-                  </Field>
-                </div>
-
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Apellido Materno" required>
-                    <InputG
-                      className={inputClass}
-                      value={form.apellido_m}
-                      onChange={(e) => updateField("apellido_m", e.target.value)}
-                    />
-                  </Field>
-                </div>
-
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Correo Electrónico" required>
-                    <InputG
-                      type="email"
-                      className={inputClass}
-                      value={form.correo}
-                      onChange={(e) => updateField("correo", e.target.value)}
-                    />
-                  </Field>
-                </div>
-
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Teléfono" required>
-                    <InputG
-                      className={inputClass}
-                      value={form.telefono}
-                      onChange={(e) => updateField("telefono", e.target.value)}
-                    />
-                  </Field>
-                </div>
-
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Tipo Donador" required>
-                    <select
-                      className={selectClass}
-                      value={form.tipo}
-                      onChange={(e) => updateField("tipo", e.target.value)}
+                    <div
+                      className={
+                        ui.modal
+                          .twoCols
+                      }
                     >
-                      <option value="">Seleccionar...</option>
-                      <option value="CEI">CEI</option>
-                      <option value="OYE">OYE</option>
-                      <option value="CANFRO">CANFRO </option>
-                    </select>
-                  </Field>
-                </div>
-
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Fecha Ingreso" required>
-                    <InputG
-                      type="date"
-                      className={inputClass}
-                      value={form.fecha_ingreso}
-                      onChange={(e) =>
-                        updateField("fecha_ingreso", e.target.value)
-                      }
-                    />
-                  </Field>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Dirección */}
-            <div>
-              <h3 className="text-[10px] font-black text-[#0E5F63]/70 uppercase tracking-[0.2em] mb-4">
-                Domicilio
-              </h3>
-
-              <div className="grid grid-cols-12 gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
-
-                {/* PAÍS */}
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="País" required>
-                    {!otroPais ? (
-                      <select
-                        className={selectClass}
-                        value={form.pais}
-                        onChange={(e) => {
-                          const value = e.target.value;
-
-                          if (value === "__otro__") {
-                            setOtroPais(true);
-                            updateField("pais", "");
-                            return;
+                      <Field label="Nombre" required error={fieldErrors.nombre}>
+                        <Input
+                          value={
+                            form.nombre
                           }
-
-                          updateField("pais", value); 
-                          updateField("cp", "");
-                          updateField("localidad", "");
-                          updateField("colonia", "");
-                          setLocalidades([]);
-                          setCpEncontrado(false);
-                        }}
-                      >
-                        <option value="">Selecciona país...</option>
-
-                        {countries.map((c) => (
-                          <option key={c.code} value={c.code}>
-                            {c.name}
-                          </option>
-                        ))}
-
-                        <option value="__otro__">Otro país...</option>
-                      </select>
-                    ) : (
-                      <div className="space-y-2">
-                        <InputG
-                          className={inputClass}
-                          value={form.pais}
-                          placeholder="Escribe el país"
-                          onChange={(e) =>
-                            updateField("pais", e.target.value)
-                          }
-                        />
-
-                        <button
-                          type="button"
-                          className="text-xs text-[#0E5F63] hover:underline"
-                          onClick={() => {
-                            setOtroPais(false);
-                            updateField("pais", "");
-                          }}
-                        >
-                          Volver a lista
-                        </button>
-                      </div>
-                    )}
-                  </Field>
-                </div>
-
-
-                {/* CP */}
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Código Postal" required>
-                    <InputG
-                      className={inputClass}
-                      disabled={!form.pais}
-                      placeholder={
-                        form.pais
-                          ? "Escribe el CP"
-                          : "Primero selecciona país"
-                      }
-                      value={form.cp}
-                      onChange={async (e) => {
-                        const cp = e.target.value;
-
-                        updateField("cp", cp);
-
-                        if (!cp) {
-                          setLocalidades([]);
-                          updateField("localidad", "");
-                          updateField("colonia", "");
-                          setCpEncontrado(false);
-                          return;
-                        }
-
-                        // espera 5 caracteres
-                        if (cp.length === 5) {
-                          await handleBuscarCP(cp);
-                        }
-                      }}
-                    />
-                  </Field>
-                </div>
-
-
-                {/* ESTADO (se guarda en colonia) */}
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Estado">
-                    <InputG
-                      className={inputClass}
-                      value={form.colonia}
-                      disabled={cpEncontrado}
-                      placeholder={
-                        cpEncontrado
-                          ? "Autocompletado"
-                          : "Escribe el estado"
-                      }
-                      onChange={(e) =>
-                        updateField("colonia", e.target.value)
-                      }
-                    />
-                  </Field>
-                </div>
-
-
-                {/* LOCALIDAD */}
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Localidad / Ciudad" required>
-                    {!otraLocalidad && localidades.length > 0 ? (
-                      <select
-                        className={selectClass}
-                        value={form.localidad}
-                        onChange={(e) => {
-                          const value = e.target.value;
-
-                          if (value === "__otra__") {
-                            setOtraLocalidad(true);
-                            updateField("localidad", "");
-                            return;
-                          }
-
-                          updateField("localidad", value);
-                        }}
-                      >
-                        {localidades.map((l) => (
-                          <option key={l} value={l}>
-                            {l}
-                          </option>
-                        ))}
-
-                        <option value="__otra__">
-                          Otra localidad...
-                        </option>
-                      </select>
-                    ) : (
-                      <div className="space-y-2">
-                        <InputG
-                          className={inputClass}
-                          value={form.localidad}
-                          placeholder="Escribe localidad"
                           onChange={(e) =>
                             updateField(
-                              "localidad",
+                              "nombre",
+                              e.target.value
+                            )
+                          }
+                          error={!!fieldErrors.nombre}
+                        />
+                      </Field>
+
+                      <Field label="Apellido paterno" required error={fieldErrors.apellido_p}>
+                        <Input
+                          value={form.apellido_p}
+                          onChange={(e) =>
+                            updateField(
+                              "apellido_p",
+                              e.target.value
+                            )
+                          }
+                          error={!!fieldErrors.apellido_p}
+                        />
+                      </Field>
+
+                      <Field label="Apellido materno" required >
+                        <Input
+                          value={form.apellido_m}
+                          onChange={(e) =>
+                            updateField(
+                              "apellido_m",
                               e.target.value
                             )
                           }
                         />
+                      </Field>
 
-                        {localidades.length > 0 && (
-                          <button
-                            type="button"
-                            className="text-xs text-[#0E5F63] hover:underline"
-                            onClick={() => {
-                              setOtraLocalidad(false);
-                              updateField(
-                                "localidad",
-                                localidades[0]
+                      <Field label="Correo" required error={fieldErrors.correo}>
+                        <Input
+                          type="email"
+                          value={form.correo}
+                          onChange={(e) =>
+                            updateField(
+                              "correo",
+                              e.target.value
+                            )
+                          }
+                          error={!!fieldErrors.correo}
+                        />
+                      </Field>
+
+                      <Field label="Teléfono" required error={fieldErrors.telefono}>
+                        <Input
+                          value={form.telefono}
+                          onChange={(e) =>
+                            updateField(
+                              "telefono",
+                              e.target.value
+                            )
+                          }
+                          error={!!fieldErrors.telefono}
+                        />
+                      </Field>
+
+                      <Field label="Tipo donador" required error={fieldErrors.tipo}>
+                        <Select
+                          value={form.tipo}
+                          onChange={(e) =>
+                            updateField(
+                              "tipo",
+                              e.target.value
+                            )
+                          }
+                          error={!!fieldErrors.tipo}
+                        >
+                          <option value="">
+                            Selecciona
+                          </option>
+                          <option value="CEI">
+                            CEI
+                          </option>
+                          <option value="OYE">
+                            OYE
+                          </option>
+                          <option value="CANFRO">
+                            CANFRO
+                          </option>
+                        </Select>
+                      </Field>
+
+                      <Field label="Fecha ingreso" required error={fieldErrors.fecha_ingreso}>
+                        <Input
+                          type="date"
+                          value={form.fecha_ingreso}
+                          onChange={(e) =>
+                            updateField(
+                              "fecha_ingreso",
+                              e.target.value
+                            )
+                          }
+                          error={!!fieldErrors.fecha_ingreso}
+                        />
+                      </Field>
+                    </div>
+                  </>
+                )}
+
+              {/* PASO 2 */}
+              {step ===
+                2 && (
+                  <>
+                    <h3 className="text-xs font-bold text-[#0E5F63] mb-4 uppercase tracking-wider">
+                      Dirección
+                    </h3>
+
+                    <div
+                      className={
+                        ui.modal
+                          .twoCols
+                      }
+                    >
+                      <Field label="País" required error={fieldErrors.pais}>
+                        <Select
+                          value={form.pais}
+                          onChange={(e) => {
+                            updateField(
+                              "pais",
+                              e.target.value
+                            );
+                          }}
+                          error={!!fieldErrors.pais}
+                        >
+                          <option value="">
+                            Selecciona país
+                          </option>
+
+                          {countries.map(
+                            (c) => (
+                              <option
+                                key={c.code}
+                                value={c.code}
+                              >
+                                {c.name}
+                              </option>
+                            )
+                          )}
+                        </Select>
+                      </Field>
+
+                      <Field label="Código Postal" required error={fieldErrors.cp}>
+                        <Input
+                          value={form.cp}
+                          onChange={async (
+                            e
+                          ) => {
+                            const cp =
+                              e.target
+                                .value;
+
+                            updateField(
+                              "cp",
+                              cp
+                            );
+
+                            if (
+                              cp.length ===
+                              5
+                            ) {
+                              await handleBuscarCP(
+                                cp
                               );
-                            }}
-                          >
-                            Volver a sugerencias
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </Field>
-                </div>
+                            }
+                          }}
+                          error={!!fieldErrors.cp}
+                        />
+                      </Field>
 
+                      <Field label="Estado" >
+                        <Input
+                          disabled={
+                            cpEncontrado
+                          }
+                          value={
+                            form.colonia
+                          }
+                          onChange={(e) =>
+                            updateField(
+                              "colonia",
+                              e.target
+                                .value
+                            )
+                          }
+                      
+                        />
+                      </Field>
 
-                {/* CALLE */}
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Calle" required>
-                    <InputG
-                      className={inputClass}
-                      value={form.calle}
-                      onChange={(e) =>
-                        updateField("calle", e.target.value)
-                      }
-                    />
-                  </Field>
-                </div>
+                      <Field
+                        label="Localidad"
+                        required
+                        error={fieldErrors.localidad}
+                      >
+                        <Input
+                          value={
+                            form.localidad
+                          }
+                          onChange={(e) =>
+                            updateField(
+                              "localidad",
+                              e.target
+                                .value
+                            )
+                          }
+                          error={!!fieldErrors.localidad}
+                        />
+                      </Field>
 
+                      <Field
+                        label="Calle"
+                        required
+                        error={fieldErrors.calle}
+                      >
+                        <Input
+                          value={
+                            form.calle
+                          }
+                          onChange={(e) =>
+                            updateField(
+                              "calle",
+                              e.target
+                                .value
+                            )
+                          }
+                          error={!!fieldErrors.calle}
+                        />
+                      </Field>
 
-                {/* NÚMERO */}
-                <div className="col-span-12 md:col-span-4">
-                  <Field label="Número" required>
-                    <InputG
-                      className={inputClass}
-                      value={form.numero}
-                      onChange={(e) =>
-                        updateField("numero", e.target.value)
-                      }
-                    />
-                  </Field>
-                </div>
-
-              </div>
+                      <Field
+                        label="Número"
+                        required
+                        error={fieldErrors.numero}
+                      >
+                        <Input
+                          value={
+                            form.numero
+                          }
+                          onChange={(e) =>
+                            updateField(
+                              "numero",
+                              e.target
+                                .value
+                            )
+                          }
+                          error={!!fieldErrors.numero}
+                        />
+                      </Field>
+                    </div>
+                  </>
+                )}
             </div>
 
-          </div>
-
-          {/* Footer */}
-          <div className="px-8 py-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-            <button
-              onClick={onClose}
-              className="px-6 py-2 text-sm font-bold text-slate-500 hover:text-slate-700"
+            <div
+              className={
+                ui.modal
+                  .formActions
+              }
             >
-              Cancelar
-            </button>
+              <Boton
+                variant="secondary"
+                onClick={() =>
+                  step ===
+                    1
+                    ? onClose()
+                    : setStep(
+                      1
+                    )
+                }
+              >
+                {step ===
+                  1
+                  ? "Cancelar"
+                  : "Atrás"}
+              </Boton>
 
-            <button
-              disabled={loading}
-              onClick={handlePreSubmit}
-              className="px-7 py-2 rounded-xl bg-[#0E5F63] text-white text-sm font-bold hover:bg-[#0c5357] transition-all shadow-lg shadow-[#0E5F63]/20 flex items-center gap-2 disabled:opacity-50"
-            >
-              {loading ? "Guardando..." : "Registrar Donador"}
-              <HiCheck />
-            </button>
+              {step ===
+                1 ? (
+                <Boton
+                  onClick={() =>
+                    setStep(
+                      2
+                    )
+                  }
+                >
+                  Siguiente
+                </Boton>
+              ) : (
+                <Boton
+                  onClick={
+                    handlePreSubmit
+                  }
+                  disabled={
+                    loading
+                  }
+                >
+                  {loading
+                    ? "Guardando..."
+                    : "Registrar"}
+                </Boton>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       <ModalConfirmacion
         open={showConfirm}
-        title="¿Registrar donador?"
-        description="Se guardará la información del nuevo donador."
-        onConfirm={handleConfirmSave}
-        onClose={() => setShowConfirm(false)}
+        title="Registrar Donador"
+        description={`¿Deseas crear a "${form.nombre}"?`}
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        onConfirm={
+          handleConfirmSave
+        }
+        onClose={() =>
+          setShowConfirm(
+            false
+          )
+        }
+        loading={loading}
+        color="teal"
       />
 
       <ModalResultado
-        open={resultModal.open}
-        type={resultModal.type}
-        title={resultModal.title}
-        message={resultModal.message}
-        onClose={handleFinalClose}
+        open={
+          resultModal.open
+        }
+        type={
+          resultModal.type
+        }
+        title={
+          resultModal.title
+        }
+        message={
+          resultModal.message
+        }
+        onClose={
+          handleFinalClose
+        }
       />
     </>
   );

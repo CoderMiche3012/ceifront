@@ -1,111 +1,120 @@
-import { User, PencilLine } from 'lucide-react';
-import React, { useState } from 'react';
+import { User, PencilLine } from "lucide-react";
+import { useState } from "react";
+
+import Card from "../../../../../components/ui/Card";
+import BotonEditar from "../../../../../components/ui/BotonEditar";
+
 import EditarDatosGenerales from "../../modales/EditarDatosGenerales";
 
-export default function DatosPersonalesCard({ data, setData }) {
+import { ui } from "../../../../../styles/ui/uiClasses";
+
+export default function DatosPersonalesCard({ data }) {
   const [modalAbierto, setModalAbierto] = useState(false);
-  const noEditable = ["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
+
+  const noEditable = ["aceptado", "rechazado"].includes(
+    data?.estatus_postulante?.toLowerCase()
+  );
 
   return (
-    <div className="rounded-2xl bg-white p-8 shadow-sm border border-slate-200">
+    <Card>
 
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="flex items-center gap-2 text-base font-bold text-slate-800">
-          <User className="w-5 h-5 text-teal-600" />
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-6">
+
+        <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800">
+          <User className="w-4 h-4 text-teal-600" />
           Datos Personales
         </h3>
+
         {!noEditable && (
-          <button
+          <BotonEditar
+            icon={PencilLine}
             onClick={() => setModalAbierto(true)}
-            className="flex items-center gap-2 text-sm font-semibold text-teal-600 hover:text-teal-700 transition group"
           >
-            <PencilLine className="w-4 h-4 group-hover:rotate-12 transition-transform" />
             Editar datos
-          </button>
+          </BotonEditar>
         )}
+
       </div>
 
-      {/* Grid de Información */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
+      {/* GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
 
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Nombre completo</p>
+          <p className={ui.text.label}>Nombre completo</p>
           <p className="text-slate-700 font-medium">
             {data.nombre} {data.apellido_p} {data.apellido_m}
           </p>
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Fecha de nacimiento</p>
+          <p className={ui.text.label}>Fecha de nacimiento</p>
           <p className="text-slate-700 font-medium">
             {data.fecha_nacimiento || "--"}
           </p>
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Teléfono</p>
+          <p className={ui.text.label}>Teléfono</p>
           <p className="text-slate-700 font-medium">
             {data.telefono || "--"}
           </p>
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Género</p>
+          <p className={ui.text.label}>Género</p>
           <p className="text-slate-700 font-medium">
             {data.genero || "--"}
           </p>
         </div>
 
-        <div className="col-span-1 md:col-span-2 lg:col-span-1">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            Correo
-          </p>
-          <p className="text-slate-700 font-medium italic text-teal-700">
+        <div>
+          <p className={ui.text.label}>Correo</p>
+          <p className="text-slate-700 font-medium truncate">
             {data.correo || "--"}
           </p>
         </div>
-        <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-            Escolaridad
-          </p>
 
-          <div className="flex items-center gap-2 text-slate-700 font-medium">
-            <span>{data.nivel_escolar_inicial || "--"}</span>
-            <span className="text-slate-400">|</span>
-            <span>{data.grado_escolar_inicial || "--"}</span>
-          </div>
-        </div>
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Referencia de la casa</p>
+          <p className={ui.text.label}>Escolaridad</p>
+          <p className="text-slate-700 font-medium">
+            {data.nivel_escolar_inicial || "--"} | {data.grado_escolar_inicial || "--"}
+          </p>
+        </div>
+
+        <div>
+          <p className={ui.text.label}>Referencia de la casa</p>
           <p className="text-slate-700 font-medium">
             {data.referencia_casa || "--"}
           </p>
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Referencias de ingreso</p>
+          <p className={ui.text.label}>Referencia de ingreso</p>
           <p className="text-slate-700 font-medium">
             {data.referencia_ingreso || "--"}
           </p>
         </div>
 
-        <div >
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-            Dirección
-          </p>
-          <p className="text-slate-700 font-medium leading-relaxed">
-            Calle {data.calle}, # {data.numero}, Col. {data.colonia}, {data.municipio}, C.P {data.cp}
-          </p>
-        </div>
+      </div>
 
-      </div>    
+      {/* DIRECCIÓN */}
+      <div className="mt-6 pt-4 border-t border-slate-100">
 
+        <p className={ui.text.label}>Dirección</p>
+
+        <p className="text-slate-700 font-medium leading-relaxed">
+          Calle {data.calle}, #{data.numero}, Col. {data.colonia},{" "}
+          {data.municipio}, C.P {data.cp}
+        </p>
+      </div>
+
+      {/* MODAL */}
       <EditarDatosGenerales
         isOpen={modalAbierto}
         onClose={() => setModalAbierto(false)}
         data={data}
-        setData={setData}
       />
-    </div>
+    </Card>
   );
 }

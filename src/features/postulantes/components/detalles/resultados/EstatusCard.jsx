@@ -1,14 +1,21 @@
 import { CheckCircle, Lock, Loader2, AlertCircle, Clock, Check, X, ChevronRight, } from "lucide-react";
 import { useState, useEffect } from "react";
-import { postulantesService } from "../../../services/postulantesService";
+import { actualizarPostulante } from "../../../services/postulantesService";
 import { crearBeneficiario } from "../../../../beneficiarios/services/beneficiariosService";
 import { usePeriodoActivo } from "../../../../periodos/hooks/usePeriodoActivo"
-import { crearSeguimiento }  from "../../../../../features/beneficiarios/services/seguimientoService"; 
+import { crearSeguimiento } from "../../../../../features/beneficiarios/services/seguimientoService";
+import { useActualizarPostulanteDetalle } from "../../../hooks/usePostulantes";
 
 export default function EstatusCard({ data, onChangeDecision }) {
-  const { data: periodoData } = usePeriodoActivo();
-  const idPeriodoActivo = periodoData?.idPeriodoActivo;
-  console.log("periodo,",idPeriodoActivo)
+  const {
+    periodoActivo,
+    idPeriodoActivo,
+  } = usePeriodoActivo();
+  const actualizarPostulanteMutation =
+    useActualizarPostulanteDetalle(
+      data.id_postulante
+    );
+  console.log("per", idPeriodoActivo)
   const estatusEstudio = data?.estatus_estudio?.toLowerCase()?.trim();
   const estudioCompleto = estatusEstudio === "completo";
   const noEditable = ["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
@@ -31,17 +38,18 @@ export default function EstatusCard({ data, onChangeDecision }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setDecision(obtenerEstatusInicial());
-  }, [data?.estatus]);
+  setDecision(
+    obtenerEstatusInicial()
+  );
+}, [data?.estatus]);
 
   const handleChange = async (value) => {
     setLoading(true);
 
     try {
-      await postulantesService.actualizarPostulante(
-        data.id_postulante,
-        { estatus: value }
-      );
+      await actualizarPostulanteMutation.mutateAsync({
+        estatus: value,
+      });
 
       if (value === "aceptado") {
         const beneficiario = await crearBeneficiario({

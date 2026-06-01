@@ -2,67 +2,31 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu } from "lucide-react";
 
-import { ui } from "../../styles/uiClasses";
-import SubMenu from "./SubMenu";
-import ModalPerfil from "../../features/usuarios/components/modales/ModalPerfil";
+import { ui } from "../../styles/ui/uiClasses";
+import { obtenerUsuario, limpiarSesionLocal, guardarUsuarioLocal } from "../../storage/userStorage";
 
-import { usePerfil } from "../../features/auth/hooks/usePerfil";
-import { limpiarSesionLocal, guardarSesionLocal } from "../../storage/userStorage";
+import SubMenu from "./SubMenu";
+import ModalPerfil from "../../features/auth/components/ModalPerfil";
 
 import logoCei from "../../assets/imagenes/logo.png";
 
-
-export default function Encabezado({
-  setSidebarOpen,
-  sidebarOpen,
-}) {
+export default function Encabezado({ setSidebarOpen, sidebarOpen, }) {
   const navigate = useNavigate();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   //estado inicial del usuario
-  const [fullUser, setFullUser] = useState(() => {
-    try {
-      const stored = localStorage.getItem("user");
-      return stored ? JSON.parse(stored) : null;
-    } catch (error) {
-      console.error("Error parsing user:", error);
-      return null;
-    }
-  });
-
-  //sincronizacion con el perfil 
-  const userId = fullUser?.id;
-  const { data: perfilActualizado } = usePerfil(userId);
+  const [fullUser, setFullUser] = useState( obtenerUsuario() );
+  //sincronizacion con el perfil (detectar cambios)
   useEffect(() => {
-    if (!perfilActualizado) return;
-
-    setFullUser((prev) => {
-      const mergedUser = {
-        ...prev,
-        ...perfilActualizado,
-
-        esAdmin:
-          perfilActualizado?.esAdmin ??
-          prev?.esAdmin,
-
-        esStaff:
-          perfilActualizado?.esStaff ??
-          prev?.esStaff,
-      };
-
-      if (JSON.stringify(prev) === JSON.stringify(mergedUser)) {
-        return prev;
-      }
-
-      guardarSesionLocal({
-        usuario: mergedUser,
-        access: localStorage.getItem("access"),
-        refresh: localStorage.getItem("refresh"),
-      });
-
-      return mergedUser;
-    });
-  }, [perfilActualizado]);
-
+    const syncUser = () => { setFullUser(obtenerUsuario()); };
+    window.addEventListener("storage", syncUser);
+    syncUser();
+    return () => {
+      window.removeEventListener(
+        "storage",
+        syncUser
+      );
+    };
+  }, []);
   //cerrar sesion
   const cerrarSesion = () => {
     limpiarSesionLocal();
@@ -70,22 +34,18 @@ export default function Encabezado({
   };
   //manejador para actualizaciones manuales
   const handleUserUpdate = useCallback((updatedUser) => {
-
     if (!updatedUser) return;
-
-    setFullUser(updatedUser);
-
-    guardarSesionLocal({
-      usuario: updatedUser,
-      access: localStorage.getItem("access"),
-      refresh: localStorage.getItem("refresh"),
-    });
+    guardarUsuarioLocal(updatedUser);
+    window.dispatchEvent(
+      new Event("storage")
+    );
   }, []);
 
   return (
     <>
       <header className={ui.headerBar.container}>
         <div className="flex items-center gap-4">
+          {/*para mostrar segun si se abre o no el menu*/}
           <button
             type="button"
             onClick={() => setSidebarOpen((prev) => !prev)}

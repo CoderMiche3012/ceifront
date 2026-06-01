@@ -1,24 +1,71 @@
-import { useState, useEffect } from "react";
-import {ShieldCheck,Lock,Loader2,CheckCircle,Pencil,} from "lucide-react";
-import { actualizarEstudio } from "../../../services/estudiosService";
+import {
+  useState,
+  useEffect,
+} from "react";
 
-export default function RecomendacionCard({ data, setData }) {
+import {
+  ShieldCheck,
+  Lock,
+  Loader2,
+  CheckCircle,
+  Pencil,
+} from "lucide-react";
+
+import {
+  useActualizarEstudioDetalle,
+} from "../../../hooks/usePostulantes";
+
+export default function RecomendacionCard({
+  data,
+}) {
   const estudioCompleto =
-    data?.estatus_estudio?.toLowerCase()?.trim() ===
-    "completo";
-  const noEditable = ["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
-  const [prioridad, setPrioridad] = useState("");
-  const [nota, setNota] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [guardado, setGuardado] = useState(false);
-  const [editando, setEditando] = useState(false);
+    data?.estatus_estudio
+      ?.toLowerCase()
+      ?.trim() === "completo";
+
+  const noEditable = [
+    "aceptado",
+    "rechazado",
+  ].includes(
+    data?.estatus_postulante
+      ?.toLowerCase()
+  );
+
+  const [prioridad, setPrioridad] =
+    useState("");
+
+  const [nota, setNota] =
+    useState("");
+
+  const [guardado, setGuardado] =
+    useState(false);
+
+  const [editando, setEditando] =
+    useState(false);
+
+  const {
+    mutateAsync:
+      actualizarRecomendacion,
+    isPending: loading,
+  } =
+    useActualizarEstudioDetalle(
+      data?.id_estudio
+    );
 
   useEffect(() => {
     if (estudioCompleto) {
-      setPrioridad(data?.prioridad_servicio || "");
-      setNota(data?.nota_servicio || "");
+      setPrioridad(
+        data?.prioridad_servicio ||
+          ""
+      );
 
-      if (data?.prioridad_servicio) {
+      setNota(
+        data?.nota_servicio || ""
+      );
+
+      if (
+        data?.prioridad_servicio
+      ) {
         setEditando(false);
       } else {
         setEditando(true);
@@ -30,45 +77,48 @@ export default function RecomendacionCard({ data, setData }) {
     }
   }, [data, estudioCompleto]);
 
-  const guardar = async () => {
-    if (!estudioCompleto) return;
+  const guardar =
+    async () => {
+      if (!estudioCompleto)
+        return;
 
-    if (!prioridad) {
-      alert("Selecciona una prioridad");
-      return;
-    }
+      if (!prioridad) {
+        alert(
+          "Selecciona una prioridad"
+        );
+        return;
+      }
 
-    setLoading(true);
-    setGuardado(false);
+      setGuardado(false);
 
-    try {
-      await actualizarEstudio(
-        data.id_estudio || data.id_expediente,
-        {
-          prioridad_servicio: prioridad,
-          nota_servicio: nota,
-        }
-      );
+      try {
+        await actualizarRecomendacion(
+          {
+            prioridad_servicio:
+              prioridad,
 
-      setData((prev) => ({
-        ...prev,
-        prioridad_servicio: prioridad,
-        nota_servicio: nota,
-      }));
+            nota_servicio:
+              nota,
+          }
+        );
 
-      setEditando(false);
-      setGuardado(true);
+        setEditando(false);
 
-      setTimeout(() => {
-        setGuardado(false);
-      }, 2500);
-    } catch (error) {
-      console.error(error);
-      alert("Error al guardar recomendación");
-    } finally {
-      setLoading(false);
-    }
-  };
+        setGuardado(true);
+
+        setTimeout(() => {
+          setGuardado(false);
+        }, 2500);
+      } catch (error) {
+        console.error(
+          error
+        );
+
+        alert(
+          "Error al guardar recomendación"
+        );
+      }
+    };
 
   const opciones = [
     {
@@ -88,21 +138,25 @@ export default function RecomendacionCard({ data, setData }) {
     },
   ];
 
-  const tienePrioridad = !!prioridad;
+  const tienePrioridad =
+    !!prioridad;
 
   return (
     <div className="rounded-3xl bg-white p-6 shadow border border-slate-200 space-y-6 relative">
-
-      {/* BOTÓN EDITAR */}
+      {/* EDITAR */}
       {tienePrioridad &&
         estudioCompleto &&
-        !editando && !noEditable &&(
-          
+        !editando &&
+        !noEditable && (
           <button
-            onClick={() => setEditando(true)}
+            onClick={() =>
+              setEditando(true)
+            }
             className="absolute top-5 right-5 flex items-center gap-1 text-sm font-semibold text-emerald-800 hover:text-emerald-900"
           >
-            <Pencil size={15} />
+            <Pencil
+              size={15}
+            />
             Editar
           </button>
         )}
@@ -116,13 +170,16 @@ export default function RecomendacionCard({ data, setData }) {
           />
 
           <h3 className="font-bold text-slate-800">
-            Recomendación del Encargado
+            Recomendación del
+            Encargado
           </h3>
         </div>
 
         {!estudioCompleto && (
           <div className="flex items-center gap-2 text-xs text-red-500">
-            <Lock size={14} />
+            <Lock
+              size={14}
+            />
             Bloqueado
           </div>
         )}
@@ -135,50 +192,60 @@ export default function RecomendacionCard({ data, setData }) {
         </p>
 
         <div className="grid grid-cols-3 gap-3">
-          {opciones.map((item) => {
-            const activo =
-              prioridad === item.key;
+          {opciones.map(
+            (item) => {
+              const activo =
+                prioridad ===
+                item.key;
 
-            return (
-              <button
-                key={item.key}
-                type="button"
-                disabled={
-                  !estudioCompleto ||
-                  loading ||
-                  !editando
-                }
-                onClick={() =>
-                  setPrioridad(item.key)
-                }
-                className={`rounded-2xl border px-4 py-4 text-sm font-bold transition
-                ${
-                  activo
-                    ? item.color
-                    : "border-slate-200 text-slate-400"
-                }
-                ${
-                  !editando
-                    ? "cursor-default"
-                    : "hover:scale-[1.02]"
-                }
-                ${
-                  !estudioCompleto
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                }`}
-              >
-                {item.key}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={
+                    item.key
+                  }
+                  type="button"
+                  disabled={
+                    !estudioCompleto ||
+                    loading ||
+                    !editando
+                  }
+                  onClick={() =>
+                    setPrioridad(
+                      item.key
+                    )
+                  }
+                  className={`rounded-2xl border px-4 py-4 text-sm font-bold transition
+                  ${
+                    activo
+                      ? item.color
+                      : "border-slate-200 text-slate-400"
+                  }
+                  ${
+                    !editando
+                      ? "cursor-default"
+                      : "hover:scale-[1.02]"
+                  }
+                  ${
+                    !estudioCompleto
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                >
+                  {
+                    item.key
+                  }
+                </button>
+              );
+            }
+          )}
         </div>
       </div>
 
       {/* NOTA */}
       <div className="space-y-2">
         <p className="text-xs font-bold text-slate-400 uppercase">
-          Justificación de prioridad
+          Justificación de
+          prioridad
         </p>
 
         <textarea
@@ -189,8 +256,13 @@ export default function RecomendacionCard({ data, setData }) {
             !editando
           }
           value={nota}
-          onChange={(e) =>
-            setNota(e.target.value)
+          onChange={(
+            e
+          ) =>
+            setNota(
+              e.target
+                .value
+            )
           }
           placeholder="Escribe una observación..."
           className="w-full rounded-2xl border border-slate-200 p-4 text-sm resize-none disabled:bg-slate-100 disabled:text-slate-400"
@@ -198,38 +270,53 @@ export default function RecomendacionCard({ data, setData }) {
       </div>
 
       {/* FOOTER */}
-      {editando && estudioCompleto && (
-        <div className="space-y-2">
-          <button
-            type="button"
-            disabled={loading}
-            onClick={guardar}
-            className="w-full rounded-2xl bg-teal-600 py-3 text-sm font-bold text-white disabled:bg-slate-300 flex items-center justify-center gap-2"
-          >
-            {loading && (
-              <Loader2
-                size={16}
-                className="animate-spin"
-              />
+      {editando &&
+        estudioCompleto && (
+          <div className="space-y-2">
+            <button
+              type="button"
+              disabled={
+                loading
+              }
+              onClick={
+                guardar
+              }
+              className="w-full rounded-2xl bg-teal-600 py-3 text-sm font-bold text-white disabled:bg-slate-300 flex items-center justify-center gap-2"
+            >
+              {loading && (
+                <Loader2
+                  size={
+                    16
+                  }
+                  className="animate-spin"
+                />
+              )}
+
+              {loading
+                ? "Guardando..."
+                : "Guardar recomendación"}
+            </button>
+
+            {guardado && (
+              <p className="text-xs text-center text-emerald-600 flex items-center justify-center gap-1">
+                <CheckCircle
+                  size={
+                    14
+                  }
+                />
+                Guardado
+                correctamente
+              </p>
             )}
-
-            {loading
-              ? "Guardando..."
-              : "Guardar recomendación"}
-          </button>
-
-          {guardado && (
-            <p className="text-xs text-center text-emerald-600 flex items-center justify-center gap-1">
-              <CheckCircle size={14} />
-              Guardado correctamente
-            </p>
-          )}
-        </div>
-      )}
+          </div>
+        )}
 
       {!estudioCompleto && (
         <p className="text-xs text-center text-red-500">
-          Debe completarse el estudio socioeconómico
+          Debe
+          completarse el
+          estudio
+          socioeconómico
         </p>
       )}
     </div>

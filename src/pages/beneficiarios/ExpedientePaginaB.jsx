@@ -11,7 +11,9 @@ import HistorialEscolarCard from "../../features/beneficiarios/components/detall
 import HistorialServicios from "../../features/beneficiarios/components/detalles/seguimiento//Servicios/HistorialServicios";
 import HistorialEconomicoCard from "../../features/beneficiarios/components/detalles/seguimiento/ApoyosEconomicos/HistorialEconomico";
 import HistorialObligaciones from "../../features/beneficiarios/components/detalles/seguimiento/Obligaciones/HistorialObligaciones";
-
+import HistorialFotografia from "../../features/beneficiarios/components/detalles/seguimiento/Fotografias/HistorialFotografias";
+import ExpedienteDigital from "../../features/beneficiarios/components/detalles/seguimiento/Documentos/Documentos";
+import EstudioSos from "../../features/beneficiarios/components/detalles/EstudioSocioeconomico";
 export default function ExpedientePagina() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -141,6 +143,9 @@ export default function ExpedientePagina() {
         {tab === "apoyos" && <HistorialEconomicoCard data={data} />}
         {tab === "obligaciones" && <HistorialObligaciones data={data} />}
         {tab === "asistencias" && <HistorialServicios data={data} />}
+        {tab === "fotografias" && <HistorialFotografia data={data} refetch={refetch} />}
+        {tab === "documentos" && <ExpedienteDigital data={data} />}
+        {tab === "estudio" && <EstudioSos data={data} refetch={refetch}/>}
       </main>
     </section>
   );

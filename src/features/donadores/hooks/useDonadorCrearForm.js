@@ -1,8 +1,15 @@
-import { useState } from "react";
-import { crearDonador } from "../services/donadoresService";
-import { countries } from "../../../utils/countries";
+// por corregir por lo de direccion
 
-export const useDonadorCrearForm = (onSuccess, onClose) => {
+import { useState } from "react";
+import { useCrearDonador } from "./useDonadores";
+import { formatErrorAnidado } from "../../../utils/errorHandlers";
+
+export const useDonadorCrearForm = (
+  onSuccess,
+  onClose
+) => {
+  const crearMutation = useCrearDonador();
+
   const getInitialForm = () => ({
     nombre: "",
     apellido_p: "",
@@ -12,7 +19,9 @@ export const useDonadorCrearForm = (onSuccess, onClose) => {
     tipo: "",
     correo: "",
     estatus: "Activo",
-    fecha_ingreso: new Date().toISOString().split("T")[0],
+    fecha_ingreso: new Date()
+      .toISOString()
+      .split("T")[0],
     nota: "",
     calle: "",
     numero: "",
@@ -21,117 +30,278 @@ export const useDonadorCrearForm = (onSuccess, onClose) => {
     pais: "",
   });
 
+  const [form, setForm] =
+    useState(getInitialForm());
 
+  const [fieldErrors, setFieldErrors] =
+    useState({});
 
-  const [form, setForm] = useState(getInitialForm());
+  const [error, setError] =
+    useState("");
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [loadingCP, setLoadingCP] = useState(false);
-  const [cpEncontrado, setCpEncontrado] = useState(false);
-  const [resultModal, setResultModal] = useState({
-    open: false,
-    type: "success",
-    title: "",
-    message: "",
-  });
+  const [showConfirm, setShowConfirm] =
+    useState(false);
+
+  const [loadingCP, setLoadingCP] =
+    useState(false);
+
+  const [cpEncontrado, setCpEncontrado] =
+    useState(false);
+
+  const [resultModal, setResultModal] =
+    useState({
+      open: false,
+      type: "success",
+      title: "",
+      message: "",
+    });
 
   const resetForm = () => {
     setForm(getInitialForm());
+    setFieldErrors({});
+    setError("");
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    setFieldErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
+
     setError("");
   };
 
   const validarFormulario = () => {
-    if (!(form.nombre || "").trim())
-      return "El nombre es obligatorio.";
+    const errors = {};
 
-    if (!(form.correo || "").trim())
-      return "El correo es obligatorio.";
+    if (!form.nombre.trim())
+      errors.nombre =
+        "El nombre es obligatorio";
 
-    if (!(form.telefono || "").trim())
-      return "El teléfono es obligatorio.";
+    if (!form.apellido_p.trim())
+      errors.apellido_p =
+        "El apellido paterno es obligatorio";
 
-    if (!(form.tipo || "").trim())
-      return "Selecciona el tipo de donador.";
+    if (!form.correo.trim())
+      errors.correo =
+        "El correo es obligatorio";
 
-    if (!(form.fecha_ingreso || "").trim())
-      return "Selecciona la fecha de ingreso.";
+    if (!form.telefono.trim())
+      errors.telefono =
+        "El teléfono es obligatorio";
 
-    return "";
+    if (!form.tipo.trim())
+      errors.tipo =
+        "Selecciona un tipo";
+
+    if (!form.fecha_ingreso.trim())
+      errors.fecha_ingreso =
+        "Selecciona una fecha";
+
+    if (!form.pais.trim())
+      errors.pais =
+        "Selecciona un país";
+
+    if (!form.cp.trim())
+      errors.cp =
+        "El código postal es obligatorio";
+
+    if (!form.localidad.trim())
+      errors.localidad =
+        "La localidad es obligatoria";
+
+    if (!form.calle.trim())
+      errors.calle =
+        "La calle es obligatoria";
+
+    if (!form.numero.trim())
+      errors.numero =
+        "El número es obligatorio";
+
+    return errors;
   };
 
   const handlePreSubmit = () => {
-    const mensajeError = validarFormulario();
+    const errors =
+      validarFormulario();
 
-    if (mensajeError) {
-      setError(mensajeError);
-      return;
-    }
+    setFieldErrors(errors);
+
+    if (
+  Object.keys(errors).length > 0
+) {
+  const labels = {
+    nombre: "Nombre",
+    apellido_p: "Apellido paterno",
+    apellido_m: "Apellido materno",
+    correo: "Correo",
+    telefono: "Teléfono",
+    tipo: "Tipo de donador",
+    fecha_ingreso: "Fecha de ingreso",
+    pais: "País",
+    cp: "Código postal",
+    localidad: "Localidad",
+    calle: "Calle",
+    numero: "Número",
+  };
+
+  const campos =
+    Object.keys(errors)
+      .map(
+        (key) =>
+          labels[key] || key
+      )
+      .join(", ");
+
+  setError(
+    `Revisa los siguientes campos: ${campos}`
+  );
+
+  return;
+}
 
     setError("");
     setShowConfirm(true);
   };
 
-  const handleConfirmSave = async () => {
+  const handleConfirmSave =
+  async () => {
     try {
-      setLoading(true);
       setShowConfirm(false);
 
-      const payload = {
-        ...form,
-        pais: form.pais,
-      };
-
-
-      await crearDonador(payload);
+      await crearMutation.mutateAsync(
+        form
+      );
 
       setResultModal({
         open: true,
         type: "success",
-        title: "Donador registrado",
-        message: "El donador fue creado correctamente.",
-      });
-
-      if (onSuccess) onSuccess();
-    } catch (err) {
-      setResultModal({
-        open: true,
-        type: "error",
-        title: "Error al guardar",
+        title:
+          "Donador registrado",
         message:
-          err?.response?.data?.message ||
-          err?.message ||
-          "No se pudo registrar el donador.",
+          "El donador fue creado correctamente.",
       });
-    } finally {
-      setLoading(false);
-    }
+
+      onSuccess?.();
+
+    } 
+    catch (err) {
+  const backendErrors =
+    err?.errors ||
+    err?.response?.data;
+
+  if (
+    backendErrors &&
+    typeof backendErrors === "object" &&
+    !Array.isArray(backendErrors)
+  ) {
+    const parsedErrors = {};
+
+    Object.entries(
+      backendErrors
+    ).forEach(([key, value]) => {
+      parsedErrors[key] =
+        Array.isArray(value)
+          ? value[0]
+          : value;
+    });
+
+    setFieldErrors(
+      parsedErrors
+    );
+
+    const labels = {
+      nombre: "Nombre",
+      apellido_p: "Apellido paterno",
+      apellido_m: "Apellido materno",
+      correo: "Correo",
+      telefono: "Teléfono",
+      tipo: "Tipo de donador",
+      fecha_ingreso: "Fecha de ingreso",
+      pais: "País",
+      cp: "Código postal",
+      localidad: "Localidad",
+      calle: "Calle",
+      numero: "Número",
+    };
+
+    const campos =
+      Object.keys(parsedErrors)
+        .map(
+          (key) =>
+            labels[key] || key
+        )
+        .join(", ");
+
+    setError(
+      `Revisa los siguientes campos: ${campos}`
+    );
+
+    return;
+  }
+
+  setResultModal({
+    open: true,
+    type: "error",
+    title:
+      "Error al guardar",
+    message:
+      formatErrorAnidado(err),
+  });
+}
   };
 
-  const handleFinalClose = () => {
-    setResultModal((prev) => ({ ...prev, open: false }));
+  const handleFinalClose =
+    () => {
+      setResultModal((prev) => ({
+        ...prev,
+        open: false,
+      }));
 
-    if (resultModal.type === "success") {
-      resetForm();
-      if (onClose) onClose();
-    }
-  };
+      if (
+        resultModal.type ===
+        "success"
+      ) {
+        resetForm();
+        onClose?.();
+      }
+    };
 
   return {
     form,
     setForm,
-    loading,
+    handleChange,
+
+    fieldErrors,
+
+    loading:
+      crearMutation.isPending,
+
     loadingCP,
-    cpEncontrado,
     setLoadingCP,
+
+    cpEncontrado,
     setCpEncontrado,
+
     error,
+
     showConfirm,
     setShowConfirm,
+
     resultModal,
+
     handlePreSubmit,
     handleConfirmSave,
     handleFinalClose,
   };
 };
+
+
+

@@ -1,141 +1,177 @@
-import { useState } from 'react';
-import { X, Save, Loader2, User, MapPin, GraduationCap, Phone, Mail } from 'lucide-react';
-import ModalConfirmacion from '../../../../components/shared/ModalConfirmacion';
-import ModalResultado from '../../../../components/shared/ModalResultado';
-import Input from '../../../../components/ui/InputG';
-import Field from '../../../../components/ui/Field';
-import { actualizarDonador } from '../../services/donadoresService';
+import { useEffect, useState } from "react";
+import { HiOutlineCalendar, HiOutlineUser, HiOutlineX, } from "react-icons/hi";
+import { ui } from "../../../../styles/ui/uiClasses";
 
-export default function EditarResumen({ isOpen, onClose, data, setData }) {
-  const [loading, setLoading] = useState(false);
+import Field from "../../../../components/ui/Field";
+import Input from "../../../../components/ui/InputG";
+import Select from "../../../../components/ui/Select";
+import Boton from "../../../../components/ui/Boton";
+
+import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
+import ModalResultado from "../../../../components/shared/ModalResultado";
+
+import { useActualizarDonador } from "../../hooks/useDonadores";
+
+export default function EditarResumen({ isOpen, onClose, data, }) {
+  // estados locales
+
   const [showConfirm, setShowConfirm] = useState(false);
-  const [resultado, setResultado] = useState({ open: false, type: 'success', title: '', message: '' });
-  const [formDataCache, setFormDataCache] = useState(null);
+  const [resultado, setResultado] =
+    useState({
+      open: false,
+      type: "success",
+      title: "",
+      message: "",
+    });
+  const [form, setForm] = useState({
+    fecha_ingreso: "",
+    estatus: "",
+  });
+
+  const actualizarMutation = useActualizarDonador();
+
+  // precargar datos
+  useEffect(() => {
+    if (isOpen && data) {
+      setForm({
+        fecha_ingreso: data.fecha_ingreso || "",
+        estatus: data.estatus || "",
+      });
+    }
+  }, [isOpen, data]);
+
   if (!isOpen) return null;
 
-  const preSubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const payload = Object.fromEntries(formData.entries());
-    setFormDataCache(payload);
-    setShowConfirm(true);
+  const updateField = ( field, value ) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
-  const handleFinalConfirm = async () => {
-    setLoading(true);
+
+  const handleGuardar = async () => {
     try {
-      const { id_donador } = data;
-      await actualizarDonador(id_donador, {
-        estatus: formDataCache.estatus,
-        fecha_ingreso: formDataCache.fecha_ingreso,
-      });
-      setData((prev) => ({ ...prev, ...formDataCache }));
+      await actualizarMutation.mutateAsync({ id: data.id_donador, data: { fecha_ingreso: form.fecha_ingreso,  estatus: form.estatus, }, });
       setShowConfirm(false);
       setResultado({
         open: true,
-        type: 'success',
-        title: '¡Actualización Exitosa!',
-        message: 'Los datos se han guardado correctamente en el sistema.'
+        type: "success",
+        title: "Datos actualizados",
+        message: "La información se guardó correctamente.",
       });
     } catch (error) {
       setShowConfirm(false);
       setResultado({
         open: true,
-        type: 'error',
-        title: 'Error de red',
-        message: error.message || 'Hubo un problema al conectar con el servidor.'
+        type: "error",
+        title: "Error",
+        message: error.message || "Ocurrió un problema al guardar.",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleCloseSuccess = () => {
-    setResultado({ ...resultado, open: false });
-    if (resultado.type === 'success') {
+  const handleCloseResultado = () => {
+    setResultado((prev) => ({
+      ...prev,
+      open: false,
+    }));
+
+    if (resultado.type === "success") {
       onClose();
     }
   };
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4">
-        <div className="bg-[#F8FAFC] rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-white">
+      <div className={ui.modal.formOverlay}>
+        <div className="w-full max-w-2xl">
+          <div className={ui.modal.formContainer}>
 
-          {/* Header */}
-          <div className="flex items-center justify-between p-8 bg-white border-b border-slate-100">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-[#0E5F63]/10 rounded-2xl">
-                <User className="w-6 h-6 text-[#0E5F63]" />
+            <div className={ui.modal.formHeader}>
+              <div className={` ${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63] `} >
+                <HiOutlineUser size={24} />
               </div>
-              <div>
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Editar Datos </h2>
-                <p className="text-sm text-slate-500 font-medium">Actualiza la información del donador</p>
+
+              <div className="flex-1">
+                <h2 className={ui.modal.title}>
+                  Editar Resumen
+                </h2>
+
+                <p className={ui.modal.description}>
+                  Actualiza información general del donador
+                </p>
               </div>
+
+              <button
+                onClick={onClose}
+                className=" p-2 rounded-xl hover:bg-slate-100  transition "
+              >
+                <HiOutlineX size={20} />
+              </button>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-all active:scale-90">
-              <X className="w-6 h-6 text-slate-400" />
-            </button>
-          </div>
 
-          <form onSubmit={preSubmit} className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-            <div className="space-y-10">
-              <section>
+            <div className={ui.modal.formBody}>
+              <div className={ui.modal.formScroll}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                  <Field label="Fecha de ingreso" required>
+                  <Field label="Fecha de ingreso" required >
                     <Input
                       type="date"
-                      name="fecha_ingreso"
-                      defaultValue={data.fecha_ingreso}
-                      required
+                      value={ form.fecha_ingreso }
+                      onChange={(e) => updateField("fecha_ingreso", e.target.value ) }
                     />
                   </Field>
 
-                  <Field label="Estatus" required>
-                    <select
-                      name="estatus"
-                      defaultValue={data?.estatus || ''}
-                      required
-                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0E5F63]"
+                  <Field label="Estatus" required >
+                    <Select
+                      value={form.estatus}
+                      onChange={(e) => updateField( "estatus", e.target.value ) }
                     >
-                      <option value="">Selecciona un estatus</option>
-                      <option value="Activo">Activo</option>
-                      <option value="Inactivo">Inactivo</option>
-                    </select>
+                      <option value="">
+                        Selecciona un estatus
+                      </option>
+
+                      <option value="Activo">
+                        Activo
+                      </option>
+
+                      <option value="Inactivo">
+                        Inactivo
+                      </option>
+                    </Select>
                   </Field>
-
                 </div>
-              </section>
-            </div>
+              </div>
 
-            <div className="flex justify-end gap-4 mt-12">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-8 py-3.5 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-2xl transition-all"
-              >
-                Descartar
-              </button>
-              <button
-                type="submit"
-                className="flex items-center gap-3 px-10 py-3.5 bg-[#0E5F63] text-white text-sm font-bold rounded-2xl hover:bg-[#0A4D50] shadow-xl shadow-[#0E5F63]/20 transition-all active:scale-95 disabled:opacity-50"
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                Confirmar Cambios
-              </button>
+              <div className={ui.modal.formActions}>
+                <Boton
+                  variant="secondary"
+                  onClick={onClose}
+                >
+                  Cancelar
+                </Boton>
+
+                <Boton
+                  onClick={() => setShowConfirm(true) }
+                  disabled={ actualizarMutation.isPending }
+                >
+                  {actualizarMutation.isPending ? "Guardando..." : "Guardar Cambios"}
+                </Boton>
+              </div>
             </div>
-          </form>
+          </div>
         </div>
       </div>
 
       <ModalConfirmacion
         open={showConfirm}
-        title="¿Guardar cambios?"
-        description="La información del expediente será actualizada de forma permanente en la base de datos."
-        confirmText="Guardar Ahora"
-        onConfirm={handleFinalConfirm}
-        onClose={() => setShowConfirm(false)}
-        loading={loading}
+        title="Guardar cambios"
+        description="¿Deseas actualizar la información?"
+        confirmText="Guardar"
+        cancelText="Cancelar"
+        onConfirm={handleGuardar}
+        onClose={() => setShowConfirm(false) }
+        loading={ actualizarMutation.isPending }
         color="teal"
       />
 
@@ -144,7 +180,7 @@ export default function EditarResumen({ isOpen, onClose, data, setData }) {
         type={resultado.type}
         title={resultado.title}
         message={resultado.message}
-        onClose={handleCloseSuccess}
+        onClose={handleCloseResultado}
       />
     </>
   );

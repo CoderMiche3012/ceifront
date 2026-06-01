@@ -1,150 +1,181 @@
-import { NavLink } from "react-router-dom";
+import { useMemo } from "react";
+import { Eye, Pencil, } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+import { ui } from "../../../../styles/ui/uiClasses";
+
+import Avatar from "../../../../components/shared/AvatarGeneral";
+import Insignia from "../../../../components/ui/Insignia";
+import AccionesTabla from "../../../../components/tablas/AccionesTabla";
 import DatosTabla from "../../../../components/tablas/DatosTabla";
-import AvatarGeneral from "../../../../components/shared/AvatarGeneral";
-import { Calendar, Clock, Eye, Printer, Check, X, Lock, Pencil } from "lucide-react";
-import EditarDatosGenerales from "../modales/EditarDatosGenerales";
 
+export default function DonadoresTabla({ donadores = [], onEditar, }) {
+  const navigate = useNavigate();
 
+  const columns =
+    useMemo(() => {
+      return [
+        {
+          key: "donador",
+          label: "Donador",
+        },
+        {
+          key: "tipo",
+          label: "Tipo",
+        },
+        {
+          key: "contacto",
+          label: "Contacto",
+        },
+        {
+          key: "asignados",
+          label: "Niños Asignados",
+        },
+        {
+          key: "donaciones",
+          label: "Donaciones (Periodo Activo)",
+        },
+        {
+          key: "estatus",
+          label: "Estatus",
+        },
+        {
+          key: "acciones",
+          label: "Acciones",
+        },
+      ];
+    }, []);
 
-const COLUMNS = [
-    { key: "donadores", label: "donadores" },
-    { key: "tipo", label: "tipo" },
-    { key: "contacto", label: "contacto" },
-    { key: "asignados", label: "Niños Asignados" },
-    { key: "donaciones", label: "Donaciones (Periodo Activo)" },
+  const renderCell = (
+    donador,
+    key
+  ) => {
+    switch (key) {
+      case "donador":
+        return (
+          <div className={ ui.table.userCell } >
+            <Avatar
+              nombre={ donador.nombre }
+              apellidoP={ donador.apellido_p }
+            />
 
-    { key: "estatus", label: "Estatus" },
-    { key: "acciones", label: "Acciones" },
-];
-export default function DonadoresTabla({ donadores = [], onRefresh, onEditar }) {
+            <div className="min-w-0">
+              <p className={`truncate ${ui.text.body} font-semibold`} >
+                { donador.nombre }{" "}
+                { donador.apellido_p }{" "}
+                { donador.apellido_m }
+              </p>
+            </div>
+          </div>
+        );
 
-    const renderCell = (item, key) => {
-        const donador = item || {};
-        //posicionamiento de las acciones
-        switch (key) {
-            case "donadores":
-                return (
-                    <div className="flex items-center gap-3">
-                        <AvatarGeneral nombre={donador.nombre || " "} apellidoP={donador.apellido_p || " "} />
-                        <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-slate-800 uppercase leading-none">
-                                {`${donador.nombre || ""} ${donador.apellido_p || ""} ${donador.apellido_m || ""}`}
-                            </span>
-                        </div>
-                    </div>
-                );
-            case "estatus": {
-                const estatus = donador.estatus?.toLowerCase();
-                const configEstatus = {
-                    activo: "bg-amber-100 text-amber-700 border-amber-200",
-                    inactivo: "bg-blue-100 text-blue-700 border-blue-200",
-                    pausa: "bg-emerald-100 text-emerald-700 border-emerald-200",
-                };
-                const estilo = configEstatus[estatus] || "bg-slate-100 text-slate-600 border-slate-200";
-                return (
-                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${estilo}`}>
-                        {donador.estatus}
-                    </span>
-                );
-            }
-            case "tipo":
-                return (
-                    <div className="flex flex-col leading-tight">
-                        <span className="text-sm font-medium text-slate-800">
-                            {donador.tipo}
-                        </span>
-                    </div>
-                );
-            case "contacto":
-                return (
-                    <div className="flex items-center gap-3">
-                        <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-slate-800 leading-none">
-                                {donador.correo || ""}
-                            </span>
+      case "tipo": {
+        const tipoVariant = {
+          CEI: "cei",
+          CANFRO: "canfro",
+          OYE: "oye",
+        };
 
-                            <span className="text-xs text-slate-500 mt-1">
-                                {donador.telefono || ""}
-                            </span>
-                        </div>
-                    </div>
-                );
-            case "asignados": {
-                const cantidad = donador.beneficiarios_apoyados?.length || 0;
+        return (
+          <Insignia
+            label={donador.tipo}
+            variant={ tipoVariant[donador.tipo] || "default"}
+          />
+        );
+      }
 
-                return (
-                    <span className="text-sm font-semibold text-slate-700">
-                        {cantidad} niños
-                    </span>
-                );
-            }
-            case "donador": {
-                const estatus = donador.estado_visita?.toLowerCase();
-                return (
-                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${estilo}`}>
-                        {"Sin donador"}
-                    </span>
-                );
-            }
-            case "donaciones": {
-                const totales = donador.totalesPeriodoActivo || {};
+      case "contacto":
+        return (
+          <div>
+            <p className={ ui.text.body } >
+              { donador.correo }
+            </p>
+            <p className={ ui.text.caption } >
+              { donador.telefono }
+            </p>
+          </div>
+        );
 
-                const monedas = Object.entries(totales);
+      case "asignados": {
+        const total = donador. beneficiarios_apoyados ?.length || 0;
 
-                if (monedas.length === 0) {
-                    return (
-                        <span className="text-xs text-slate-400">
-                            Sin donaciones
-                        </span>
-                    );
-                }
-
-                return (
-                    <div className="flex flex-col gap-1">
-                        {monedas.map(([moneda, monto]) => (
-                            <span
-                                key={moneda}
-                                className="text-sm font-semibold text-slate-700"
-                            >
-                                {moneda}: ${Number(monto).toLocaleString("es-MX")}
-                            </span>
-                        ))}
-                    </div>
-                );
-            }
-            case "acciones":
-                return (
-                    <div className="flex items-center gap-2">
-                        {/* VER */}
-                        <NavLink
-                            to={`/App/donadores/donador/${donador.id_donador}`}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-blue-600 transition-all"
-                            title="Ver donador"
-                        >
-                            <Eye size={18} />
-                        </NavLink>
-
-                        {/* EDITAR */}
-                        <button
-                            onClick={() => onEditar(donador)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-emerald-600 transition-all"
-                            title="Editar donador"
-                        >
-                            <Pencil size={18} />
-                        </button>
-                    </div>
-                );
-
-            default: return null;
+        if (total === 0) {
+          return (
+            <Insignia
+              label="Sin asignar"
+              variant="slate"
+            />
+          );
         }
-    };
 
-    return (
-        <DatosTabla
-            columns={COLUMNS}
-            data={donadores}
-            renderCell={renderCell}
-            rowKey="id_donador"
-        />
-    );
+        return (
+          <span className={ ui.text.body } >
+            {total}{" "}
+            {total === 1 ? "niño" : "niños"}
+          </span>
+        );
+      }
+      case "donaciones": {
+        const totales = donador.totalesPeriodoActivo || {};
+        const monedas = Object.entries( totales );
+        if ( monedas.length === 0 ) {
+          return (
+            <Insignia
+              label="Sin donaciones"
+              variant="slate"
+            />
+          );
+        }
+
+        return (
+          <div className="space-y-1">
+            {monedas.map( ([ moneda, monto,]) => (
+                <p key={ moneda } className={ ui.text.body } >
+                  { moneda } : $ {Number( monto ).toLocaleString( "es-MX" )}
+                </p>
+              )
+            )}
+          </div>
+        );
+      }
+
+      case "estatus":
+        return (
+          <Insignia
+            status={ donador.estatus }
+          />
+        );
+
+      case "acciones":
+        return (
+          <AccionesTabla
+            row={donador}
+            actions={[
+              {
+                label: "Ver",
+                icon: ( <Eye className="h-4 w-4" /> ),
+                onClick: ( row ) => navigate( `/App/donadores/donador/${row.id_donador}` ),
+              },
+              {
+                label: "Editar",
+                icon: ( <Pencil className="h-4 w-4" /> ),
+                onClick: onEditar,
+              },
+            ]}
+          />
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <DatosTabla
+      columns={ columns }
+      data={ donadores }
+      renderCell={ renderCell }
+      rowKey="id_donador"
+    />
+  );
 }
