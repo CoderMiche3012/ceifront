@@ -53,15 +53,40 @@ export const mainMenu = [
 
 export const reportesMenu = {
   label: "Reportes",
-  path: "/app/reportes",
   icon: HiOutlineChartBar,
-
   permission: {
     module: "reportes",
     action: "ver",
   },
 };
+export const reportesSubmenu = [
+  {
+    label: "Beneficiarios",
+    path: "/app/reportes/beneficiarios",
+    permission: {
+      module: "reportes",
+      action: "ver",
+    },
+  },
 
+  {
+    label: "Postulantes",
+    path: "/app/reportes/postulantes",
+    permission: {
+      module: "reportes",
+      action: "ver",
+    },
+  },
+
+  {
+    label: "Donadores",
+    path: "/app/reportes/donadores",
+    permission: {
+      module: "reportes",
+      action: "ver",
+    },
+  },
+];
 export const configSubmenu = [
   {
     label: "Usuarios",

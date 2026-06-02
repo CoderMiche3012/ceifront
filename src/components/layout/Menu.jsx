@@ -1,16 +1,17 @@
 import { useMemo, useState, useCallback } from "react";
 import { NavLink } from "react-router-dom";
-import {HiOutlineCog, HiOutlineLogout, HiChevronDown, HiChevronRight, } from "react-icons/hi";
+import { HiOutlineCog, HiOutlineLogout, HiChevronDown, HiChevronRight, } from "react-icons/hi";
 
 import logoCei from "../../assets/imagenes/logo.png";
 
-import {mainMenu, reportesMenu, configSubmenu, } from "../../config/menuConfig";
+import { mainMenu, reportesMenu, reportesSubmenu, configSubmenu, } from "../../config/menuConfig";
 import { usePermissions } from "../../context/PermissionsContext";
 
 export default function Menu({ sidebarOpen, onLogout }) {
   //estados
   const [configOpen, setConfigOpen] = useState(false);
   const { hasModulePermission } = usePermissions();
+  const [reportesOpen, setReportesOpen] = useState(false);
   // filtrar menú principal
   const visibleMainMenu = useMemo(() => {
     return mainMenu.filter((item) => {
@@ -25,6 +26,17 @@ export default function Menu({ sidebarOpen, onLogout }) {
   const visibleConfigSubmenu = useMemo(() => {
     return configSubmenu.filter((item) => {
       if (!item.permission) return true;
+      return hasModulePermission(
+        item.permission.module,
+        item.permission.action
+      );
+    });
+  }, [hasModulePermission]);
+  // submenu de reporte
+  const visibleReportesSubmenu = useMemo(() => {
+    return reportesSubmenu.filter((item) => {
+      if (!item.permission) return true;
+
       return hasModulePermission(
         item.permission.module,
         item.permission.action
@@ -108,17 +120,53 @@ export default function Menu({ sidebarOpen, onLogout }) {
             <nav className="space-y-1.5">
               {/* Reportes */}
               {canViewReportes && (
-                <NavLink
-                  to={reportesMenu.path}
-                  className={getLinkClasses}
-                  title={!sidebarOpen ? reportesMenu.label : ""}
-                >
-                  <reportesMenu.icon className="shrink-0 text-xl" />
-                  <span className={`${sidebarOpen ? "inline" : "hidden"} lg:inline`} >
-                    {reportesMenu.label}
-                  </span>
-                </NavLink>
+                <div className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => setReportesOpen((prev) => !prev)}
+                    className={`flex w-full items-center rounded-2xl py-3 text-[15px] font-medium text-[#0E5F63] transition hover:bg-slate-200/50 ${sidebarOpen
+                        ? "px-4 gap-3"
+                        : "justify-center lg:justify-start lg:px-4 lg:gap-3"
+                      }`}
+                  >
+                    <reportesMenu.icon className="shrink-0 text-xl" />
 
+                    <div
+                      className={`${sidebarOpen ? "flex" : "hidden"
+                        } lg:flex flex-1 items-center justify-between`}
+                    >
+                      <span className="truncate">
+                        {reportesMenu.label}
+                      </span>
+
+                      {reportesOpen ? (
+                        <HiChevronDown />
+                      ) : (
+                        <HiChevronRight />
+                      )}
+                    </div>
+                  </button>
+
+                  {reportesOpen &&
+                    (sidebarOpen || window.innerWidth >= 1024) && (
+                      <div className="mt-1 space-y-1 ml-9 border-l-2 border-slate-200 pl-2 animate-in slide-in-from-top-2 duration-200">
+                        {visibleReportesSubmenu.map((subItem) => (
+                          <NavLink
+                            key={subItem.path}
+                            to={subItem.path}
+                            className={({ isActive }) =>
+                              `block rounded-xl px-4 py-2 text-sm transition-colors ${isActive
+                                ? "bg-[#e7f4f3] font-bold text-[#1F8A8A]"
+                                : "text-slate-500 hover:bg-slate-100 hover:text-[#0E5F63]"
+                              }`
+                            }
+                          >
+                            {subItem.label}
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
+                </div>
               )}
 
               {/* Configuración */}
@@ -132,7 +180,7 @@ export default function Menu({ sidebarOpen, onLogout }) {
                       : "justify-center lg:justify-start lg:px-4 lg:gap-3"
                       }`}
                   >
-                    <HiOutlineCog className={`shrink-0 text-xl transition-transform ${configOpen ? "rotate-45" : "" }`} />
+                    <HiOutlineCog className={`shrink-0 text-xl transition-transform ${configOpen ? "rotate-45" : ""}`} />
                     <div className={`${sidebarOpen ? "flex" : "hidden"} lg:flex flex-1 items-center justify-between`} >
                       <span className="truncate">
                         Configuración

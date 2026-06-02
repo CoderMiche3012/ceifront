@@ -7,11 +7,11 @@ export default function FiltrosTabla({
   searchPlaceholder = "Buscar...",
   filters = [],
   onClearFilters,
+  showClearButton = true,
 }) {
   return (
     <div className={ui.filters.container}>
       <div className={ui.filters.layout}>
-
         <div className={ui.filters.searchWrapper}>
           <Search className={ui.filters.searchIcon} />
 
@@ -49,16 +49,17 @@ export default function FiltrosTabla({
             </select>
           ))}
 
-          <button
-            type="button"
-            onClick={onClearFilters}
-            className={ui.filters.clearButton}
-          >
-            <X className="h-4 w-4" />
-            Limpiar filtros
-          </button>
+          {showClearButton && (
+            <button
+              type="button"
+              onClick={onClearFilters}
+              className={ui.filters.clearButton}
+            >
+              <X className="h-4 w-4" />
+              Limpiar filtros
+            </button>
+          )}
         </div>
-
       </div>
     </div>
   );

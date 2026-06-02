@@ -23,6 +23,8 @@ import ExpedientePagina from "../pages/postulantes/ExpedientePagina";
 import BeneficiariosPagina from "../pages/beneficiarios/BeneficiariosPagina";
 import ExpedientePaginaB from "../pages/beneficiarios/ExpedientePaginaB";
 
+import ReportePostulantes from "../features/reportes/ReportePostulantes";
+
 //import AsistenciasPagina from "../pages/AsistenciasPagina";
 
 export default function AppRouter() {
@@ -158,6 +160,18 @@ export default function AppRouter() {
                   accion="ver"
                 >
                   <ExpedientePaginaB />
+                </PermissionRoute>
+              }
+            />
+
+            <Route
+              path="reportes/postulantes"
+              element={
+                <PermissionRoute
+                  modulo="usuarios"
+                  accion="ver"
+                >
+                  <ReportePostulantes />
                 </PermissionRoute>
               }
             />
