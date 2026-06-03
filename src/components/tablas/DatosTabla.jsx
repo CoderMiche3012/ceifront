@@ -1,6 +1,6 @@
 import { ui } from "../../styles/ui/uiClasses";
 
-export default function DatosTabla({columns,data,renderCell,rowKey = "id",}) {
+export default function DatosTabla({ columns, data, renderCell, rowKey = "id", }) {
   return (
     <div className={ui.table.wrapper}>
       <table className={ui.table.table}>
@@ -18,8 +18,10 @@ export default function DatosTabla({columns,data,renderCell,rowKey = "id",}) {
             data.map((row) => (
               <tr key={row[rowKey] ?? JSON.stringify(row)} className={ui.table.row} >
                 {columns.map((column) => (
-                  <td key={column.key}  className={ui.table.cell}>
-                    {renderCell(row, column.key)}
+                  <td key={column.key} className={ui.table.cell}>
+                    {renderCell
+                      ? renderCell(row, column.key)
+                      : row[column.key]}
                   </td>
                 ))}
               </tr>
