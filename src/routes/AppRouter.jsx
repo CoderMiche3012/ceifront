@@ -24,6 +24,7 @@ import BeneficiariosPagina from "../pages/beneficiarios/BeneficiariosPagina";
 import ExpedientePaginaB from "../pages/beneficiarios/ExpedientePaginaB";
 
 import ReportePostulantes from "../features/reportes/ReportePostulantes";
+import ReporteDonativos from "../features/reportes/ReporteDonativos";
 
 //import AsistenciasPagina from "../pages/AsistenciasPagina";
 
@@ -172,6 +173,17 @@ export default function AppRouter() {
                   accion="ver"
                 >
                   <ReportePostulantes />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="reportes/donadores"
+              element={
+                <PermissionRoute
+                  modulo="usuarios"
+                  accion="ver"
+                >
+                  <ReporteDonativos />
                 </PermissionRoute>
               }
             />
