@@ -1,6 +1,6 @@
 import { CalendarPlus } from "lucide-react";
 import { useMemo } from "react";
-import { ui } from "../styles/ui/uiClasses";
+import { ui } from "../styles/ui/index";
 import Boton from "../components/ui/Boton";
 import EncabezadoPagina from "../components/shared/EncabezadoPagina";
 import Alerta from "../components/ui/AlertaError";
@@ -48,8 +48,7 @@ export default function PeriodosPagina() {
       <PeriodoActivo periodoActivo={periodoActivo} onEdit={handleOpenEdit} />
 
       {/* Solo mostrar alerta si realmente hay un error de datos */}
-      {error && <Alerta mensaje={error} tipo="error" />}
-
+     
       <div className={ui.card}>
 
         <PeriodoFiltros

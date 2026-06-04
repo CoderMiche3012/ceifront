@@ -10,10 +10,13 @@ import AppLayout from "../components/layout/AppLayout";
 
 import InicioSesion from "../pages/InicioSesion";
 import Inicio from "../pages/Inicio";
-import RolesPagina from "../pages/RolesPagina";
-import UsuariosPagina from "../pages/UsuariosPagina";
-import PeriodosPagina from "../pages/PeriodosPagina";
 
+import RolesPagina from "../pages/RolesPagina";
+
+import UsuariosPagina from "../pages/UsuariosPagina";
+
+import PeriodosPagina from "../pages/PeriodosPagina";
+{/*
 import DonadoresPagina from "../pages/donadores/DonadoresPagina";
 import DonadoresDetalle from "../pages/donadores/DonadoresDetalle";
 
@@ -26,7 +29,7 @@ import ExpedientePaginaB from "../pages/beneficiarios/ExpedientePaginaB";
 import ReportePostulantes from "../features/reportes/ReportePostulantes";
 import ReporteDonativos from "../features/reportes/ReporteDonativos";
 import ReporteBeneficiarios from "../features/reportes/ReporteBeneficiarios";
-
+*/}
 //import AsistenciasPagina from "../pages/AsistenciasPagina";
 
 export default function AppRouter() {
@@ -90,7 +93,8 @@ export default function AppRouter() {
                 </PermissionRoute>
               }
             />
-            {/* donadores */}
+            
+            {/* donadores 
             <Route
               path="donadores"
               element={
@@ -114,7 +118,7 @@ export default function AppRouter() {
                 </PermissionRoute>
               }
             />
-            {/* postulantes */}
+
             <Route path="ingresos">
 
               <Route
@@ -199,7 +203,8 @@ export default function AppRouter() {
                 </PermissionRoute>
               }
             />
-
+            */}
+             
           </Route>
 
         </Routes>

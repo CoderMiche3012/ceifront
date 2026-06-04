@@ -1,4 +1,4 @@
-import { ui } from "../../styles/ui/uiClasses";
+import { ui } from "../../styles/ui/index";
 
 // para mostrar los estatus, tipos, o condiciones de donadores
 export default function Insignia({

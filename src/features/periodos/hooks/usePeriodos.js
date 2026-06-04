@@ -1,13 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { obtenerPeriodos, crearPeriodo, actualizarPeriodo, eliminarPeriodo, } from "../services/periodoService";
+import { obtenerPeriodos, obtenerPeriodoActivo, crearPeriodo, actualizarPeriodo } from "../services/periodoService";
 import { periodosKeys } from "../services/periodosKeys";
 
-// obtener periodos
+// obtener todos los periodos
 export function usePeriodos() {
   return useQuery({
-    queryKey: periodosKeys.all,
+    queryKey: periodosKeys.list(),
     queryFn: obtenerPeriodos,
+  });
+}
+
+// obtener periodo activo
+export function usePeriodoActivo() {
+  return useQuery({
+    queryKey: periodosKeys.active(),
+    queryFn: obtenerPeriodoActivo,
   });
 }
 
@@ -20,7 +28,11 @@ export function useCrearPeriodo() {
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: periodosKeys.all,
+        queryKey: periodosKeys.list(),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: periodosKeys.active(),
       });
     },
   });
@@ -31,27 +43,15 @@ export function useActualizarPeriodo() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }) =>
-      actualizarPeriodo(id, data),
+    mutationFn: ({ id, data }) => actualizarPeriodo(id, data),
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: periodosKeys.all,
+        queryKey: periodosKeys.list(),
       });
-    },
-  });
-}
 
-// eliminar periodo
-export function useEliminarPeriodo() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: eliminarPeriodo,
-
-    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: periodosKeys.all,
+        queryKey: periodosKeys.active(),
       });
     },
   });

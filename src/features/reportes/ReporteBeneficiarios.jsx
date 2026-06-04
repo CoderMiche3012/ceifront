@@ -5,6 +5,7 @@ import EncabezadoPagina from "../../components/shared/EncabezadoPagina";
 import ReporteBeneficiariosTab from "./components/BeneficiariosGeneral";
 import ReporteAcademicoTab from "./components/ReporteAcademicoTab";
 import ReporteApoyosEconomicosTab from "./components/ReporteApoyosEconomicosTab";
+import ReporteObligacionesTab from "./components/ReporteObligacionesTab";
 
 export default function ReporteBeneficiarios() {
     const [tabActiva, setTabActiva] = useState("general");
@@ -45,6 +46,15 @@ export default function ReporteBeneficiarios() {
                     >
                         Apoyos economicos
                     </button>
+                    <button
+                        onClick={() => setTabActiva("obligaciones")}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${tabActiva === "obligaciones"
+                                ? "border-blue-600 text-blue-600"
+                                : "border-transparent text-gray-500 hover:text-gray-700"
+                            }`}
+                    >
+                        Obligaciones
+                    </button>
                     
                 </nav>
             </div>
@@ -52,6 +62,7 @@ export default function ReporteBeneficiarios() {
             {tabActiva === "general" && <ReporteBeneficiariosTab />}
             {tabActiva === "rendimiento" && <ReporteAcademicoTab />}
             {tabActiva === "apoyos" && <ReporteApoyosEconomicosTab />}
+            {tabActiva === "obligaciones" && <ReporteObligacionesTab />}
 
         </div>
     );

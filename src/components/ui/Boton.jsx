@@ -1,4 +1,4 @@
-import { ui } from "../../styles/ui/uiClasses";
+import { ui } from "../../styles/ui/index";
 
 // boton general para crear, guardar o cancelar cambios
 export default function Boton({

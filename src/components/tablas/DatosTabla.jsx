@@ -1,4 +1,4 @@
-import { ui } from "../../styles/ui/uiClasses";
+import { ui } from "../../styles/ui/index";
 
 export default function DatosTabla({ columns, data, renderCell, rowKey = "id", }) {
   return (

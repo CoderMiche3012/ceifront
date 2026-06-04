@@ -1,5 +1,5 @@
 import { Calendar, Edit3 } from "lucide-react";
-import { ui } from "../../../styles/ui/uiClasses";
+import { ui } from "../../../styles/ui/index";
 
 import Insignia from "../../../components/ui/Insignia";
 

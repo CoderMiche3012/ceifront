@@ -1,5 +1,5 @@
 import { HiOutlineCalendar } from "react-icons/hi";
-import { ui } from "../../../../styles/ui/uiClasses";
+import { ui } from "../../../../styles/ui/index";
 
 import AlertaError from "../../../../components/ui/AlertaError";
 import Field from "../../../../components/ui/Field";

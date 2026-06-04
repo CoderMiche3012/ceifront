@@ -1,4 +1,4 @@
-import { ui } from "../../styles/ui/uiClasses";
+import { ui } from "../../styles/ui/index";
 
 // para los modales
 export default function Input({

@@ -1,20 +1,13 @@
 export const button = {
-  base: `
-    inline-flex items-center justify-center gap-2
-    rounded-2xl whitespace-nowrap
-    transition-all duration-200 active:scale-95
-  `,
+  base: `inline-flex items-center justify-center gap-2 rounded-2xl whitespace-nowrap transition-all duration-200 active:scale-95`,
 
-  sm: "h-10 px-4 text-sm font-medium",
+  sm: `h-10 px-4 text-sm font-medium`,
 
-  md: "h-11 px-5 text-base font-medium",
+  md: `h-11 px-5 text-base font-medium`,
 
-  primary:
-    "bg-[#0e5f63] text-white hover:bg-[#0d6f6b]",
+  primary: `bg-[#0e5f63] text-white hover:bg-[#0d6f6b] shadow-[0_10px_24px_rgba(15,127,122,0.20)]`,
 
-  secondary:
-    "border border-[#dbe3eb] bg-transparent text-[#475569] hover:bg-slate-50",
+  secondary: `border border-[#dbe3eb] bg-transparent text-[#475569] hover:bg-slate-50`,
 
-  danger:
-    "bg-red-500 text-white hover:bg-red-600",
+  danger: `bg-red-500 text-white hover:bg-red-600`,
 };

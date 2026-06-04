@@ -1,6 +1,6 @@
 import {CheckCircle2, AlertCircle, XCircle, Info, X, } from "lucide-react";
 import Boton from "../ui/Boton";
-import { ui } from "../../styles/ui/uiClasses";
+import { ui } from "../../styles/ui/index";
 
 const icons = {
   success: CheckCircle2,

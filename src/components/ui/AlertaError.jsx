@@ -1,5 +1,5 @@
 import { HiOutlineExclamationCircle } from "react-icons/hi";
-import { ui } from "../../styles/ui/uiClasses";
+import { ui } from "../../styles/ui/index";
 
 // componente para mostrar los errores 
 export default function Alerta({ mensaje, tipo = "error", }) {

@@ -1,6 +1,6 @@
 import DatosTabla from "../../../../components/tablas/DatosTabla";
 import Insignia from "../../../../components/ui/Insignia";
-import { ui } from "../../../../styles/ui/uiClasses";
+import { ui } from "../../../../styles/ui/index";
 
 // columnas de periodos
 const columns = [

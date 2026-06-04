@@ -1,6 +1,5 @@
 // componente para los titulos de las paginas principales
-
-import { ui } from "../../styles/ui/uiClasses";
+import { ui } from "../../styles/ui/index";
 
 export default function EncabezadoPagina({ titulo, descripcion, accion, }) {
   return (

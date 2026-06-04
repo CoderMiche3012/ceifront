@@ -1,5 +1,5 @@
 import { Search, X } from "lucide-react";
-import { ui } from "../../styles/ui/uiClasses";
+import { ui } from "../../styles/ui/index";
 
 export default function FiltrosTabla({
   searchValue,

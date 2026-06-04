@@ -1,13 +1,16 @@
 import { useState, useMemo } from "react";
-import { usePeriodos } from "../hooks/usePeriodos";
+import { usePeriodos, usePeriodoActivo } from "../hooks/usePeriodos";
 
 export default function usePeriodosPage() {
-  // estados iniciales 
-  const { data: periodos = [], isLoading: loading, error } = usePeriodos();
+  // consultas
+  const { data: periodos = [], isLoading: loadingPeriodos, error: errorPeriodos } = usePeriodos();
+  const { data: periodoActivo = null, isLoading: loadingActivo, error: errorActivo } = usePeriodoActivo();
+  // estados
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  //paginacion
   const PAGE_SIZE = 3;
-  //para modales
+  // modales
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedPeriodo, setSelectedPeriodo] = useState(null);
@@ -17,28 +20,14 @@ export default function usePeriodosPage() {
   const filteredPeriodos = useMemo(() => {
     return periodos
       .filter((periodo) => {
-        const esInactivo = periodo.estado === false || Number(periodo.estado) === 0;
-
-        const coincideBusqueda = periodo.ciclo_escolar
-          ?.toLowerCase()
-          .includes(search.toLowerCase());
-
-        return esInactivo && coincideBusqueda;
+        const noEsActivo = periodo.id_periodo !== periodoActivo?.id_periodo;
+        const coincideBusqueda = periodo.ciclo_escolar?.toLowerCase().includes(search.toLowerCase());
+        return noEsActivo && coincideBusqueda;
       })
       .sort((a, b) => a.id_periodo - b.id_periodo);
-  }, [periodos, search]);
+  }, [periodos, periodoActivo, search]);
 
-  const periodoActivo = useMemo(() => {
-    return periodos.find(
-      (p) =>
-        p.estado === true ||
-        p.estado === 1 ||
-        p.estado === "1" ||
-        p.estado === "true"
-    );
-  }, [periodos]);
-
-  const totalPages = Math.ceil(filteredPeriodos.length / PAGE_SIZE);
+  const totalPages = Math.ceil( filteredPeriodos.length / PAGE_SIZE );
 
   const periodosPaginados = filteredPeriodos.slice(
     (currentPage - 1) * PAGE_SIZE,
@@ -66,21 +55,24 @@ export default function usePeriodosPage() {
   };
 
   return {
+    // manda el periodo activo
     periodoActivo,
+    // todos los periodos
     periodos: periodosPaginados,
     filteredPeriodos,
+    // filtros
     search,
     handleSearchChange,
     handleClearFilters,
-
+    // paginacion
     currentPage,
     totalPages,
     PAGE_SIZE,
     setCurrentPage,
-
-    loading,
-    error,
-
+    // error y carga
+    loading: loadingPeriodos || loadingActivo,
+    error: errorPeriodos || errorActivo,
+    // modales
     isCreateModalOpen,
     isEditModalOpen,
     selectedPeriodo,
@@ -90,4 +82,3 @@ export default function usePeriodosPage() {
     handleCloseEdit,
   };
 }
- 
