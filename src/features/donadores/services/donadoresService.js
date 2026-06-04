@@ -26,14 +26,12 @@ export const actualizarDonador = async (id, payload) => {
 };
 
 // buscar CP
-export const buscarCPZippopotam = async (pais, cp) => {
-  const response = await fetch(
-    `https://api.zippopotam.us/${pais}/${cp}`
-  );
-
-  if (!response.ok) {
-    throw new Error("CP no encontrado");
-  }
-
-  return response.json();
+export const obtenerDireccionPorCP = async (cp, pais = "MX") => {
+  const { data } = await API.get("/beneficiarios/geografia", {
+    params: {
+      cp,
+      pais,
+    },
+  });
+  return data;
 };
