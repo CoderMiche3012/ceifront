@@ -16,8 +16,10 @@ import RolesPagina from "../pages/RolesPagina";
 import UsuariosPagina from "../pages/UsuariosPagina";
 
 import PeriodosPagina from "../pages/PeriodosPagina";
-{/*
+
 import DonadoresPagina from "../pages/donadores/DonadoresPagina";
+
+{/*
 import DonadoresDetalle from "../pages/donadores/DonadoresDetalle";
 
 import PostulantesPagina from "../pages/postulantes/PostulantesPagina";
@@ -93,8 +95,8 @@ export default function AppRouter() {
                 </PermissionRoute>
               }
             />
-            
-            {/* donadores 
+
+
             <Route
               path="donadores"
               element={
@@ -106,7 +108,7 @@ export default function AppRouter() {
                 </PermissionRoute>
               }
             />
-
+            {/* donadores 
             <Route
               path="donadores/donador/:id"
               element={
@@ -204,7 +206,7 @@ export default function AppRouter() {
               }
             />
             */}
-             
+
           </Route>
 
         </Routes>

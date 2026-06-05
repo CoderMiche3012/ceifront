@@ -1,8 +1,8 @@
 // por corregir por lo de direccion
-
 import { useState } from "react";
 import { useCrearDonador } from "./useDonadores";
 import { formatErrorAnidado } from "../../../utils/errorHandlers";
+import { normalizeName } from "../../../utils/normalizeName";
 
 export const useDonadorCrearForm = (
   onSuccess,
@@ -14,24 +14,35 @@ export const useDonadorCrearForm = (
     nombre: "",
     apellido_p: "",
     apellido_m: "",
+
     telefono: "",
-    cp: "",
-    tipo: "",
     correo: "",
+
+    tipo: "",
     estatus: "Activo",
+
     fecha_ingreso: new Date()
       .toISOString()
       .split("T")[0],
+
     nota: "",
+
     calle: "",
     numero: "",
-    colonia: "",
-    localidad: "",
+
+    cp: "",
     pais: "",
+
+    municipio: "",
+    estado: "",
+    colonia: "",
+
+    id_geografia: null,
   });
 
   const [form, setForm] =
     useState(getInitialForm());
+    
 
   const [fieldErrors, setFieldErrors] =
     useState({});
@@ -81,49 +92,65 @@ export const useDonadorCrearForm = (
   const validarFormulario = () => {
     const errors = {};
 
-    if (!form.nombre.trim())
+    if (!form.nombre.trim()) {
       errors.nombre =
         "El nombre es obligatorio";
+    }
 
-    if (!form.apellido_p.trim())
+    if (!form.apellido_p.trim()) {
       errors.apellido_p =
         "El apellido paterno es obligatorio";
+    }
 
-    if (!form.correo.trim())
+    if (!form.correo.trim()) {
       errors.correo =
         "El correo es obligatorio";
+    }
 
-    if (!form.telefono.trim())
+    if (!form.telefono.trim()) {
       errors.telefono =
         "El teléfono es obligatorio";
+    }
 
-    if (!form.tipo.trim())
+    if (!form.tipo.trim()) {
       errors.tipo =
         "Selecciona un tipo";
+    }
 
-    if (!form.fecha_ingreso.trim())
+    if (!form.fecha_ingreso.trim()) {
       errors.fecha_ingreso =
         "Selecciona una fecha";
+    }
 
-    if (!form.pais.trim())
+    if (!form.pais.trim()) {
       errors.pais =
         "Selecciona un país";
+    }
 
-    if (!form.cp.trim())
+    if (!form.cp.trim()) {
       errors.cp =
         "El código postal es obligatorio";
+    }
 
-    if (!form.localidad.trim())
-      errors.localidad =
+    if (!form.municipio.trim()) {
+      errors.municipio =
         "La localidad es obligatoria";
+    }
 
-    if (!form.calle.trim())
+    if (!form.estado.trim()) {
+      errors.estado =
+        "El estado es obligatorio";
+    }
+
+    if (!form.calle.trim()) {
       errors.calle =
         "La calle es obligatoria";
+    }
 
-    if (!form.numero.trim())
+    if (!form.numero.trim()) {
       errors.numero =
         "El número es obligatorio";
+    }
 
     return errors;
   };
@@ -135,135 +162,202 @@ export const useDonadorCrearForm = (
     setFieldErrors(errors);
 
     if (
-  Object.keys(errors).length > 0
-) {
-  const labels = {
-    nombre: "Nombre",
-    apellido_p: "Apellido paterno",
-    apellido_m: "Apellido materno",
-    correo: "Correo",
-    telefono: "Teléfono",
-    tipo: "Tipo de donador",
-    fecha_ingreso: "Fecha de ingreso",
-    pais: "País",
-    cp: "Código postal",
-    localidad: "Localidad",
-    calle: "Calle",
-    numero: "Número",
-  };
+      Object.keys(errors).length > 0
+    ) {
+      const labels = {
+        nombre: "Nombre",
+        apellido_p: "Apellido paterno",
+        apellido_m: "Apellido materno",
+        correo: "Correo",
+        telefono: "Teléfono",
+        tipo: "Tipo de donador",
+        fecha_ingreso: "Fecha de ingreso",
+        pais: "País",
+        cp: "Código postal",
+        municipio: "Municipio",
+        estado: "Estado",
+        calle: "Calle",
+        numero: "Número",
+      };
 
-  const campos =
-    Object.keys(errors)
-      .map(
-        (key) =>
-          labels[key] || key
-      )
-      .join(", ");
+      const campos =
+        Object.keys(errors)
+          .map(
+            (key) =>
+              labels[key] || key
+          )
+          .join(", ");
 
-  setError(
-    `Revisa los siguientes campos: ${campos}`
-  );
+      setError(
+        `Revisa los siguientes campos: ${campos}`
+      );
 
-  return;
-}
+      return;
+    }
 
     setError("");
     setShowConfirm(true);
   };
 
   const handleConfirmSave =
-  async () => {
-    try {
-      setShowConfirm(false);
+    async () => {
+      try {
+        setShowConfirm(false);
 
-      await crearMutation.mutateAsync(
-        form
-      );
+        const payload = {
+          nombre: normalizeName(form.nombre),
+          apellido_paterno: normalizeName(form.apellido_p),
 
-      setResultModal({
-        open: true,
-        type: "success",
-        title:
-          "Donador registrado",
-        message:
-          "El donador fue creado correctamente.",
-      });
+          apellido_materno: form.apellido_m
+    ? normalizeName(form.apellido_m)
+    : null,
+          tipo_donador:
+            form.tipo,
 
-      onSuccess?.();
+          correo: form.correo.trim().toLowerCase(),
+          telefono: form.telefono,
 
-    } 
-    catch (err) {
-  const backendErrors =
-    err?.errors ||
-    err?.response?.data;
+          fecha_ingreso:
+            form.fecha_ingreso,
 
-  if (
-    backendErrors &&
-    typeof backendErrors === "object" &&
-    !Array.isArray(backendErrors)
-  ) {
-    const parsedErrors = {};
+          nota:
+            form.nota || null,
 
-    Object.entries(
-      backendErrors
-    ).forEach(([key, value]) => {
-      parsedErrors[key] =
-        Array.isArray(value)
-          ? value[0]
-          : value;
-    });
+          domicilio: {
+            calle: normalizeName(form.calle),
 
-    setFieldErrors(
-      parsedErrors
-    );
+            numero_exterior:
+              form.numero,
 
-    const labels = {
-      nombre: "Nombre",
-      apellido_p: "Apellido paterno",
-      apellido_m: "Apellido materno",
-      correo: "Correo",
-      telefono: "Teléfono",
-      tipo: "Tipo de donador",
-      fecha_ingreso: "Fecha de ingreso",
-      pais: "País",
-      cp: "Código postal",
-      localidad: "Localidad",
-      calle: "Calle",
-      numero: "Número",
+            geografia: {
+              id_geografia:
+                form.id_geografia,
+
+              codigo_postal:
+                form.cp,
+
+              municipio:
+                form.municipio,
+
+              colonia:
+                form.colonia || null,
+
+              estado:
+                form.estado,
+
+              pais:
+                form.pais,
+            },
+          },
+        };
+
+        await crearMutation.mutateAsync(
+          payload
+        );
+
+        setResultModal({
+          open: true,
+          type: "success",
+          title:
+            "Donador registrado",
+          message:
+            "El donador fue creado correctamente.",
+        });
+
+        onSuccess?.();
+      } catch (err) {
+        const backendErrors =
+          err?.errors ||
+          err?.response?.data;
+
+        if (
+          backendErrors &&
+          typeof backendErrors ===
+            "object" &&
+          !Array.isArray(
+            backendErrors
+          )
+        ) {
+          const parsedErrors = {};
+
+          Object.entries(
+            backendErrors
+          ).forEach(
+            ([key, value]) => {
+              parsedErrors[key] =
+                Array.isArray(
+                  value
+                )
+                  ? value[0]
+                  : value;
+            }
+          );
+
+          setFieldErrors(
+            parsedErrors
+          );
+
+          const labels = {
+            nombre: "Nombre",
+            apellido_p:
+              "Apellido paterno",
+            apellido_m:
+              "Apellido materno",
+            correo: "Correo",
+            telefono:
+              "Teléfono",
+            tipo:
+              "Tipo de donador",
+            fecha_ingreso:
+              "Fecha de ingreso",
+            pais: "País",
+            cp: "Código postal",
+            municipio:
+              "Municipio",
+            estado: "Estado",
+            calle: "Calle",
+            numero: "Número",
+          };
+
+          const campos =
+            Object.keys(
+              parsedErrors
+            )
+              .map(
+                (key) =>
+                  labels[key] ||
+                  key
+              )
+              .join(", ");
+
+          setError(
+            `Revisa los siguientes campos: ${campos}`
+          );
+
+          return;
+        }
+
+        setResultModal({
+          open: true,
+          type: "error",
+          title:
+            "Error al guardar",
+          message:
+            formatErrorAnidado(
+              err
+            ),
+        });
+      }
     };
-
-    const campos =
-      Object.keys(parsedErrors)
-        .map(
-          (key) =>
-            labels[key] || key
-        )
-        .join(", ");
-
-    setError(
-      `Revisa los siguientes campos: ${campos}`
-    );
-
-    return;
-  }
-
-  setResultModal({
-    open: true,
-    type: "error",
-    title:
-      "Error al guardar",
-    message:
-      formatErrorAnidado(err),
-  });
-}
-  };
 
   const handleFinalClose =
     () => {
-      setResultModal((prev) => ({
-        ...prev,
-        open: false,
-      }));
+      setResultModal(
+        (prev) => ({
+          ...prev,
+          open: false,
+        })
+      );
 
       if (
         resultModal.type ===
@@ -302,6 +396,3 @@ export const useDonadorCrearForm = (
     handleFinalClose,
   };
 };
-
-
-

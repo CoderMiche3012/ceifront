@@ -1,8 +1,13 @@
-import { useState, useEffect, useCallback, useMemo, } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 
 import { useDonadores } from "./useDonadores";
-import { useDonativos } from "./useDonativos";
-import { usePeriodoActivo } from "../../periodos/hooks/usePeriodoActivo";
+import { useResumenPeriodo } from "./useDonativos";
+import { usePeriodoActivo } from "../../periodos/hooks/usePeriodos";
 
 export const useDonadoresPage = () => {
   const {
@@ -12,16 +17,18 @@ export const useDonadoresPage = () => {
   } = useDonadores();
 
   const {
-    data: donativos = [],
-    isLoading: loadingDonativos,
-    error: errorDonativos,
-  } = useDonativos();
-
-  const {
     periodoActivo,
     isLoading: loadingPeriodo,
     error: errorPeriodo,
   } = usePeriodoActivo();
+
+  const {
+    data: resumenPeriodo = [],
+    isLoading: loadingResumen,
+    error: errorResumen,
+  } = useResumenPeriodo(
+    periodoActivo?.id_periodo
+  );
 
   const [filters, setFilters] = useState({
     estatus: "todos",
@@ -29,10 +36,20 @@ export const useDonadoresPage = () => {
   });
 
   const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
   const PAGE_SIZE = 3;
-  const loading = loadingDonadores || loadingDonativos || loadingPeriodo;
-  const error = errorDonadores || errorDonativos || errorPeriodo;
+
+  const loading =
+    loadingDonadores ||
+    loadingPeriodo ||
+    loadingResumen;
+
+  const error =
+    errorDonadores ||
+    errorPeriodo ||
+    errorResumen;
 
   // filtros
   const handleFilterChange =
@@ -44,70 +61,105 @@ export const useDonadoresPage = () => {
       setCurrentPage(1);
     }, []);
 
-  // calcular totales
-  const calcularTotales =
-    useCallback(
-      (donadorId, periodoId) => {
-        const filtrados =
-          donativos.filter(
-            (d) => Number( d.id_donador ) === Number( donadorId ) && Number( d.id_periodo ) === Number( periodoId )
-          );
-
-        return filtrados.reduce(
-          (acc, item) => {
-            const moneda = item.moneda || "MXN";
-            acc[moneda] = (acc[ moneda ] || 0) + Number( item.monto || 0 );
-            return acc;
-          },
-          {}
-        );
+  // mapa de resumenes por donador
+  const resumenMap = useMemo(() => {
+    return resumenPeriodo.reduce(
+      (acc, item) => {
+        acc[item.id_donador] = item;
+        return acc;
       },
-      [donativos]
+      {}
     );
+  }, [resumenPeriodo]);
 
-  // agregar totales al periodo activo
+  // unir donadores + resumen del periodo activo
   const donadoresConTotales =
     useMemo(() => {
-      return donadores.map(
-        (donador) => ({
-          ...donador,
-          totalesPeriodoActivo: periodoActivo ? calcularTotales( donador.id_donador, periodoActivo.id_periodo ) : {},
-        })
-      );
-    }, [ donadores, periodoActivo, calcularTotales, ]);
+      return donadores.map((donador) => {
+        const resumen =
+          resumenMap[
+          donador.id_donador
+          ];
 
-  // filtros y busqueda
+        return {
+          ...donador,
+
+          cantidadDonativos:
+            resumen?.cantidad_donativos ??
+            0,
+
+          totalesPeriodoActivo:
+            resumen?.totales ?? {},
+        };
+      });
+    }, [donadores, resumenMap]);
+
+  // filtros y búsqueda
   const filteredDonadores =
     useMemo(() => {
-
-      const searchLower = search.toLowerCase();
+      const searchLower =
+        search.toLowerCase();
 
       return donadoresConTotales.filter(
         (p) => {
-          const matchSearch = ( p.nombre || "" ) .toLowerCase() .includes( searchLower );
-          const matchStatus = filters.estatus === "todos" || p.estatus?.toLowerCase() === filters.estatus.toLowerCase();
-          const matchTipo = filters.tipo === "todos" || p.tipo?.toLowerCase() ===  filters.tipo.toLowerCase();
-          return ( matchSearch && matchStatus && matchTipo );
+          const matchSearch =
+            (p.nombre || "")
+              .toLowerCase()
+              .includes(searchLower);
+
+          const matchStatus =
+            filters.estatus ===
+            "todos" ||
+            p.estatus?.toLowerCase() ===
+            filters.estatus.toLowerCase();
+
+          const matchTipo =
+            filters.tipo === "todos" ||
+            p.tipo_donador?.toLowerCase() === filters.tipo.toLowerCase();
+
+          return (
+            matchSearch &&
+            matchStatus &&
+            matchTipo
+          );
         }
       );
-    }, [ donadoresConTotales, search, filters, ]);
+    }, [
+      donadoresConTotales,
+      search,
+      filters,
+    ]);
 
   // paginación
-  const totalPages = Math.ceil(  filteredDonadores.length / PAGE_SIZE );
+  const totalPages = Math.ceil(
+    filteredDonadores.length /
+    PAGE_SIZE
+  );
 
   useEffect(() => {
-    if ( currentPage > totalPages && totalPages > 0 ) {
-      setCurrentPage( totalPages );
+    if (
+      currentPage > totalPages &&
+      totalPages > 0
+    ) {
+      setCurrentPage(totalPages);
     }
-  }, [ currentPage, totalPages, ]);
+  }, [currentPage, totalPages]);
 
   const paginatedDonadores =
     useMemo(() => {
-      const start = (currentPage - 1) * PAGE_SIZE;
-      return filteredDonadores.slice( start, start + PAGE_SIZE );
-    }, [ filteredDonadores, currentPage, ]);
+      const start =
+        (currentPage - 1) * PAGE_SIZE;
 
-  // busqueda
+      return filteredDonadores.slice(
+        start,
+        start + PAGE_SIZE
+      );
+    }, [
+      filteredDonadores,
+      currentPage,
+    ]);
+
+  // búsqueda
   const handleSearchChange =
     useCallback((value) => {
       setSearch(value);
@@ -117,16 +169,19 @@ export const useDonadoresPage = () => {
   const handleClearFilters =
     useCallback(() => {
       setSearch("");
+
       setFilters({
         estatus: "todos",
         tipo: "todos",
       });
+
       setCurrentPage(1);
     }, []);
 
   return {
     donadores: paginatedDonadores,
-    totalCount: filteredDonadores.length,
+    totalCount:
+      filteredDonadores.length,
 
     loading,
     error,

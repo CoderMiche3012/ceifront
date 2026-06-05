@@ -67,9 +67,9 @@ export default function DonadoresPagina() {
   // metricas
   const activos = donadores.filter((d) => d.estatus?.toLowerCase() === "activo").length;
   const inactivos = donadores.filter((d) => d.estatus?.toLowerCase() === "inactivo").length;
-  const cei = donadores.filter((d) => d.tipo === "CEI").length;
-  const canfro = donadores.filter((d) => d.tipo === "CANFRO").length;
-  const oye = donadores.filter((d) => d.tipo === "OYE").length;
+  const cei = donadores.filter((d) => d.tipo_donador === "CEI").length;
+  const canfro = donadores.filter((d) => d.tipo_donador === "CANFRO").length;
+  const oye = donadores.filter((d) => d.tipo_donador === "OYE").length;
   
   return (
     <section className={ui.page}>

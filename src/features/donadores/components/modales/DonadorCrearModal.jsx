@@ -1,6 +1,13 @@
 // por corregir
-import { useState } from "react";
-import { HiOutlineUserCircle, HiOutlineExclamationCircle, } from "react-icons/hi";
+import { useState,useEffect } from "react";
+import {
+  HiOutlineUserCircle,
+  HiOutlineExclamationCircle,
+  HiOutlineArrowLeft,
+  HiOutlineSearch,
+  HiCheck,
+} from "react-icons/hi";
+
 
 import { ui } from "../../../../styles/ui/uiClasses";
 
@@ -14,8 +21,11 @@ import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
 
 import { useDonadorCrearForm } from "../../hooks/useDonadorCrearForm";
-import { buscarCPZippopotam } from "../../services/donadoresService";
+import { obtenerDireccionPorCP } from "../../services/donadoresService";
 import { countries } from "../../../../utils/countries";
+import { obtenerPaises } from "../../services/donadoresService";
+import { buildCountriesList } from "../../../../utils/buildCountriesList";
+
 
 export default function DonadorCrearModal({
   open,
@@ -25,15 +35,12 @@ export default function DonadorCrearModal({
   const [step, setStep] =
     useState(1);
 
-  const [otroPais, setOtroPais] =
-    useState(false);
-
-  const [otraLocalidad, setOtraLocalidad] =
-    useState(false);
-
-  const [localidades, setLocalidades] =
+  const [municipios, setMunicipios] =
     useState([]);
-
+  const [cpError, setCpError] = useState("");
+  const [manualAddressMode, setManualAddressMode] = useState(false); 
+  const [manualCountryMode, setManualCountryMode] = useState(false);
+  const [paises, setPaises] = useState([]);
   const {
     form,
     setForm,
@@ -55,20 +62,34 @@ export default function DonadorCrearModal({
     onSuccess,
     onClose
   );
+useEffect(() => {
+  const loadPaises = async () => {
+    try {
+      const api = await obtenerPaises();
 
+      const merged = buildCountriesList(countries, api);
+
+      setPaises(merged);
+    } catch (e) {
+      setPaises(countries); // fallback seguro
+    }
+  };
+
+  loadPaises();
+}, []);
   if (!open) return null;
 
   const updateField = (
-  field,
-  value
-) => {
-  handleChange({
-    target: {
-      name: field,
-      value,
-    },
-  });
-};
+    field,
+    value
+  ) => {
+    handleChange({
+      target: {
+        name: field,
+        value,
+      },
+    });
+  };
 
   const handleBackdropClick = (e) => {
     if (
@@ -80,76 +101,55 @@ export default function DonadorCrearModal({
     }
   };
 
-  const handleBuscarCP =
-    async (
-      cpValue = form.cp
-    ) => {
-      if (
-        !form.pais ||
-        !cpValue
-      )
+  const handleBuscarCP = async (cpValue = form.cp) => {
+    if (!form.pais || !cpValue) return;
+
+    try {
+      setLoadingCP(true);
+      setCpError("");
+
+      const data = await obtenerDireccionPorCP(cpValue, form.pais);
+
+      const opciones = data?.opciones || [];
+
+      // 🚨 si no hay resultados
+      if (opciones.length === 0) {
+        setMunicipios([]);
+        setCpError("Este código postal no está registrado consulte con el administrador");
+
+        setCpEncontrado(false);
+
+        updateField("estado", "");
+        updateField("municipio", "");
+        updateField("colonia", "");
+        updateField("id_geografia", null);
+
         return;
-
-      try {
-        setLoadingCP(true);
-
-        const data =
-          await buscarCPZippopotam(
-            form.pais,
-            cpValue
-          );
-
-        const lista =
-          data?.places?.map(
-            (p) =>
-              p[
-              "place name"
-              ]
-          ) || [];
-
-        setLocalidades(
-          lista
-        );
-
-        if (
-          lista.length > 0
-        ) {
-          updateField(
-            "localidad",
-            lista[0]
-          );
-
-          updateField(
-            "colonia",
-            data?.places?.[0]
-              ?.state || ""
-          );
-
-          setCpEncontrado(
-            true
-          );
-        }
-      } catch {
-        setLocalidades(
-          []
-        );
-        updateField(
-          "localidad",
-          ""
-        );
-        updateField(
-          "colonia",
-          ""
-        );
-        setCpEncontrado(
-          false
-        );
-      } finally {
-        setLoadingCP(
-          false
-        );
       }
-    };
+
+      setMunicipios(opciones);
+
+      updateField("estado", data.estado || "");
+      updateField("colonia", data.colonia || "");
+
+      updateField("municipio", opciones[0].nombre);
+      updateField("id_geografia", opciones[0].id_geografia);
+
+      setCpEncontrado(true);
+    } catch (e) {
+      setMunicipios([]);
+      setCpError("Error al consultar el código postal");
+
+      setCpEncontrado(false);
+
+      updateField("estado", "");
+      updateField("municipio", "");
+      updateField("colonia", "");
+      updateField("id_geografia", null);
+    } finally {
+      setLoadingCP(false);
+    }
+  };
 
   return (
     <>
@@ -162,7 +162,7 @@ export default function DonadorCrearModal({
           handleBackdropClick
         }
       >
-        <div className={ ui.modal .formContainer }>
+        <div className={ui.modal.formContainer}>
           {/* HEADER */}
           <div
             className={
@@ -200,14 +200,14 @@ export default function DonadorCrearModal({
                 <div className="flex gap-1">
                   <div
                     className={`h-1 w-5 rounded-full ${step === 1
-                        ? "bg-[#0E5F63]"
-                        : "bg-slate-200"
+                      ? "bg-[#0E5F63]"
+                      : "bg-slate-200"
                       }`}
                   />
                   <div
                     className={`h-1 w-5 rounded-full ${step === 2
-                        ? "bg-[#0E5F63]"
-                        : "bg-slate-200"
+                      ? "bg-[#0E5F63]"
+                      : "bg-slate-200"
                       }`}
                   />
                 </div>
@@ -306,7 +306,7 @@ export default function DonadorCrearModal({
                         />
                       </Field>
 
-                      <Field label="Apellido materno" required >
+                      <Field label="Apellido materno"  >
                         <Input
                           value={form.apellido_m}
                           onChange={(e) =>
@@ -392,9 +392,42 @@ export default function DonadorCrearModal({
               {step ===
                 2 && (
                   <>
-                    <h3 className="text-xs font-bold text-[#0E5F63] mb-4 uppercase tracking-wider">
-                      Dirección
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xs font-bold text-[#0E5F63] uppercase tracking-wider">
+                        Dirección
+                      </h3>
+
+                      <button
+                        type="button"
+                        className="flex items-center gap-1 text-xs text-[#0E5F63] font-semibold hover:underline"
+                        onClick={() => {
+                          if (manualAddressMode) {
+                            setManualAddressMode(false);
+                            setManualCountryMode(false);
+
+                            updateField("estado", "");
+                            updateField("municipio", "");
+                            updateField("id_geografia", null);
+
+                            if (form.cp?.length === 5) {
+                              handleBuscarCP(form.cp);
+                            }
+                          } else {
+                            setManualAddressMode(true);
+                            setCpError("");
+                          }
+                        }}
+                      >
+                        {manualAddressMode ? (
+                          <>
+                            <HiOutlineArrowLeft size={14} />
+                            Volver a búsqueda por CP
+                          </>
+                        ) : (
+                          "Agregar manual"
+                        )}
+                      </button>
+                    </div>
 
                     <div
                       className={
@@ -403,100 +436,175 @@ export default function DonadorCrearModal({
                       }
                     >
                       <Field label="País" required error={fieldErrors.pais}>
-                        <Select
-                          value={form.pais}
-                          onChange={(e) => {
-                            updateField(
-                              "pais",
-                              e.target.value
-                            );
-                          }}
-                          error={!!fieldErrors.pais}
-                        >
-                          <option value="">
-                            Selecciona país
-                          </option>
+                        {manualCountryMode ? (
+                          // MODO MANUAL DE PAÍS: Se muestra el Input de texto libre
+                          <div className="space-y-1">
+                            <Input
+                              value={form.pais}
+                              onChange={(e) => updateField("pais", e.target.value)}
+                              placeholder="Escribe el nombre del país"
+                              error={!!fieldErrors.pais}
+                            />
+                            <button
+                              type="button"
+                              className="text-xs text-slate-500 underline block hover:text-[#0E5F63] transition-colors"
+                              onClick={() => {
+                                setManualCountryMode(false);
+                                updateField("pais", "");
+                              }}
+                            >
+                              <HiOutlineArrowLeft size={14} />
 
-                          {countries.map(
-                            (c) => (
-                              <option
-                                key={c.code}
-                                value={c.code}
-                              >
-                                {c.name}
-                              </option>
-                            )
-                          )}
-                        </Select>
+                              Volver a lista de países
+                            </button>
+                          </div>
+                        ) : (
+                          // MODO AUTOMÁTICO: Se muestra el Select con los países estándar
+                          <Select
+                            value={form.pais}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value === "OTHER") {
+                                setManualCountryMode(true);
+                                updateField("pais", "");
+                              } else {
+                                updateField("pais", value);
+                              }
+                            }}
+                            error={!!fieldErrors.pais}
+                          >
+                            <option value="">Selecciona país</option>
+
+                            {paises.map((c) => (
+  <option key={c.code} value={c.code}>
+    {c.name}
+  </option>
+))}
+
+                            {/* 🌟 AQUÍ ESTÁ EL TRUCO: 
+          La opción "Otro" SOLO se renderiza si el usuario activó el modo manual general */}
+                            {manualAddressMode && (
+                              <option value="OTHER">Otro / Escribir manual</option>
+                            )}
+                          </Select>
+                        )}
                       </Field>
 
                       <Field label="Código Postal" required error={fieldErrors.cp}>
-                        <Input
-                          value={form.cp}
-                          onChange={async (
-                            e
-                          ) => {
-                            const cp =
-                              e.target
-                                .value;
-
-                            updateField(
-                              "cp",
-                              cp
-                            );
-
-                            if (
-                              cp.length ===
-                              5
-                            ) {
-                              await handleBuscarCP(
-                                cp
-                              );
+                        <div
+                          className={`relative rounded-md border transition
+      ${cpError
+                              ? "border-amber-400"
+                              : cpEncontrado
+                                ? "border-green-400"
+                                : "border-slate-200 focus-within:border-[#0E5F63]"
                             }
-                          }}
-                          error={!!fieldErrors.cp}
-                        />
+    `}
+                        >
+                          {/* INPUT */}
+                          <Input
+                            value={form.cp}
+                            onChange={(e) => {
+                              updateField("cp", e.target.value);
+                              setCpError("");
+                              setCpEncontrado(false);
+                            }}
+                            error={!!fieldErrors.cp}
+                            className="border-0 focus:ring-0 pl-9 pr-28"
+                          />
+
+                          {/* LUPA (decorativa, no interactiva) */}
+                          <div className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                            <HiOutlineSearch size={16} />
+                          </div>
+
+                          {/* BOTÓN STRIPE STYLE */}
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                            <button
+                              type="button"
+                              onClick={() => handleBuscarCP(form.cp)}
+                              disabled={!form.cp || loadingCP}
+                              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition
+          ${cpEncontrado
+                                  ? "bg-green-50 text-green-600"
+                                  : "bg-slate-100 text-[#0E5F63] hover:bg-slate-200"
+                                }
+          disabled:opacity-40`}
+                            >
+                              {/* LOADING */}
+                              {loadingCP ? (
+                                <div className="h-3 w-3 border-2 border-[#0E5F63] border-t-transparent rounded-full animate-spin" />
+                              ) : cpEncontrado ? (
+                                "Encontrado"
+                              ) : (
+                                "Buscar"
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* HELP TEXT */}
+                        {!manualAddressMode && (
+                          <p className="mt-1 text-[11px] text-slate-400 text-right">
+                            La búsqueda se realiza manualmente
+                          </p>
+                        )}
+
+                        {/* ERROR */}
+                        {cpError && (
+                          <p className="mt-1 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md flex items-center gap-1">
+                            <HiOutlineExclamationCircle size={14} />
+                            {cpError}
+                          </p>
+                        )}
                       </Field>
 
-                      <Field label="Estado" >
+                      <Field label="Estado" required>
                         <Input
-                          disabled={
-                            cpEncontrado
-                          }
-                          value={
-                            form.colonia
-                          }
+                          disabled={!manualAddressMode && !cpEncontrado}
+                          value={form.estado || ""}
                           onChange={(e) =>
                             updateField(
-                              "colonia",
+                              "estado",
                               e.target
                                 .value
                             )
                           }
-                      
+
                         />
                       </Field>
 
-                      <Field
-                        label="Localidad"
-                        required
-                        error={fieldErrors.localidad}
-                      >
-                        <Input
-                          value={
-                            form.localidad
-                          }
-                          onChange={(e) =>
-                            updateField(
-                              "localidad",
-                              e.target
-                                .value
-                            )
-                          }
-                          error={!!fieldErrors.localidad}
-                        />
-                      </Field>
+                      <Field label="Localidad" required error={fieldErrors.municipio}>
+                        {manualAddressMode ? (
+                          <Input
+                            value={form.municipio}
+                            onChange={(e) =>
+                              updateField("municipio", e.target.value)
+                            }
+                          />
+                        ) : (
+                          <Select
+                            value={form.municipio || ""}
+                            disabled={!cpEncontrado || municipios.length === 0 || loadingCP}
+                            onChange={(e) => {
+                              const municipio = municipios.find(
+                                (m) => m.nombre === e.target.value
+                              );
 
+                              updateField("municipio", e.target.value);
+                              updateField("id_geografia", municipio?.id_geografia ?? null);
+                            }}
+                            error={!!fieldErrors.municipio}
+                          >
+                            <option value="">Selecciona la localidad</option>
+                            {municipios.map((m) => (
+                              <option key={m.id_geografia ?? m.nombre} value={m.nombre}>
+                                {m.nombre}
+                              </option>
+                            ))}
+                          </Select>
+                        )}
+                      </Field>
                       <Field
                         label="Calle"
                         required

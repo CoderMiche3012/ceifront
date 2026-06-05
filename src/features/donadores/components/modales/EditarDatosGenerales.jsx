@@ -15,7 +15,7 @@ import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
 
 import { useDonadorEditarForm } from "../../hooks/useDonadorEditarForm";
-import { buscarCPZippopotam } from "../../services/donadoresService";
+import { obtenerDireccionPorCP } from "../../services/donadoresService";
 import { countries } from "../../../../utils/countries";
 
 export default function EditarDatosGenerales({
@@ -27,8 +27,8 @@ export default function EditarDatosGenerales({
   const {
     form,
     setForm,
-     fieldErrors,
-     setFieldErrors,
+    fieldErrors,
+    setFieldErrors,
     loading,
     error,
     showConfirm,
@@ -37,15 +37,13 @@ export default function EditarDatosGenerales({
     handlePreSubmit,
     handleConfirmSave,
     handleFinalClose,
-  } = useDonadorEditarForm(open,donador, onSuccess, onClose);
+  } = useDonadorEditarForm(open, donador, onSuccess, onClose);
 
   const [step, setStep] = useState(1);
 
   const [cpEncontrado, setCpEncontrado] = useState(false);
   const [loadingCP, setLoadingCP] = useState(false);
   const [localidades, setLocalidades] = useState([]);
-  const [otraLocalidad, setOtraLocalidad] = useState(false);
-  const [otroPais, setOtroPais] = useState(false);
 
   // 🔥 precargar donador cuando abre modal
   useEffect(() => {
@@ -72,62 +70,76 @@ export default function EditarDatosGenerales({
       colonia: donador.colonia || "",
       calle: donador.calle || "",
       numero: donador.numero || "",
+      estado:
+        donador.estado || "",
+
+      id_geografia:
+        donador.id_geografia || null,
     }));
   }, [open, donador, setForm]);
 
-  
+
 
   const updateField = (field, value) => {
-  setForm((prev) => ({
-    ...prev,
-    [field]: value,
-  }));
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
 
-  setFieldErrors((prev) => {
-    const copy = { ...prev };
-    delete copy[field];
-    return copy;
-  });
-};
+    setFieldErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+  };
 
 
-  const handleBuscarCP = async (cpValue, paisValue) => {
-    const pais = paisValue || form.pais;
-    if (!pais || !cpValue) return;
+  const handleBuscarCP = async (
+    cpValue,
+    paisValue
+  ) => {
+    const pais =
+      paisValue || form.pais;
+
+    if (!pais || !cpValue) {
+      return;
+    }
 
     try {
       setLoadingCP(true);
 
-      const data = await buscarCPZippopotam(pais, cpValue);
+      const data =
+        await obtenerDireccionPorCP(
+          cpValue,
+          pais
+        );
 
-      const lista =
-        data?.places?.map((p) => p["place name"]) || [];
+      setLocalidades(
+        data?.opciones || []
+      );
 
-      setLocalidades(lista);
+      setForm((prev) => ({
+        ...prev,
+        estado: data.estado || "",
+        localidad:
+          data?.opciones?.[0]?.nombre || "",
+        id_geografia:
+          data?.opciones?.[0]
+            ?.id_geografia || null,
+      }));
 
-      if (lista.length > 0) {
-        setForm((prev) => ({
-          ...prev,
-          localidad: lista[0],
-          colonia: data?.places?.[0]?.state || "",
-        }));
-
-        setCpEncontrado(true);
-        setOtraLocalidad(false);
-      } else {
-        setCpEncontrado(false);
-        setOtraLocalidad(true);
-
-        setForm((prev) => ({
-          ...prev,
-          localidad: "",
-          colonia: "",
-        }));
-      }
+      setCpEncontrado(true);
     } catch {
       setLocalidades([]);
+
+      setForm((prev) => ({
+        ...prev,
+        estado: "",
+        localidad: "",
+        id_geografia: null,
+      }));
+
       setCpEncontrado(false);
-      setOtraLocalidad(true);
     } finally {
       setLoadingCP(false);
     }
@@ -202,22 +214,22 @@ export default function EditarDatosGenerales({
                   <div className={ui.modal.twoCols}>
                     <Field label="Nombre" required error={fieldErrors.nombre}>
                       <Input value={form.nombre}
-                        onChange={(e) => updateField("nombre", e.target.value)}  error={!!fieldErrors.nombre}/>
+                        onChange={(e) => updateField("nombre", e.target.value)} error={!!fieldErrors.nombre} />
                     </Field>
 
                     <Field label="Apellido paterno" required error={fieldErrors.apellido_p}>
                       <Input value={form.apellido_p}
-                        onChange={(e) => updateField("apellido_p", e.target.value)} error={!!fieldErrors.apellido_p}/>
+                        onChange={(e) => updateField("apellido_p", e.target.value)} error={!!fieldErrors.apellido_p} />
                     </Field>
 
                     <Field label="Apellido materno" required error={fieldErrors.apellido_m} >
                       <Input value={form.apellido_m}
-                        onChange={(e) => updateField("apellido_m", e.target.value)} error={!!fieldErrors.apellido_m}/>
+                        onChange={(e) => updateField("apellido_m", e.target.value)} error={!!fieldErrors.apellido_m} />
                     </Field>
 
                     <Field label="Correo" required error={fieldErrors.correo}>
                       <Input value={form.correo}
-                        onChange={(e) => updateField("correo", e.target.value)} error={!!fieldErrors.correo}/>
+                        onChange={(e) => updateField("correo", e.target.value)} error={!!fieldErrors.correo} />
                     </Field>
 
                     <Field label="Teléfono" required error={fieldErrors.telefono}>
@@ -238,7 +250,7 @@ export default function EditarDatosGenerales({
                     <Field label="Fecha ingreso" required error={fieldErrors.fecha_ingreso}>
                       <Input type="date"
                         value={form.fecha_ingreso}
-                        onChange={(e) => updateField("fecha_ingreso", e.target.value) } error={!!fieldErrors.fecha_ingreso} />
+                        onChange={(e) => updateField("fecha_ingreso", e.target.value)} error={!!fieldErrors.fecha_ingreso} />
                     </Field>
                   </div>
                 </>
@@ -270,27 +282,71 @@ export default function EditarDatosGenerales({
                           const cp = e.target.value;
                           updateField("cp", cp);
                           if (cp.length === 5) handleBuscarCP(cp);
-                        }}  error={!!fieldErrors.cp}/>
+                        }} error={!!fieldErrors.cp} />
                     </Field>
 
                     <Field label="Estado" >
-                      <Input value={form.colonia}
+                      <Input value={form.estado || ""}
                         onChange={(e) => updateField("colonia", e.target.value)} />
                     </Field>
 
-                    <Field label="Localidad" required error={fieldErrors.localidad}>
-                      <Input value={form.localidad}
-                        onChange={(e) => updateField("localidad", e.target.value)} error={!!fieldErrors.localidad}/>
+                    <Field
+                      label="Localidad"
+                      required
+                      error={fieldErrors.localidad}
+                    >
+                      <Select
+                        value={
+                          form.id_geografia ?? ""
+                        }
+                        onChange={(e) => {
+                          const selected =
+                            localidades.find(
+                              (item) =>
+                                String(
+                                  item.id_geografia
+                                ) === e.target.value
+                            );
+
+                          setForm((prev) => ({
+                            ...prev,
+                            id_geografia:
+                              selected?.id_geografia ||
+                              null,
+                            localidad:
+                              selected?.nombre || "",
+                          }));
+                        }}
+                        error={!!fieldErrors.localidad}
+                      >
+                        <option value="">
+                          Selecciona
+                        </option>
+
+                        {localidades.map((item) => (
+                          <option
+                            key={
+                              item.id_geografia ??
+                              item.nombre
+                            }
+                            value={
+                              item.id_geografia ?? ""
+                            }
+                          >
+                            {item.nombre}
+                          </option>
+                        ))}
+                      </Select>
                     </Field>
 
                     <Field label="Calle" required error={fieldErrors.calle}>
                       <Input value={form.calle}
-                        onChange={(e) => updateField("calle", e.target.value)} error={!!fieldErrors.calle}/>
+                        onChange={(e) => updateField("calle", e.target.value)} error={!!fieldErrors.calle} />
                     </Field>
 
                     <Field label="Número" required error={fieldErrors.numero}>
                       <Input value={form.numero}
-                        onChange={(e) => updateField("numero", e.target.value)} error={!!fieldErrors.numero}/>
+                        onChange={(e) => updateField("numero", e.target.value)} error={!!fieldErrors.numero} />
                     </Field>
                   </div>
                 </>

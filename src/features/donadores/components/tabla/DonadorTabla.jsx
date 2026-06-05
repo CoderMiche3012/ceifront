@@ -62,8 +62,8 @@ export default function DonadoresTabla({ donadores = [], onEditar, }) {
             <div className="min-w-0">
               <p className={`truncate ${ui.text.body} font-semibold`} >
                 { donador.nombre }{" "}
-                { donador.apellido_p }{" "}
-                { donador.apellido_m }
+                { donador.apellido_paterno }{" "}
+                { donador.apellido_materno }
               </p>
             </div>
           </div>
@@ -78,8 +78,8 @@ export default function DonadoresTabla({ donadores = [], onEditar, }) {
 
         return (
           <Insignia
-            label={donador.tipo}
-            variant={ tipoVariant[donador.tipo] || "default"}
+            label={donador.tipo_donador }
+            variant={ tipoVariant[donador.tipo_donador ] || "default"}
           />
         );
       }

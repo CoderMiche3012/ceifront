@@ -1,5 +1,7 @@
 import API from "../../../config/apiClient";
 const BASE_URL = "/api/donadores/donadores";
+const BASE_URL2 = "/api/beneficiarios/catalogos";
+
 
 // obtener todos
 export const obtenerDonadores = async () => {
@@ -27,11 +29,19 @@ export const actualizarDonador = async (id, payload) => {
 
 // buscar CP
 export const obtenerDireccionPorCP = async (cp, pais = "MX") => {
-  const { data } = await API.get("/beneficiarios/geografia", {
+  console.log("🔥 REQUEST PARAMS:", { cp, pais });
+  const { data } = await API.get("/api/beneficiarios/geografia", {
     params: {
       cp,
       pais,
     },
   });
+
   return data;
+};
+
+// Obtener países
+export const obtenerPaises = async () => {
+  const { data } = await API.get(`${BASE_URL2}/paises/`);
+  return Array.isArray(data) ? data : [];
 };
