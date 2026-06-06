@@ -1,3 +1,4 @@
+//por corregir
 import { useEffect, useMemo, useState } from "react";
 import { useDonativos, useCrearDonativo, useActualizarDonativo, } from "./useDonativos";
 import { usePeriodos } from "../../periodos/hooks/usePeriodos";

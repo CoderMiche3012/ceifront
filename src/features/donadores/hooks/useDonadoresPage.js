@@ -1,55 +1,23 @@
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 import { useDonadores } from "./useDonadores";
 import { useResumenPeriodo } from "./useDonativos";
+
 import { usePeriodoActivo } from "../../periodos/hooks/usePeriodos";
 
 export const useDonadoresPage = () => {
-  const {
-    data: donadores = [],
-    isLoading: loadingDonadores,
-    error: errorDonadores,
-  } = useDonadores();
+  const { data: donadores = [], isLoading: loadingDonadores, error: errorDonadores, } = useDonadores();
+  const { periodoActivo, isLoading: loadingPeriodo, error: errorPeriodo } = usePeriodoActivo();
+  const { data: resumenPeriodo = [], isLoading: loadingResumen, error: errorResumen } = useResumenPeriodo(periodoActivo?.id_periodo);
 
-  const {
-    periodoActivo,
-    isLoading: loadingPeriodo,
-    error: errorPeriodo,
-  } = usePeriodoActivo();
-
-  const {
-    data: resumenPeriodo = [],
-    isLoading: loadingResumen,
-    error: errorResumen,
-  } = useResumenPeriodo(
-    periodoActivo?.id_periodo
-  );
-
-  const [filters, setFilters] = useState({
-    estatus: "todos",
-    tipo: "todos",
-  });
-
+  const [filters, setFilters] = useState({ estatus: "todos", tipo: "todos" });
   const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] =
-    useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const PAGE_SIZE = 3;
 
-  const loading =
-    loadingDonadores ||
-    loadingPeriodo ||
-    loadingResumen;
-
-  const error =
-    errorDonadores ||
-    errorPeriodo ||
-    errorResumen;
+  const loading = loadingDonadores || loadingPeriodo || loadingResumen;
+  const error = errorDonadores || errorPeriodo || errorResumen;
 
   // filtros
   const handleFilterChange =
@@ -80,84 +48,44 @@ export const useDonadoresPage = () => {
           resumenMap[
           donador.id_donador
           ];
-
         return {
           ...donador,
-
-          cantidadDonativos:
-            resumen?.cantidad_donativos ??
-            0,
-
-          totalesPeriodoActivo:
-            resumen?.totales ?? {},
+          cantidadDonativos: resumen?.cantidad_donativos ?? 0,
+          totalesPeriodoActivo: resumen?.totales ?? {},
         };
       });
     }, [donadores, resumenMap]);
-
   // filtros y búsqueda
   const filteredDonadores =
     useMemo(() => {
-      const searchLower =
-        search.toLowerCase();
-
+      const searchLower = search.toLowerCase();
       return donadoresConTotales.filter(
         (p) => {
-          const matchSearch =
-            (p.nombre || "")
-              .toLowerCase()
-              .includes(searchLower);
-
-          const matchStatus =
-            filters.estatus ===
-            "todos" ||
-            p.estatus?.toLowerCase() ===
-            filters.estatus.toLowerCase();
-
-          const matchTipo =
-            filters.tipo === "todos" ||
-            p.tipo_donador?.toLowerCase() === filters.tipo.toLowerCase();
-
-          return (
-            matchSearch &&
-            matchStatus &&
-            matchTipo
-          );
+          const matchSearch = (p.nombre || "").toLowerCase().includes(searchLower);
+          const matchStatus = filters.estatus === "todos" || p.estatus?.toLowerCase() === filters.estatus.toLowerCase();
+          const matchTipo = filters.tipo === "todos" || p.tipo_donador?.toLowerCase() === filters.tipo.toLowerCase();
+          return (matchSearch && matchStatus && matchTipo);
         }
       );
-    }, [
-      donadoresConTotales,
-      search,
-      filters,
-    ]);
+    }, [donadoresConTotales, search, filters]);
 
   // paginación
-  const totalPages = Math.ceil(
-    filteredDonadores.length /
-    PAGE_SIZE
-  );
-
+  const totalPages = Math.ceil(filteredDonadores.length / PAGE_SIZE);
   useEffect(() => {
-    if (
-      currentPage > totalPages &&
-      totalPages > 0
-    ) {
+    if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(totalPages);
     }
   }, [currentPage, totalPages]);
 
   const paginatedDonadores =
     useMemo(() => {
-      const start =
-        (currentPage - 1) * PAGE_SIZE;
+      const start = (currentPage - 1) * PAGE_SIZE;
 
       return filteredDonadores.slice(
         start,
         start + PAGE_SIZE
       );
-    }, [
-      filteredDonadores,
-      currentPage,
-    ]);
+    }, [filteredDonadores, currentPage,]);
 
   // búsqueda
   const handleSearchChange =
@@ -169,37 +97,27 @@ export const useDonadoresPage = () => {
   const handleClearFilters =
     useCallback(() => {
       setSearch("");
-
       setFilters({
         estatus: "todos",
         tipo: "todos",
       });
-
       setCurrentPage(1);
     }, []);
 
   return {
     donadores: paginatedDonadores,
-    totalCount:
-      filteredDonadores.length,
-
+    totalCount: filteredDonadores.length,
     loading,
     error,
-
     search,
     handleSearchChange,
-
     handleClearFilters,
-
     currentPage,
     totalPages,
     setCurrentPage,
-
     PAGE_SIZE,
-
     filters,
     handleFilterChange,
-
     periodoActivo,
   };
 };

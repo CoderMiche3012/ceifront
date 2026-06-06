@@ -2,7 +2,7 @@ import { useState, useEffect, } from "react";
 import { UserPlus, UserCheck, UserX, Building2, HeartHandshake, HandHeart, } from "lucide-react";
 import { useLocation, useNavigate, } from "react-router-dom";
 
-import { ui } from "../../styles/ui/uiClasses";
+import { ui } from "../../styles/ui/index";
 import TarjetasEstadisticas from "../../components/shared/TarjetasEstadisticas";
 
 import Boton from "../../components/ui/Boton";
@@ -26,7 +26,7 @@ export default function DonadoresPagina() {
   //para permisos
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
   const canCreate = hasModulePermission("donadores", "crear");
-  
+  const canEdit =hasModulePermission("donadores", "editar");
   const {
     filters,
     donadores,
@@ -90,13 +90,6 @@ export default function DonadoresPagina() {
         }
       />
 
-      {error && (
-        <Alerta
-          mensaje={error.message}
-          tipo="error"
-        />
-      )}
-
       {/* resumen */}
       <TarjetasEstadisticas
         items={[
@@ -146,6 +139,7 @@ export default function DonadoresPagina() {
           donadores={donadores}
           isLoading={loading}
           onEditar={handleEditar}
+          canEdit={canEdit}
         />
 
         {!loading && !error && totalCount > 0 && (

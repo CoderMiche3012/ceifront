@@ -33,7 +33,7 @@ export const donativosKeys = {
     idPeriodo,
   ],
 
-  // NUEVA
+  // resumen por periodo de todos los donadores
   resumenPeriodo: (idPeriodo) => [
     ...donativosKeys.all,
     "resumenPeriodo",

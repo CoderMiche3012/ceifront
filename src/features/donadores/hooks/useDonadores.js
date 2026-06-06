@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient, } from "@tanstack/react-query";
-
 import { obtenerDonadores, obtenerDonadorPorId, crearDonador, actualizarDonador, } from "../services/donadoresService";
 import { donadoresKeys } from "../services/donadoresKeys";
 
@@ -39,13 +38,13 @@ export function useActualizarDonador() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data, }) =>
-      actualizarDonador( id, data ),
+      actualizarDonador(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: donadoresKeys.all,
       });
       queryClient.invalidateQueries({
-        queryKey: donadoresKeys.detail( variables.id ),
+        queryKey: donadoresKeys.detail(variables.id),
       });
     },
   });

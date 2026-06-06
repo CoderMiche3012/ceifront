@@ -2,14 +2,14 @@ import { useMemo } from "react";
 import { Eye, Pencil, } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import { ui } from "../../../../styles/ui/uiClasses";
+import { ui } from "../../../../styles/ui/index";
 
 import Avatar from "../../../../components/shared/AvatarGeneral";
 import Insignia from "../../../../components/ui/Insignia";
 import AccionesTabla from "../../../../components/tablas/AccionesTabla";
 import DatosTabla from "../../../../components/tablas/DatosTabla";
 
-export default function DonadoresTabla({ donadores = [], onEditar, }) {
+export default function DonadoresTabla({ donadores = [], onEditar, canEdit = false}) {
   const navigate = useNavigate();
 
   const columns =
@@ -45,7 +45,22 @@ export default function DonadoresTabla({ donadores = [], onEditar, }) {
         },
       ];
     }, []);
+const actions = [
+  {
+    label: "Ver",
+    icon: <Eye className="h-4 w-4" />,
+    onClick: (row) =>
+      navigate(`/App/donadores/donador/${row.id_donador}`),
+  },
+];
 
+if (canEdit) {
+  actions.push({
+    label: "Editar",
+    icon: <Pencil className="h-4 w-4" />,
+    onClick: onEditar,
+  });
+}
   const renderCell = (
     donador,
     key
@@ -149,20 +164,9 @@ export default function DonadoresTabla({ donadores = [], onEditar, }) {
       case "acciones":
         return (
           <AccionesTabla
-            row={donador}
-            actions={[
-              {
-                label: "Ver",
-                icon: ( <Eye className="h-4 w-4" /> ),
-                onClick: ( row ) => navigate( `/App/donadores/donador/${row.id_donador}` ),
-              },
-              {
-                label: "Editar",
-                icon: ( <Pencil className="h-4 w-4" /> ),
-                onClick: onEditar,
-              },
-            ]}
-          />
+  row={donador}
+  actions={actions}
+/>
         );
 
       default:

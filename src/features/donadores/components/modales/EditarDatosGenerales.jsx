@@ -1,9 +1,6 @@
-// por corregir
-
 import { useEffect, useState } from "react";
-import { HiOutlinePencilAlt, HiOutlineExclamationCircle, } from "react-icons/hi";
-
-import { ui } from "../../../../styles/ui/uiClasses";
+import { HiOutlinePencilAlt, HiOutlineExclamationCircle, HiOutlineArrowLeft, HiOutlineSearch } from "react-icons/hi";
+import { ui } from "../../../../styles/ui/index";
 
 import Field from "../../../../components/ui/Field";
 import Input from "../../../../components/ui/InputG";
@@ -15,14 +12,17 @@ import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
 
 import { useDonadorEditarForm } from "../../hooks/useDonadorEditarForm";
-import { obtenerDireccionPorCP } from "../../services/donadoresService";
-import { countries } from "../../../../utils/countries";
 
-export default function EditarDatosGenerales({
-  open,
-  onClose,
-  onSuccess,
-  donador,
+import { obtenerDireccionPorCP } from "../../services/donadoresService";
+import { obtenerPaises } from "../../services/donadoresService";
+
+import { countries } from "../../../../utils/countries";
+import { buildCountriesList } from "../../../../utils/buildCountriesList";
+
+import { usePermissions } from "../../../../context/PermissionsContext";
+import { obtenerUsuario } from "../../../../storage/userStorage";
+
+export default function EditarDatosGenerales({ open, onClose, onSuccess, donador,
 }) {
   const {
     form,
@@ -37,48 +37,48 @@ export default function EditarDatosGenerales({
     handlePreSubmit,
     handleConfirmSave,
     handleFinalClose,
+    loadingCP,
+    setLoadingCP,
+    cpEncontrado,
+    setCpEncontrado,
   } = useDonadorEditarForm(open, donador, onSuccess, onClose);
 
+  const usuarioActual = obtenerUsuario();
+  const puedeEditarNombre = usuarioActual?.esAdmin === true || usuarioActual?.esSuperUser === true;
+  
   const [step, setStep] = useState(1);
+  const [cpError, setCpError] = useState("");
+  const [manualAddressMode, setManualAddressMode] = useState(false);
+  const [manualCountryMode, setManualCountryMode] = useState(false);
+  const [paises, setPaises] = useState([]);
+  const estadoEditable = manualAddressMode;
+  const [municipios, setMunicipios] = useState([]);
+  const { hasModulePermission } = usePermissions();
 
-  const [cpEncontrado, setCpEncontrado] = useState(false);
-  const [loadingCP, setLoadingCP] = useState(false);
-  const [localidades, setLocalidades] = useState([]);
+  const canCreate = hasModulePermission("direcciones", "crear");
 
-  // 🔥 precargar donador cuando abre modal
   useEffect(() => {
-    if (!open || !donador) return;
-
-    const match = countries.find(
-      (c) =>
-        c.code === donador.pais ||
-        c.name?.toLowerCase() === donador.pais?.toLowerCase()
-    );
-
-    setForm((prev) => ({
-      ...prev,
-      nombre: donador.nombre || "",
-      apellido_p: donador.apellido_p || "",
-      apellido_m: donador.apellido_m || "",
-      correo: donador.correo || "",
-      telefono: donador.telefono || "",
-      tipo: donador.tipo || "",
-      fecha_ingreso: donador.fecha_ingreso || "",
-      pais: match?.code || donador.pais || "",
-      cp: donador.cp || "",
-      localidad: donador.localidad || "",
-      colonia: donador.colonia || "",
-      calle: donador.calle || "",
-      numero: donador.numero || "",
-      estado:
-        donador.estado || "",
-
-      id_geografia:
-        donador.id_geografia || null,
-    }));
-  }, [open, donador, setForm]);
-
-
+    const loadPaises = async () => {
+      try {
+        const api = await obtenerPaises();
+        const merged = buildCountriesList(countries, api);
+        setPaises(merged);
+      } catch {
+        setPaises(countries);
+      }
+    };
+    loadPaises();
+  }, []);
+  useEffect(() => {
+    if (!open) {
+      setStep(1);
+      setManualAddressMode(false);
+      setManualCountryMode(false);
+      setCpError("");
+      setMunicipios([]);
+      setCpEncontrado(false);
+    }
+  }, [open, setCpEncontrado]);
 
   const updateField = (field, value) => {
     setForm((prev) => ({
@@ -93,53 +93,39 @@ export default function EditarDatosGenerales({
     });
   };
 
-
-  const handleBuscarCP = async (
-    cpValue,
-    paisValue
-  ) => {
-    const pais =
-      paisValue || form.pais;
-
-    if (!pais || !cpValue) {
-      return;
-    }
+  const handleBuscarCP = async (cpValue = form.cp) => {
+    if (!form.pais || !cpValue) return;
 
     try {
       setLoadingCP(true);
-
-      const data =
-        await obtenerDireccionPorCP(
-          cpValue,
-          pais
-        );
-
-      setLocalidades(
-        data?.opciones || []
-      );
-
-      setForm((prev) => ({
-        ...prev,
-        estado: data.estado || "",
-        localidad:
-          data?.opciones?.[0]?.nombre || "",
-        id_geografia:
-          data?.opciones?.[0]
-            ?.id_geografia || null,
-      }));
-
+      setCpError("");
+      const data = await obtenerDireccionPorCP(cpValue, form.pais);
+      const opciones = data?.opciones || [];
+      // si no hay resultados
+      if (opciones.length === 0) {
+        setMunicipios([]);
+        setCpError("Este código postal no está registrado consulte con el administrador");
+        setCpEncontrado(false);
+        updateField("estado", "");
+        updateField("municipio", "");
+        updateField("colonia", "");
+        updateField("id_geografia", null);
+        return;
+      }
+      setMunicipios(opciones);
+      updateField("estado", data.estado || "");
+      updateField("colonia", data.colonia || "");
+      updateField("municipio", opciones[0].nombre);
+      updateField("id_geografia", opciones[0].id_geografia);
       setCpEncontrado(true);
-    } catch {
-      setLocalidades([]);
-
-      setForm((prev) => ({
-        ...prev,
-        estado: "",
-        localidad: "",
-        id_geografia: null,
-      }));
-
+    } catch (e) {
+      setMunicipios([]);
+      setCpError("Error al consultar el código postal");
       setCpEncontrado(false);
+      updateField("estado", "");
+      updateField("municipio", "");
+      updateField("colonia", "");
+      updateField("id_geografia", null);
     } finally {
       setLoadingCP(false);
     }
@@ -159,7 +145,6 @@ export default function EditarDatosGenerales({
       <div className={ui.modal.formOverlay} onClick={handleBackdropClick}>
         <div className={ui.modal.formContainer}>
 
-          {/* HEADER */}
           <div className={ui.modal.formHeader}>
             <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}>
               <HiOutlinePencilAlt size={24} />
@@ -172,7 +157,6 @@ export default function EditarDatosGenerales({
                 Actualiza la información del donador
               </p>
 
-              {/* STEPS */}
               <div className="flex items-center gap-3 mt-4">
                 <span className="text-[10px] font-bold text-slate-400">
                   Paso {step} de 2
@@ -185,12 +169,7 @@ export default function EditarDatosGenerales({
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                setStep(1);
-                onClose();
-              }}
-            >
+            <button onClick={() => { setStep(1); onClose(); }} >
               ×
             </button>
           </div>
@@ -204,7 +183,6 @@ export default function EditarDatosGenerales({
 
             <div className={ui.modal.formScroll}>
 
-              {/* ================= STEP 1 ================= */}
               {step === 1 && (
                 <>
                   <h3 className="text-xs font-bold text-[#0E5F63] mb-4 uppercase">
@@ -214,17 +192,17 @@ export default function EditarDatosGenerales({
                   <div className={ui.modal.twoCols}>
                     <Field label="Nombre" required error={fieldErrors.nombre}>
                       <Input value={form.nombre}
-                        onChange={(e) => updateField("nombre", e.target.value)} error={!!fieldErrors.nombre} />
+                        disabled={!puedeEditarNombre} onChange={(e) => updateField("nombre", e.target.value)} error={!!fieldErrors.nombre} />
                     </Field>
 
                     <Field label="Apellido paterno" required error={fieldErrors.apellido_p}>
                       <Input value={form.apellido_p}
-                        onChange={(e) => updateField("apellido_p", e.target.value)} error={!!fieldErrors.apellido_p} />
+                        disabled={!puedeEditarNombre} onChange={(e) => updateField("apellido_p", e.target.value)} error={!!fieldErrors.apellido_p} />
                     </Field>
 
                     <Field label="Apellido materno" required error={fieldErrors.apellido_m} >
                       <Input value={form.apellido_m}
-                        onChange={(e) => updateField("apellido_m", e.target.value)} error={!!fieldErrors.apellido_m} />
+                        disabled={!puedeEditarNombre} onChange={(e) => updateField("apellido_m", e.target.value)} error={!!fieldErrors.apellido_m} />
                     </Field>
 
                     <Field label="Correo" required error={fieldErrors.correo}>
@@ -255,105 +233,239 @@ export default function EditarDatosGenerales({
                   </div>
                 </>
               )}
+              {/* PASO 2 */}
+              {step ===
+                2 && (
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xs font-bold text-[#0E5F63] uppercase tracking-wider">
+                        Dirección
+                      </h3>
+                      {canCreate && (
+                        <button
+                          type="button"
+                          className="flex items-center gap-1 text-xs text-[#0E5F63] font-semibold hover:underline"
+                          onClick={() => {
+                            if (manualAddressMode) {
+                              setManualAddressMode(false);
+                              setManualCountryMode(false);
+                              updateField("estado", "");
+                              updateField("municipio", "");
+                              updateField("id_geografia", null);
+                              if (form.cp?.length === 5) {
+                                handleBuscarCP(form.cp);
+                              }
+                            } else {
+                              setManualAddressMode(true);
+                              setCpError("");
+                            }
+                          }}
+                        >
+                          {manualAddressMode ? (
+                            <>
+                              <HiOutlineArrowLeft size={14} />
+                              Volver a búsqueda por CP
+                            </>
+                          ) : (
+                            "Agregar dirección manual"
+                          )}
+                        </button>
+                      )}
+                    </div>
 
-              {/* ================= STEP 2 ================= */}
-              {step === 2 && (
-                <>
-                  <h3 className="text-xs font-bold text-[#0E5F63] mb-4 uppercase">
-                    Dirección
-                  </h3>
-
-                  <div className={ui.modal.twoCols}>
-                    <Field label="País" required error={fieldErrors.pais} >
-                      <Select value={form.pais}
-                        onChange={(e) => updateField("pais", e.target.value)} error={!!fieldErrors.pais}>
-                        <option value="">Selecciona país</option>
-                        {countries.map((c) => (
-                          <option key={c.code} value={c.code}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </Select>
-                    </Field>
-
-                    <Field label="Código Postal" required error={fieldErrors.cp}>
-                      <Input value={form.cp}
-                        onChange={(e) => {
-                          const cp = e.target.value;
-                          updateField("cp", cp);
-                          if (cp.length === 5) handleBuscarCP(cp);
-                        }} error={!!fieldErrors.cp} />
-                    </Field>
-
-                    <Field label="Estado" >
-                      <Input value={form.estado || ""}
-                        onChange={(e) => updateField("colonia", e.target.value)} />
-                    </Field>
-
-                    <Field
-                      label="Localidad"
-                      required
-                      error={fieldErrors.localidad}
+                    <div
+                      className={ui.modal.twoCols}
                     >
-                      <Select
-                        value={
-                          form.id_geografia ?? ""
-                        }
-                        onChange={(e) => {
-                          const selected =
-                            localidades.find(
-                              (item) =>
-                                String(
-                                  item.id_geografia
-                                ) === e.target.value
-                            );
-
-                          setForm((prev) => ({
-                            ...prev,
-                            id_geografia:
-                              selected?.id_geografia ||
-                              null,
-                            localidad:
-                              selected?.nombre || "",
-                          }));
-                        }}
-                        error={!!fieldErrors.localidad}
-                      >
-                        <option value="">
-                          Selecciona
-                        </option>
-
-                        {localidades.map((item) => (
-                          <option
-                            key={
-                              item.id_geografia ??
-                              item.nombre
-                            }
-                            value={
-                              item.id_geografia ?? ""
-                            }
+                      <Field label="País" required error={fieldErrors.pais}>
+                        {manualCountryMode ? (
+                          // modo manual de pais
+                          <div className="space-y-1">
+                            <Input
+                              value={form.pais}
+                              onChange={(e) => updateField("pais", e.target.value)}
+                              placeholder="Escribe el nombre del país"
+                              error={!!fieldErrors.pais}
+                            />
+                            <button
+                              type="button"
+                              className="text-xs text-slate-500 underline block hover:text-[#0E5F63] transition-colors"
+                              onClick={() => {
+                                setManualCountryMode(false);
+                                updateField("pais", "");
+                              }}
+                            >
+                              <HiOutlineArrowLeft size={14} />
+                              Volver a lista de países
+                            </button>
+                          </div>
+                        ) : (
+                          //  modo automatico
+                          <Select
+                            value={form.pais}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setMunicipios([]);
+                              setCpEncontrado(false);
+                              setCpError("");
+                              updateField("cp", "");
+                              updateField("estado", "");
+                              updateField("municipio", "");
+                              updateField("colonia", "");
+                              updateField("id_geografia", null);
+                              if (value === "OTHER") {
+                                setManualCountryMode(true);
+                                updateField("pais", "");
+                              } else {
+                                updateField("pais", value);
+                              }
+                            }}
+                            error={!!fieldErrors.pais}
                           >
-                            {item.nombre}
-                          </option>
-                        ))}
-                      </Select>
-                    </Field>
+                            <option value="">Selecciona país</option>
+                            {paises.map((c) => (
+                              <option key={c.code} value={c.code}>
+                                {c.name}
+                              </option>
+                            ))}
 
-                    <Field label="Calle" required error={fieldErrors.calle}>
-                      <Input value={form.calle}
-                        onChange={(e) => updateField("calle", e.target.value)} error={!!fieldErrors.calle} />
-                    </Field>
+                            {/* para mostrar otro */}
+                            {manualAddressMode && (
+                              <option value="OTHER">Otro / Escribir manual</option>
+                            )}
+                          </Select>
+                        )}
+                      </Field>
 
-                    <Field label="Número" required error={fieldErrors.numero}>
-                      <Input value={form.numero}
-                        onChange={(e) => updateField("numero", e.target.value)} error={!!fieldErrors.numero} />
-                    </Field>
-                  </div>
-                </>
-              )}
+                      <Field label="Código Postal" required error={fieldErrors.cp}>
+                        <div
+                          className={`relative rounded-md border transition
+                              ${cpError
+                              ? "border-amber-400"
+                              : cpEncontrado
+                                ? "border-green-400"
+                                : "border-slate-200 focus-within:border-[#0E5F63]"
+                            }
+                            `}
+                        >
+                          <Input
+                            value={form.cp}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              updateField("cp", value);
+                              setCpError("");
+                              setCpEncontrado(false);
+                              setMunicipios([]);
+                              updateField("estado", "");
+                              updateField("municipio", "");
+                              updateField("colonia", "");
+                              updateField("id_geografia", null);
+                            }}
+                            error={!!fieldErrors.cp}
+                            className="border-0 focus:ring-0 pl-9 pr-28"
+                          />
+                          <div className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                            <HiOutlineSearch size={16} />
+                          </div>
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                            <button
+                              type="button"
+                              onClick={() => handleBuscarCP(form.cp)}
+                              disabled={!form.cp || loadingCP || manualAddressMode}
+                              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition
+                                ${cpEncontrado
+                                  ? "bg-green-50 text-green-600"
+                                  : "bg-slate-100 text-[#0E5F63] hover:bg-slate-200"
+                                }
+                              disabled:opacity-40`}
+                            >
+                              {loadingCP ? (
+                                <div className="h-3 w-3 border-2 border-[#0E5F63] border-t-transparent rounded-full animate-spin" />
+                              ) : cpEncontrado ? (
+                                "Encontrado"
+                              ) : (
+                                "Buscar"
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        {!manualAddressMode && (
+                          <p className="mt-1 text-[11px] text-slate-400 text-right">
+                            La búsqueda se realiza manualmente
+                          </p>
+                        )}
+
+                        {cpError && (
+                          <p className="mt-1 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md flex items-center gap-1">
+                            <HiOutlineExclamationCircle size={14} />
+                            {cpError}
+                          </p>
+                        )}
+                      </Field>
+                      <Field label="Estado" required>
+                        <Input
+                          disabled={!estadoEditable}
+                          value={form.estado || ""}
+                          onChange={(e) => updateField("estado", e.target.value)}
+                        />
+                      </Field>
+
+                      <Field label="Localidad" required error={fieldErrors.municipio} >
+                        {manualAddressMode ? (
+                          <Input
+                            value={form.municipio}
+                            onChange={(e) => updateField("municipio", e.target.value)}
+                          />
+                        ) : municipios.length === 0 ? (
+                          <Input value={form.municipio || ""} disabled />
+                        ) : (
+                          <Select
+                            value={form.municipio || ""}
+                            disabled={!cpEncontrado || loadingCP}
+                            onChange={(e) => {
+                              const municipio = municipios.find(
+                                (m) => m.nombre === e.target.value
+                              );
+                              updateField("municipio", e.target.value);
+                              updateField("id_geografia", municipio?.id_geografia ?? null);
+                            }}
+                            error={!!fieldErrors.municipio}
+                          >
+                            <option value="">
+                              Selecciona la localidad
+                            </option>
+
+                            {municipios.map((m) => (
+                              <option
+                                key={m.id_geografia ?? m.nombre}
+                                value={m.nombre}
+                              >
+                                {m.nombre}
+                              </option>
+                            ))}
+                          </Select>
+                        )}
+                      </Field>
+                      <Field label="Calle" required error={fieldErrors.calle} >
+                        <Input
+                          value={form.calle}
+                          onChange={(e) => updateField("calle", e.target.value)}
+                          error={!!fieldErrors.calle}
+                        />
+                      </Field>
+
+                      <Field label="Número" required error={fieldErrors.numero} >
+                        <Input
+                          value={form.numero}
+                          onChange={(e) => updateField("numero", e.target.value)}
+                          error={!!fieldErrors.numero}
+                        />
+                      </Field>
+                    </div>
+                  </>
+                )}
             </div>
 
-            {/* BOTONES */}
             <div className={ui.modal.formActions}>
               <Boton
                 variant="secondary"
@@ -398,3 +510,4 @@ export default function EditarDatosGenerales({
     </>
   );
 }
+
