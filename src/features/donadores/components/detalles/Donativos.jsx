@@ -1,21 +1,10 @@
 import HistorialDonativos from "./HistorialDonativos";
 
-export default function Donativos({ data, setData }) {
-
-  const handleUpdateEstatus = (nuevoEstatus) => {
-    if (!setData) return;
-    setData((prev) => ({
-      ...prev,
-      estatus: nuevoEstatus,
-    }));
-  };
+export default function Donativos({ data }) {
   return (
     <div className="w-full px-6 py-6">
       <div className="w-full">
-        <HistorialDonativos
-          data={data}
-          setData={setData}
-        />
+        <HistorialDonativos data={data} />
       </div>
     </div>
   );

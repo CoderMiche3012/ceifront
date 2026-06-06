@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { HiOutlineDocumentText, HiOutlineX, } from "react-icons/hi";
 
-import { ui } from "../../../../styles/ui/uiClasses";
+import { ui } from "../../../../styles/ui/index";
 
 import Field from "../../../../components/ui/Field";
 import Boton from "../../../../components/ui/Boton";
@@ -11,7 +11,7 @@ import ModalResultado from "../../../../components/shared/ModalResultado";
 
 import { useActualizarDonador } from "../../hooks/useDonadores";
 
-export default function EditarNotaGeneral({ isOpen, onClose, data, }) {
+export default function EditarNotaGeneral({ isOpen, onClose, data }) {
   // estado
   const [showConfirm, setShowConfirm] = useState(false);
   const [nota, setNota] = useState("");
@@ -112,7 +112,7 @@ export default function EditarNotaGeneral({ isOpen, onClose, data, }) {
                 </Field>
               </div>
 
-              {/* ACTIONS */}
+              {/* acciones */}
               <div className={ui.modal.formActions}>
                 <Boton
                   variant="secondary"

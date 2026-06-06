@@ -1,73 +1,89 @@
-//por corregir
 import { useEffect, useMemo, useState } from "react";
-import { useDonativos, useCrearDonativo, useActualizarDonativo, } from "./useDonativos";
-import { usePeriodos } from "../../periodos/hooks/usePeriodos";
+
+import {
+  useDonativosPorDonador,
+  usePeriodosDonativosPorDonador,
+  useCrearDonativo,
+  useActualizarDonativo,
+} from "./useDonativos";
 
 const PAGE_SIZE = 2;
 
 export default function useHistorialDonativos(data) {
 
-  const { data: donativosData = [], isLoading, } = useDonativos();
-  const { data: periodos = [], } = usePeriodos();
+  const {
+    data: donativos = [],
+    isLoading,
+  } = useDonativosPorDonador(
+    data?.id_donador
+  );
+
+  const {
+    data: periodosDonador = [],
+  } = usePeriodosDonativosPorDonador(
+    data?.id_donador
+  );
+
   const crearMutation = useCrearDonativo();
   const actualizarMutation = useActualizarDonativo();
 
-  const [modalConf, setModalConf] =
-    useState({
-      open: false,
-      data: null,
-    });
+  const [modalConf, setModalConf] = useState({
+    open: false,
+    data: null,
+  });
 
-  const [modalRes, setModalRes] =
-    useState({
-      open: false,
-      type: "success",
-      title: "",
-      message: "",
-    });
+  const [modalRes, setModalRes] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
 
   const [openId, setOpenId] = useState(null);
   const [pages, setPages] = useState({});
-  const [searchByPeriodo, setSearchByPeriodo,] = useState({});
+  const [searchByPeriodo, setSearchByPeriodo] = useState({});
   const [showModal, setShowModal] = useState(false);
-  const [showModalEditar, setShowModalEditar,] = useState(false);
-  const [donativoEditando, setDonativoEditando,] = useState(null);
+  const [showModalEditar, setShowModalEditar] = useState(false);
+  const [donativoEditando, setDonativoEditando] = useState(null);
   const [errorForm, setErrorForm] = useState("");
 
-  const [form, setForm] =
-    useState({
-      id_donador: "",
-      id_periodo: "",
-      concepto: "",
-      monto: "",
-      fecha: "",
-      moneda: "MXN",
-    });
+  const [form, setForm] = useState({
+    id_donador: "",
+    id_periodo: "",
+    concepto: "",
+    monto: "",
+    fecha: "",
+    moneda: "MXN",
+  });
 
-  const loading = isLoading || crearMutation.isPending || actualizarMutation.isPending;
+  const loading = isLoading;
 
-  const donativos =
-    useMemo(() => {
-      return donativosData.filter(
-        (item) => Number(item.id_donador) === Number(data?.id_donador)
-      );
-    }, [donativosData, data,]);
+  const saving =
+    crearMutation.isPending ||
+    actualizarMutation.isPending;
 
-  const periodosOrdenados =
-    useMemo(() => {
-      return [...periodos].sort(
-        (a, b) => new Date(b.fecha_inicio) - new Date(a.fecha_inicio)
-      );
-    }, [periodos]);
+  const periodosOrdenados = useMemo(() => {
+    return [...periodosDonador]
+      .sort(
+        (a, b) =>
+          new Date(b.fecha_inicio) -
+          new Date(a.fecha_inicio)
+      )
+      .map((periodo) => ({
+        ...periodo,
+        ciclo_escolar: `${new Date(periodo.fecha_inicio).getFullYear()}-${new Date(periodo.fecha_fin).getFullYear()}`,
+      }));
+  }, [periodosDonador]);
 
   useEffect(() => {
-    if (periodosOrdenados.length > 0 && openId === null) {
+    if (periodosOrdenados.length > 0) {
       setOpenId(periodosOrdenados[0].id_periodo);
     }
-  }, [periodosOrdenados]);
+  }, []);
 
-  const abrirModal = ( periodo ) => {
+  const abrirModal = (periodo) => {
     setErrorForm("");
+
     setForm({
       id_donador: data?.id_donador,
       id_periodo: periodo.id_periodo,
@@ -76,12 +92,15 @@ export default function useHistorialDonativos(data) {
       fecha: "",
       moneda: "MXN",
     });
+
     setShowModal(true);
   };
 
-  const abrirModalEditar = ( donativo ) => {
+  const abrirModalEditar = (donativo) => {
     setErrorForm("");
-    setDonativoEditando( donativo );
+
+    setDonativoEditando(donativo);
+
     setForm({
       id_donador: donativo.id_donador,
       id_periodo: donativo.id_periodo,
@@ -90,9 +109,8 @@ export default function useHistorialDonativos(data) {
       fecha: donativo.fecha,
       moneda: donativo.moneda || "MXN",
     });
-    setShowModalEditar(
-      true
-    );
+
+    setShowModalEditar(true);
   };
 
   const cerrarModal = () => {
@@ -100,17 +118,31 @@ export default function useHistorialDonativos(data) {
     setErrorForm("");
   };
 
-  const handleSubmitClick = ( tipo ) => {
-    if ( data?.estatus?.toLowerCase() === "inactivo" ) {
-      setErrorForm( "No se pueden registrar nuevos donativos para un donador inactivo." );
+  const handleSubmitClick = (tipo) => {
+
+    if (
+      data?.estatus?.toLowerCase() ===
+      "inactivo"
+    ) {
+      setErrorForm(
+        "No se pueden registrar nuevos donativos para un donador inactivo."
+      );
       return;
     }
 
-    if ( !form.concepto || !form.monto || !form.fecha ) {
-      setErrorForm( "Todos los campos son obligatorios para registrar el donativo." );
+    if (
+      !form.concepto ||
+      !form.monto ||
+      !form.fecha
+    ) {
+      setErrorForm(
+        "Todos los campos son obligatorios para registrar el donativo."
+      );
       return;
     }
+
     setErrorForm("");
+
     setModalConf({
       open: true,
       data: tipo,
@@ -120,28 +152,33 @@ export default function useHistorialDonativos(data) {
   const handleConfirmarGuardado =
     async () => {
       try {
-        if ( modalConf.data === "CREAR" ) {
-          await crearMutation.mutateAsync(
-            {
-              ...form,
-              monto: Number( Number( form.monto ).toFixed( 3 ) ),
-            }
-          );
+
+        if (modalConf.data === "CREAR") {
+
+          await crearMutation.mutateAsync({
+            ...form,
+            monto: Number(
+              Number(form.monto).toFixed(3)
+            ),
+          });
 
           cerrarModal();
+
         } else {
-          await actualizarMutation.mutateAsync(
-            {
-              id: donativoEditando.id_donativo,
-              data: {
-                concepto: form.concepto,
-                monto: Number( Number( form.monto ).toFixed( 3 ) ),
-                fecha: form.fecha,
-                moneda: form.moneda,
-              },
-            }
-          );
-          setShowModalEditar( false );
+
+          await actualizarMutation.mutateAsync({
+            id: donativoEditando.id_donativo,
+            data: {
+              concepto: form.concepto,
+              monto: Number(
+                Number(form.monto).toFixed(3)
+              ),
+              fecha: form.fecha,
+              moneda: form.moneda,
+            },
+          });
+
+          setShowModalEditar(false);
         }
 
         setModalConf({
@@ -153,14 +190,36 @@ export default function useHistorialDonativos(data) {
           open: true,
           type: "success",
           title: "¡Éxito!",
-          message: "El donativo se ha guardado correctamente.",
+          message:
+            "El donativo se ha guardado correctamente.",
         });
-      } catch {
+
+      } catch (err) {
+
+        const backendErrors = err?.errors || err?.response?.data;
+
+        console.log(backendErrors);
         setModalConf({
           open: false,
           data: null,
         });
+        // Si vienen errores de validación
+        if (
+          backendErrors &&
+          typeof backendErrors === "object"
+        ) {
+          const primerError = Object.values(
+            backendErrors
+          )?.[0]?.[0];
 
+          setErrorForm(
+            primerError ||
+            "No se pudo procesar la solicitud."
+          );
+          return;
+        }
+
+        // Error general
         setModalRes({
           open: true,
           type: "error",
@@ -170,20 +229,24 @@ export default function useHistorialDonativos(data) {
       }
     };
 
-  const changePage = ( idPeriodo, page ) => {
+  const changePage = (
+    idPeriodo,
+    page
+  ) => {
     setPages((prev) => ({
       ...prev,
       [idPeriodo]: page,
     }));
   };
 
-  const handleSearchChange = ( idPeriodo, value ) => {
-    setSearchByPeriodo(
-      (prev) => ({
-        ...prev,
-        [idPeriodo]: value,
-      })
-    );
+  const handleSearchChange = (
+    idPeriodo,
+    value
+  ) => {
+    setSearchByPeriodo((prev) => ({
+      ...prev,
+      [idPeriodo]: value,
+    }));
   };
 
   return {
@@ -196,6 +259,7 @@ export default function useHistorialDonativos(data) {
     modalRes,
 
     loading,
+    saving,
     openId,
 
     pages,
@@ -219,6 +283,7 @@ export default function useHistorialDonativos(data) {
     cerrarModal,
     handleSubmitClick,
     handleConfirmarGuardado,
+
     changePage,
     handleSearchChange,
   };

@@ -5,9 +5,10 @@ import {
   crearBeneficiario,
   actualizarBeneficiario,
   eliminarBeneficiario,
-} from "./../services/beneficiariosService";
+  obtenerBeneficiariosActivos
+} from "../services/beneficiariosService";
 
-import { beneficiariosKeys } from "./../services/beneficiariosKeys";
+import { beneficiariosKeys } from "../services/beneficiariosKeys";
 
 // obtener beneficiarios
 export function useBeneficiarios() {
@@ -61,3 +62,10 @@ export function useEliminarBeneficiario() {
     },
   });
 }
+
+export const useBeneficiariosActivos = () => {
+  return useQuery({
+    queryKey: beneficiariosKeys.active(),
+    queryFn: obtenerBeneficiariosActivos,
+  });
+};

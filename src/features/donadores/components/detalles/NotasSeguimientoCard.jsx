@@ -4,17 +4,17 @@ import { useState } from "react";
 import NotasCard from "../../../../components/ui/NotasCard";
 import EditarNotaGeneral from "../modales/EditarNotaGeneral";
 
-export default function NotasSeguimientoCard({ data, setData }) {
+export default function NotasSeguimientoCard({ data, canEdit  }) {
   // estado
   const [modalAbierto, setModalAbierto] = useState(false);
   const hayNota = data?.nota && data.nota.trim() !== "";
-
+  
   return (
     <>
       <NotasCard
         icon={AlignLeft}
         title="Notas de Seguimiento"
-        onEdit={() => setModalAbierto(true)}
+        onEdit={canEdit ? () => setModalAbierto(true) : undefined}
         editLabel="Editar nota"
       >
         <div className="rounded-xl bg-slate-50 border border-slate-200 p-5">
@@ -37,7 +37,6 @@ export default function NotasSeguimientoCard({ data, setData }) {
         isOpen={modalAbierto}
         onClose={() => setModalAbierto(false)}
         data={data}
-        setData={setData}
       />
     </>
   );

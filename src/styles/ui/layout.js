@@ -1,19 +1,16 @@
-import { uiTheme } from "./uiTheme";
 
 export const layout = {
-  page: uiTheme.spacing.page,
-  section: uiTheme.spacing.section,
-  block: uiTheme.spacing.block,
-  gap: uiTheme.spacing.gap,
+  page: "space-y-6",
 
-  header: {
-    container:
-      "flex flex-col gap-4 md:flex-row md:items-start md:justify-between",
-    description: "text-sm text-[#64748b] mt-1",
-  },
+  twoColumn: `
+    grid grid-cols-1
+    gap-6
+    xl:grid-cols-3
+  `,
 
-  iconBox:
-    "flex items-center justify-center rounded-2xl bg-[#f0f9f6]",
+  twoColumnMain: "xl:col-span-2 space-y-6",
 
-  primaryIcon: "text-[#0e6b62]",
+  twoColumnAside: "xl:col-span-1 space-y-6",
+
+  stack: "space-y-6",
 };

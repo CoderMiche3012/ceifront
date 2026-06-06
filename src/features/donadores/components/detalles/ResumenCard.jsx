@@ -1,14 +1,14 @@
-import { User } from "lucide-react";
+import { User, PencilLine } from "lucide-react";
 import { useState } from "react";
-import { ui } from "../../../../styles/ui/uiClasses";
+import { ui } from "../../../../styles/ui/index";
 
 import Card from "../../../../components/ui/Card";
 
 import BotonEditar from "../../../../components/ui/BotonEditar";
 import EditarResumen from "../modales/EditarResumen";
 
-export default function ResumenCard({ data = {}, setData }) {
-  // estados
+export default function ResumenCard({ data = {}, canEdit}) {
+
   const [modalAbierto, setModalAbierto] = useState(false);
   // transformar fecha
   const formatearFecha = (fecha) => {
@@ -51,9 +51,8 @@ export default function ResumenCard({ data = {}, setData }) {
       meses += 12;
     }
 
-    return `${años > 0 ? años + " año" + (años !== 1 ? "s " : " ") : ""}${
-      meses > 0 ? meses + " mes" + (meses !== 1 ? "es " : " ") : ""
-    }${dias} día${dias !== 1 ? "s" : ""}`;
+    return `${años > 0 ? años + " año" + (años !== 1 ? "s " : " ") : ""}${meses > 0 ? meses + " mes" + (meses !== 1 ? "es " : " ") : ""
+      }${dias} día${dias !== 1 ? "s" : ""}`;
   };
 
   return (
@@ -63,10 +62,11 @@ export default function ResumenCard({ data = {}, setData }) {
           <User className="w-4 h-4 text-teal-600" />
           Resumen
         </h3>
-
-        <BotonEditar onClick={() => setModalAbierto(true)}>
-          Editar datos
-        </BotonEditar>
+        {canEdit && (
+          <BotonEditar icon={PencilLine} onClick={() => setModalAbierto(true)}>
+            Editar datos
+          </BotonEditar>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-y-6 text-sm">
@@ -102,7 +102,6 @@ export default function ResumenCard({ data = {}, setData }) {
         isOpen={modalAbierto}
         onClose={() => setModalAbierto(false)}
         data={data}
-        setData={setData}
       />
     </Card>
   );

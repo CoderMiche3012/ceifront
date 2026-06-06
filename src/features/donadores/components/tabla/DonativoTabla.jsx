@@ -1,37 +1,41 @@
 import { useMemo } from "react";
 import { Pencil } from "lucide-react";
 
-import { ui } from "../../../../styles/ui/uiClasses";
+import { ui } from "../../../../styles/ui/index";
 
 import DatosTabla from "../../../../components/tablas/DatosTabla";
 import AccionesTabla from "../../../../components/tablas/AccionesTabla";
 
 import { formatMoney } from "../../../../utils/formatMoney";
 
-export default function DonativoTabla({ donativos = [], onEditar, }) {
-  const columns =
-    useMemo(() => {
-      return [
-        {
-          key: "concepto",
-          label: "Concepto",
-        },
-        {
-          key: "monto",
-          label: "Monto",
-        },
-        {
-          key: "fecha",
-          label: "Fecha",
-        },
-        {
-          key: "acciones",
-          label: "Acciones",
-        },
-      ];
-    }, []);
+export default function DonativoTabla({ donativos = [], onEditar, canEdit }) {
+  const columns = useMemo(() => {
+    const baseColumns = [
+      {
+        key: "concepto",
+        label: "Concepto",
+      },
+      {
+        key: "monto",
+        label: "Monto",
+      },
+      {
+        key: "fecha",
+        label: "Fecha",
+      },
+    ];
 
-  const renderCell = ( item, key ) => {
+    if (canEdit) {
+      baseColumns.push({
+        key: "acciones",
+        label: "Acciones",
+      });
+    }
+
+    return baseColumns;
+  }, [canEdit]);
+
+  const renderCell = (item, key) => {
     switch (key) {
       case "concepto":
         return (
@@ -43,13 +47,13 @@ export default function DonativoTabla({ donativos = [], onEditar, }) {
       case "monto":
         return (
           <span className="text-sm font-medium text-emerald-600">
-            {formatMoney( item.monto, item.moneda )}
+            {formatMoney(item.monto, item.moneda)}
           </span>
         );
 
       case "fecha":
         return (
-          <span className={ ui.text.muted } >
+          <span className={ui.text.muted} >
             {item.fecha || "--"}
           </span>
         );
@@ -61,7 +65,7 @@ export default function DonativoTabla({ donativos = [], onEditar, }) {
             actions={[
               {
                 label: "Editar",
-                icon: ( <Pencil className="h-4 w-4" /> ),
+                icon: <Pencil className="h-4 w-4" />,
                 onClick: onEditar,
               },
             ]}
@@ -75,9 +79,9 @@ export default function DonativoTabla({ donativos = [], onEditar, }) {
 
   return (
     <DatosTabla
-      columns={ columns }
-      data={ donativos }
-      renderCell={ renderCell }
+      columns={columns}
+      data={donativos}
+      renderCell={renderCell}
       rowKey="id_donativo"
     />
   );

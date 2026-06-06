@@ -13,7 +13,8 @@ import { headerBar } from "./headerBar";
 import { userMenu } from "./userMenu";
 
 export const ui = {
-  ...layout,
+  //verifiado
+  layout,
   //verificado
   text: {
     ...uiTheme.typography,

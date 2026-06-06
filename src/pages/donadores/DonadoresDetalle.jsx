@@ -13,7 +13,6 @@ export default function DonadoresDetalle() {
   // para los datos del donador
   const {
     data,
-    setData,
     loading,
     tab,
     setTab,
@@ -55,8 +54,8 @@ export default function DonadoresDetalle() {
       <div className={`sticky top-0 z-10 pb-2 bg-[#f3f1f4] ${ui.layout.page}`}>
         <EncabezadoDetalle
           nombre={data.nombre}
-          apellidoP={data.apellido_p}
-          apellidoM={data.apellido_m}
+          apellidoP={data.apellido_paterno}
+          apellidoM={data.apellido_materno}
           estatus={data.estatus}
           badgeClass={badgeClass}
           avatarClassName="h-16 w-16 text-3xl"
@@ -68,11 +67,11 @@ export default function DonadoresDetalle() {
       <main className="flex-1 overflow-y-auto pr-2 custom-scroll pb-10">
     
           {tab === "generales" && (
-            <DatosGenerales data={data} setData={setData} />
+            <DatosGenerales data={data}/>
           )}
 
           {tab === "donativo" && (
-            <Donativos data={data} setData={setData} />
+            <Donativos data={data}/>
           )}
       </main>
 

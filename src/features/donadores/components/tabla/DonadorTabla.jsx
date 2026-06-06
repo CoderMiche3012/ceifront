@@ -9,7 +9,7 @@ import Insignia from "../../../../components/ui/Insignia";
 import AccionesTabla from "../../../../components/tablas/AccionesTabla";
 import DatosTabla from "../../../../components/tablas/DatosTabla";
 
-export default function DonadoresTabla({ donadores = [], onEditar, canEdit = false}) {
+export default function DonadoresTabla({ donadores = [], onEditar, canEdit = false }) {
   const navigate = useNavigate();
 
   const columns =
@@ -45,22 +45,22 @@ export default function DonadoresTabla({ donadores = [], onEditar, canEdit = fal
         },
       ];
     }, []);
-const actions = [
-  {
-    label: "Ver",
-    icon: <Eye className="h-4 w-4" />,
-    onClick: (row) =>
-      navigate(`/App/donadores/donador/${row.id_donador}`),
-  },
-];
+  const actions = [
+    {
+      label: "Ver",
+      icon: <Eye className="h-4 w-4" />,
+      onClick: (row) =>
+        navigate(`/App/donadores/donador/${row.id_donador}`),
+    },
+  ];
 
-if (canEdit) {
-  actions.push({
-    label: "Editar",
-    icon: <Pencil className="h-4 w-4" />,
-    onClick: onEditar,
-  });
-}
+  if (canEdit) {
+    actions.push({
+      label: "Editar",
+      icon: <Pencil className="h-4 w-4" />,
+      onClick: onEditar,
+    });
+  }
   const renderCell = (
     donador,
     key
@@ -68,17 +68,17 @@ if (canEdit) {
     switch (key) {
       case "donador":
         return (
-          <div className={ ui.table.userCell } >
+          <div className={ui.table.userCell} >
             <Avatar
-              nombre={ donador.nombre }
-              apellidoP={ donador.apellido_p }
+              nombre={donador.nombre}
+              apellidoP={donador.apellido_p}
             />
 
             <div className="min-w-0">
               <p className={`truncate ${ui.text.body} font-semibold`} >
-                { donador.nombre }{" "}
-                { donador.apellido_paterno }{" "}
-                { donador.apellido_materno }
+                {donador.nombre}{" "}
+                {donador.apellido_paterno}{" "}
+                {donador.apellido_materno}
               </p>
             </div>
           </div>
@@ -93,8 +93,8 @@ if (canEdit) {
 
         return (
           <Insignia
-            label={donador.tipo_donador }
-            variant={ tipoVariant[donador.tipo_donador ] || "default"}
+            label={donador.tipo_donador}
+            variant={tipoVariant[donador.tipo_donador] || "default"}
           />
         );
       }
@@ -102,17 +102,17 @@ if (canEdit) {
       case "contacto":
         return (
           <div>
-            <p className={ ui.text.body } >
-              { donador.correo }
+            <p className={ui.text.body} >
+              {donador.correo}
             </p>
-            <p className={ ui.text.caption } >
-              { donador.telefono }
+            <p className={ui.text.caption} >
+              {donador.telefono}
             </p>
           </div>
         );
 
       case "asignados": {
-        const total = donador. beneficiarios_apoyados ?.length || 0;
+        const total = donador.beneficiarios_apoyados?.length || 0;
 
         if (total === 0) {
           return (
@@ -124,7 +124,7 @@ if (canEdit) {
         }
 
         return (
-          <span className={ ui.text.body } >
+          <span className={ui.text.body} >
             {total}{" "}
             {total === 1 ? "niño" : "niños"}
           </span>
@@ -132,8 +132,8 @@ if (canEdit) {
       }
       case "donaciones": {
         const totales = donador.totalesPeriodoActivo || {};
-        const monedas = Object.entries( totales );
-        if ( monedas.length === 0 ) {
+        const monedas = Object.entries(totales);
+        if (monedas.length === 0) {
           return (
             <Insignia
               label="Sin donaciones"
@@ -144,11 +144,11 @@ if (canEdit) {
 
         return (
           <div className="space-y-1">
-            {monedas.map( ([ moneda, monto,]) => (
-                <p key={ moneda } className={ ui.text.body } >
-                  { moneda } : $ {Number( monto ).toLocaleString( "es-MX" )}
-                </p>
-              )
+            {monedas.map(([moneda, monto,]) => (
+              <p key={moneda} className={ui.text.body} >
+                {moneda} : $ {Number(monto).toLocaleString("es-MX")}
+              </p>
+            )
             )}
           </div>
         );
@@ -157,16 +157,16 @@ if (canEdit) {
       case "estatus":
         return (
           <Insignia
-            status={ donador.estatus }
+            status={donador.estatus}
           />
         );
 
       case "acciones":
         return (
           <AccionesTabla
-  row={donador}
-  actions={actions}
-/>
+            row={donador}
+            actions={actions}
+          />
         );
 
       default:
@@ -176,9 +176,9 @@ if (canEdit) {
 
   return (
     <DatosTabla
-      columns={ columns }
-      data={ donadores }
-      renderCell={ renderCell }
+      columns={columns}
+      data={donadores}
+      renderCell={renderCell}
       rowKey="id_donador"
     />
   );

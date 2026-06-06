@@ -1,5 +1,5 @@
 import { X, DollarSign, Calendar, Tag, Save, } from "lucide-react";
-import { ui } from "../../../../styles/ui/uiClasses";
+import { ui } from "../../../../styles/ui/index";
 
 import Field from "../../../../components/ui/Field";
 import Input from "../../../../components/ui/InputG";
@@ -30,6 +30,7 @@ export default function ModalDonativo({
   };
 
   const handleBackdropClick = (e) => {
+    if (saving) return;
     if (e.target === e.currentTarget) {
       onClose();
     }
@@ -61,6 +62,7 @@ export default function ModalDonativo({
 
           <button
             onClick={onClose}
+            disabled={saving}
             className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
           >
             ×
@@ -104,6 +106,8 @@ export default function ModalDonativo({
               >
                 <Input
                   type="number"
+                  min="0"
+                  step="0.001"
                   placeholder="0.00"
                   value={form.monto}
                   onChange={(e) => updateField("monto", e.target.value)}
@@ -118,7 +122,7 @@ export default function ModalDonativo({
               >
                 <Select
                   value={form.moneda}
-                  onChange={(e) => updateField("moneda", e.target.value) }
+                  onChange={(e) => updateField("moneda", e.target.value)}
                   error={!!fieldErrors.moneda}
                 >
                   <option value="MXN">MXN</option>
@@ -136,7 +140,7 @@ export default function ModalDonativo({
                 <Input
                   type="date"
                   value={form.fecha}
-                  onChange={(e) => updateField("fecha", e.target.value) }
+                  onChange={(e) => updateField("fecha", e.target.value)}
                   error={!!fieldErrors.fecha}
                 />
               </Field>
@@ -147,6 +151,7 @@ export default function ModalDonativo({
             <Boton
               variant="secondary"
               onClick={onClose}
+              disabled={saving}
             >
               Cancelar
             </Boton>

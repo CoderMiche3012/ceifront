@@ -32,3 +32,9 @@ export const eliminarBeneficiario = async (id) => {
   const { data } = await API.delete(`${BASE_URL}/${id}/`);
   return data;
 };
+
+export const obtenerBeneficiariosActivos = async () => {
+  const { data } = await API.get("/api/beneficiarios/beneficiarios/activos/ ");
+  return Array.isArray(data) ? data : data?.data ?? [];
+};
+

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { HiOutlineCalendar, HiOutlineUser, HiOutlineX, } from "react-icons/hi";
-import { ui } from "../../../../styles/ui/uiClasses";
+import { ui } from "../../../../styles/ui/index";
 
 import Field from "../../../../components/ui/Field";
 import Input from "../../../../components/ui/InputG";
@@ -11,10 +11,12 @@ import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
 
 import { useActualizarDonador } from "../../hooks/useDonadores";
+import { obtenerUsuario } from "../../../../storage/userStorage";
 
-export default function EditarResumen({ isOpen, onClose, data, }) {
+export default function EditarResumen({ isOpen, onClose, data }) {
   // estados locales
-
+const usuarioActual = obtenerUsuario();
+  const puedeEditarFechaIngreso = usuarioActual?.esAdmin === true || usuarioActual?.esSuperUser === true;
   const [showConfirm, setShowConfirm] = useState(false);
   const [resultado, setResultado] =
     useState({
@@ -117,6 +119,7 @@ export default function EditarResumen({ isOpen, onClose, data, }) {
                   <Field label="Fecha de ingreso" required >
                     <Input
                       type="date"
+                      disabled={!puedeEditarFechaIngreso}
                       value={ form.fecha_ingreso }
                       onChange={(e) => updateField("fecha_ingreso", e.target.value ) }
                     />

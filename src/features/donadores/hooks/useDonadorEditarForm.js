@@ -46,6 +46,7 @@ export function useDonadorEditarForm(open, donador, onSuccess, onClose) {
   // cargar datos al abrir modal
   useEffect(() => {
     if (!open || !donador) return;
+    console.log("reinicializando formulario");
     setFieldErrors({});
     setError("");
     setShowConfirm(false);
@@ -73,8 +74,7 @@ export function useDonadorEditarForm(open, donador, onSuccess, onClose) {
       colonia: donador.domicilio_detalle?.geografia_detalle?.colonia || "",
       id_geografia: donador.domicilio_detalle?.geografia_detalle?.id_geografia ?? null,
     });
-  }, [open, donador]);
-
+  }, [open]);
 
   const validar = () => {
     const errors = {};
@@ -229,23 +229,19 @@ export function useDonadorEditarForm(open, donador, onSuccess, onClose) {
       }
     };
 
-  const handleFinalClose =
-    () => {
-      const fueExito = resultModal.type === "success";
-      setResultModal(
-        (
-          prev
-        ) => ({
-          ...prev,
-          open: false,
-        })
-      );
+  const handleFinalClose = () => {
+    const fueExito = resultModal.type === "success";
 
-      if (fueExito) {
-        onSuccess?.(form);
-        onClose?.();
-      }
-    };
+    setResultModal((prev) => ({
+      ...prev,
+      open: false,
+    }));
+
+    if (fueExito) {
+      onSuccess?.(form);
+      onClose?.();
+    }
+  };
 
   return {
     form,

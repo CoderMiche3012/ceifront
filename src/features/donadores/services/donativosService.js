@@ -90,3 +90,4 @@ export const obtenerResumenPeriodo = async (idPeriodo) => {
   );
   return data;
 };
+
