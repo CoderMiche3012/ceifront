@@ -6,7 +6,7 @@ import {
 
 import AccionesPostulante from "../../tabla/ColumnaAcciones";
 
-export default function VitasTab({ visitas = [] }) {
+export default function VitasTab({ visitas = [],idPostulante }) {
   const formatearFecha = (fecha) => {
     if (!fecha) return "Sin fecha";
     return new Date(fecha).toLocaleDateString("es-MX", {
@@ -25,8 +25,14 @@ export default function VitasTab({ visitas = [] }) {
   };
 
   if (!visitas.length) {
-    return (
-      <div className="rounded-3xl bg-slate-50/50 p-12 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
+  return (
+    <div className="rounded-3xl bg-slate-50/50 p-12 border-2 border-dashed border-slate-200">
+      
+      <div className="flex justify-end mb-4">
+        <AccionesPostulante item={null} idPostulante={idPostulante}/>
+      </div>
+
+      <div className="flex flex-col items-center justify-center text-center">
         <div className="bg-white p-4 rounded-full shadow-sm mb-4">
           <CalendarDays className="w-10 h-10 text-slate-300" />
         </div>
@@ -39,8 +45,10 @@ export default function VitasTab({ visitas = [] }) {
           Aún no se han programado eventos para este proceso de ingreso.
         </p>
       </div>
-    );
-  }
+
+    </div>
+  );
+}
 
   return (
     <div className="space-y-4">
@@ -53,13 +61,12 @@ export default function VitasTab({ visitas = [] }) {
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-3">
               <div
-                className={`p-2.5 rounded-2xl ${
-                  visita.estado_visita === "Realizada"
-                    ? "bg-emerald-50 text-emerald-600"
-                    : visita.estado_visita === "Programada"
+                className={`p-2.5 rounded-2xl ${visita.estado_visita === "Realizada"
+                  ? "bg-emerald-50 text-emerald-600"
+                  : visita.estado_visita === "Programada"
                     ? "bg-amber-50 text-amber-600"
                     : "bg-slate-50 text-slate-500"
-                }`}
+                  }`}
               >
                 <CalendarDays size={20} />
               </div>
@@ -76,19 +83,18 @@ export default function VitasTab({ visitas = [] }) {
 
             <div className="flex items-center gap-3">
               <span
-                className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-tighter border ${
-                  visita.estado_visita === "Realizada"
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                    : visita.estado_visita === "Programada"
+                className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-tighter border ${visita.estado_visita === "Realizada"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                  : visita.estado_visita === "Programada"
                     ? "bg-amber-50 text-amber-700 border-amber-100"
                     : "bg-rose-50 text-rose-700 border-rose-100"
-                }`}
+                  }`}
               >
                 {visita.estado_visita}
               </span>
 
               {/* ACCIONES (YA SIN onRefresh) */}
-              <AccionesPostulante item={visita} />
+              <AccionesPostulante item={visita} idPostulante={idPostulante} />
             </div>
           </div>
 

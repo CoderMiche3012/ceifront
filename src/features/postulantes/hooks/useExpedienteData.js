@@ -17,6 +17,11 @@ export const useExpedienteData = (id) => {
   const expediente = postulante?.expediente;
 
   const familia = expediente?.familia || [];
+  const idDocumentoEstudio = useMemo(() => {
+  return expediente?.documentos?.find(
+    (doc) => doc.tipo_documento === "Estudio"
+  )?.id_documento || null;
+}, [expediente]);
   const fotografias = expediente?.fotografias || [];
 
   const tutor = familia.find(
@@ -55,6 +60,7 @@ export const useExpedienteData = (id) => {
     numero: expediente?.direccion?.numero,
 
     familia,
+    idDocumentoEstudio,
     fotografias,
     gastos,
 

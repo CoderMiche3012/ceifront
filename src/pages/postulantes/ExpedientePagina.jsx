@@ -11,8 +11,6 @@ import DatosGenerales from "../../features/postulantes/components/detalles/gener
 import { useExpedienteData } from "../../features/postulantes/hooks/useExpedienteData";
 import { ui } from "../../styles/ui/uiClasses";
 
-import { subirDocumentoEstudio } from "../../features/expedientes/services/documentosService";
-import { actualizarEstudio } from "../../features/postulantes/services/estudiosService";
 import { useSubirEstudio } from "../../features/postulantes/hooks/useSubirEstudio";
 
 export default function ExpedientePagina() {
@@ -29,15 +27,7 @@ export default function ExpedientePagina() {
     edad,
   } = useExpedienteData(id);
 
-   const {
-  mostrarSubida,
-  setMostrarSubida,
-  archivo,
-  setArchivo,
-  guardarDocumentoEstudio,
-  cancelar,
-  loading: subiendo,
-} = useSubirEstudio(data);
+   const estudio = useSubirEstudio(data);
   // loading
   if (loading) {
     return (
@@ -107,57 +97,10 @@ export default function ExpedientePagina() {
 
       {/* contenido */}
       <main className="flex-1 overflow-y-auto pr-2 custom-scroll pb-10 space-y-6">
-
-        {/* subir documento */}
-        {mostrarSubida && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow space-y-4">
-
-            <h3 className="text-base font-semibold text-slate-800">
-              Subir documento de estudio
-            </h3>
-
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 p-6 hover:bg-slate-50">
-
-              <Upload size={18} />
-
-              <span className="text-sm text-slate-600">
-                {archivo
-                  ? archivo.name
-                  : "Seleccionar archivo"}
-              </span>
-
-              <input
-                type="file"
-                className="hidden"
-                onChange={(e) =>
-                  setArchivo(e.target.files[0])
-                }
-              />
-            </label>
-
-            <div className="flex gap-3">
-              <button
-                onClick={
-                  guardarDocumentoEstudio
-                }
-                className="rounded-xl bg-emerald-600 px-4 py-2 text-white text-sm font-semibold hover:bg-emerald-700"
-              >
-                Guardar y completar
-              </button>
-
-              <button
-                onClick={cancelar}
-                className="rounded-xl bg-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-300"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        )}
         
         {/* generales */}
         {tab === "generales" && (
-          <DatosGenerales data={data} />
+          <DatosGenerales data={data}/>
         )}
 
         {/* visitas */}
@@ -165,9 +108,8 @@ export default function ExpedientePagina() {
           <VisitasCard
             data={data}
             visitas={visitasFiltradas}
-            setMostrarSubida={
-              setMostrarSubida
-            }
+           
+            estudio={estudio}
           />
         )}
 

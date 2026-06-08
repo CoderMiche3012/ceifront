@@ -23,7 +23,8 @@ import {
 
 import EstudioCard from "../detalles/visitas/EstudioCard";
 
-export default function AccionesPostulante({ item }) {
+export default function AccionesPostulante({ item,idPostulante = null}) {
+   
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const menuRef = useRef(null);
@@ -37,9 +38,10 @@ export default function AccionesPostulante({ item }) {
     result,
     setResult,
     ejecutarAccion,
-  } = useAccionesVisita(item);
+  } = useAccionesVisita(item,idPostulante);
 
-  const estatus = item.estado_visita?.toLowerCase();
+  const estatus = item?.estado_visita?.toLowerCase() || "no agendada";
+
 
   // =========================
   // CLOSE OUTSIDE CLICK

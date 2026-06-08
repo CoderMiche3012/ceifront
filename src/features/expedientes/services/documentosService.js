@@ -20,21 +20,21 @@ export const subirDocumentoEstudio =
     return data;
   };
 
-
+export const obtenerDocumentos = async () => {
+  const { data } = await API.get(`${BASE_URL}/`);
+  return data;
+};
 // =========================
 // OBTENER
 // =========================
 
-export const obtenerDocumentos =
-  async (id_expediente) => {
+export const obtenerDocumentoPorId = async (id_documento) => {
+  const { data } = await API.get(
+    `${BASE_URL}/${id_documento}/`
+  );
 
-    const { data } =
-      await API.get(
-        `${BASE_URL}/?id_expediente=${id_expediente}`
-      );
-
-    return data;
-  };
+  return data;
+};
 
 // =========================
 // SUBIR
@@ -70,3 +70,20 @@ export const eliminarDocumento =
 
     return data;
   };
+
+export const actualizarDocumento = async (
+  id_documento,
+  formData
+) => {
+  const { data } = await API.patch(
+    `${BASE_URL}/${id_documento}/`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return data;
+};
