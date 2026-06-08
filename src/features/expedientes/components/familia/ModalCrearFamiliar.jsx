@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { HiOutlineUser, HiOutlineX } from "react-icons/hi";
 
 import { X } from "lucide-react";
 
@@ -10,6 +11,8 @@ import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
 
 import { useFamiliarForm } from "../../hooks/useFamiliarForm";
+import { ui } from "../../../../styles/ui/index";
+import Boton from "../../../../components/ui/Boton";
 
 export default function ModalCrearFamiliar({
   open,
@@ -49,6 +52,7 @@ export default function ModalCrearFamiliar({
     setResultadoModal,
   );
 
+
   if (!open) return null;
 
   const parentescos = [
@@ -61,33 +65,6 @@ export default function ModalCrearFamiliar({
     "Otro",
   ];
 
-  const calcularEdad = (fechaString) => {
-
-    const fecha = new Date(fechaString);
-
-    const hoy = new Date();
-
-    let edad =
-      hoy.getFullYear() -
-      fecha.getFullYear();
-
-    const mes =
-      hoy.getMonth() -
-      fecha.getMonth();
-
-    if (
-      mes < 0 ||
-      (
-        mes === 0 &&
-        hoy.getDate() < fecha.getDate()
-      )
-    ) {
-      edad--;
-    }
-
-    return edad;
-  };
-
   const handleSubmit = (e) => {
 
     e.preventDefault();
@@ -97,274 +74,267 @@ export default function ModalCrearFamiliar({
     }
   };
 
+  const updateField = (field, value) => {
+    handleChange({
+      target: { name: field, value },
+    });
+  };
+
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      setStep(1);
+      onClose();
+    }
+  };
   const selectStyle = (error) => `
     w-full rounded-xl border px-4 py-3 text-sm transition-all duration-200
-    ${
-      error
-        ? "border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-200"
-        : "border-slate-300 focus:border-[#0E5F63] focus:ring-2 focus:ring-[#0E5F63]/20 bg-white"
+    ${error
+      ? "border-rose-400 bg-rose-50 focus:ring-2 focus:ring-rose-200"
+      : "border-slate-300 focus:border-[#0E5F63] focus:ring-2 focus:ring-[#0E5F63]/20 bg-white"
     }
   `;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+    <>
+      <div className={ui.modal.formOverlay} onClick={handleBackdropClick}>
+        <div className="w-full max-w-4xl">
+          <div className={ui.modal.formContainer}>
 
-      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-in fade-in zoom-in duration-200">
+            {/* Header */}
+            <div className={ui.modal.formHeader}>
+              <div
+                className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}
+              >
+                <HiOutlineUser size={24} />
+              </div>
 
-        {/* header */}
-        <div className="p-6 border-b border-slate-100 flex justify-between items-start">
+              <div className="flex-1">
+                <h2 className={ui.modal.title}>
+                  Agregar Familiar
+                </h2>
 
-          <div>
+                <p className={ui.modal.description}>
+                  Complete los datos del integrante para el expediente actual.
+                </p>
+              </div>
 
-            <h2 className="text-xl font-bold text-slate-800">
-              Agregar Familiar
-            </h2>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-xl hover:bg-slate-100 transition"
+              >
+                <HiOutlineX size={20} />
+              </button>
+            </div>
 
-            <p className="text-sm text-slate-500 mt-1">
-              Complete los datos del integrante para el expediente actual.
-            </p>
+            {/* Body */}
+            <div className={ui.modal.formBody}>
+              <div className={ui.modal.formScroll}>
+
+                <AlertaError mensaje={generalError} />
+
+                <form
+                  id="familiar-form"
+                  onSubmit={handleSubmit}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <Field label="Nombre(s) *" required error={fieldErrors.nombre} >
+                      <InputG name="nombre"
+                        value={formData.nombre}
+                        onChange={(e) => updateField("nombre", e.target.value)}
+                        placeholder="Ej. Juan"
+                        error={!!fieldErrors.nombre}
+                      />
+                    </Field>
+
+                    <Field
+                      label="Apellido Paterno *" required
+                      error={fieldErrors.apellido_p}
+                    >
+                      <InputG
+                        name="apellido_p"
+                        value={formData.apellido_p}
+                        onChange={(e) => updateField("apellido_p", e.target.value)}
+                        error={!!fieldErrors.apellido_p}
+                      />
+                    </Field>
+
+                    <Field
+                      label="Apellido Materno"
+                      error={fieldErrors.apellido_m}
+                    >
+                      <InputG
+                        name="apellido_m"
+                        value={formData.apellido_m}
+                        onChange={(e) => updateField("apellido_m", e.target.value)}
+                        error={!!fieldErrors.apellido_m}
+                      />
+                    </Field>
+
+                    <Field
+                      label="Parentesco *" required
+                      error={fieldErrors.parentesco}
+                    >
+                      <select
+                        name="parentesco"
+                        value={formData.parentesco}
+                        onChange={(e) => updateField("parentesco", e.target.value)}
+                        className={selectStyle(
+                          !!fieldErrors.parentesco,
+                        )}
+                      >
+                        <option value="">
+                          Seleccionar...
+                        </option>
+
+                        {parentescos.map((p) => (
+                          <option
+                            key={p}
+                            value={p}
+                          >
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+
+                    <Field
+                      label="Fecha de nacimiento *" required
+                      error={fieldErrors.fecha_nacimiento}
+                    >
+                      <InputG
+                        type="date"
+                        name="fecha_nacimiento"
+                        value={formData.fecha_nacimiento}
+                        onChange={(e) => updateField("fecha_nacimiento", e.target.value)}
+                        error={!!fieldErrors.fecha_nacimiento}
+                      />
+                    </Field>
+
+                    <Field
+                      label="Teléfono (10 dígitos) *" required
+                      error={fieldErrors.telefono}
+                    >
+                      <InputG
+                        name="telefono"
+                        value={formData.telefono}
+                        onChange={(e) => updateField("telefono", e.target.value)}
+                        placeholder="5512345678"
+                        maxLength={10}
+                        error={!!fieldErrors.telefono}
+                      />
+                    </Field>
+
+                    <Field
+                      label="Ocupación / Grado Escolar *" required
+                      error={fieldErrors.actividad_principal}
+                    >
+                      <InputG
+                        name="actividad_principal"
+                        value={
+                          formData.actividad_principal
+                        }
+                        onChange={(e) => updateField("actividad_principal", e.target.value)}
+                        placeholder="Ej. Empleado, Estudiante"
+                        error={!!fieldErrors.actividad_principal}
+                      />
+                    </Field>
+
+
+                    <Field
+                      label="Salario o Escuela *" required
+                      error={fieldErrors.salario}
+                    >
+                      <InputG
+                        name="salario"
+                        value={formData.salario}
+                        onChange={(e) => updateField("salario", e.target.value)}
+                        placeholder="0.00"
+                        error={!!fieldErrors.salario}
+                      />
+                    </Field>
+
+                    <Field
+                      label="¿Habita en el mismo domicilio? *" required
+                      error={
+                        fieldErrors.vive_en_casa
+                      }
+                    >
+                      <select
+                        name="vive_en_casa"
+                        value={formData.vive_en_casa}
+                        onChange={(e) => updateField("vive_en_casa", e.target.value)}
+                        className={selectStyle(
+                          !!fieldErrors.vive_en_casa,
+                        )}
+                      >
+                        <option value="">
+                          Seleccionar...
+                        </option>
+
+                        <option value="true">
+                          Sí, vive en casa
+                        </option>
+
+                        <option value="false">
+                          No vive en casa
+                        </option>
+                      </select>
+                    </Field>
+
+                  </div>
+                </form>
+              </div>
+
+              {/* Footer */}
+              <div className={ui.modal.formActions}>
+
+
+                <Boton
+                  variant="secondary"
+                  onClick={onClose}
+                >
+                  Cancelar
+                </Boton>
+
+                <Boton
+                  form="familiar-form"
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading
+                    ? "Guardando..."
+                    : "Guardar Familiar"}
+                </Boton>
+              </div>
+            </div>
+
           </div>
-
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-          >
-            <X
-              size={20}
-              className="text-slate-400"
-            />
-          </button>
         </div>
-
-        {/* body */}
-        <div className="p-6 overflow-y-auto">
-
-          <AlertaError
-            mensaje={generalError}
-          />
-
-          <form
-            id="familiar-form"
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4"
-          >
-
-            <Field
-              label="Nombre(s) *"
-              error={fieldErrors.nombre}
-            >
-              <InputG
-                name="nombre"
-                value={formData.nombre}
-                onChange={handleChange}
-                placeholder="Ej. Juan"
-              />
-            </Field>
-
-            <Field
-              label="Apellido Paterno *"
-              error={fieldErrors.apellido_p}
-            >
-              <InputG
-                name="apellido_p"
-                value={formData.apellido_p}
-                onChange={handleChange}
-              />
-            </Field>
-
-            <Field
-              label="Apellido Materno"
-              error={fieldErrors.apellido_m}
-            >
-              <InputG
-                name="apellido_m"
-                value={formData.apellido_m}
-                onChange={handleChange}
-              />
-            </Field>
-
-            <Field
-              label="Parentesco *"
-              error={fieldErrors.parentesco}
-            >
-              <select
-                name="parentesco"
-                value={formData.parentesco}
-                onChange={handleChange}
-                className={selectStyle(
-                  fieldErrors.parentesco,
-                )}
-              >
-                <option value="">
-                  Seleccionar...
-                </option>
-
-                {parentescos.map((p) => (
-                  <option
-                    key={p}
-                    value={p}
-                  >
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field
-              label="Fecha de nacimiento *"
-              error={fieldErrors.edad}
-            >
-              <InputG
-                type="date"
-
-                onChange={(e) =>
-                  handleChange({
-                    target: {
-                      name: "edad",
-                      value: calcularEdad(
-                        e.target.value,
-                      ),
-                    },
-                  })
-                }
-              />
-            </Field>
-
-            <Field
-              label="Teléfono (10 dígitos) *"
-              error={fieldErrors.telefono}
-            >
-              <InputG
-                name="telefono"
-                value={formData.telefono}
-                onChange={handleChange}
-                placeholder="5512345678"
-                maxLength={10}
-              />
-            </Field>
-
-            <Field
-              label="Ocupación / Actividad *"
-              error={
-                fieldErrors.actividad_principal
-              }
-            >
-              <InputG
-                name="actividad_principal"
-                value={
-                  formData.actividad_principal
-                }
-                onChange={handleChange}
-                placeholder="Ej. Empleado, Estudiante"
-              />
-            </Field>
-
-            <Field
-              label="Lugar de Trabajo / Escuela"
-              error={
-                fieldErrors.area_laboral_escuela
-              }
-            >
-              <InputG
-                name="area_laboral_escuela"
-                value={
-                  formData.area_laboral_escuela
-                }
-                onChange={handleChange}
-              />
-            </Field>
-
-            <Field
-              label="Ingreso Mensual o Beca *"
-              error={fieldErrors.salario}
-            >
-              <InputG
-                name="salario"
-                value={formData.salario}
-                onChange={handleChange}
-                placeholder="0.00"
-              />
-            </Field>
-
-            <Field
-              label="¿Habita en el mismo domicilio? *"
-              error={
-                fieldErrors.vive_en_casa
-              }
-            >
-              <select
-                name="vive_en_casa"
-                value={formData.vive_en_casa}
-                onChange={handleChange}
-                className={selectStyle(
-                  fieldErrors.vive_en_casa,
-                )}
-              >
-                <option value="">
-                  Seleccionar...
-                </option>
-
-                <option value="true">
-                  Sí, vive en casa
-                </option>
-
-                <option value="false">
-                  No vive en casa
-                </option>
-              </select>
-            </Field>
-          </form>
-        </div>
-
-        {/* footer */}
-        <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-medium hover:bg-white transition-all"
-          >
-            Cancelar
-          </button>
-
-          <button
-            form="familiar-form"
-            type="submit"
-            disabled={loading}
-            className="bg-[#0E5F63] hover:bg-[#0c4e52] disabled:opacity-60 text-white px-8 py-2.5 rounded-xl font-semibold shadow-lg shadow-teal-900/20 transition-all"
-          >
-            {loading
-              ? "Guardando..."
-              : "Guardar Familiar"}
-          </button>
-        </div>
-
-        {/* confirmacion */}
-        <ModalConfirmacion
-          open={confirmOpen}
-          title="Confirmar Registro"
-          description={`¿Estás seguro de agregar a ${formData.nombre} como familiar?`}
-          onConfirm={handleConfirm}
-          onClose={() =>
-            setConfirmOpen(false)
-          }
-          loading={loading}
-        />
-
-        {/* resultado */}
-        <ModalResultado
-          open={resultadoModal.open}
-          type={resultadoModal.type}
-          title={resultadoModal.title}
-          message={resultadoModal.message}
-          onClose={() =>
-            setResultadoModal({
-              ...resultadoModal,
-              open: false,
-            })
-          }
-        />
       </div>
-    </div>
+
+      <ModalConfirmacion
+        open={confirmOpen}
+        title="Confirmar Registro"
+        description={`¿Estás seguro de agregar a ${formData.nombre} como familiar?`}
+        onConfirm={handleConfirm}
+        onClose={() => setConfirmOpen(false)}
+        loading={loading}
+        color="teal"
+      />
+
+      <ModalResultado
+        open={resultadoModal.open}
+        type={resultadoModal.type}
+        title={resultadoModal.title}
+        message={resultadoModal.message}
+        onClose={() =>
+          setResultadoModal((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+      />
+    </>
   );
 }

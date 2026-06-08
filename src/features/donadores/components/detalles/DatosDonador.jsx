@@ -79,7 +79,6 @@ export default function DatosDonador({ data, canEdit }) {
         onClose={() => setModalAbierto(false)}
         donador={data}
         onSuccess={() => {
-          console.log("onSuccess ejecutado");
           setModalAbierto(false);
         }}
       />

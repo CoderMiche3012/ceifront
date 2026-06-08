@@ -13,6 +13,7 @@ import {
 } from "../services/visitasService";
 
 import { visitasKeys } from "../services/visitasKeys";
+import { postulantesKeys } from "../services/postulantesKeys";
 
 // =====================
 // LISTA
@@ -48,6 +49,11 @@ export function useCrearVisita() {
       queryClient.invalidateQueries({
         queryKey: visitasKeys.all,
       });
+
+      // 👇 ESTO ES LO QUE TE FALTA
+      queryClient.invalidateQueries({
+        queryKey: postulantesKeys.all,
+      });
     },
   });
 }
@@ -59,23 +65,24 @@ export function useActualizarVisita() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }) =>
-      actualizarVisita(id, data),
+    mutationFn: ({ id, data }) => actualizarVisita(id, data),
 
     onSuccess: (_, variables) => {
-      // lista
       queryClient.invalidateQueries({
         queryKey: visitasKeys.all,
       });
 
-      // detalle específico
       queryClient.invalidateQueries({
         queryKey: visitasKeys.detail(variables.id),
+      });
+
+      // 👇 CLAVE
+      queryClient.invalidateQueries({
+        queryKey: postulantesKeys.all,
       });
     },
   });
 }
-
 // =====================
 // ELIMINAR
 // =====================
@@ -92,6 +99,11 @@ export function useEliminarVisita() {
 
       queryClient.invalidateQueries({
         queryKey: visitasKeys.detail(variables),
+      });
+
+      // 👇 CLAVE
+      queryClient.invalidateQueries({
+        queryKey: postulantesKeys.all,
       });
     },
   });

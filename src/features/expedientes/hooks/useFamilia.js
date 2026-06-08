@@ -13,6 +13,7 @@ import {
 } from "../services/familiaService";
 
 import { familiaKeys } from "../services/familiaKeys";
+import { postulantesKeys } from "../../postulantes/services/postulantesKeys";
 
 // lista
 export function useFamilia() {
@@ -45,6 +46,10 @@ export function useCrearFamilia() {
       queryClient.invalidateQueries({
         queryKey: familiaKeys.all,
       });
+
+      queryClient.invalidateQueries({
+        queryKey: postulantesKeys.all,
+      });
     },
   });
 }
@@ -61,6 +66,10 @@ export function useActualizarFamilia() {
       queryClient.invalidateQueries({
         queryKey: familiaKeys.all,
       });
+
+      queryClient.invalidateQueries({
+        queryKey: postulantesKeys.all,
+      });
     },
   });
 }
@@ -75,6 +84,10 @@ export function useEliminarFamilia() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: familiaKeys.all,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: postulantesKeys.all,
       });
     },
   });

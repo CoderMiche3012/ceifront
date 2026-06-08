@@ -14,7 +14,7 @@ export const useFamiliarForm = (
     apellido_p: "",
     apellido_m: "",
     parentesco: "",
-    edad: "",
+    fecha_nacimiento: "",
     telefono: "",
     actividad_principal: "",
     area_laboral_escuela: "",
@@ -87,69 +87,76 @@ export const useFamiliarForm = (
   };
 
   const validate = () => {
+    const errors = {};
 
-    const required = [
-      "nombre",
-      "apellido_p",
-      "parentesco",
-      "edad",
-      "telefono",
-      "actividad_principal",
-      "salario",
-      "vive_en_casa",
-    ];
-
-    const faltantes =
-      required.filter((field) => {
-
-        const value =
-          formData[field];
-
-        return (
-          value === null ||
-          value === undefined ||
-          value
-            .toString()
-            .trim() === ""
-        );
-      });
-
-    if (faltantes.length > 0) {
-
-      setGeneralError(
-        "Faltan campos obligatorios por completar",
-      );
-
-      return false;
+    if (!formData.nombre?.trim()) {
+      errors.nombre = "El nombre es obligatorio";
     }
 
-    // edad invalida
-    if (
-      Number(formData.edad) < 0
-    ) {
-
-      setGeneralError(
-        "La edad no es válida",
-      );
-
-      return false;
+    if (!formData.apellido_p?.trim()) {
+      errors.apellido_p = "El apellido paterno es obligatorio";
     }
 
-    // telefono invalido
+    if (!formData.parentesco?.trim()) {
+      errors.parentesco = "Seleccione un parentesco";
+    }
+
+    if (!formData.fecha_nacimiento) {
+      errors.fecha_nacimiento = "Seleccione una fecha";
+    }
+
+    if (!formData.telefono?.trim()) {
+      errors.telefono = "El teléfono es obligatorio";
+    } else if (formData.telefono.length !== 10) {
+      errors.telefono = "El teléfono debe tener 10 dígitos";
+    }
+
+    if (!formData.actividad_principal?.trim()) {
+      errors.actividad_principal = "La ocupación es obligatoria";
+    }
+
     if (
-      formData.telefono &&
-      formData.telefono.length !== 10
+      formData.salario === "" ||
+      formData.salario === null ||
+      formData.salario === undefined
     ) {
+      errors.salario = "El salario es obligatorio";
+    }
+
+    if (
+      formData.vive_en_casa === "" ||
+      formData.vive_en_casa === null ||
+      formData.vive_en_casa === undefined
+    ) {
+      errors.vive_en_casa = "Seleccione una opción";
+    }
+
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      const labels = {
+        nombre: "Nombre",
+        apellido_p: "Apellido paterno",
+        parentesco: "Parentesco",
+        fecha_nacimiento: "Fecha de nacimiento",
+        telefono: "Teléfono",
+        actividad_principal: "Ocupación / Grado escolar",
+        salario: "Salario o escuela",
+        vive_en_casa: "Habita en el mismo domicilio",
+      };
+
+      const campos = Object.keys(errors)
+        .map((key) => labels[key] || key)
+        .join(", ");
 
       setGeneralError(
-        "El teléfono debe tener exactamente 10 dígitos",
+        `Revisa los siguientes campos: ${campos}`
       );
 
       return false;
     }
 
     setGeneralError("");
-
     return true;
   };
 
@@ -161,10 +168,6 @@ export const useFamiliarForm = (
 
       const dataFinal = {
         ...formData,
-
-        edad: Number(
-          formData.edad,
-        ),
 
         vive_en_casa:
           formData.vive_en_casa ===
@@ -187,42 +190,57 @@ export const useFamiliarForm = (
           "El familiar fue agregado correctamente.",
       });
 
-      // cerrar modal
-      onClose();
-
     } catch (error) {
+  const backendData =
+    error?.errors ||
+    error?.response?.data?.errors ||
+    error?.response?.data;
 
-      setResultadoModal({
-        open: true,
-        type: "error",
-        title: "Error al guardar",
-        message:
-          error.message ||
-          "No se pudo guardar el familiar.",
-      });
+  if (
+    backendData &&
+    typeof backendData === "object" &&
+    !Array.isArray(backendData)
+  ) {
+    const parsedErrors = {};
 
-      // errores backend
-      if (error.response?.data) {
+    Object.entries(backendData).forEach(([key, value]) => {
+      parsedErrors[key] = Array.isArray(value)
+        ? value[0]
+        : value;
+    });
 
-        const backendErrors = {};
+    setFieldErrors(parsedErrors);
 
-        Object.entries(
-          error.response.data,
-        ).forEach(
-          ([key, val]) => {
+    const labels = {
+      nombre: "Nombre",
+      apellido_p: "Apellido paterno",
+      parentesco: "Parentesco",
+      fecha_nacimiento: "Fecha de nacimiento",
+      telefono: "Teléfono",
+      actividad_principal: "Ocupación / Grado escolar",
+      salario: "Salario o escuela",
+      vive_en_casa: "Habita en el mismo domicilio",
+    };
 
-            backendErrors[key] =
-              Array.isArray(val)
-                ? val[0]
-                : val;
-          },
-        );
+    const campos = Object.keys(parsedErrors)
+      .map((key) => labels[key] || key)
+      .join(", ");
 
-        setFieldErrors(
-          backendErrors,
-        );
-      }
-    }
+    setGeneralError(
+      `Revisa los siguientes campos: ${campos}`
+    );
+
+    return;
+  }
+
+  // Solo errores inesperados
+  setResultadoModal({
+    open: true,
+    type: "error",
+    title: "Error al guardar",
+    message: "No se pudo guardar el familiar.",
+  });
+}
   };
 
   return {

@@ -1,14 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useCrearPostulante } from "../hooks/usePostulantes";
-import { useCrearEstudio } from "../hooks/useEstudios";
 import { formatErrorAnidado } from "../../../utils/errorHandlers";
-
-
 
 export const usePostulanteCrearForm = (onSuccess, onClose) => {
 
   const initialForm = {
-    estatus: "En Revisión",
     id_usuario: null,
     nombre: "",
     apellido_p: "",
@@ -19,6 +15,7 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
     correo: "",
     calle: "",
     numero: "",
+    id_geografia: null,
     colonia: "",
     municipio: "",
     cp: "",
@@ -27,6 +24,8 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
     referencia_ingreso: "",
     referencia_casa: "",
     prioridad_servicio: "Pendiente",
+    gasto_alimentacion: "",
+    gasto_transporte: "",
     familia: [
       {
         nombre: "",
@@ -34,10 +33,8 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
         apellido_m: "",
         parentesco: "",
         fecha_nacimiento: "",
-        edad: "",
         actividad_principal: "",
-        area_laboral_escuela: "",
-        salario: "0.00",
+        salario: "",
         vive_en_casa: true,
         telefono: "",
         es_tutor_principal: true,
@@ -49,6 +46,9 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loadingCP, setLoadingCP] = useState(false);
+  const [cpEncontrado, setCpEncontrado] = useState(false);
+
 
   const [resultModal, setResultModal] = useState({
     open: false,
@@ -58,13 +58,8 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
   });
 
   const isSubmitting = useRef(false);
-
   const crearPostulanteMutation = useCrearPostulante();
-  const crearEstudioMutation = useCrearEstudio();
-
-  const loading =
-    crearPostulanteMutation.isPending ||
-    crearEstudioMutation.isPending;
+  const loading = crearPostulanteMutation.isPending;
 
 
   const validarFormulario = () => {
@@ -92,6 +87,10 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
 
     if (!form.grado_escolar_inicial.trim())
       errors.grado_escolar_inicial = "Grado obligatorio";
+    if (!form.gasto_alimentacion.trim())
+      errors.gasto_alimentacion = "Gasto de alimentacion obligatorio";
+    if (!form.gasto_transporte.trim())
+      errors.gasto_transporte = "Gasto de transporte";
 
     form.familia.forEach((fam, idx) => {
       if (!fam.nombre?.trim())
@@ -108,6 +107,9 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
 
       if (!fam.fecha_nacimiento)
         errors[`familia.${idx}.fecha_nacimiento`] = "Fecha obligatoria";
+
+      if (!fam.salario)
+        errors[`familia.${idx}.salario`] = "Salario o escuela Obligatorio";
 
       if (!fam.actividad_principal?.trim())
         errors[`familia.${idx}.actividad_principal`] =
@@ -133,16 +135,58 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
     const campos = Object.keys(fieldErrors);
 
     if (campos.length > 0) {
-      const nombresBonitos = campos.map((campo) =>
-        campo
-          .replace(/\.\d+\./g, " ") // familia.0.nombre -> familia nombre
-          .replace(/\./g, " ")
-          .replace(/_/g, " ")
-      );
 
-      setError(
-        `Revisa los campos: ${nombresBonitos.join(", ")}`
-      );
+      const etiquetas = {
+  nombre: "Nombre",
+  apellido_p: "Apellido paterno",
+  apellido_m: "Apellido materno",
+  correo: "Correo",
+  telefono: "Teléfono",
+  genero: "Género",
+  fecha_nacimiento: "Fecha de nacimiento",
+
+  cp: "Código postal",
+  municipio: "Municipio",
+  colonia: "Colonia",
+  calle: "Calle",
+  numero: "Número",
+
+  nivel_escolar_inicial: "Nivel escolar inicial",
+  grado_escolar_inicial: "Grado escolar inicial",
+
+  referencia_ingreso: "Referencia de ingreso",
+  referencia_casa: "Referencia de domicilio",
+
+  gasto_alimentacion: "Gasto de alimentacion",
+  gasto_transporte: "Gasto de transporte",
+};
+
+      const etiquetasFamilia = {
+        nombre: "Nombre",
+        apellido_p: "Apellido paterno",
+        apellido_m: "Apellido materno",
+        parentesco: "Parentesco",
+        fecha_nacimiento: "Fecha de nacimiento",
+        actividad_principal: "Ocupación o grado escolar",
+        salario: "Salario",
+        telefono: "Teléfono",
+      };
+
+      const nombresBonitos = campos.map((campo) => {
+
+        if (campo.startsWith("familia.")) {
+          const partes = campo.split(".");
+          const indice = Number(partes[1]) + 1;
+          const campoFamilia = partes[2];
+
+          return `${etiquetasFamilia[campoFamilia] || campoFamilia} (Familiar ${indice})`;
+        }
+
+        return etiquetas[campo] || campo;
+      });
+
+      setError(`Revisa los campos: ${nombresBonitos.join(", ")}`);
+
     } else {
       setError(null);
     }
@@ -204,9 +248,8 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
 
     try {
       const payload = {
-        estatus: form.estatus,
-        id_usuario: form.id_usuario,
-        id_expediente: {
+
+        expediente: {
           nombre: form.nombre,
           apellido_p: form.apellido_p,
           apellido_m: form.apellido_m,
@@ -214,35 +257,44 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
           telefono: form.telefono,
           genero: form.genero,
           correo: form.correo,
-          nota_situacion_familiar: "Registro manual desde panel",
-          id_direccion: {
+
+          direccion: {
             calle: form.calle,
             numero: form.numero,
-            colonia: form.colonia,
-            municipio: form.municipio,
-            cp: form.cp,
+
+            ...(form.id_geografia
+              ? {
+                id_geografia: form.id_geografia,
+              }
+              : {
+                codigo_postal: form.cp,
+                municipio: form.municipio,
+                colonia: form.colonia,
+              }),
           },
-          familia: form.familia,
         },
+
+        estudio: {
+          nivel_escolar_inicial: form.nivel_escolar_inicial,
+          grado_escolar_inicial: form.grado_escolar_inicial,
+          referencia_ingreso: form.referencia_ingreso,
+          referencia_casa: form.referencia_casa,
+          gastos: [
+            {
+              nombre: "alimentacion",
+              monto: String(form.gasto_alimentacion || "0.00"),
+            },
+            {
+              nombre: "Transporte",
+              monto: String(form.gasto_transporte || "0.00"),
+            },
+          ],
+        },
+
+        familia: form.familia,
       };
 
-      const dataPostulante =
-        await crearPostulanteMutation.mutateAsync(payload);
-
-      const idExpediente =
-        dataPostulante?.id_expediente?.id_expediente ||
-        dataPostulante?.id_expediente;
-
-      await crearEstudioMutation.mutateAsync({
-        id_expediente: idExpediente,
-        nivel_escolar_inicial: form.nivel_escolar_inicial,
-        grado_escolar_inicial: form.grado_escolar_inicial,
-        referencia_ingreso: form.referencia_ingreso,
-        referencia_casa: form.referencia_casa,
-        prioridad_servicio: "Pendiente",
-        estatus_estudio: "En revision",
-      });
-
+      await crearPostulanteMutation.mutateAsync(payload);
       setResultModal({
         open: true,
         type: "success",
@@ -250,7 +302,6 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
         message: "Registro completado correctamente.",
       });
     } catch (err) {
-      console.error(err);
 
       const backendErrors =
         err?.errors ||
@@ -260,38 +311,37 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
       const parsedErrors = {};
 
       const flattenErrors = (obj, prefix = "") => {
-        Object.entries(obj).forEach(([key, value]) => {
-          let newKey = prefix
-            ? `${prefix}.${key}`
-            : key;
+  Object.entries(obj).forEach(([key, value]) => {
+    let newKey = prefix
+      ? `${prefix}.${key}`
+      : key;
 
-          newKey = newKey
-            .replace(/^id_expediente\./, "")
-            .replace(/^id_expediente\.id_direccion\./, "")
-            .replace(/^id_direccion\./, "");
+    newKey = newKey
+      .replace(/^id_expediente\./, "")
+      .replace(/^id_expediente\.id_direccion\./, "")
+      .replace(/^id_direccion\./, "")
+      .replace(/^expediente\./, "")
+      .replace(/^estudio\./, "");
 
-          if (
-            Array.isArray(value) &&
-            typeof value[0] === "string"
-          ) {
-            parsedErrors[newKey] = value[0];
-          } else if (Array.isArray(value)) {
-            value.forEach((item, index) => {
-              if (typeof item === "object") {
-                flattenErrors(
-                  item,
-                  `${newKey}.${index}`
-                );
-              }
-            });
-          } else if (
-            typeof value === "object" &&
-            value !== null
-          ) {
-            flattenErrors(value, newKey);
-          }
-        });
-      };
+    if (
+      Array.isArray(value) &&
+      typeof value[0] === "string"
+    ) {
+      parsedErrors[newKey] = value[0];
+    } else if (Array.isArray(value)) {
+      value.forEach((item, index) => {
+        if (typeof item === "object") {
+          flattenErrors(item, `${newKey}.${index}`);
+        }
+      });
+    } else if (
+      typeof value === "object" &&
+      value !== null
+    ) {
+      flattenErrors(value, newKey);
+    }
+  });
+};
 
       flattenErrors(backendErrors);
 
@@ -317,27 +367,27 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
   };
 
   const handleFinalClose = () => {
-  const wasSuccess = resultModal.type === "success";
+    const wasSuccess = resultModal.type === "success";
 
-  setResultModal({
-    open: false,
-    type: "",
-    title: "",
-    message: "",
-  });
+    setResultModal({
+      open: false,
+      type: "",
+      title: "",
+      message: "",
+    });
 
-  if (wasSuccess) {
-    setForm(initialForm);
-    setFieldErrors({});
-    setError(null);
-    setShowConfirm(false);
-    onSuccess?.(); // Notifica la actualización de la lista en segundo plano
-  }
-  
-  // Sacamos esto de la condicional para asegurar que ante cualquier 
-  // cierre del ModalResultado, la ventana de creación también se destruya.
-  onClose?.(); 
-};
+    if (wasSuccess) {
+      setForm(initialForm);
+      setFieldErrors({});
+      setError(null);
+      setShowConfirm(false);
+      onSuccess?.(); // Notifica la actualización de la lista en segundo plano
+    }
+
+    // Sacamos esto de la condicional para asegurar que ante cualquier 
+    // cierre del ModalResultado, la ventana de creación también se destruya.
+    onClose?.();
+  };
 
   return {
     form,
@@ -346,12 +396,19 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
     fieldErrors,
     error,
     loading,
+    loadingCP,// checar
+    cpEncontrado,// checar
+    setLoadingCP,// chercar
+    setCpEncontrado,//c
     showConfirm,
     setShowConfirm,
     resultModal,
     handlePreSubmit,
     handleConfirmSave,
     handleFinalClose,
+
   };
 };
+
+
 

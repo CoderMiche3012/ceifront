@@ -1,5 +1,5 @@
 import EstudioCard from "./EstudioCard";
-import FotosCard from "./FotosCard";
+//import FotosCard from "./FotosCard";
 import VitasTab from "./VitasTab";
 
 export default function VisitasCard({
@@ -13,13 +13,14 @@ export default function VisitasCard({
       </div>
 
       <div className="col-span-1 space-y-6">
+        
         <EstudioCard
           data={data}
-          onSubirDocumento={() =>
-            setMostrarSubida(true)
-          }
+          onSubirDocumento={() => setMostrarSubida(true) }
         />
+        {/*
         <FotosCard data={data} />
+        */}
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import BotonEditar from "../../../../../components/ui/BotonEditar";
 
 import EditarDatosGenerales from "../../modales/EditarDatosGenerales";
 
-import { ui } from "../../../../../styles/ui/uiClasses";
+import { ui } from "../../../../../styles/ui/index";
 
 export default function DatosPersonalesCard({ data }) {
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -110,10 +110,14 @@ export default function DatosPersonalesCard({ data }) {
       </div>
 
       {/* MODAL */}
+      
       <EditarDatosGenerales
-        isOpen={modalAbierto}
+        open={modalAbierto}
         onClose={() => setModalAbierto(false)}
-        data={data}
+        postulante={data}
+        onSuccess={() => {
+          setModalAbierto(false);
+        }}
       />
     </Card>
   );

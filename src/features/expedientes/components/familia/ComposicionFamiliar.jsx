@@ -167,21 +167,40 @@ export default function ComposicionFamiliar({
 
     switch (key) {
 
-      case "nombre":
+      case "nombre": {
+        const calcularEdad = (fechaNacimiento) => {
+          if (!fechaNacimiento) return "";
+
+          const hoy = new Date();
+          const nacimiento = new Date(fechaNacimiento);
+
+          let edad = hoy.getFullYear() - nacimiento.getFullYear();
+
+          const mes = hoy.getMonth() - nacimiento.getMonth();
+
+          if (
+            mes < 0 ||
+            (mes === 0 &&
+              hoy.getDate() < nacimiento.getDate())
+          ) {
+            edad--;
+          }
+
+          return edad;
+        };
+
         return (
           <div>
-
             <div className="font-semibold text-slate-800 uppercase text-xs">
-              {row.nombre}{" "}
-              {row.apellido_p}{" "}
-              {row.apellido_m}
+              {row.nombre} {row.apellido_p} {row.apellido_m}
             </div>
 
             <div className="text-xs text-slate-500">
-              {row.edad} años
+              {calcularEdad(row.fecha_nacimiento)} años
             </div>
           </div>
         );
+      }
 
       case "parentesco":
         return row.parentesco;
@@ -351,16 +370,10 @@ export default function ComposicionFamiliar({
       {/* editar */}
       <ModalEditarFamiliar
         open={modalEditarOpen}
-        onClose={() =>
-          setModalEditarOpen(false)
-        }
-        onSave={handleSaveEditar}
+        onClose={() => setModalEditarOpen(false)}
         loading={loadingEditar}
         editando={familiarEnEdicion}
-        setEditando={
-          setFamiliarEnEdicion
-        }
-        postulanteId={postulanteId}
+        setEditando={setFamiliarEnEdicion}
       />
 
       {/* confirmar eliminar */}

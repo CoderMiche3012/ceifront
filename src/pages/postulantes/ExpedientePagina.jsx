@@ -4,7 +4,7 @@ import { Calendar, Upload } from "lucide-react";
 
 import EncabezadoDetalle from "../../components/ui/EncabezadoDetalle";
 import TabsExpediente from "../../features/postulantes/components/detalles/TabsExpediente";
-import ResultadosCard from "../../features/postulantes/components/detalles/resultados/ResultadosCard";
+//import ResultadosCard from "../../features/postulantes/components/detalles/resultados/ResultadosCard";
 import VisitasCard from "../../features/postulantes/components/detalles/visitas/VisitasCard";
 import DatosGenerales from "../../features/postulantes/components/detalles/generales/DatosGenerales";
 
@@ -13,9 +13,11 @@ import { ui } from "../../styles/ui/uiClasses";
 
 import { subirDocumentoEstudio } from "../../features/expedientes/services/documentosService";
 import { actualizarEstudio } from "../../features/postulantes/services/estudiosService";
+import { useSubirEstudio } from "../../features/postulantes/hooks/useSubirEstudio";
 
 export default function ExpedientePagina() {
   const { id } = useParams();
+ 
 
   const {
     data,
@@ -26,113 +28,16 @@ export default function ExpedientePagina() {
     estatusInfo,
     edad,
   } = useExpedienteData(id);
-  
 
-  const [mostrarSubida, setMostrarSubida] = useState(false);
-  const [archivo, setArchivo] = useState(null);
-  const guardarDocumentoEstudio =
-    async () => {
-      if (
-        !archivo ||
-        !data?.id_estudio
-      ) {
-        return;
-      }
-
-      try {
-        const formData =
-          new FormData();
-
-        // archivo
-        formData.append(
-          "archivo",
-          archivo
-        );
-        const nombreLimpio =
-          archivo.name
-            .replace(/\.[^/.]+$/, "") // quitar extensión
-            .normalize("NFD")
-            .replace(
-              /[\u0300-\u036f]/g,
-              ""
-            ) // quitar acentos
-            .replace(
-              /[^a-zA-Z0-9 _-]/g,
-              ""
-            ) // dejar básicos
-            .trim();
-
-        // campos requeridos
-        formData.append(
-          "id_expediente",
-          data.id_expediente
-        );
-
-        formData.append(
-          "nombre_documento",
-           "nuevo"
-        );
-
-        formData.append(
-          "tipo_documento",
-          "Estudio"
-        );
-
-        // subir
-        const documento =
-          await subirDocumentoEstudio(
-            formData
-          );
-
-        console.log(
-          "documento:",
-          documento
-        );
-
-        const urlDocumento =
-          documento.url ||
-          documento.link_documento ||
-          documento.archivo;
-
-        // ligar al estudio
-        await actualizarEstudio(
-          data.id_estudio,
-          {
-            link_documento:
-              urlDocumento,
-
-            estatus_estudio:
-              "Completo",
-          }
-        );
-
-        setMostrarSubida(
-          false
-        );
-
-        setArchivo(null);
-
-        window.location.reload();
-      } catch (error) {
-        console.log("ERROR COMPLETO:", error);
-
-        console.log(
-          "response:",
-          error.response
-        );
-
-        console.log(
-          "data:",
-          error.response?.data
-        );
-
-        console.log(
-          "status:",
-          error.response?.status
-        );
-
-      }
-    };
+   const {
+  mostrarSubida,
+  setMostrarSubida,
+  archivo,
+  setArchivo,
+  guardarDocumentoEstudio,
+  cancelar,
+  loading: subiendo,
+} = useSubirEstudio(data);
   // loading
   if (loading) {
     return (
@@ -241,13 +146,7 @@ export default function ExpedientePagina() {
               </button>
 
               <button
-                onClick={() => {
-                  setMostrarSubida(
-                    false
-                  );
-
-                  setArchivo(null);
-                }}
+                onClick={cancelar}
                 className="rounded-xl bg-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-300"
               >
                 Cancelar
@@ -255,7 +154,7 @@ export default function ExpedientePagina() {
             </div>
           </div>
         )}
-
+        
         {/* generales */}
         {tab === "generales" && (
           <DatosGenerales data={data} />
@@ -272,10 +171,12 @@ export default function ExpedientePagina() {
           />
         )}
 
-        {/* resultados */}
+        {/* resultados 
         {tab === "Resultados" && (
           <ResultadosCard data={data} />
         )}
+*/}
+        
       </main>
     </section>
   );

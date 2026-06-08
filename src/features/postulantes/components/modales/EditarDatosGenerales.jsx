@@ -1,380 +1,585 @@
-import { useEffect, useState } from "react";
-import { X, Save, Loader2 } from "lucide-react";
-import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { useState, useEffect } from "react";
+import {
+  HiOutlineUser,
+  HiUserGroup,
+  HiPlus,
+  HiTrash,
+  HiOutlineArrowLeft,
+  HiOutlineSearch
+} from "react-icons/hi";
 
-import InputG from "../../../../components/ui/InputG";
+import { ui } from "../../../../styles/ui/index";
 import Select from "../../../../components/ui/Select";
+
+import AlertaError from "../../../../components/ui/AlertaError";
 import Field from "../../../../components/ui/Field";
+import InputG from "../../../../components/ui/InputG";
+import Boton from "../../../../components/ui/Boton";
 
 import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
 
-import {
-  actualizarExpediente,
-  actualizarDireccion,
-  buscarCPCompleto
-} from "../../../expedientes/services/expedientesService";
+import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { obtenerDireccionPorCP } from "../../../donadores/services/donadoresService";
+import { usePostulanteEditarForm } from "../../hooks/usePostulanteEditarForm";
 
-import { actualizarEstudio } from "../../services/estudiosService";
-import { formatErrorAnidado } from "../../../../utils/errorHandlers";
-
-const getErrorMessage = (err) => {
-  if (err?.response?.data) return formatErrorAnidado(err.response.data);
-  if (err?.message) return formatErrorAnidado(err);
-  return "Error inesperado";
-};
-
-export default function EditarDatosGenerales({ isOpen, onClose, data }) {
-  const [loading, setLoading] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [resultado, setResultado] = useState({
-    open: false,
-    type: "success",
-    title: "",
-    message: ""
-  });
-
-  const [form, setForm] = useState({
-    nombre: "",
-    apellido_p: "",
-    apellido_m: "",
-    telefono: "",
-    correo: "",
-    fecha_nacimiento: "",
-    genero: "",
-
-    nivel_escolar_inicial: "",
-    grado_escolar_inicial: "",
-    referencia_ingreso: "",
-    referencia_casa: "",
-
-    calle: "",
-    numero: "",
-    colonia: "",
-    municipio: "",
-    cp: ""
-  });
-
+export default function PostulanteEditarModal({ open, postulante, onSuccess, onClose }) {
+  const [step, setStep] = useState(1);
   const [colonias, setColonias] = useState([]);
-  const [loadingCP, setLoadingCP] = useState(false);
-  const [cpEncontrado, setCpEncontrado] = useState(false);
-  const [otraColonia, setOtraColonia] = useState(false);
+  const [cpError, setCpError] = useState("");
+  const [manualAddressMode, setManualAddressMode] = useState(false);
 
-  // =========================
-  // INIT DATA
-  // =========================
+  const estadoEditable = manualAddressMode;
+
+  const {
+    form,
+    setForm,
+    handleChange,
+    fieldErrors,
+    loading,
+    loadingCP,
+    cpEncontrado,
+    setLoadingCP,
+    setCpEncontrado,
+    error,
+    showConfirm,
+    setShowConfirm,
+    resultModal,
+    handlePreSubmit,
+    handleConfirmSave,
+    handleFinalClose
+  } = usePostulanteEditarForm(open, postulante, onSuccess, onClose);
+
+  
   useEffect(() => {
-    if (!isOpen || !data) return;
+    if (!open) {
+      setStep(1);
+      setManualAddressMode(false);
+      setCpError("");
+      setColonias([]);
+      setCpEncontrado(false);
+    }
+  }, [open, setCpEncontrado]);
+  useEffect(() => {
+  if (
+    open &&
+    form.cp &&
+    form.colonia &&
+    colonias.length === 0
+  ) {
+    handleBuscarCP(form.cp);
+  }
+}, [open, form.cp]);
 
-    setForm({
-      nombre: data.nombre || "",
-      apellido_p: data.apellido_p || "",
-      apellido_m: data.apellido_m || "",
-      telefono: data.telefono || "",
-      correo: data.correo || "",
-      fecha_nacimiento: data.fecha_nacimiento || "",
-      genero: data.genero || "",
+  if (!open) return null;
 
-      nivel_escolar_inicial: data.nivel_escolar_inicial || "",
-      grado_escolar_inicial: data.grado_escolar_inicial || "",
-      referencia_ingreso: data.referencia_ingreso || "",
-      referencia_casa: data.referencia_casa || "",
-
-      calle: data.calle || "",
-      numero: data.numero || "",
-      colonia: data.colonia || "",
-      municipio: data.municipio || "",
-      cp: data.cp || ""
-    });
-
-    setOtraColonia(false);
-    setColonias([]);
-    setCpEncontrado(false);
-
-    const cargarCP = async () => {
-      if (!data?.cp || String(data.cp).length !== 5) return;
-
-      try {
-        setLoadingCP(true);
-
-        const res = await buscarCPCompleto(data.cp);
-
-        setColonias(res?.colonias || []);
-
-        if (res?.municipio) {
-          setCpEncontrado(true);
-          setForm((prev) => ({
-            ...prev,
-            municipio: res.municipio
-          }));
-        }
-
-        if (
-          data?.colonia &&
-          res?.colonias &&
-          !res.colonias.includes(data.colonia)
-        ) {
-          setOtraColonia(true);
-        }
-      } catch (e) {
-        console.log(e);
-      } finally {
-        setLoadingCP(false);
-      }
-    };
-
-    cargarCP();
-  }, [isOpen, data]);
-
-  if (!isOpen) return null;
-
-  // =========================
-  // HELPERS
-  // =========================
-  const update = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  const updateField = (field, value) => {
+    handleChange(field, value);
   };
 
-  // =========================
-  // SUBMIT
-  // =========================
-  const handleSave = async () => {
-    setLoading(true);
+
+  const handleBuscarCP = async (cpValue = form.cp) => {
+    if (!cpValue) return;
 
     try {
-      const { id_expediente, id_direccion, id_estudio } = data;
+      setLoadingCP(true);
+      setCpError("");
 
-      await Promise.all([
-        actualizarExpediente(id_expediente, {
-          nombre: form.nombre,
-          apellido_p: form.apellido_p,
-          apellido_m: form.apellido_m,
-          telefono: form.telefono,
-          correo: form.correo,
-          fecha_nacimiento: form.fecha_nacimiento,
-          genero: form.genero
-        }),
+      const data = await obtenerDireccionPorCP(cpValue);
+      const opciones = data?.opciones || [];
 
-        actualizarDireccion(id_direccion, {
-          calle: form.calle,
-          numero: form.numero,
-          colonia: form.colonia,
-          municipio: form.municipio,
-          cp: form.cp
-        }),
+      if (opciones.length === 0) {
+        setColonias([]);
+        setCpError("Este código postal no está registrado");
+        setCpEncontrado(false);
+        updateField("estado", "");
+        updateField("municipio", "");
+        updateField("colonia", "");
+        updateField("id_geografia", null);
+        return;
+      }
+      setColonias(opciones);
+      updateField("estado", data.estado || "");
+      updateField("municipio", data.municipio || "");
+      updateField("colonia", opciones[0].nombre);
+      updateField("id_geografia", opciones[0].id_geografia);
+      setCpEncontrado(true);
+    } catch (e) {
+      setColonias([]);
+      setCpError("Error al consultar el código postal");
 
-        actualizarEstudio(id_estudio, {
-          nivel_escolar_inicial: form.nivel_escolar_inicial,
-          grado_escolar_inicial: form.grado_escolar_inicial,
-          referencia_ingreso: form.referencia_ingreso,
-          referencia_casa: form.referencia_casa
-        })
-      ]);
+      setCpEncontrado(false);
 
-      setResultado({
-        open: true,
-        type: "success",
-        title: "Actualización exitosa",
-        message: "Los datos se actualizaron correctamente"
-      });
-
-      setShowConfirm(false);
-    } catch (error) {
-      setShowConfirm(false);
-
-      setResultado({
-        open: true,
-        type: "error",
-        title: "Error",
-        message: getErrorMessage(error)
-      });
+      updateField("estado", "");
+      updateField("municipio", "");
+      updateField("colonia", "");
+      updateField("id_geografia", null);
     } finally {
-      setLoading(false);
+      setLoadingCP(false);
+    }
+  };
+
+  const limpiarDireccionCP = () => {
+    setColonias([]);
+    setCpEncontrado(false);
+    setCpError("");
+
+    updateField("estado", "");
+    updateField("municipio", "");
+    updateField("colonia", "");
+    updateField("id_geografia", null);
+  };
+
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      setStep(1);
+      onClose();
     }
   };
 
   return (
     <>
-      {/* OVERLAY */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4">
-
-        <div className="bg-[#F8FAFC] rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden">
+      <div className={ui.modal.formOverlay} onClick={handleBackdropClick}>
+        <div className={ui.modal.formContainer}>
 
           {/* HEADER */}
-          <div className="flex items-center justify-between p-8 bg-white border-b">
-            <div>
-              <h2 className="text-2xl font-black text-slate-800">
-                Editar Expediente
-              </h2>
-              <p className="text-sm text-slate-500">
-                Actualiza la información del beneficiario
-              </p>
+          <div className={`${ui.modal.formHeader} relative`}>
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute top-5 right-6 text-2xl text-slate-400 hover:text-slate-600"
+            >
+              ×
+            </button>
+
+            <div className="flex items-start gap-4">
+              <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}>
+                <HiOutlineUser size={20} />
+              </div>
+
+              <div>
+                <h2 className={ui.modal.title}>
+                  Editar Postulante
+                </h2>
+
+                <p className={ui.modal.description}>
+                  Actualiza la información del postulante
+                </p>
+
+                <div className="flex items-center gap-3 mt-4">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Paso {step} de 3
+                  </span>
+
+                  <div className="flex gap-1">
+                    <div className={`h-1 w-5 rounded-full ${step === 1 ? "bg-[#0E5F63]" : "bg-slate-200"}`} />
+                    <div className={`h-1 w-5 rounded-full ${step === 2 ? "bg-[#0E5F63]" : "bg-slate-200"}`} />
+                    <div className={`h-1 w-5 rounded-full ${step === 3 ? "bg-[#0E5F63]" : "bg-slate-200"}`} />
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <form className={ui.modal.formBody} onSubmit={handlePreSubmit}>
+
+            {error && (
+              <div className="mb-4">
+                <AlertaError mensaje={error} />
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
+              <HiOutlineExclamationCircle className="text-[#0E5F63]" size={18} />
+              <span>
+                Los campos con <span className="font-semibold text-red-500">*</span> son obligatorios
+              </span>
             </div>
 
-            <button onClick={onClose}>
-              <X className="text-slate-400" />
-            </button>
-          </div>
+            <div className={ui.modal.formScroll}>
 
-          {/* FORM */}
-          <div className="p-8 max-h-[70vh] overflow-y-auto space-y-10">
+              {/* ================= STEP 1 ================= */}
+              {step === 1 && (
+                <div className="space-y-6 animate-in fade-in duration-300">
+                  <div>
+                    <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em] mb-4">
+                      Información Personal
+                    </h3>
 
-            {/* INFO PERSONAL */}
-            <section>
-              <h3 className="text-xs font-black text-[#0E5F63] mb-4">
-                Información Personal
-              </h3>
+                    <div className={ui.modal.twoCols}>
+                      <Field label="Nombre(s)" required error={fieldErrors.nombre}>
+                        <InputG
+                          placeholder="Ej: Juan Antonio"
+                          value={form.nombre}
+                          onChange={(e) => updateField("nombre", e.target.value)}
+                          error={!!fieldErrors.nombre}
+                        />
+                      </Field>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <Field label="Nombre">
-                  <InputG value={form.nombre} onChange={(e) => update("nombre", e.target.value)} />
-                </Field>
+                      <Field label="Apellido paterno" required error={fieldErrors.apellido_p}>
+                        <InputG
+                          value={form.apellido_p}
+                          onChange={(e) => updateField("apellido_p", e.target.value)}
+                          error={!!fieldErrors.apellido_p}
+                        />
+                      </Field>
 
-                <Field label="Apellido Paterno">
-                  <InputG value={form.apellido_p} onChange={(e) => update("apellido_p", e.target.value)} />
-                </Field>
+                      <Field label="Apellido materno" error={fieldErrors.apellido_m}>
+                        <InputG
+                          value={form.apellido_m}
+                          onChange={(e) => updateField("apellido_m", e.target.value)}
+                          error={!!fieldErrors.apellido_m}
+                        />
+                      </Field>
 
-                <Field label="Apellido Materno">
-                  <InputG value={form.apellido_m} onChange={(e) => update("apellido_m", e.target.value)} />
-                </Field>
+                      <Field label="Correo electrónico" required error={fieldErrors.correo}>
+                        <InputG
+                          type="email"
+                          value={form.correo}
+                          onChange={(e) => updateField("correo", e.target.value)}
+                          error={!!fieldErrors.correo}
+                        />
+                      </Field>
 
-                <Field label="Teléfono">
-                  <InputG value={form.telefono} onChange={(e) => update("telefono", e.target.value)} />
-                </Field>
+                      <Field label="Teléfono" required error={fieldErrors.telefono}>
+                        <InputG
+                          value={form.telefono}
+                          onChange={(e) => updateField("telefono", e.target.value)}
+                          error={!!fieldErrors.telefono}
+                        />
+                      </Field>
 
-                <Field label="Correo">
-                  <InputG value={form.correo} onChange={(e) => update("correo", e.target.value)} />
-                </Field>
-              </div>
-            </section>
+                      <Field label="Género" required error={fieldErrors.genero}>
+                        <Select
+                          value={form.genero}
+                          onChange={(e) => updateField("genero", e.target.value)}
+                          error={!!fieldErrors.genero}
+                        >
+                          <option value="">Elegir...</option>
+                          <option value="Femenino">Femenino</option>
+                          <option value="Masculino">Masculino</option>
+                        </Select>
+                      </Field>
 
-            {/* DIRECCIÓN */}
-            <section>
-              <h3 className="text-xs font-black text-[#0E5F63] mb-4">
-                Dirección
-              </h3>
+                      <Field label="Fecha nacimiento" required error={fieldErrors.fecha_nacimiento}>
+                        <InputG
+                          type="date"
+                          value={form.fecha_nacimiento}
+                          onChange={(e) => updateField("fecha_nacimiento", e.target.value)}
+                          error={!!fieldErrors.fecha_nacimiento}
+                        />
+                      </Field>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-              <div className="grid md:grid-cols-3 gap-4">
+              {/* ================= STEP 2 ================= */}
+              {step === 2 && (
+                <div className="space-y-6 animate-in fade-in duration-300">
+                  <div className="pt-4 border-t border-slate-50">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em]">
+                        Dirección
+                      </h3>
 
-                <Field label="CP">
-                  <InputG
-                    value={form.cp}
-                    onChange={async (e) => {
-                      const cp = e.target.value;
-                      update("cp", cp);
+                      <button
+                        type="button"
+                        className="flex items-center gap-1 text-xs text-[#0E5F63] font-semibold hover:underline"
+                        onClick={() => {
+                          if (manualAddressMode) {
+                            setManualAddressMode(false);
+                            updateField("colonia", "");
+                            updateField("estado", "");
+                            updateField("municipio", "");
+                            updateField("id_geografia", null);
 
-                      if (!/^\d{5}$/.test(cp)) return;
+                            if (form.cp?.trim()) {
+                              handleBuscarCP(form.cp);
+                            }
+                          } else {
+                            setManualAddressMode(true);
+                            setCpError("");
+                          }
+                        }}
+                      >
+                        {manualAddressMode ? (
+                          <>
+                            <HiOutlineArrowLeft size={14} />
+                            Volver a búsqueda por CP
+                          </>
+                        ) : (
+                          "Agregar dirección manual"
+                        )}
+                      </button>
+                    </div>
 
-                      const res = await buscarCPCompleto(cp);
-                      setColonias(res?.colonias || []);
+                    <div className={ui.modal.twoCols}>
+                      <Field label="Código Postal" required error={fieldErrors.cp}>
+                        <div
+                          className={`relative rounded-md border transition  
+                                                  ${cpError
+                              ? "border-amber-400" : cpEncontrado ? "border-green-400"
+                                : "border-slate-200 focus-within:border-[#0E5F63]"
+                            }`}
+                        >
 
-                      if (res?.municipio) {
-                        setCpEncontrado(true);
-                        update("municipio", res.municipio);
-                      }
-                    }}
-                  />
-                </Field>
+                          <InputG
+                            value={form.cp}
+                            onChange={(e) => {
+                              updateField("cp", e.target.value);
+                              limpiarDireccionCP();
+                            }}
+                            error={!!fieldErrors.cp}
+                            className="border-0 focus:ring-0 pl-9 pr-28"
+                          />
+                          <div className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                            <HiOutlineSearch size={16} />
+                          </div>
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2">
 
-                <Field label="Municipio">
-                  <InputG
-                    value={form.municipio}
-                    disabled={cpEncontrado}
-                    onChange={(e) => update("municipio", e.target.value)}
-                  />
-                </Field>
+                            <button
+                              type="button"
+                              onClick={() => handleBuscarCP(form.cp)}
+                              disabled={!form.cp || loadingCP || manualAddressMode}
+                              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition
+                                                        ${cpEncontrado
+                                  ? "bg-green-50 text-green-600"
+                                  : "bg-slate-100 text-[#0E5F63] hover:bg-slate-200"
+                                }
+                                                      disabled:opacity-40`}
+                            >
+                              {/* carga */}
+                              {loadingCP ? (
+                                <div className="h-3 w-3 border-2 border-[#0E5F63] border-t-transparent rounded-full animate-spin" />
+                              ) : cpEncontrado ? (
+                                "Encontrado"
+                              ) : (
+                                "Buscar"
+                              )}
+                            </button>
+                          </div>
 
-                <Field label="Colonia">
-                  {!otraColonia ? (
-                    <Select
-                      value={form.colonia}
-                      onChange={(e) => update("colonia", e.target.value)}
-                    >
-                      <option value="">Seleccionar</option>
-                      {colonias.map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                      <option value="__otra__">Otra</option>
-                    </Select>
-                  ) : (
-                    <InputG
-                      value={form.colonia}
-                      onChange={(e) => update("colonia", e.target.value)}
-                    />
-                  )}
-                </Field>
+                        </div>
 
-                <Field label="Calle">
-                  <InputG value={form.calle} onChange={(e) => update("calle", e.target.value)} />
-                </Field>
+                        {cpError && (
+                          <p className="mt-1 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md flex items-center gap-1">
+                            <HiOutlineExclamationCircle size={14} />
+                            {cpError}
+                          </p>
+                        )}
+                      </Field>
 
-                <Field label="Número">
-                  <InputG value={form.numero} onChange={(e) => update("numero", e.target.value)} />
-                </Field>
-              </div>
-            </section>
+                      <Field label="Municipio" required error={fieldErrors.municipio}>
+                        <InputG
+                          disabled={!estadoEditable}
+                          value={form.municipio || ""}
+                          onChange={(e) => updateField("municipio", e.target.value)}
+                          error={!!fieldErrors.municipio}
+                        />
+                      </Field>
+                      <Field label="Colonia" required error={fieldErrors.colonia}>
+                        {manualAddressMode ? (
+                          <InputG
+                            value={form.colonia}
+                            onChange={(e) => updateField("colonia", e.target.value)}
+                          />
+                        ) : (
+                          <Select
+                            value={form.colonia || ""}
+                            disabled={!cpEncontrado || colonias.length === 0 || loadingCP}
+                            onChange={(e) => {
+                              const colonia = colonias.find((m) => m.nombre === e.target.value);
+                              updateField("colonia", e.target.value);
+                              updateField("id_geografia", colonia?.id_geografia ?? null);
+                            }}
+                            error={!!fieldErrors.colonia}
+                          >
+                            <option value="">Selecciona la colonia</option>
+                            {colonias.map((m) => (
+                              <option key={m.id_geografia ?? m.nombre} value={m.nombre}>
+                                {m.nombre}
+                              </option>
+                            ))}
+                          </Select>
+                        )}
+                      </Field>
 
-            {/* ACADÉMICO */}
-            <section>
-              <h3 className="text-xs font-black text-[#0E5F63] mb-4">
-                Estudios
-              </h3>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <Field label="Nivel">
-                  <Select
-                    value={form.nivel_escolar_inicial}
-                    onChange={(e) => update("nivel_escolar_inicial", e.target.value)}
-                  >
-                    <option>Primaria</option>
-                    <option>Secundaria</option>
-                    <option>Bachillerato</option>
-                  </Select>
-                </Field>
+                      <Field label="Calle" required error={fieldErrors.calle}>
+                        <InputG
+                          value={form.calle}
+                          onChange={(e) => updateField("calle", e.target.value)}
+                          error={!!fieldErrors.calle}
+                        />
+                      </Field>
 
-                <Field label="Grado">
-                  <InputG value={form.grado_escolar_inicial} onChange={(e) => update("grado_escolar_inicial", e.target.value)} />
-                </Field>
-              </div>
-            </section>
-          </div>
+                      <Field label="Número" required error={fieldErrors.numero}>
+                        <InputG
+                          value={form.numero}
+                          onChange={(e) => updateField("numero", e.target.value)}
+                          error={!!fieldErrors.numero}
+                        />
+                      </Field>
 
-          {/* FOOTER */}
-          <div className="flex justify-end gap-4 p-6 border-t bg-white">
-            <button onClick={onClose} className="px-6 py-2 text-slate-500">
-              Cancelar
-            </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-            <button
-              onClick={() => setShowConfirm(true)}
-              className="px-6 py-2 bg-[#0E5F63] text-white rounded-xl flex items-center gap-2"
-            >
-              {loading ? <Loader2 className="animate-spin" /> : <Save />}
-              Guardar
-            </button>
-          </div>
+              {/* ================= STEP 3 ================= */}
+              {step === 3 && (
+
+                <div className="space-y-8 animate-in fade-in duration-300">
+
+                  {/* Académica */}
+                  <div className="bg-slate-50/40 border border-slate-100 rounded-2xl p-5">
+
+                    <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em] mb-4">
+                      Información Académica
+                    </h3>
+
+                    <div className={ui.modal.twoCols}>
+                      <Field
+                        label="Nivel Escolar Inicial"
+                        required
+                        error={fieldErrors.nivel_escolar_inicial}
+                      >
+                        <Select
+                          value={form.nivel_escolar_inicial}
+                          error={!!fieldErrors.nivel_escolar_inicial}
+                          onChange={(e) =>
+                            updateField("nivel_escolar_inicial", e.target.value)
+                          }
+                        >
+                          <option value="">Elegir...</option>
+                          <option value="Preescolar">Preescolar</option>
+                          <option value="Primaria">Primaria</option>
+                          <option value="Secundaria">Secundaria</option>
+                          <option value="Media superior">Preparatoria</option>
+                          <option value="Universidad">Universidad</option>
+                        </Select>
+                      </Field>
+
+                      <Field
+                        label="Grado Escolar Inicial"
+                        required
+                        error={fieldErrors.grado_escolar_inicial}
+                      >
+                        <InputG
+                          value={form.grado_escolar_inicial}
+                          error={!!fieldErrors.grado_escolar_inicial}
+                          onChange={(e) =>
+                            updateField("grado_escolar_inicial", e.target.value)
+                          }
+                        />
+                      </Field>
+                    </div>
+                  </div>
+
+                  {/* Socioeconómica */}
+                  <div className="bg-slate-50/40 border border-slate-100 rounded-2xl p-5">
+                    <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em] mb-4">
+                      Información Socioeconómica
+                    </h3>
+
+                    <div className={ui.modal.twoCols}>
+                      <Field
+                        label="Gasto de alimentacion mensual"
+                        required
+                        error={fieldErrors.gasto_alimentacion}
+                      >
+                        <InputG
+                          type="number"
+                          value={form.gasto_alimentacion}
+                          error={!!fieldErrors.gasto_alimentacion}
+                          onChange={(e) =>
+                            updateField("gasto_alimentacion", e.target.value)
+                          }
+                        />
+                      </Field>
+
+                      <Field
+                        label="Gasto de transporte mensual"
+                        required
+                        error={fieldErrors.gasto_transporte}
+                      >
+                        <InputG
+                          type="number"
+                          value={form.gasto_transporte}
+                          error={!!fieldErrors.gasto_transporte}
+                          onChange={(e) =>
+                            updateField("gasto_transporte", e.target.value)
+                          }
+                        />
+                      </Field>
+
+                      <Field
+                        label="¿Cómo conoció el programa?"
+                        required
+                        error={fieldErrors.referencia_ingreso}
+                      >
+                        <InputG
+                          value={form.referencia_ingreso}
+                          error={!!fieldErrors.referencia_ingreso}
+                          onChange={(e) =>
+                            updateField("referencia_ingreso", e.target.value)
+                          }
+                        />
+                      </Field>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+            </div>
+
+            {/* FOOTER */}
+            <div className={ui.modal.formActions}>
+
+              <Boton
+                type="button"
+                variant="secondary"
+                onClick={() => (step === 1 ? onClose() : setStep(step - 1))}
+              >
+                {step === 1 ? "Cancelar" : "Volver"}
+              </Boton>
+
+              <Boton
+                type="button"
+                onClick={() => {
+                  if (step < 3) setStep(step + 1);
+                  else handlePreSubmit();
+                }}
+                disabled={loading}
+              >
+                {step < 3 ? "Siguiente" : loading ? "Guardando..." : "Guardar cambios"}
+              </Boton>
+
+            </div>
+
+          </form>
+
         </div>
       </div>
 
-      {/* CONFIRM */}
+      {/* MODALES */}
       <ModalConfirmacion
         open={showConfirm}
-        title="Confirmar cambios"
-        message="Se actualizará el expediente"
-        onConfirm={handleSave}
         onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirmSave}
+        title="Confirmar cambios"
+        message="Se actualizará la información del postulante."
       />
 
-      {/* RESULT */}
       <ModalResultado
-        open={resultado.open}
-        type={resultado.type}
-        title={resultado.title}
-        message={resultado.message}
-        onClose={() => {
-          setResultado((p) => ({ ...p, open: false }));
-          if (resultado.type === "success") onClose();
-        }}
+        open={resultModal.open}
+        type={resultModal.type}
+        title={resultModal.title}
+        message={resultModal.message}
+        onClose={handleFinalClose}
       />
     </>
   );

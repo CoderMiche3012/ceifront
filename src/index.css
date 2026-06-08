@@ -32,3 +32,39 @@
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
 }
+.filters-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+  margin-bottom: 14px;
+}
+
+/* botón avanzados */
+.filters-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.btn-advanced {
+  font-size: 13px;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #374151;
+  transition: 0.2s;
+}
+
+.btn-advanced:hover {
+  background: #f9fafb;
+}
+
+/* sección avanzada */
+.advanced-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}

@@ -1,8 +1,4 @@
-import {
-  useState,
-  useRef,
-  useEffect,
-} from "react";
+import { useState, useRef, useEffect } from "react";
 
 import {
   MoreVertical,
@@ -13,10 +9,12 @@ import {
   Ban,
 } from "lucide-react";
 
-import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
-import ModalResultado from "../../../../components/shared/ModalResultado";
+import { ui } from "../../../../styles/ui/index";
 
+import ModalResultado from "../../../../components/shared/ModalResultado";
+import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import { useAccionesVisita } from "../../hooks/useAccionesVisita";
+
 import {
   FormAgendar,
   FormFinalizar,
@@ -27,6 +25,7 @@ import EstudioCard from "../detalles/visitas/EstudioCard";
 
 export default function AccionesPostulante({ item }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const menuRef = useRef(null);
 
   const {
@@ -56,11 +55,7 @@ export default function AccionesPostulante({ item }) {
     };
 
     if (menuOpen) {
-      document.addEventListener(
-        "mousedown",
-        handleOutsideClick
-      );
-
+      document.addEventListener("mousedown", handleOutsideClick);
       window.addEventListener(
         "scroll",
         () => setMenuOpen(false),
@@ -69,15 +64,8 @@ export default function AccionesPostulante({ item }) {
     }
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleOutsideClick
-      );
-
-      window.removeEventListener(
-        "scroll",
-        () => setMenuOpen(false)
-      );
+      document.removeEventListener("mousedown", handleOutsideClick);
+      window.removeEventListener("scroll", () => setMenuOpen(false));
     };
   }, [menuOpen]);
 
@@ -137,9 +125,7 @@ export default function AccionesPostulante({ item }) {
       case "realizada":
         return (
           <button
-            onClick={() =>
-              handleAction("capturar_estudio")
-            }
+            onClick={() => handleAction("capturar_estudio")}
             className={`${btnClass} text-indigo-600 hover:bg-indigo-50`}
           >
             <FileText size={16} />
@@ -158,6 +144,145 @@ export default function AccionesPostulante({ item }) {
           </button>
         );
     }
+  };
+
+  // =========================
+  // MODAL RENDER (UI TIPO RESUMEN)
+  // =========================
+
+  const renderModal = () => {
+    if (!modalMode) return null;
+
+    if (modalMode === "capturar_estudio") {
+      return (
+        <div className={ui.modal.formOverlay}>
+          <div className="w-full max-w-2xl">
+            <div className={ui.modal.formContainer}>
+
+              <div className={ui.modal.formHeader}>
+                <div className={`${ui.modal.iconWrapper} bg-indigo-100 text-indigo-600`}>
+                  <FileText size={22} />
+                </div>
+
+                <div className="flex-1">
+                  <h2 className={ui.modal.title}>
+                    Capturar estudio socioeconómico
+                  </h2>
+                  <p className={ui.modal.description}>
+                    Revisa la información del postulante
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setModalMode(null)}
+                  className="p-2 hover:bg-slate-100 rounded-xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className={ui.modal.formBody}>
+                <div className={ui.modal.formScroll}>
+                  <EstudioCard data={item} />
+                </div>
+
+                <div className={ui.modal.formActions}>
+                  <button
+                    onClick={() => setModalMode(null)}
+                    className="px-4 py-2 rounded-xl bg-slate-100"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const config = {
+      agendar: {
+        title: "Programar visita",
+        icon: <CalendarPlus size={22} />,
+        color: "bg-[#0E5F63]/10 text-[#0E5F63]",
+        form: (
+          <FormAgendar data={formData} onChange={setFormData} />
+        ),
+      },
+      finalizar: {
+        title: "Finalizar visita",
+        icon: <CheckCircle size={22} />,
+        color: "bg-green-100 text-green-600",
+        form: (
+          <FormFinalizar data={formData} onChange={setFormData} />
+        ),
+      },
+      cancelar: {
+        title: "Cancelar visita",
+        icon: <Ban size={22} />,
+        color: "bg-red-100 text-red-600",
+        form: (
+          <FormCancelar data={formData} onChange={setFormData} />
+        ),
+      },
+    };
+
+    const current = config[modalMode];
+
+    return (
+      <div className={ui.modal.formOverlay}>
+        <div className="w-full max-w-xl">
+          <div className={ui.modal.formContainer}>
+
+            <div className={ui.modal.formHeader}>
+              <div className={`${ui.modal.iconWrapper} ${current.color}`}>
+                {current.icon}
+              </div>
+
+              <div className="flex-1">
+                <h2 className={ui.modal.title}>{current.title}</h2>
+                <p className={ui.modal.description}>
+                  Completa la información
+                </p>
+              </div>
+
+              <button
+                onClick={() => setModalMode(null)}
+                className="p-2 hover:bg-slate-100 rounded-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className={ui.modal.formBody}>
+              <div className={ui.modal.formScroll}>
+                {current.form}
+              </div>
+
+              <div className={ui.modal.formActions}>
+                <button
+                  onClick={() => setModalMode(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  onClick={() => setConfirmOpen(true)}
+                  disabled={loading}
+                  className="px-4 py-2 rounded-xl bg-[#0E5F63] text-white"
+                >
+                  {loading ? "Guardando..." : "Guardar"}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -180,15 +305,9 @@ export default function AccionesPostulante({ item }) {
           className="fixed z-[9999] w-56 rounded-xl border border-slate-200 bg-white shadow-2xl"
           style={{
             top:
-              menuRef.current?.getBoundingClientRect()
-                .top +
-              35 +
-              "px",
+              menuRef.current?.getBoundingClientRect().top + 35 + "px",
             left:
-              menuRef.current?.getBoundingClientRect()
-                .left -
-              200 +
-              "px",
+              menuRef.current?.getBoundingClientRect().left - 200 + "px",
           }}
         >
           <div className="py-1">
@@ -198,86 +317,75 @@ export default function AccionesPostulante({ item }) {
         </div>
       )}
 
-      {/* MODAL ACCIONES */}
-      {modalMode &&
-        modalMode !== "capturar_estudio" && (
-          <ModalConfirmacion
-            open={true}
-            color={
-              modalMode === "cancelar"
-                ? "red"
-                : modalMode === "finalizar"
-                ? "green"
-                : "teal"
-            }
-            title={
-              modalMode === "agendar"
-                ? "Programar Visita"
-                : modalMode === "finalizar"
-                ? "Finalizar Visita"
-                : "Confirmar Cancelación"
-            }
-            description={
-              <div className="mt-4">
-                {modalMode === "agendar" && (
-                  <FormAgendar
-                    data={formData}
-                    onChange={setFormData}
-                  />
-                )}
+      {/* MODAL */}
+      {renderModal()}
+      {confirmOpen && (
+  <div className={ui.modal.formOverlay}>
+    <div className="w-full max-w-md">
+      <div className={ui.modal.formContainer}>
 
-                {modalMode === "finalizar" && (
-                  <FormFinalizar
-                    data={formData}
-                    onChange={setFormData}
-                  />
-                )}
+        {/* HEADER */}
+        <div className={ui.modal.formHeader}>
+          <div className={`${ui.modal.iconWrapper} bg-amber-100 text-amber-600`}>
+            ⚠️
+          </div>
 
-                {modalMode === "cancelar" && (
-                  <FormCancelar
-                    data={formData}
-                    onChange={setFormData}
-                  />
-                )}
-              </div>
-            }
-            onConfirm={ejecutarAccion}
-            onClose={() => setModalMode(null)}
-            loading={loading}
-            confirmText={
-              modalMode === "cancelar"
-                ? "Sí, Cancelar"
-                : "Guardar Cambios"
-            }
-          />
-        )}
+          <div className="flex-1">
+            <h2 className={ui.modal.title}>
+              Confirmar acción
+            </h2>
+            <p className={ui.modal.description}>
+              ¿Seguro que deseas continuar?
+            </p>
+          </div>
 
-      {/* CAPTURAR ESTUDIO */}
-      {modalMode === "capturar_estudio" && (
-        <ModalConfirmacion
-          open={true}
-          color="indigo"
-          title="Capturar estudio socioeconómico"
-          description={
-            <div className="mt-4">
-              <EstudioCard data={item} />
-            </div>
-          }
-          onConfirm={() => setModalMode(null)}
-          onClose={() => setModalMode(null)}
-          confirmText="Cerrar"
-          showCancel={false}
-        />
-      )}
+          <button
+            onClick={() => setConfirmOpen(false)}
+            className="p-2 hover:bg-slate-100 rounded-xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* BODY */}
+        <div className={ui.modal.formBody}>
+          <div className="text-sm text-slate-600">
+            Esta acción se aplicará al registro actual.
+          </div>
+
+          {/* ACTIONS */}
+          <div className={ui.modal.formActions}>
+            <button
+              onClick={() => setConfirmOpen(false)}
+              className="px-4 py-2 rounded-xl bg-slate-100"
+            >
+              Cancelar
+            </button>
+
+            <button
+              onClick={async () => {
+                setConfirmOpen(false);
+                await ejecutarAccion();
+              }}
+              disabled={loading}
+              className="px-4 py-2 rounded-xl bg-[#0E5F63] text-white"
+            >
+              {loading ? "Procesando..." : "Confirmar"}
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+)}
 
       {/* RESULTADO */}
       <ModalResultado
         {...result}
         onClose={() =>
-          setResult((prev) => ({
-            ...prev,
-            open: false,
-          }))
+          setResult((prev) => ({ ...prev, open: false }))
         }
       />
     </div>

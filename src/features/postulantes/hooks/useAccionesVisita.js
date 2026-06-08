@@ -1,15 +1,12 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-
 import { useCrearVisita, useActualizarVisita } from "../hooks/useVisitas";
 import { visitasKeys } from "../services/visitasKeys";
 
 export const useAccionesVisita = (item) => {
   const queryClient = useQueryClient();
-
   const crearVisitaMutation = useCrearVisita();
   const actualizarVisitaMutation = useActualizarVisita();
-
   const [modalMode, setModalMode] = useState(null);
   const [loading, setLoading] = useState(false);
 

@@ -10,6 +10,7 @@ export default function Boton({
   variant = "primary",
   size = "md",
   disabled = false,
+  ...props
 }) {
   return (
     <button
@@ -17,8 +18,14 @@ export default function Boton({
       onClick={onClick}
       disabled={disabled}
       className={`${ui.button.base} ${ui.button[size]} ${ui.button[variant]} ${className}`}
+      {...props}
     >
-      {icon && <span className="flex items-center">{icon}</span>}
+      {icon && (
+        <span className="flex items-center">
+          {icon}
+        </span>
+      )}
+
       {children}
     </button>
   );

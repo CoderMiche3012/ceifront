@@ -16,10 +16,7 @@ import { FormatoImpresion } from "../../features/postulantes/components/FormatoS
 import { usePermissions } from "../../context/PermissionsContext";
 
 export default function PostulantesPagina() {
-  const {
-    hasModulePermission,
-    loading: isPermsLoading,
-  } = usePermissions();
+  const { hasModulePermission, loading: isPermsLoading,} = usePermissions();
 
   const canCreate = hasModulePermission("postulantes", "crear");
 
@@ -32,7 +29,7 @@ export default function PostulantesPagina() {
   const navigate = useNavigate();
 
   const nombreArchivo =
-    postulanteAImprimir?.id_expediente?.nombre
+    postulanteAImprimir?.expediente?.nombre
       ?.replace(/\s+/g, "_")
       ?.replace(/[^\w-]/g, "") || "Postulante";
 
@@ -79,6 +76,7 @@ export default function PostulantesPagina() {
     setCurrentPage,
     PAGE_SIZE,
   } = usePostulantesPage();
+
 
   return (
     <section className="space-y-6">

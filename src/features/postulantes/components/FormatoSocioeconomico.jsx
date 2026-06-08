@@ -70,6 +70,8 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
     if (!postulante) return null;
     const { expediente, fecha_visita, fecha_nacimiento, tutor_nombre, tutor_telefono } = postulante;
     const familia = expediente?.familia || [];
+    const direccion = postulante?.expediente?.direccion;
+    const geo = direccion?.geografia;
     const fechaEncuesta = fecha_visita
         ? new Date(fecha_visita).toLocaleDateString()
         : "________________";
@@ -140,7 +142,7 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                             Nombre del niño / <span className="text-[10px] italic font-normal text-slate-600">Name:</span>
                         </span>
                         <span className="text-[11px] font-bold whitespace-nowrap">
-                            {postulante.id_expediente?.nombre} {postulante.id_expediente?.apellido_p} {postulante.id_expediente?.apellido_m}
+                            {postulante.expediente?.nombre} {postulante.expediente?.apellido_p} {postulante.expediente?.apellido_m}
                         </span>
                     </div>
 
@@ -150,7 +152,7 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                             Edad / <span className="text-[10px] italic font-normal text-slate-600">Age:</span>
                         </span>
                         <span className="text-[11px] font-bold whitespace-nowrap">
-                            {calcularEdad(postulante.id_expediente?.fecha_nacimiento)} años
+                            {calcularEdad(postulante.expediente?.fecha_nacimiento)} años
                         </span>
                     </div>
 
@@ -183,7 +185,7 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                                 <tr key={index} className="text-center h-8">
                                     <td className="border border-black p-1 text-[10px] text-left">{miembro.nombre} {miembro.apellido_p} {miembro.apellido_m}</td>
                                     <td className="border border-black p-1 text-[10px]">{miembro.parentesco}</td>
-                                    <td className="border border-black p-1 text-[10px]">{miembro.edad}</td>
+                                    <td className="border border-black p-1 text-[10px]">{miembro.fecha_nacimiento ? `${calcularEdad(miembro.fecha_nacimiento)} años` : "--"}</td>
                                     <td className="border border-black p-1 text-[10px]">{miembro.actividad_principal || "---"}</td>
                                     <td className="border border-black p-1 text-[10px]">${miembro.salario || "0.00"}</td>
                                 </tr>
@@ -212,21 +214,23 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                 <p className="text-[11px] font-bold text-slate-500">
                     Dirección:{" "}
                     <span className="text-[11px] font-bold text-slate-500">
-                        Calle {postulante.id_expediente?.id_direccion?.calle}, # {postulante.id_expediente?.id_direccion?.numero}
-                        , Col. {postulante.id_expediente?.id_direccion?.colonia}, {postulante.id_expediente?.id_direccion?.municipio}
-                        , C.P {postulante.id_expediente?.id_direccion?.cp}
+                        Calle {direccion?.calle || "____"}, #
+                        {direccion?.numero || "____"},
+                        Col. {geo?.colonia || "____"},
+                        {geo?.municipio || "____"},
+                        C.P {geo?.codigo_postal || "____"}
                     </span>
                 </p>
                 <p className="text-[11px] font-bold text-slate-500">
                     Referencia:{" "}
                     <span className="text-[11px] font-bold text-slate-500">
-                        {postulante.referencia_casa || ""}
+                        {postulante.estudio?.referencia_casa || ""}
                     </span>
                 </p>
                 <p className="text-[11px] font-bold text-slate-500">
                     ¿Por medio de quien se enteró del Programa?{" "}
                     <span className="text-[11px] font-bold text-slate-500">
-                        {postulante.referencia_ingreso || ""}
+                        {postulante.estudio?.referencia_ingreso || ""}
                     </span>
                 </p>
                 <p className="text-[11px] font-bold text-slate-500">
@@ -596,12 +600,16 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
 
                         <span>
                             Semana / <span className="italic text-slate-600">week</span> $
-                            <span className="border-b border-black inline-block min-w-[50px] ml-1"></span>
+                            <span className="text-[11px] font-bold whitespace-nowrap">
+                                {(postulante.estudio?.gastos?.[0]?.monto ?? 0) / 4}
+                            </span>
                         </span>
 
                         <span>
                             Mes / <span className="italic text-slate-600">month</span> $
-                            <span className="border-b border-black inline-block min-w-[50px] ml-1"></span>
+                            <span className="text-[11px] font-bold whitespace-nowrap">
+                                {postulante.estudio?.gastos?.[0]?.monto ?? 0}
+                            </span>
                         </span>
 
                     </div>
@@ -613,11 +621,15 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                         </span>
                         <span>
                             Semana / <span className="italic text-slate-600">week</span> $
-                            <span className="border-b border-black inline-block min-w-[50px] ml-1"></span>
+                            <span className="text-[11px] font-bold whitespace-nowrap">
+                                {(postulante.estudio?.gastos?.[1]?.monto ?? 0) / 4}
+                            </span>
                         </span>
                         <span>
                             Mes / <span className="italic text-slate-600">month</span> $
-                            <span className="border-b border-black inline-block min-w-[50px] ml-1"></span>
+                            <span className="text-[11px] font-bold whitespace-nowrap">
+                                {postulante.estudio?.gastos?.[1]?.monto ?? 0}
+                            </span>
                         </span>
                     </div>
                     <div className="flex items-center gap-4 text-[10px] flex-wrap break-inside-avoid-page">
@@ -788,7 +800,7 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                         <span className="italic text-slate-600"> Reasons why you feel you need the support</span>
                     </p>
                     <div className="flex items-center gap-3">
-                        
+
 
                         <span>Continuar mis estudios</span>
                         <span className="w-3 h-3 border border-black"></span>
@@ -823,4 +835,6 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
     );
 });
 export const FormatoImpresion = React.memo(FormatoImpresionComponent);
+
+
 

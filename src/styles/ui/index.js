@@ -11,6 +11,9 @@ import { form, input } from "./forms";
 import { modal } from "./modals";
 import { headerBar } from "./headerBar";
 import { userMenu } from "./userMenu";
+import { icon } from "./icons";
+import { status } from "./status";
+import { visit } from "./visit";
 
 export const ui = {
   //verifiado
@@ -19,6 +22,11 @@ export const ui = {
   text: {
     ...uiTheme.typography,
     label: `text-xs font-semibold uppercase tracking-wider text-slate-400`,
+
+    primary: "text-slate-800",
+    secondary: "text-slate-600",
+    muted: "text-slate-500",
+    soft: "text-slate-400",
   },
   //verificado
   header: {
@@ -36,6 +44,12 @@ export const ui = {
   cardCompact,
   //verificado
   button,
+  //verificado
+  visit,
+  //verificado
+  icon,
+  //verificado
+  status,
   //verificado
   badge,
   //verificado

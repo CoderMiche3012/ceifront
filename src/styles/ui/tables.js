@@ -14,4 +14,6 @@ export const table = {
   userCell: `flex items-center gap-3 min-w-[220px]`,
 
   empty: "px-6 py-10 text-center text-sm text-[#94a3b8]",
+  cellFlex: "flex items-center gap-3",
+  cellStack: "flex flex-col gap-0.5",
 };

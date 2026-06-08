@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { obtenerEstudios, obtenerEstudioPorId, crearEstudio, actualizarEstudio, eliminarEstudio, } from "../services/estudiosService";
 import { estudiosKeys } from "../services/estudiosKeys";
+import { postulantesKeys } from "../services/postulantesKeys";
 
 
 // lista
@@ -44,10 +45,18 @@ export function useActualizarEstudio() {
       actualizarEstudio(id, data),
 
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: estudiosKeys.all,
-      });
-    },
+  queryClient.invalidateQueries({
+    queryKey: estudiosKeys.all,
+  });
+
+  queryClient.invalidateQueries({
+    queryKey: postulantesKeys.all,
+  });
+
+  queryClient.invalidateQueries({
+    queryKey: postulantesKeys.details(),
+  });
+}
   });
 }
 

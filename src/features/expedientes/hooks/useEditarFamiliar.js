@@ -1,14 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useActualizarFamilia } from "./useFamilia";
-import { useQueryClient } from "@tanstack/react-query";
-import { postulantesKeys } from "../../../features/postulantes/services/postulantesKeys";
 
 export const useEditarFamiliar = (
   editando,
+  setEditando,
   onClose,
 ) => {
-
-  const queryClient = useQueryClient();
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [generalError, setGeneralError] = useState("");
@@ -29,15 +26,24 @@ export const useEditarFamiliar = (
   }, [editando?.id]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type, checked } =
+      e.target;
 
-    let val = type === "checkbox" ? checked : value;
+    let val =
+      type === "checkbox"
+        ? checked
+        : value;
 
     if (name === "telefono") {
-      val = value.replace(/\D/g, "").slice(0, 10);
+      val = value
+        .replace(/\D/g, "")
+        .slice(0, 10);
     }
 
-    editando[name] = val; // ⚠️ solo local mutation controlado por React state externo
+    setEditando((prev) => ({
+      ...prev,
+      [name]: val,
+    }));
 
     if (fieldErrors[name]) {
       setFieldErrors((prev) => ({
@@ -45,39 +51,102 @@ export const useEditarFamiliar = (
         [name]: "",
       }));
     }
+
+    if (generalError) {
+      setGeneralError("");
+    }
   };
 
   const validate = () => {
 
-    const required = [
-      "nombre",
-      "apellido_p",
-      "parentesco",
-      "edad",
-      "telefono",
-      "actividad_principal",
-      "salario",
-      "vive_en_casa",
-    ];
-
     const errors = {};
 
-    required.forEach((field) => {
-      if (
-        editando[field] === undefined ||
-        editando[field] === null ||
-        editando[field] === ""
-      ) {
-        errors[field] = "Este campo es obligatorio";
-      }
-    });
+    if (!editando.nombre?.trim()) {
+      errors.nombre = "El nombre es obligatorio";
+    }
+
+    if (!editando.apellido_p?.trim()) {
+      errors.apellido_p =
+        "El apellido paterno es obligatorio";
+    }
+
+    if (!editando.parentesco?.trim()) {
+      errors.parentesco =
+        "Seleccione un parentesco";
+    }
+
+    if (!editando.fecha_nacimiento) {
+      errors.fecha_nacimiento =
+        "Seleccione una fecha";
+    }
+
+    if (!editando.telefono?.trim()) {
+      errors.telefono =
+        "El teléfono es obligatorio";
+    } else if (
+      editando.telefono.length !== 10
+    ) {
+      errors.telefono =
+        "El teléfono debe tener 10 dígitos";
+    }
+
+    if (!editando.actividad_principal?.trim()) {
+      errors.actividad_principal =
+        "La ocupación es obligatoria";
+    }
+
+    if (
+      editando.salario === "" ||
+      editando.salario === null ||
+      editando.salario === undefined
+    ) {
+      errors.salario =
+        "El salario es obligatorio";
+    }
+
+    if (
+      editando.vive_en_casa === "" ||
+      editando.vive_en_casa === null ||
+      editando.vive_en_casa === undefined
+    ) {
+      errors.vive_en_casa =
+        "Seleccione una opción";
+    }
+
+    setFieldErrors(errors);
 
     if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      setGeneralError("Completa los campos obligatorios.");
 
-      const firstError = Object.keys(errors)[0];
-      fieldRefs.current[firstError]?.focus();
+      const labels = {
+        nombre: "Nombre",
+        apellido_p: "Apellido paterno",
+        parentesco: "Parentesco",
+        fecha_nacimiento:
+          "Fecha de nacimiento",
+        telefono: "Teléfono",
+        actividad_principal:
+          "Ocupación / Grado escolar",
+        salario: "Salario o escuela",
+        vive_en_casa:
+          "Habita en el mismo domicilio",
+      };
+
+      const campos = Object.keys(errors)
+        .map(
+          (key) => labels[key] || key
+        )
+        .join(", ");
+
+      setGeneralError(
+        `Revisa los siguientes campos: ${campos}`
+      );
+
+      const firstError =
+        Object.keys(errors)[0];
+
+      fieldRefs.current[
+        firstError
+      ]?.focus?.();
 
       return false;
     }
@@ -94,56 +163,95 @@ export const useEditarFamiliar = (
 
       const payload = {
         ...editando,
-        edad: Number(editando.edad),
         vive_en_casa:
-          String(editando.vive_en_casa) === "true",
+          String(
+            editando.vive_en_casa
+          ) === "true",
       };
 
-      await editarMutation.mutateAsync(payload);
-
-      // 🔥 clave: refrescar expediente automáticamente
-      queryClient.invalidateQueries({
-        queryKey: postulantesKeys.detail(
-          editando.id_postulante
-        ),
+      await editarMutation.mutateAsync({
+        id: payload.id_familia,
+        data: payload,
       });
 
       setResultType("success");
-      setResultTitle("Actualización exitosa");
-      setResultMessage("El familiar fue actualizado correctamente.");
+      setResultTitle(
+        "Actualización exitosa"
+      );
+      setResultMessage(
+        "El familiar fue actualizado correctamente."
+      );
       setResultOpen(true);
 
     } catch (error) {
 
-      setResultType("error");
-      setResultTitle("Error");
-      setResultMessage(
-        error.message ||
-          "No se pudo actualizar el familiar.",
-      );
-      setResultOpen(true);
+      const backendData =
+        error?.errors ||
+        error?.response?.data?.errors ||
+        error?.response?.data;
 
-      if (error.response?.data) {
-        const backendErrors = {};
+      if (
+        backendData &&
+        typeof backendData === "object"
+      ) {
 
-        Object.entries(error.response.data).forEach(
-          ([key, val]) => {
-            backendErrors[key] = Array.isArray(val)
-              ? val[0]
-              : val;
+        const parsedErrors = {};
+
+        Object.entries(backendData).forEach(
+          ([key, value]) => {
+            parsedErrors[key] =
+              Array.isArray(value)
+                ? value[0]
+                : value;
           }
         );
 
-        setFieldErrors(backendErrors);
+        setFieldErrors(parsedErrors);
+
+        const labels = {
+          nombre: "Nombre",
+          apellido_p: "Apellido paterno",
+          apellido_m: "Apellido materno",
+          parentesco: "Parentesco",
+          fecha_nacimiento: "Fecha de nacimiento",
+          telefono: "Teléfono",
+          actividad_principal:
+            "Ocupación / Grado escolar",
+          salario: "Salario o escuela",
+          vive_en_casa:
+            "Habita en el mismo domicilio",
+        };
+
+        const campos = Object.keys(parsedErrors)
+          .map(
+            (key) =>
+              labels[key] || key
+          )
+          .join(", ");
+
+        setGeneralError(
+          `Revisa los siguientes campos: ${campos}`
+        );
+
+        return;
       }
+
+      setResultType("error");
+      setResultTitle("Error");
+      setResultMessage(
+        error?.message ||
+        "No se pudo actualizar el familiar."
+      );
+      setResultOpen(true);
     }
   };
 
   const handleCloseResult = () => {
+
     setResultOpen(false);
 
     if (resultType === "success") {
-      onClose();
+      onClose?.();
     }
   };
 
@@ -155,10 +263,12 @@ export const useEditarFamiliar = (
     confirmOpen,
     setConfirmOpen,
 
-    loading: editarMutation.isPending,
+    loading:
+      editarMutation.isPending,
 
     fieldErrors,
     generalError,
+    setGeneralError,
     fieldRefs,
 
     resultOpen,

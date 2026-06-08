@@ -1,69 +1,44 @@
 import { useState, useMemo } from "react";
-
 import { usePostulante } from "./usePostulantes";
-import { useEstudios } from "./useEstudios";
-import { useVisitas } from "./useVisitas";
 
 export const useExpedienteData = (id) => {
   const [tab, setTab] = useState("generales");
 
-  // queries
   const {
     data: postulante,
     isLoading: loadingPostulante,
   } = usePostulante(id);
 
-  const {
-    data: estudiosData,
-    isLoading: loadingEstudios,
-  } = useEstudios();
+  const loading = loadingPostulante;
 
-  const {
-    data: visitasData,
-    isLoading: loadingVisitas,
-  } = useVisitas();
+  // -------------------------
+  // BASE
+  // -------------------------
+  const expediente = postulante?.expediente;
 
-  // loading general
-  const loading =
-    loadingPostulante ||
-    loadingEstudios ||
-    loadingVisitas;
-
-  // expediente
-  const expediente = postulante?.id_expediente;
-
-  // familia
   const familia = expediente?.familia || [];
-
   const fotografias = expediente?.fotografias || [];
 
-  // tutor principal
   const tutor = familia.find(
     (f) => f.es_tutor_principal
   );
 
-  // estudios
-  const listaEstudios = Array.isArray(estudiosData)
-    ? estudiosData
-    : estudiosData?.results || [];
+  // -------------------------
+  // ESTUDIO (YA VIENE EN POSTULANTE)
+  // -------------------------
+  const estudio = postulante?.estudio;
+  const gastos = postulante?.estudio?.gastos || [];
 
-  const estudioExpediente = listaEstudios.find(
-    (e) =>
-      String(e.id_expediente) ===
-      String(expediente?.id_expediente)
-  );
+  // -------------------------
+  // VISITA (YA VIENE EN POSTULANTE)
+  // -------------------------
+  const visitasFiltradas = postulante?.visita
+    ? [postulante.visita]
+    : [];
 
-  // visitas
-  const listaVisitas = Array.isArray(visitasData)
-    ? visitasData
-    : visitasData?.results || [];
-
-  const visitasFiltradas = listaVisitas.filter(
-    (v) =>
-      String(v.id_postulante) === String(id)
-  );
-
-  // data unificada
+  // -------------------------
+  // DATA UNIFICADA
+  // -------------------------
   const data = useMemo(() => ({
     nombre: expediente?.nombre,
     apellido_p: expediente?.apellido_p,
@@ -71,77 +46,50 @@ export const useExpedienteData = (id) => {
     genero: expediente?.genero,
     correo: expediente?.correo,
     telefono: expediente?.telefono,
-    fecha_nacimiento:
-      expediente?.fecha_nacimiento,
+    fecha_nacimiento: expediente?.fecha_nacimiento,
 
-    cp: expediente?.id_direccion?.cp,
-    municipio:
-      expediente?.id_direccion?.municipio,
-    calle: expediente?.id_direccion?.calle,
-    numero:
-      expediente?.id_direccion?.numero,
-    colonia:
-      expediente?.id_direccion?.colonia,
+    cp: expediente?.direccion?.geografia?.codigo_postal,
+    municipio: expediente?.direccion?.geografia?.municipio,
+    colonia: expediente?.direccion?.geografia?.colonia,
+    calle: expediente?.direccion?.calle,
+    numero: expediente?.direccion?.numero,
 
     familia,
     fotografias,
+    gastos,
 
-    id_expediente:
-      expediente?.id_expediente,
+    id_expediente: expediente?.id_expediente,
+    id_direccion: expediente?.direccion?.id_direccion,
 
-    id_direccion:
-      expediente?.id_direccion
-        ?.id_direccion,
-    
-
-    id_postulante:
-      postulante?.id_postulante,
-
-    estatus_postulante:
-      postulante?.estatus,
+    id_postulante: postulante?.id_postulante,
+    estatus_postulante: postulante?.estatus,
 
     tutor_nombre: tutor
-      ? `${tutor.nombre} ${tutor.apellido_p} ${
-          tutor.apellido_m || ""
-        }`
+      ? `${tutor.nombre} ${tutor.apellido_p} ${tutor.apellido_m || ""}`
       : "--",
 
     // estudio
-    id_estudio:
-      estudioExpediente?.id_estudio,
-
-    link_documento:
-  estudioExpediente?.link_documento,
-
-    nivel_escolar_inicial:
-      estudioExpediente?.nivel_escolar_inicial,
-
-    estatus_estudio:
-      estudioExpediente?.estatus_estudio,
-
-    prioridad_servicio:
-      estudioExpediente?.prioridad_servicio,
-
-    nota_servicio:
-      estudioExpediente?.nota_servicio,
-
-    grado_escolar_inicial:
-      estudioExpediente?.grado_escolar_inicial,
-
-    referencia_casa:
-      estudioExpediente?.referencia_casa,
-
-    referencia_ingreso:
-      estudioExpediente?.referencia_ingreso,
+    id_estudio: estudio?.id_estudio,
+    link_documento: estudio?.link_documento,
+    nivel_escolar_inicial: estudio?.nivel_escolar_inicial,
+    estatus_estudio: estudio?.estatus_estudio,
+    prioridad_servicio: estudio?.prioridad_servicio,
+    nota_servicio: estudio?.nota_servicio,
+    grado_escolar_inicial: estudio?.grado_escolar_inicial,
+    referencia_casa: estudio?.referencia_casa,
+    referencia_ingreso: estudio?.referencia_ingreso,
   }), [
     expediente,
     familia,
+    fotografias,
     postulante,
     tutor,
-    estudioExpediente,
+    estudio,
   ]);
 
-  // estatus UI
+  // -------------------------
+  // ESTATUS UI
+  // -------------------------
   const estatusInfo = useMemo(() => {
     const estatus =
       data?.estatus_postulante?.toLowerCase();
@@ -150,65 +98,40 @@ export const useExpedienteData = (id) => {
       case "aceptado":
         return {
           text: "Aceptado",
-          className:
-            "bg-green-100 text-green-600",
+          className: "bg-green-100 text-green-600",
         };
-
       case "rechazado":
         return {
           text: "Rechazado",
-          className:
-            "bg-red-100 text-red-600",
+          className: "bg-red-100 text-red-600",
         };
-
       case "en revisión":
         return {
           text: "En Revisión",
-          className:
-            "bg-amber-100 text-amber-600",
+          className: "bg-amber-100 text-amber-600",
         };
-
-      case "espera":
-        return {
-          text: "En Espera",
-          className:
-            "bg-teal-100 text-teal-600",
-        };
-
       default:
         return {
-          text: "Sin estatus",
-          className:
-            "bg-slate-100 text-slate-500",
+          text: "Pendiente",
+          className: "bg-slate-100 text-slate-500",
         };
     }
   }, [data?.estatus_postulante]);
 
-  // edad
+  // -------------------------
+  // EDAD
+  // -------------------------
   const edad = useMemo(() => {
-    if (!data?.fecha_nacimiento)
-      return "--";
+    if (!data?.fecha_nacimiento) return "--";
 
     const hoy = new Date();
+    const cumple = new Date(data.fecha_nacimiento);
 
-    const cumple = new Date(
-      data.fecha_nacimiento
-    );
+    let edad = hoy.getFullYear() - cumple.getFullYear();
 
-    let edad =
-      hoy.getFullYear() -
-      cumple.getFullYear();
+    const m = hoy.getMonth() - cumple.getMonth();
 
-    const m =
-      hoy.getMonth() -
-      cumple.getMonth();
-
-    if (
-      m < 0 ||
-      (m === 0 &&
-        hoy.getDate() <
-          cumple.getDate())
-    ) {
+    if (m < 0 || (m === 0 && hoy.getDate() < cumple.getDate())) {
       edad--;
     }
 

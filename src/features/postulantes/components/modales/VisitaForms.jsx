@@ -1,53 +1,59 @@
-// Formulario para Agendar/Reprogramar
+import { useState, useEffect } from "react";
+import { ui } from "../../../../styles/ui/index";
+
+import Field from "../../../../components/ui/Field";
+import Input from "../../../../components/ui/InputG";
+
 export const FormAgendar = ({ data, onChange }) => (
-  <div className="mt-4 space-y-4 text-left">
-    <div className="flex flex-col gap-1">
-      <label className="text-[10px] font-bold text-slate-400 uppercase">Fecha de Visita</label>
-      <input 
-        type="date" 
-        className="w-full rounded-xl border border-slate-200 p-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0E5F63]/20" 
-        value={data.fecha}
-        onChange={(e) => onChange({...data, fecha: e.target.value})} 
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <Field label="Fecha de visita" required>
+      <Input
+        type="date"
+        value={data.fecha || ""}
+        onChange={(e) =>
+          onChange({ ...data, fecha: e.target.value })
+        }
       />
-    </div>
-    <div className="flex flex-col gap-1">
-      <label className="text-[10px] font-bold text-slate-400 uppercase">Hora</label>
-      <input 
-        type="time" 
-        className="w-full rounded-xl border border-slate-200 p-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0E5F63]/20" 
-        value={data.hora}
-        onChange={(e) => onChange({...data, hora: e.target.value})} 
+    </Field>
+
+    <Field label="Hora" required>
+      <Input
+        type="time"
+        value={data.hora || ""}
+        onChange={(e) =>
+          onChange({ ...data, hora: e.target.value })
+        }
       />
-    </div>
+    </Field>
+
   </div>
 );
 
-// Formulario para Notas
 export const FormFinalizar = ({ data, onChange }) => (
-  <div className="mt-4 text-left">
-    <label className="text-[10px] font-bold text-slate-400 uppercase">Notas del resultado</label>
-    <textarea 
-      className="w-full rounded-xl border border-slate-200 p-2.5 text-sm outline-none focus:ring-2 focus:ring-green-500/20" 
-      rows="3" 
+  <Field label="Notas del resultado">
+    <textarea
+      rows={4}
+      className="w-full rounded-xl border border-slate-200 p-2.5 text-sm outline-none transition focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
       placeholder="Escribe las observaciones de la visita..."
-      value={data.nota}
-      onChange={(e) => onChange({...data, nota: e.target.value})} 
+      value={data.nota || ""}
+      onChange={(e) =>
+        onChange({ ...data, nota: e.target.value })
+      }
     />
-  </div>
+  </Field>
 );
 
-// Formulario para Cancelar con Nota
 export const FormCancelar = ({ data, onChange }) => (
-  <div className="mt-4 text-left">
-    <label className="text-[10px] font-bold text-slate-400 uppercase">
-      Motivo de cancelación
-    </label>
-    <textarea 
-      className="w-full rounded-xl border border-slate-200 p-2.5 text-sm outline-none focus:ring-2 focus:ring-red-500/20" 
-      rows="3" 
+  <Field label="Motivo de cancelación">
+    <textarea
+      rows={4}
+      className="w-full rounded-xl border border-slate-200 p-2.5 text-sm outline-none transition focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
       placeholder="Escribe el motivo de la cancelación..."
       value={data.nota || ""}
-      onChange={(e) => onChange({ ...data, nota: e.target.value })} 
+      onChange={(e) =>
+        onChange({ ...data, nota: e.target.value })
+      }
     />
-  </div>
+  </Field>
 );

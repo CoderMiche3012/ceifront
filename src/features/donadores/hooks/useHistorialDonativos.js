@@ -197,8 +197,6 @@ export default function useHistorialDonativos(data) {
       } catch (err) {
 
         const backendErrors = err?.errors || err?.response?.data;
-
-        console.log(backendErrors);
         setModalConf({
           open: false,
           data: null,
