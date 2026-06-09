@@ -1,11 +1,4 @@
-import {
-  Pencil,
-  Plus,
-  Users,
-  Check,
-  X,
-  Trash2,
-} from "lucide-react";
+import { Pencil, Plus, Users, Check, X, Trash2 } from "lucide-react";
 
 import React, { useState } from "react";
 
@@ -22,12 +15,23 @@ import { useFamiliaTabla } from "../../hooks/useFamiliaTabla";
 
 import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
+import { usePermissions } from "../../../../context/PermissionsContext";
 
 export default function ComposicionFamiliar({
   familia = [],
   expedienteId,
   postulanteId,
+  puedeEditar = true,
 }) {
+
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canEdit = hasModulePermission("familia", "editar");
+  const canCreate = hasModulePermission("familia", "eliminar");
+  const canDelete = hasModulePermission("familia", "crear");
+
+  const puedeCrear = canCreate && puedeEditar;
+  const puedeModificar = canEdit && puedeEditar;
+  const puedeEliminar = canDelete && puedeEditar;
 
   const [confirmarEliminar, setConfirmarEliminar] =
     useState({
@@ -257,40 +261,41 @@ export default function ComposicionFamiliar({
           row.es_tutor_principal;
 
         return (
-          <AccionesTabla
-            row={row}
-            actions={[
-              {
-                label: "Editar",
+  <AccionesTabla
+    row={row}
+    actions={[
+      ...(canEdit && puedeEditar
+        ? [
+            {
+              label: "Editar",
 
-                icon: (
-                  <Pencil size={18} />
-                ),
+              icon: <Pencil size={18} />,
 
-                onClick: abrirEditar,
+              onClick: abrirEditar,
 
-                className:
-                  "p-2 rounded-lg bg-slate-100 hover:bg-teal-100 text-slate-500 hover:text-teal-600 transition",
-              },
+              className:
+                "p-2 rounded-lg bg-slate-100 hover:bg-teal-100 text-slate-500 hover:text-teal-600 transition",
+            },
+          ]
+        : []),
 
-              ...(!esTutor
-                ? [{
-                  label: "Eliminar",
+      ...(!esTutor && canDelete && puedeEditar
+        ? [
+            {
+              label: "Eliminar",
 
-                  icon: (
-                    <Trash2 size={18} />
-                  ),
+              icon: <Trash2 size={18} />,
 
-                  onClick:
-                    preHandleEliminar,
+              onClick: preHandleEliminar,
 
-                  className:
-                    "p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 transition",
-                }]
-                : []),
-            ]}
-          />
-        );
+              className:
+                "p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 transition",
+            },
+          ]
+        : []),
+    ]}
+  />
+);
       }
 
       default:
@@ -315,13 +320,14 @@ export default function ComposicionFamiliar({
 
           Composición Familiar
         </h3>
-
-        <BotonInterno
-          icon={<Plus size={18} />}
-          onClick={abrirCrear}
-        >
-          Agregar Miembro
-        </BotonInterno>
+        {puedeCrear && (
+          <BotonInterno
+            icon={<Plus size={18} />}
+            onClick={abrirCrear}
+          >
+            Agregar Miembro
+          </BotonInterno>
+        )}
       </div>
 
       {/* filtros */}

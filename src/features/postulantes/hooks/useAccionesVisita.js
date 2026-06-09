@@ -10,7 +10,6 @@ export const useAccionesVisita = (item,idPostulante = null) => {
   const [modalMode, setModalMode] = useState(null);
   const [loading, setLoading] = useState(false);
 
-
   const [formData, setFormData] = useState({
     fecha: "",
     hora: "",
@@ -24,21 +23,14 @@ export const useAccionesVisita = (item,idPostulante = null) => {
     message: "",
   });
 
-  const resetForm = () =>
-    setFormData({ fecha: "", hora: "", nota: "" });
+  const resetForm = () => setFormData({ fecha: "", hora: "", nota: "" });
 
-  // =========================
-  // INIT FORM
-  // =========================
   useEffect(() => {
     if (modalMode === "agendar") {
       if (item?.id_visita && item?.fecha_visita) {
-        const [fecha, resto] =
-          item?.fecha_visita.split("T");
+        const [fecha, resto] = item?.fecha_visita.split("T");
 
-        const hora = resto
-          ? resto.substring(0, 5)
-          : "";
+        const hora = resto ? resto.substring(0, 5) : "";
 
         setFormData({
           fecha,
@@ -50,10 +42,7 @@ export const useAccionesVisita = (item,idPostulante = null) => {
       }
     }
 
-    if (
-      modalMode === "finalizar" ||
-      modalMode === "cancelar"
-    ) {
+    if ( modalMode === "finalizar" || modalMode === "cancelar" ) {
       setFormData((prev) => ({
         ...prev,
         nota: "",
@@ -61,16 +50,11 @@ export const useAccionesVisita = (item,idPostulante = null) => {
     }
   }, [modalMode, item]);
 
-  // =========================
-  // EXECUTE ACTION
-  // =========================
   const ejecutarAccion = async () => {
     setLoading(true);
 
     try {
-      // =====================
-      // AGENDAR / REPROGRAMAR
-      // =====================
+
       if (modalMode === "agendar") {
         if (!formData.fecha || !formData.hora) {
           throw new Error(
@@ -95,10 +79,6 @@ export const useAccionesVisita = (item,idPostulante = null) => {
           await crearVisitaMutation.mutateAsync(payload);
         }
       }
-
-      // =====================
-      // FINALIZAR
-      // =====================
       else if (modalMode === "finalizar") {
         if (!formData.nota) {
           throw new Error(
@@ -115,9 +95,6 @@ export const useAccionesVisita = (item,idPostulante = null) => {
         });
       }
 
-      // =====================
-      // CANCELAR
-      // =====================
       else if (modalMode === "cancelar") {
         await actualizarVisitaMutation.mutateAsync({
           id: item?.id_visita,
@@ -128,9 +105,6 @@ export const useAccionesVisita = (item,idPostulante = null) => {
         });
       }
 
-      // =====================
-      // SUCCESS UI
-      // =====================
       setResult({
         open: true,
         type: "success",
@@ -141,7 +115,6 @@ export const useAccionesVisita = (item,idPostulante = null) => {
       setModalMode(null);
       resetForm();
 
-      // 🔥 seguridad extra (opcional)
       queryClient.invalidateQueries({
         queryKey: visitasKeys.all,
       });

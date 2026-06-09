@@ -5,8 +5,7 @@ import { postulantesKeys } from "../services/postulantesKeys";
 
 
 // lista
-export function useEstudios() {
-  return useQuery({
+export function useEstudios() {  return useQuery({
     queryKey: estudiosKeys.all,
     queryFn: obtenerEstudios,
   });
@@ -53,9 +52,7 @@ export function useActualizarEstudio() {
     queryKey: postulantesKeys.all,
   });
 
-  queryClient.invalidateQueries({
-    queryKey: postulantesKeys.details(),
-  });
+ 
 }
   });
 }

@@ -1,33 +1,31 @@
-import { CheckCircle, Lock, Loader2, AlertCircle, Clock, Check, X, ChevronRight, } from "lucide-react";
+import { CheckCircle, Lock, Loader2, AlertCircle, Clock, Check, X, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
-import { actualizarPostulante } from "../../../services/postulantesService";
-import { crearBeneficiario } from "../../../../beneficiarios/services/beneficiariosService";
-import { usePeriodoActivo } from "../../../../periodos/hooks/usePeriodoActivo"
-import { crearSeguimiento } from "../../../../../features/beneficiarios/services/seguimientoService";
-import { useActualizarPostulanteDetalle } from "../../../hooks/usePostulantes";
 
-export default function EstatusCard({ data, onChangeDecision }) {
-  const {
-    periodoActivo,
-    idPeriodoActivo,
-  } = usePeriodoActivo();
-  const actualizarPostulanteMutation =
-    useActualizarPostulanteDetalle(
-      data.id_postulante
-    );
-  console.log("per", idPeriodoActivo)
+import { ui } from "../../../../../styles/ui/index";
+
+import { useActualizarPostulanteDetalle, useAceptarPostulante, } from "../../../hooks/usePostulantes";
+import Card from "../../../../../components/ui/Card";
+
+export default function EstatusCard({ data, canEdit }) {
+
+  const aceptarPostulante = useAceptarPostulante();
+  const actualizarPostulanteMutation = useActualizarPostulanteDetalle(data.id_postulante);
+
   const estatusEstudio = data?.estatus_estudio?.toLowerCase()?.trim();
   const estudioCompleto = estatusEstudio === "completo";
-  const noEditable = ["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
+  const tienePrioridad = !!data?.prioridad_servicio;
+  const mostrarAdvertenciaPrioridad = estudioCompleto && !tienePrioridad;
+
+  const puedeEditar =
+    canEdit && tienePrioridad && !["aceptado", "rechazado"].includes(
+      data?.estatus_postulante?.toLowerCase()
+    );
+
   const obtenerEstatusInicial = () => {
+
     const valor = data?.estatus_postulante?.toLowerCase()?.trim();
 
-    if (
-      valor === "aceptado" ||
-      valor === "rechazado" ||
-      valor === "espera" ||
-      valor === "en revisión"
-    ) {
+    if (["aceptado", "rechazado", "espera", "en revisión"].includes(valor)) {
       return valor;
     }
 
@@ -38,41 +36,35 @@ export default function EstatusCard({ data, onChangeDecision }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-  setDecision(
-    obtenerEstatusInicial()
-  );
-}, [data?.estatus]);
+    setDecision(obtenerEstatusInicial());
+  }, [data?.estatus_postulante]);
 
   const handleChange = async (value) => {
     setLoading(true);
 
     try {
-      await actualizarPostulanteMutation.mutateAsync({
-        estatus: value,
-      });
-
+      // si es aceptado
       if (value === "aceptado") {
-        const beneficiario = await crearBeneficiario({
-          estatus: "Activo",
-          fecha_ingreso: new Date().toISOString().split("T")[0],
-          id_expediente: data.id_expediente,
-        });
-        await crearSeguimiento({
-          id_beneficiario: beneficiario.id_beneficiario,
-          id_periodo: idPeriodoActivo,
-          nota_seguimiento: "Seguimiento creado automaticamente",
-          estatus: "Activo",
+        await aceptarPostulante.mutateAsync(data.id_postulante);
+      }
+      // si se rechaza
+      else if (value === "rechazado") {
+        await actualizarPostulanteMutation.mutateAsync({
+          estatus: "inactivo",
         });
       }
-
-
+      // otros
+      else {
+        await actualizarPostulanteMutation.mutateAsync({
+          estatus: value,
+        });
+      }
       setDecision(value);
 
-      if (onChangeDecision) onChangeDecision(value);
-
     } catch (error) {
-      console.error(error);
+
       alert("Error al guardar");
+
     } finally {
       setLoading(false);
     }
@@ -109,136 +101,221 @@ export default function EstatusCard({ data, onChangeDecision }) {
     },
   };
 
-  const renderContenido = () => {
-    if (loading) {
-      return (
-        <div className="flex flex-col items-center justify-center py-12">
-          <Loader2 className="animate-spin text-indigo-500 mb-3" size={32} />
-          <p className="text-sm text-slate-400">Guardando...</p>
-        </div>
-      );
-    }
-
-    if (!estudioCompleto) {
-      return (
-        <div className="flex flex-col items-center py-4">
-          <div className="bg-slate-100 p-4 rounded-2xl mb-4">
-            <Lock className="text-slate-400" size={32} />
-          </div>
-
-          <h3 className="font-bold text-slate-700">
-            Acción restringida
-          </h3>
-
-          <p className="text-xs text-slate-400 mt-2 max-w-[200px]">
-            El estudio socioeconómico debe estar completado para modificar el estatus.
-          </p>
-
-          <div className="mt-6 w-full rounded-xl bg-slate-100 py-3 text-sm font-semibold text-slate-400 border border-slate-200">
-            Bloqueado
-          </div>
-        </div>
-      );
-    }
-
-    if (decision === "en revisión") {
-      return (
-        <div className="flex flex-col items-center py-4">
-          <div className="bg-indigo-50 p-4 rounded-2xl mb-4">
-            <CheckCircle className="text-indigo-500" size={32} />
-          </div>
-
-          <h3 className="text-slate-800 font-bold text-lg">
-            Estatus final
-          </h3>
-
-          <p className="text-sm text-slate-500 mb-6">
-            El postulante espera resolución
-          </p>
-
-          <button
-            onClick={() => setDecision("seleccion")}
-            className="w-full bg-slate-900 hover:bg-indigo-600 text-white py-3 rounded-xl transition"
-          >
-            Definir estatus
-          </button>
-        </div>
-      );
-    }
-
-    if (decision === "seleccion") {
-      const opciones = [
-        { id: "aceptado", label: "Aceptar", icon: Check },
-        { id: "rechazado", label: "Rechazar", icon: X },
-        { id: "espera", label: "En espera", icon: Clock },
-      ];
-
-      return (
-        <div>
-          <h3 className="text-sm font-bold text-slate-400 uppercase mb-4">
-            Cambiar estatus
-          </h3>
-
-          <div className="space-y-2">
-            {opciones.map((opt) => (
-              <button
-                key={opt.id}
-                onClick={() => handleChange(opt.id)}
-                className="w-full flex items-center justify-between p-3 rounded-xl border bg-slate-50 hover:bg-slate-100"
-              >
-                <div className="flex items-center gap-2">
-                  <opt.icon size={16} />
-                  {opt.label}
-                </div>
-
-                <ChevronRight size={16} />
-              </button>
-            ))}
-
-            <button
-              onClick={() => setDecision(obtenerEstatusInicial())}
-              className="text-xs text-slate-400 pt-2"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    const current =
-      statusConfig[decision] || statusConfig["en revisión"];
-
-    const Icon = current.icon;
-
-    return (
-      <div className="flex flex-col items-center py-2">
-        <div className={`${current.bg} ${current.border} border p-4 rounded-3xl mb-4`}>
-          <Icon className={current.color} size={36} />
-        </div>
-
-        <span className="text-xs font-bold text-slate-400 uppercase">
-          Resultado
-        </span>
-
-        <h3 className={`text-2xl font-black ${current.color} mb-6`}>
-          {current.label}
-        </h3>
-        {!noEditable && (
-          <button
-            onClick={() => setDecision("seleccion")}
-            className="text-sm text-slate-400 hover:text-indigo-500"
-          >
-            Cambiar decisión
-          </button>
-        )}
-      </div>
-    );
-  };
+  const current = statusConfig[decision] || statusConfig["en revisión"];
+  const Icon = current.icon;
 
   return (
-    <div className="rounded-3xl bg-white p-8 shadow border border-slate-100 min-h-[300px] flex items-center justify-center text-center">
-      {renderContenido()}
-    </div>
+    <Card className="h-full overflow-hidden p-0">
+      <div className="p-6 border-b border-slate-100">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">
+              Resolución
+            </p>
+            <h2 className="text-xl font-bold text-slate-900 mt-1">
+              Estatus del postulante
+            </h2>
+          </div>
+          <div
+            className={` ${ui.badge.base} ${current.bg} ${current.color} `}>
+            {current.label}
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2
+            className="animate-spin text-indigo-500"
+            size={34}
+          />
+          <p className="mt-4 text-sm text-slate-500">
+            Guardando cambios...
+          </p>
+        </div>
+      ) : !estudioCompleto ? (
+        <div className="p-6">
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+            <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center">
+              <Lock size={28} className="text-slate-500" />
+            </div>
+            <h3 className="mt-5 text-lg font-bold text-slate-800">
+              Estatus bloqueado
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">
+              Debe completarse el estudio socioeconómico antes
+              de tomar una decisión.
+            </p>
+          </div>
+        </div>
+      ) : mostrarAdvertenciaPrioridad ? (
+        <div className="p-6">
+          <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6">
+            <h3 className="text-lg font-bold text-amber-800">
+              Prioridad pendiente
+            </h3>
+            <p className="mt-2 text-sm text-amber-700">
+              El estudio socioeconómico está completo, pero aún no se ha asignado
+              una prioridad de servicio al postulante.
+            </p>
+          </div>
+        </div>
+      )
+        : decision === "en revisión" || decision === "seleccion" ? (
+          <>
+            {/* PROGRESO */}
+            <div className="p-6">
+              <h3 className={`${ui.text.label} mb-5`}>
+                Progreso
+              </h3>
+              <div className="space-y-5">
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <Check
+                      size={16}
+                      className="text-emerald-600"
+                    />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800">
+                      Estudio completado
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Requisitos validados
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <Clock
+                      size={16}
+                      className="text-indigo-600"
+                    />
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-slate-800">
+                      Pendiente de resolución
+                    </p>
+
+                    <p className="text-xs text-slate-500">
+                      Seleccione una decisión final
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+            {/* acciones */}
+            <div className="px-6 pb-6">
+              <h3 className={`${ui.text.label} mb-4`}>
+                Acciones disponibles
+              </h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => handleChange("aceptado")}
+                  className=" w-full p-4 rounded-2xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 transition "
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="text-left">
+                      <p className="font-semibold text-emerald-700">
+                        Aceptar postulante
+                      </p>
+                      <p className="text-xs text-emerald-600 mt-1">
+                        Crear beneficiario automáticamente
+                      </p>
+                    </div>
+
+                    <CheckCircle
+                      size={24}
+                      className="text-emerald-600"
+                    />
+
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleChange("espera")}
+                  className=" w-full p-4 rounded-2xl border border-amber-200 bg-amber-50 hover:bg-amber-100 transition"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="text-left">
+                      <p className="font-semibold text-amber-700">
+                        Mantener en espera
+                      </p>
+
+                      <p className="text-xs text-amber-600 mt-1">
+                        Requiere seguimiento
+                      </p>
+                    </div>
+
+                    <Clock
+                      size={24}
+                      className="text-amber-600"
+                    />
+
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleChange("rechazado")}
+                  className=" w-full p-4 rounded-2xl border border-rose-200 bg-rose-50 hover:bg-rose-100 transition "
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="text-left">
+                      <p className="font-semibold text-rose-700">
+                        Rechazar postulante
+                      </p>
+                      <p className="text-xs text-rose-600 mt-1">
+                        Finalizar proceso
+                      </p>
+                    </div>
+                    <X size={24} className="text-rose-600" />
+                  </div>
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="p-6">
+
+            <div
+              className={` rounded-3xl p-6 border ${current.bg} ${current.border}`}
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className=" w-16 h-16 rounded-2xl bg-white flex items-center justify-center"
+                >
+                  <Icon size={30} className={current.color} />
+                </div>
+
+                <div>
+                  <p className="text-xs uppercase font-bold text-slate-500">
+                    Resultado final
+                  </p>
+
+                  <h2
+                    className={` text-3xl font-black ${current.color}`}
+                  >
+                    {current.label}
+                  </h2>
+                </div>
+
+              </div>
+            </div>
+
+            {puedeEditar && (
+              <button
+                onClick={() => setDecision("seleccion")}
+                className={` ${ui.button.base} ${ui.button.secondary} ${ui.button.sm} mt-5 w-full`}
+              >
+                Cambiar decisión
+              </button>
+            )}
+          </div>
+        )}
+
+    </Card>
   );
 }

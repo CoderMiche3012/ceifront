@@ -3,41 +3,23 @@ import { usePostulantes } from "../hooks/usePostulantes";
 
 export const usePostulantesPage = () => {
   const [filters, setFilters] = useState({
-  visita: "todos",
-  estudio: "todos",
-  decision: "todos",
-  prioridad: "todos",
-});
+    visita: "todos",
+    estudio: "todos",
+    decision: "todos",
+    prioridad: "todos",
+  });
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
   const PAGE_SIZE = 4;
-
-  // ========================
-  // DATA
-  // ========================
-  const {
-    data: postulantes = [],
-    isLoading,
-    error,
-  } = usePostulantes();
-
-  // ========================
-  // FILTERS
-  // ========================
+  const { data: postulantes = [], isLoading, error } = usePostulantes();
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
 
-  // ========================
-  // NORMALIZACIÓN
-  // ========================
   const allData = useMemo(() => {
-    const listaPostulantes = Array.isArray(postulantes)
-      ? postulantes
-      : postulantes?.results || [];
+    const listaPostulantes = Array.isArray(postulantes) ? postulantes : postulantes?.results || [];
 
     return listaPostulantes.map((postulante) => {
       const expediente = postulante.expediente || {};
@@ -57,26 +39,23 @@ export const usePostulantesPage = () => {
         nota_visita: visita.nota_visita || "",
         // estudio
         estatus_estudio: estudio.estatus_estudio || "Pendiente",
-        nivel_escolar_inicial:  estudio.nivel_escolar_inicial || "--",
+        nivel_escolar_inicial: estudio.nivel_escolar_inicial || "--",
         grado_escolar_inicial: estudio.grado_escolar_inicial || "--",
         // tutor
-        tutor_nombre: tutor ? `${tutor.nombre} ${tutor.apellido_p} ${ tutor.apellido_m || "" }`.trim() : "--",
+        tutor_nombre: tutor ? `${tutor.nombre} ${tutor.apellido_p} ${tutor.apellido_m || ""}`.trim() : "--",
         tutor_telefono: tutor?.telefono || "--",
+        prioridad_servicio: estudio.prioridad_servicio || null
       };
     });
   }, [postulantes]);
 
-  // ========================
-  // SEARCH + FILTERS
-  // ========================
   const filteredPostulantes = useMemo(() => {
     const searchLower = search.toLowerCase();
 
     return allData.filter((p) => {
       const nombrePostulante =
-        `${p.expediente?.nombre || ""} ${
-          p.expediente?.apellido_p || ""
-        } ${p.expediente?.apellido_m || ""}`.toLowerCase();
+        `${p.expediente?.nombre || ""} ${p.expediente?.apellido_p || ""
+          } ${p.expediente?.apellido_m || ""}`.toLowerCase();
 
       const matchSearch =
         nombrePostulante.includes(searchLower) ||
@@ -87,22 +66,22 @@ export const usePostulantesPage = () => {
       const matchVisita =
         filters.visita === "todos" ||
         p.estado_visita?.toLowerCase() ===
-          filters.visita.toLowerCase();
+        filters.visita.toLowerCase();
 
       const matchEstudio =
         filters.estudio === "todos" ||
         p.estatus_estudio?.toLowerCase() ===
-          filters.estudio.toLowerCase();
+        filters.estudio.toLowerCase();
 
       const matchDecision =
         filters.decision === "todos" ||
         p.estatus?.toLowerCase() ===
-          filters.decision.toLowerCase();
+        filters.decision.toLowerCase();
 
-const matchPrioridad =
-  filters.prioridad === "todos" ||
-  (p.prioridad_servicio || "").toLowerCase() ===
-    filters.prioridad.toLowerCase();
+      const matchPrioridad =
+        filters.prioridad === "todos" ||
+        (p.prioridad_servicio || "").toLowerCase() ===
+        filters.prioridad.toLowerCase();
 
       return (
         matchSearch &&
@@ -114,9 +93,6 @@ const matchPrioridad =
     });
   }, [allData, search, filters]);
 
-  // ========================
-  // PAGINACIÓN
-  // ========================
   const totalPages = Math.ceil(
     filteredPostulantes.length / PAGE_SIZE
   );
@@ -130,9 +106,6 @@ const matchPrioridad =
     );
   }, [filteredPostulantes, currentPage]);
 
-  // ========================
-  // ACTIONS
-  // ========================
   const handleSearchChange = (value) => {
     setSearch(value);
     setCurrentPage(1);

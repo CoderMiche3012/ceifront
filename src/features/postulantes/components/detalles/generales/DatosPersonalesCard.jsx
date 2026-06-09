@@ -8,12 +8,18 @@ import EditarDatosGenerales from "../../modales/EditarDatosGenerales";
 
 import { ui } from "../../../../../styles/ui/index";
 
-export default function DatosPersonalesCard({ data }) {
+export default function DatosPersonalesCard({ data,canEdit }) {
   const [modalAbierto, setModalAbierto] = useState(false);
+  console.log(data)
+  const gastoAlimentacion =
+  data?.gastos?.find((g) => g.nombre === "Alimentacion")?.monto;
 
-  const noEditable = ["aceptado", "rechazado"].includes(
-    data?.estatus_postulante?.toLowerCase()
-  );
+const gastoTransporte =
+  data?.gastos?.find((g) => g.nombre === "Transporte")?.monto;
+  console.log("t",gastoTransporte,gastoAlimentacion)
+
+    const puedeEditar = canEdit && !["aceptado", "rechazado"].includes( data?.estatus_postulante?.toLowerCase() );
+
 
   return (
     <Card>
@@ -26,7 +32,7 @@ export default function DatosPersonalesCard({ data }) {
           Datos Personales
         </h3>
 
-        {!noEditable && (
+        {puedeEditar && (
           <BotonEditar
             icon={PencilLine}
             onClick={() => setModalAbierto(true)}
@@ -96,7 +102,43 @@ export default function DatosPersonalesCard({ data }) {
           </p>
         </div>
 
+        <div>
+          <p className={ui.text.label}>Nivel escolar inicial</p>
+          <p className="text-slate-700 font-medium">
+            {data.nivel_escolar_inicial || "--"}
+          </p>
+        </div>
+
+        <div>
+          <p className={ui.text.label}>Grado escolar inicial</p>
+          <p className="text-slate-700 font-medium">
+            {data.grado_escolar_inicial || "--"}
+          </p>
+        </div>
+
+        <div>
+          <p className={ui.text.label}>Gasto de alimentación mensual</p>
+          <p className="text-slate-700 font-medium">
+            {gastoAlimentacion ?? "--"}
+          </p>
+        </div>
+
+        <div>
+          <p className={ui.text.label}>Gasto de transporte mensual</p>
+          <p className="text-slate-700 font-medium">
+            {gastoTransporte ?? "--"}
+          </p>
+        </div>
+
+        <div>
+          <p className={ui.text.label}>¿Cómo conoció el programa?</p>
+          <p className="text-slate-700 font-medium">
+            {data.referencia_ingreso || "--"}
+          </p>
+        </div>
+
       </div>
+
 
       {/* DIRECCIÓN */}
       <div className="mt-6 pt-4 border-t border-slate-100">
@@ -110,7 +152,7 @@ export default function DatosPersonalesCard({ data }) {
       </div>
 
       {/* MODAL */}
-      
+
       <EditarDatosGenerales
         open={modalAbierto}
         onClose={() => setModalAbierto(false)}

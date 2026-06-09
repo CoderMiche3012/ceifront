@@ -1,24 +1,28 @@
 import { useRef, useState } from "react";
-import { Trash2, Camera, Plus, ChevronLeft, ChevronRight, ImagePlus } from "lucide-react";
+import { Download, Trash2, Camera, Plus, ChevronLeft, ChevronRight, ImagePlus } from "lucide-react";
 import { HiOutlineX } from "react-icons/hi";
-import { useSubirFotografia } from "../../../hooks/useSubirFotografia";
+
 import { ui } from "../../../../../styles/ui/index";
+
 import Field from "../../../../../components/ui/Field";
 import Input from "../../../../../components/ui/Input";
 import Boton from "../../../../../components/ui/Boton";
 import ModalConfirmacion from "../../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../../components/shared/ModalResultado";
+
 import { useEliminarFotografia } from "../../../../expedientes/hooks/useFotografias";
+import { useSubirFotografia } from "../../../hooks/useSubirFotografia";
+import { usePermissions } from "../../../../../context/PermissionsContext";
+
 
 export default function FotosCard({ data }) {
-  const { mutateAsync: eliminarFoto } =
-    useEliminarFotografia(
-      data.id_expediente,
-      data.id_postulante
-    );
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canEditPostulante = hasModulePermission("postulantes", "editar");
+  const puedeEditar = canEditPostulante && !["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
+
+  const { mutateAsync: eliminarFoto } = useEliminarFotografia(data.id_expediente, data.id_postulante);
 
   const fotos = data?.fotografias || [];
-  console.log(fotos)
 
   const [index, setIndex] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -38,18 +42,15 @@ export default function FotosCard({ data }) {
     setShowConfirm,
 
     resultado,
-      setResultado,
+    setResultado,
     cerrarResultado,
   } = useSubirFotografia(data.id_expediente);
+
   const eliminarFotografiaActual = async () => {
     try {
       await eliminarFoto(fotos[index].id_foto);
-
       setShowDeleteConfirm(false);
-
-      if (index > 0 && index >= fotos.length - 1) {
-        setIndex(index - 1);
-      }
+      if (index > 0 && index >= fotos.length - 1) { setIndex(index - 1); }
 
       setResultado({
         open: true,
@@ -57,6 +58,7 @@ export default function FotosCard({ data }) {
         title: "Fotografía eliminada",
         message: "La fotografía se eliminó correctamente.",
       });
+
     } catch (error) {
       setResultado({
         open: true,
@@ -66,6 +68,7 @@ export default function FotosCard({ data }) {
       });
     }
   };
+
   const next = () => {
     if (!fotos.length) return;
     setIndex((prev) => (prev + 1) % fotos.length);
@@ -76,28 +79,32 @@ export default function FotosCard({ data }) {
     setIndex((prev) => (prev - 1 + fotos.length) % fotos.length);
   };
 
+  const nombre = data
+    ? `Fotografia_${[data.nombre, data.apellido_p, data.apellido_m]
+      .filter(Boolean)
+      .join("_")}_${index + 1}.jpg`
+    : `Fotografia_${index + 1}.jpg`;
+
   return (
     <div className="rounded-3xl bg-white p-5 shadow border border-slate-200 space-y-4">
 
-      {/* HEADER */}
       <div className="flex items-center justify-between">
         <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
           <Camera size={18} />
           Fotos del expediente
         </h3>
-
-        <button
-          onClick={() => setShowModal(true)}
-          className="h-9 w-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center hover:scale-105 transition"
-        >
-          <Plus size={16} />
-        </button>
+        {puedeEditar && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="h-9 w-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center hover:scale-105 transition"
+          >
+            <Plus size={16} />
+          </button>
+        )}
       </div>
 
-      {/* VIEWER */}
       <div className="relative rounded-2xl border border-slate-200 overflow-hidden min-h-[280px] bg-slate-50 flex items-center justify-center">
-       
-        {/* NAV */}
+
         {fotos.length > 0 && (
           <>
             <button
@@ -114,14 +121,13 @@ export default function FotosCard({ data }) {
               <ChevronRight size={16} />
             </button>
 
-            {/* INDICADOR */}
+            {/* indicador */}
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs bg-black/60 text-white px-2 py-1 rounded-full">
               {index + 1} / {fotos.length}
             </div>
           </>
         )}
 
-        {/* EMPTY */}
         {fotos.length === 0 ? (
           <div className="text-center p-6">
             <ImagePlus size={40} className="mx-auto text-slate-400 mb-2" />
@@ -130,129 +136,131 @@ export default function FotosCard({ data }) {
         ) : (
           <img
             src={`http://localhost:8000${fotos[index].foto_archivo}`}
-
             className="w-full h-full object-cover"
           />
         )}
       </div>
       {fotos.length > 0 && (
         <div className="rounded-xl bg-slate-50 px-4 py-3 border border-slate-100 flex items-center justify-between">
-  <p className="text-sm text-slate-700">
-    {fotos[index].descripcion || "Sin descripción"}
-  </p>
+          <p className="text-sm text-slate-700">
+            {fotos[index].descripcion || "Sin descripción"}
+          </p>
+          <div className="flex items-center gap-2">
 
-  <button
-    onClick={() => setShowDeleteConfirm(true)}
-    className="
-      p-2 rounded-lg
-      text-slate-400
-      hover:text-red-600
-      hover:bg-red-50
-      transition
-    "
-  >
-    <Trash2 size={16} />
-  </button>
-</div>
-      )}
-      {showModal && (
-        <div className={ui.modal.formOverlay}>
-          <div className="w-full max-w-2xl">
-            <div className={ui.modal.formContainer}>
+            <button
+              onClick={async () => {
+                const imgUrl = `http://localhost:8000${fotos[index].foto_archivo}`;
 
-              {/* HEADER */}
-              <div className={ui.modal.formHeader}>
-                <div
-                  className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}
-                >
-                  <Camera size={24} />
-                </div>
+                const response = await fetch(imgUrl);
+                const blob = await response.blob();
 
-                <div className="flex-1">
-                  <h2 className={ui.modal.title}>
-                    Agregar Fotografía
-                  </h2>
+                const url = window.URL.createObjectURL(blob);
 
-                  <p className={ui.modal.description}>
-                    Adjunta una fotografía al expediente
-                  </p>
-                </div>
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = nombre;
 
-                <button
-                  onClick={limpiar}
-                  className="p-2 rounded-xl hover:bg-slate-100 transition"
-                >
-                  <HiOutlineX size={20} />
-                </button>
-              </div>
+                document.body.appendChild(link);
+                link.click();
 
-              {/* BODY */}
-              <div className={ui.modal.formBody}>
-                <div className={ui.modal.formScroll}>
-                  <div className="space-y-6">
-
-                    {!preview ? (
-                      <button
-                        onClick={seleccionar}
-                        className="
-                    w-full
-                    border-2
-                    border-dashed
-                    border-slate-300
-                    rounded-2xl
-                    p-12
-                    text-slate-500
-                    hover:border-teal-500
-                    hover:text-teal-600
-                    transition
-                  "
-                      >
-                        Seleccionar fotografía
-                      </button>
-                    ) : (
-                      <img
-                        src={URL.createObjectURL(preview)}
-                        alt="Preview"
-                        className="w-full h-72 object-cover rounded-2xl border"
-                      />
-                    )}
-
-                    <Field label="Descripción">
-                      <Input
-                        value={descripcion}
-                        onChange={(e) =>
-                          setDescripcion(e.target.value)
-                        }
-                        placeholder="Describe la fotografía"
-                      />
-                    </Field>
-
-                  </div>
-                </div>
-
-                {/* FOOTER */}
-                <div className={ui.modal.formActions}>
-                  <Boton
-                    variant="secondary"
-                    onClick={limpiar}
-                  >
-                    Cancelar
-                  </Boton>
-
-                  <Boton
-                    onClick={() => setShowConfirm(true)}
-                    disabled={!preview}
-                  >
-                    Guardar Fotografía
-                  </Boton>
-                </div>
-              </div>
-
-            </div>
+                link.remove();
+                window.URL.revokeObjectURL(url);
+              }}
+              className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
+              title="Descargar foto"
+            >
+              <Download size={16} />
+            </button>
+            {puedeEditar && (
+              < button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition "
+                title="Eliminar foto"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
           </div>
         </div>
       )}
-      {/* INPUT */}
+      {
+        showModal && (
+          <div className={ui.modal.formOverlay}>
+            <div className="w-full max-w-2xl">
+              <div className={ui.modal.formContainer}>
+
+                <div className={ui.modal.formHeader}>
+                  <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`} >
+                    <Camera size={24} />
+                  </div>
+
+                  <div className="flex-1">
+                    <h2 className={ui.modal.title}>
+                      Agregar Fotografía
+                    </h2>
+
+                    <p className={ui.modal.description}>
+                      Adjunta una fotografía al expediente
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={limpiar}
+                    className="p-2 rounded-xl hover:bg-slate-100 transition"
+                  >
+                    <HiOutlineX size={20} />
+                  </button>
+                </div>
+
+                {/* BODY */}
+                <div className={ui.modal.formBody}>
+                  <div className={ui.modal.formScroll}>
+                    <div className="space-y-6">
+
+                      {!preview ? (
+                        <button
+                          onClick={seleccionar}
+                          className="
+                            w-full border-2 border-dashed border-slate-300 rounded-2xl p-12 text-slate-500
+                            hover:border-teal-500 hover:text-teal-600 transition
+                          "
+                        >
+                          Seleccionar fotografía
+                        </button>
+                      ) : (
+                        <img
+                          src={URL.createObjectURL(preview)}
+                          alt="Preview"
+                          className="w-full h-72 object-cover rounded-2xl border"
+                        />
+                      )}
+
+                      <Field label="Descripción">
+                        <Input
+                          value={descripcion}
+                          onChange={(e) => setDescripcion(e.target.value) }
+                          placeholder="Describe la fotografía"
+                        />
+                      </Field>
+                    </div>
+                  </div>
+
+                  <div className={ui.modal.formActions}>
+                    <Boton variant="secondary" onClick={limpiar} >
+                      Cancelar
+                    </Boton>
+                    <Boton onClick={() => setShowConfirm(true)} disabled={!preview} >
+                      Guardar Fotografía
+                    </Boton>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        )
+      }
+
       <input
         ref={inputRef}
         type="file"
@@ -260,6 +268,7 @@ export default function FotosCard({ data }) {
         className="hidden"
         onChange={subirFotos}
       />
+
       <ModalConfirmacion
         open={showConfirm}
         title="Guardar fotografía"
@@ -270,6 +279,7 @@ export default function FotosCard({ data }) {
         onClose={() => setShowConfirm(false)}
         color="teal"
       />
+      
       <ModalConfirmacion
         open={showDeleteConfirm}
         title="Eliminar fotografía"
@@ -288,6 +298,6 @@ export default function FotosCard({ data }) {
         message={resultado.message}
         onClose={cerrarResultado}
       />
-    </div>
+    </div >
   );
 }

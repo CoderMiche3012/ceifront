@@ -21,6 +21,7 @@ import DonadoresPagina from "../pages/donadores/DonadoresPagina";
 import DonadoresDetalle from "../pages/donadores/DonadoresDetalle";
 import PostulantesPagina from "../pages/postulantes/PostulantesPagina";
 import ExpedientePagina from "../pages/postulantes/ExpedientePagina";
+import ReportePostulantes from "../features/reportes/ReportePostulantes";
 
 
 {/*
@@ -149,6 +150,18 @@ export default function AppRouter() {
                 }
               />
             </Route>
+            <Route
+              path="reportes/postulantes"
+              element={
+                <PermissionRoute
+                  modulo="usuarios"
+                  accion="ver"
+                >
+                  <ReportePostulantes />
+                </PermissionRoute>
+              }
+            />
+
             {/* donadores 
             
             /* beneficiarios

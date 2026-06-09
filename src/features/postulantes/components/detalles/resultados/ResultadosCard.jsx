@@ -1,30 +1,22 @@
 import EstatusCard from "./EstatusCard";
 import RecomendacionCard from "./RecomendacionCard";
-export default function resultados({ data, setData }) {
-  const handleUpdateFamilia = (nuevaFamilia) => {
-    if (!setData) return;
-    setData((prev) => ({
-      ...prev,
-      familia: nuevaFamilia,
-    }));
-  };
-  const handleUpdateEstatus = (nuevoEstatus) => {
-    if (!setData) return;
-    setData((prev) => ({
-      ...prev,
-      estatus_postulante: nuevoEstatus,
-    }));
-  };
+import { ui } from "../../../../../styles/ui/index";
+
+export default function Resultados({ data }) {
+
   return (
-    <div className="grid grid-cols-3 gap-6">
-      <div className="col-span-2 space-y-6">
-        <RecomendacionCard data={data}  />
+
+    <div className={ui.layout.twoColumn}>
+      <div className={ui.layout.twoColumnMain}>
+        <RecomendacionCard
+          data={data}
+        />
       </div>
 
-      <div className="col-span-1 space-y-6">
+      <div className={ui.layout.twoColumnAside}>
         <EstatusCard
           data={data}
-          onChangeDecision={handleUpdateEstatus}
+          canEdit={canEdit}
         />
       </div>
     </div>

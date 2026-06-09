@@ -23,25 +23,22 @@ const PAGE_SIZE = 10;
 export default function ReportePostulantes() {
 
     const [search, setSearch] = useState("");
-    const [estatus, setEstatus] = useState("");
+    const [estatus, setEstatus] = useState("Pendiente");
     const [page, setPage] = useState(1);
 
     const { data: postulantes, loading } = useReportePostulantes();
 
-    const postulantesFiltrados =
-        useMemo(() => {
-            return postulantes.filter(
-                (p) => {
+    const postulantesFiltrados = useMemo(() => {
+        return postulantes.filter((p) => {
+            const coincideBusqueda = p.nombreCompleto
+                .toLowerCase()
+                .includes(search.toLowerCase());
 
-                    const coincideBusqueda = p.nombreCompleto.toLowerCase().includes(search.toLowerCase());
-                    const coincideEstatus = !estatus || p.estatus === estatus;
+            const coincideEstatus = p.estatus === estatus;
 
-                    return (
-                        coincideBusqueda && coincideEstatus
-                    );
-                }
-            );
-        }, [postulantes, search, estatus]);
+            return coincideBusqueda && coincideEstatus;
+        });
+    }, [postulantes, search, estatus]);
 
     const totalPages = Math.ceil(postulantesFiltrados.length / PAGE_SIZE);
     const datosPaginados = postulantesFiltrados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -55,8 +52,8 @@ export default function ReportePostulantes() {
                     color: "blue",
                 },
                 {
-                    label: "En Revisión",
-                    value: postulantes.filter((p) => p.estatus === "En Revisión").length,
+                    label: "Pendiente",
+                    value: postulantes.filter((p) => p.estatus === "Pendiente").length,
                     icon: Clock3,
                     color: "amber",
                 },
@@ -78,7 +75,7 @@ export default function ReportePostulantes() {
 
     const limpiarFiltros = () => {
         setSearch("");
-        setEstatus("");
+        setEstatus("Pendiente");
         setPage(1);
     };
 
@@ -246,20 +243,16 @@ export default function ReportePostulantes() {
                             },
                             options: [
                                 {
-                                    value: "",
-                                    label: "Todos los estatus",
-                                },
-                                {
-                                    value: "En Revisión",
-                                    label: "En Revisión",
+                                    value: "Pendiente",
+                                    label: "Postulantes Pendientes",
                                 },
                                 {
                                     value: "Aceptado",
-                                    label: "Aceptado",
+                                    label: " Postulantes Aceptados",
                                 },
                                 {
                                     value: "Rechazado",
-                                    label: "Rechazado",
+                                    label: "Postulantes Rechazados",
                                 },
                             ],
                         },
@@ -299,3 +292,4 @@ export default function ReportePostulantes() {
         </div>
     );
 }
+

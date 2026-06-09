@@ -1,33 +1,17 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-
-import {
-  obtenerVisitas,
-  obtenerVisitaPorId,
-  crearVisita,
-  actualizarVisita,
-  eliminarVisita,
-} from "../services/visitasService";
+import { useQuery, useMutation, useQueryClient,} from "@tanstack/react-query";
+import {obtenerVisitas,obtenerVisitaPorId,crearVisita,actualizarVisita,eliminarVisita,} from "../services/visitasService";
 
 import { visitasKeys } from "../services/visitasKeys";
 import { postulantesKeys } from "../services/postulantesKeys";
 
-// =====================
-// LISTA
-// =====================
+//lista
 export function useVisitas() {
   return useQuery({
     queryKey: visitasKeys.all,
     queryFn: obtenerVisitas,
   });
 }
-
-// =====================
-// DETALLE
-// =====================
+// detalle
 export function useVisita(id) {
   return useQuery({
     queryKey: visitasKeys.detail(id),
@@ -36,9 +20,7 @@ export function useVisita(id) {
   });
 }
 
-// =====================
-// CREAR
-// =====================
+// crear
 export function useCrearVisita() {
   const queryClient = useQueryClient();
 
@@ -58,9 +40,7 @@ export function useCrearVisita() {
   });
 }
 
-// =====================
-// ACTUALIZAR
-// =====================
+// actualizar
 export function useActualizarVisita() {
   const queryClient = useQueryClient();
 
@@ -83,9 +63,7 @@ export function useActualizarVisita() {
     },
   });
 }
-// =====================
-// ELIMINAR
-// =====================
+// eliminar
 export function useEliminarVisita() {
   const queryClient = useQueryClient();
 
@@ -101,7 +79,6 @@ export function useEliminarVisita() {
         queryKey: visitasKeys.detail(variables),
       });
 
-      // 👇 CLAVE
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
       });

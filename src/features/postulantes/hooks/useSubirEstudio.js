@@ -3,27 +3,31 @@ import { useState } from "react";
 import { subirDocumentoEstudio } from "../../expedientes/services/documentosService";
 import { useActualizarPostulante } from "./usePostulantes";
 import { useActualizarDocumento } from "../../expedientes/hooks/useDocumentos";
+import { useActualizarEstudioDetalle } from "./usePostulantes";
+import { useActualizarEstudio } from "./useEstudios";
 
 export function useSubirEstudio(data) {
   const [mostrarSubida, setMostrarSubida] = useState(false);
   const [archivo, setArchivo] = useState(null);
   const [loading, setLoading] = useState(false);
+  const actualizarEstudioMutation = useActualizarEstudio();
+  console.log("id", data.id_estudio)
 
   const actualizarPostulanteMutation = useActualizarPostulante();
   const actualizarDocumentoMutation = useActualizarDocumento();
 
   const guardarDocumentoEstudio = async () => {
     if (!archivo || !data?.id_postulante) return;
+    if (archivo?.type !== "application/pdf") {
+      throw new Error("Solo se permiten archivos PDF");
+    }
 
     try {
       setLoading(true);
 
-      const tieneDocumento =
-        data?.idDocumentoEstudio && data?.link_documento;
+      const tieneDocumento = data?.idDocumentoEstudio && data?.link_documento;
 
-      // =========================
-      // CASO 1: YA EXISTE DOCUMENTO
-      // =========================
+      //ya existe documento
 
       const formDataRemplazar = new FormData();
 
@@ -34,17 +38,20 @@ export function useSubirEstudio(data) {
           id_documento: data.idDocumentoEstudio,
           formData: formDataRemplazar,
         });
+        await actualizarEstudioMutation.mutateAsync({
+          id: data.id_estudio,
+          data: {
+            estatus_estudio: "Completo",
+          },
+        });
 
         setMostrarSubida(false);
         setArchivo(null);
         return;
       }
 
-      // =========================
-      // CASO 2: NO EXISTE DOCUMENTO (CREAR + ASOCIAR)
-      // =========================
+      // no existe
       const formData = new FormData();
-
       formData.append("archivo", archivo);
       formData.append("id_expediente", data.id_expediente);
       formData.append("nombre_documento", "nuevo");
@@ -58,6 +65,12 @@ export function useSubirEstudio(data) {
           estudio: {
             id_documento: documento.id_documento,
           },
+        },
+      });
+      await actualizarEstudioMutation.mutateAsync({
+        id: data.id_estudio,
+        data: {
+          estatus_estudio: "Completo",
         },
       });
 

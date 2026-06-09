@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useActualizarPostulante } from "../hooks/usePostulantes";
 import { normalizeName } from "../../../utils/normalizeName";
+
 export const usePostulanteEditarForm = (open, postulante, onSuccess, onClose) => {
   const initialForm = {
     nombre: "",
@@ -49,9 +50,7 @@ export const usePostulanteEditarForm = (open, postulante, onSuccess, onClose) =>
       setError("");
     }
   }, [fieldErrors]);
-  // =========================
-  // 🔥 PRELLENAR FORM EN EDIT
-  // =========================
+
   useEffect(() => {
     if (!postulante) return;
 
@@ -81,9 +80,6 @@ export const usePostulanteEditarForm = (open, postulante, onSuccess, onClose) =>
     });
   }, [postulante]);
 
-  // =========================
-  // VALIDACIÓN (igual que crear)
-  // =========================
   const validarFormulario = () => {
     const errors = {};
     if (!form.nombre.trim()) errors.nombre = "Nombre obligatorio";
@@ -182,9 +178,6 @@ export const usePostulanteEditarForm = (open, postulante, onSuccess, onClose) =>
     });
   };
 
-  // =========================
-  // 🔥 PATCH PAYLOAD
-  // =========================
   const handleConfirmSave = async () => {
     if (isSubmitting.current) return;
 
@@ -224,12 +217,12 @@ export const usePostulanteEditarForm = (open, postulante, onSuccess, onClose) =>
 
           gastos: [
             {
-              id_gasto: form.gasto_alimentacion_id, // 👈 IMPORTANTE
+              id_gasto: form.gasto_alimentacion_id, 
               nombre: "Alimentacion",
               monto: String(form.gasto_alimentacion || "0.00"),
             },
             {
-              id_gasto: form.gasto_transporte_id, // 👈 IMPORTANTE
+              id_gasto: form.gasto_transporte_id, 
               nombre: "Transporte",
               monto: String(form.gasto_transporte || "0.00"),
             },
@@ -333,10 +326,10 @@ export const usePostulanteEditarForm = (open, postulante, onSuccess, onClose) =>
     fieldErrors,
     error,
     loading,
-    loadingCP,// checar
-    cpEncontrado,// checar
-    setLoadingCP,// chercar
-    setCpEncontrado,//c
+    loadingCP,
+    cpEncontrado,
+    setLoadingCP,
+    setCpEncontrado,
     showConfirm,
     setShowConfirm,
     resultModal,

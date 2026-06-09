@@ -324,17 +324,21 @@ export default function ModalCrearFamiliar({
       />
 
       <ModalResultado
-        open={resultadoModal.open}
-        type={resultadoModal.type}
-        title={resultadoModal.title}
-        message={resultadoModal.message}
-        onClose={() =>
-          setResultadoModal((prev) => ({
-            ...prev,
-            open: false,
-          }))
-        }
-      />
+  open={resultadoModal.open}
+  type={resultadoModal.type}
+  title={resultadoModal.title}
+  message={resultadoModal.message}
+  onClose={() => {
+    setResultadoModal({
+      open: false,
+      type: "",
+      title: "",
+      message: "",
+    });
+
+    onClose();
+  }}
+/>
     </>
   );
 }

@@ -11,11 +11,8 @@ export const useExpedienteData = (id) => {
 
   const loading = loadingPostulante;
 
-  // -------------------------
-  // BASE
-  // -------------------------
+  // base
   const expediente = postulante?.expediente;
-
   const familia = expediente?.familia || [];
   const idDocumentoEstudio = useMemo(() => {
   return expediente?.documentos?.find(
@@ -28,22 +25,12 @@ export const useExpedienteData = (id) => {
     (f) => f.es_tutor_principal
   );
 
-  // -------------------------
-  // ESTUDIO (YA VIENE EN POSTULANTE)
-  // -------------------------
   const estudio = postulante?.estudio;
   const gastos = postulante?.estudio?.gastos || [];
-
-  // -------------------------
-  // VISITA (YA VIENE EN POSTULANTE)
-  // -------------------------
   const visitasFiltradas = postulante?.visita
     ? [postulante.visita]
     : [];
 
-  // -------------------------
-  // DATA UNIFICADA
-  // -------------------------
   const data = useMemo(() => ({
     nombre: expediente?.nombre,
     apellido_p: expediente?.apellido_p,
@@ -93,12 +80,8 @@ export const useExpedienteData = (id) => {
     estudio,
   ]);
 
-  // -------------------------
-  // ESTATUS UI
-  // -------------------------
   const estatusInfo = useMemo(() => {
-    const estatus =
-      data?.estatus_postulante?.toLowerCase();
+    const estatus = data?.estatus_postulante?.toLowerCase();
 
     switch (estatus) {
       case "aceptado":
@@ -124,9 +107,7 @@ export const useExpedienteData = (id) => {
     }
   }, [data?.estatus_postulante]);
 
-  // -------------------------
-  // EDAD
-  // -------------------------
+
   const edad = useMemo(() => {
     if (!data?.fecha_nacimiento) return "--";
 

@@ -2,7 +2,6 @@ import API from "../../../config/apiClient";
 
 const BASE_URL = "/api/estudios/estudios";
 
-
 // obtener lista de estudios
 export const obtenerEstudios = async () => {
   const { data } = await API.get(`${BASE_URL}/`);

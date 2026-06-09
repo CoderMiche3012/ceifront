@@ -30,3 +30,11 @@ export const eliminarPostulante = async (id) => {
   const { data } = await API.delete(`${BASE_URL}/${id}/`);
   return data;
 };
+// aceptar al postulante
+export const aceptarPostulante = async (id) => {
+  const { data } = await API.post(`${BASE_URL}/${id}/aceptar/`,
+    {}
+  );
+
+  return data;
+};

@@ -4,7 +4,7 @@ import { Calendar, Upload } from "lucide-react";
 
 import EncabezadoDetalle from "../../components/ui/EncabezadoDetalle";
 import TabsExpediente from "../../features/postulantes/components/detalles/TabsExpediente";
-//import ResultadosCard from "../../features/postulantes/components/detalles/resultados/ResultadosCard";
+import ResultadosCard from "../../features/postulantes/components/detalles/resultados/ResultadosCard";
 import VisitasCard from "../../features/postulantes/components/detalles/visitas/VisitasCard";
 import DatosGenerales from "../../features/postulantes/components/detalles/generales/DatosGenerales";
 
@@ -12,11 +12,14 @@ import { useExpedienteData } from "../../features/postulantes/hooks/useExpedient
 import { ui } from "../../styles/ui/uiClasses";
 
 import { useSubirEstudio } from "../../features/postulantes/hooks/useSubirEstudio";
+import { usePermissions } from "../../context/PermissionsContext";
 
 export default function ExpedientePagina() {
-  const { id } = useParams();
- 
 
+  const { id } = useParams();
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canEdit =hasModulePermission("postulantes", "editar");
+ 
   const {
     data,
     loading,
@@ -100,7 +103,7 @@ export default function ExpedientePagina() {
         
         {/* generales */}
         {tab === "generales" && (
-          <DatosGenerales data={data}/>
+          <DatosGenerales data={data} canEdit={canEdit}/>
         )}
 
         {/* visitas */}
@@ -108,16 +111,15 @@ export default function ExpedientePagina() {
           <VisitasCard
             data={data}
             visitas={visitasFiltradas}
-           
             estudio={estudio}
+            canEdit={canEdit}
           />
         )}
 
-        {/* resultados 
         {tab === "Resultados" && (
-          <ResultadosCard data={data} />
+          <ResultadosCard data={data} canEdit={canEdit}/>
         )}
-*/}
+
         
       </main>
     </section>
