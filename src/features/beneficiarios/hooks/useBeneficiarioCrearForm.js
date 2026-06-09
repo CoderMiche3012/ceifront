@@ -1,27 +1,13 @@
-import { useState, useRef, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { crearBeneficiario, eliminarBeneficiario, } from "../services/beneficiariosService";
-import { crearExpediente, eliminarExpediente, } from "../../expedientes/services/expedientesService";
-import { crearSeguimiento } from "../services/seguimientoService";
-import { obtenerPeriodos } from "../../periodos/services/periodoService";
+import { useState, useEffect, useRef } from "react";
 import { formatErrorAnidado } from "../../../utils/errorHandlers";
-const getErrorMessage = (err) => {
-  // Si Axios nos devolvió una respuesta del servidor, decodificamos el JSON que viene dentro
-  if (err?.response?.data) {
-    return formatErrorAnidado(err.response.data);
-  }
+import {useCrearBeneficiario} from "../hooks/useBeneficiarios";
 
-  // Si no hay respuesta del servidor (error de red o el throw modificado de antes)
-  if (err?.message) {
-    return formatErrorAnidado(err); 
-  }
+export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
 
-  return "Error inesperado";
-};
-const initialForm = {
-  fecha_ingreso: new Date().toISOString().split("T")[0],
-  id_usuario: null,
-  id_expediente: {
+  const initialForm = {
+    estatus: "Activo",
+    fecha_ingreso: "",
+    notas: " ",
     nombre: "",
     apellido_p: "",
     apellido_m: "",
@@ -29,213 +15,343 @@ const initialForm = {
     telefono: "",
     genero: "",
     correo: "",
-    nota_situacion_familiar: "Registro manual desde panel",
-    id_direccion: {
-      calle: "",
-      numero: "",
-      colonia: "",
-      municipio: "",
-      cp: "",
-    },
+    calle: "",
+    numero: "",
+    id_geografia: null,
+    colonia: "",
+    municipio: "",
+    cp: "",
     familia: [
       {
         nombre: "",
         apellido_p: "",
         apellido_m: "",
         parentesco: "",
-        edad: "",
+        fecha_nacimiento: "",
         actividad_principal: "",
-        area_laboral_escuela: "",
-        salario: 0,
+        salario: "",
         vive_en_casa: true,
         telefono: "",
         es_tutor_principal: true,
       },
     ],
-  },
-};
+  };
 
-export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
-  const queryClient = useQueryClient();
-  const isSubmitting = useRef(false);
   const [form, setForm] = useState(initialForm);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loadingCP, setLoadingCP] = useState(false);
+  const [cpEncontrado, setCpEncontrado] = useState(false);
+
+
   const [resultModal, setResultModal] = useState({
     open: false,
     type: "success",
     title: "",
     message: "",
   });
-  useEffect(() => {
-    const raw = localStorage.getItem("user");
-    if (!raw) return;
 
-    try {
-      const user = JSON.parse(raw);
-      const id_usuario = user?.id_usuario || user?.id;
+  const isSubmitting = useRef(false);
+  const crearBeneficiarioMutation = useCrearBeneficiario();
+  const loading = crearBeneficiarioMutation.isPending;
 
-      if (id_usuario) {
-        setForm((prev) => ({
-          ...prev,
-          id_usuario,
-        }));
-      }
-    } catch (e) {
-      console.error("Error parsing user:", e);
-    }
-  }, []);
 
-  const mutation = useMutation({
-    mutationFn: async (formData) => {
-      let idExpediente = null;
-      let idBeneficiario = null;
-      try {
-        //crear expediente
-        const resExp = await crearExpediente(formData.id_expediente);
-        const expediente = resExp?.data || resExp;
-        idExpediente = expediente?.id_expediente;
-        if (!idExpediente) {
-          throw new Error("No se generó el ID del expediente");
-        }
-        //crear beneficiario
-        const resBen = await crearBeneficiario({
-          id_expediente: idExpediente,
-          fecha_ingreso: formData.fecha_ingreso,
-          notas: "Registro inicial",
-          estatus: "Activo",
-        });
-        const beneficiario = resBen?.data || resBen;
-        idBeneficiario = beneficiario?.id_beneficiario;
-        //obtener todos los periodos
-        const resPeriodos = await obtenerPeriodos();
-        const periodos = resPeriodos?.data || resPeriodos;
+  const validarFormulario = () => {
+    const errors = {};
 
-        //buscar el activo
-        const periodoActivo = periodos.find(p => p.estado === true);
+    if (!form.nombre.trim()) errors.nombre = "Nombre obligatorio";
+    if (!form.apellido_p.trim()) errors.apellido_p = "Apellido obligatorio";
+    if (!form.correo.trim()) errors.correo = "Correo obligatorio";
+    if (!form.telefono.trim()) errors.telefono = "Teléfono obligatorio";
+    if (!form.genero.trim()) errors.genero = "Selecciona género";
+    if (!form.fecha_nacimiento) errors.fecha_nacimiento = "Selecciona fecha";
+    if (!form.fecha_ingreso) errors.fecha_nacimiento = "Selecciona fecha";
 
-        if (!periodoActivo) {
-          throw new Error("No hay periodo activo");
-        }
+    if (!form.cp.trim()) errors.cp = "CP obligatorio";
+    if (!form.municipio.trim()) errors.municipio = "Municipio obligatorio";
+    if (!form.colonia.trim()) errors.colonia = "Colonia obligatoria";
+    if (!form.calle.trim()) errors.calle = "Calle obligatoria";
+    if (!form.numero.trim()) errors.numero = "Número obligatorio";
 
-        const idPeriodo = periodoActivo.id_periodo;
 
-        //crear seguimiento
-        await crearSeguimiento({
-          id_beneficiario: idBeneficiario,
-          id_periodo: idPeriodo,
-          nota_seguimiento: "Seguimiento creado automáticamente al registrar beneficiario",
-        });
+    form.familia.forEach((fam, idx) => {
+      if (!fam.nombre?.trim())
+        errors[`familia.${idx}.nombre`] = "Nombre obligatorio";
 
-        return beneficiario;
-      } catch (error) {
-        try {
-          if (idBeneficiario && eliminarBeneficiario) {
-            await eliminarBeneficiario(idBeneficiario);
-          }
+      if (!fam.apellido_p?.trim())
+        errors[`familia.${idx}.apellido_p`] = "Apellido obligatorio";
 
-          if (idExpediente) {
-            await eliminarExpediente(idExpediente);
-          }
-        } catch (rollbackError) {
-          console.error("Rollback falló:", rollbackError);
-        }
+      if (!fam.apellido_m?.trim())
+        errors[`familia.${idx}.apellido_m`] = "Apellido obligatorio";
 
-        throw error;
-      }
-    },
+      if (!fam.parentesco?.trim())
+        errors[`familia.${idx}.parentesco`] = "Parentesco obligatorio";
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["beneficiarios"],
-      });
+      if (!fam.fecha_nacimiento)
+        errors[`familia.${idx}.fecha_nacimiento`] = "Fecha obligatoria";
 
-      setResultModal({
-        open: true,
-        type: "success",
-        title: "Registro exitoso",
-        message: "Beneficiario y expediente creados correctamente",
-      });
-    },
+      if (!fam.salario)
+        errors[`familia.${idx}.salario`] = "Salario o escuela Obligatorio";
 
-    onError: (err) => {
-      setResultModal({
-        open: true,
-        type: "error",
-        title: "Error",
-        message: getErrorMessage(err),
-      });
-    },
+      if (!fam.actividad_principal?.trim())
+        errors[`familia.${idx}.actividad_principal`] =
+          "Actividad obligatoria";
+    });
 
-    onSettled: () => {
-      isSubmitting.current = false;
-    },
-  });
-  //validacion
-  const validateForm = () => {
-    const f = form.id_expediente;
-    const dir = f.id_direccion;
-    const tutor = f.familia?.[0];
-
-    if (!f.nombre || !f.apellido_p || !f.fecha_nacimiento) {
-      return "Faltan datos personales obligatorios";
-    }
-
-    if (!dir.calle || !dir.municipio) {
-      return "Faltan datos de dirección";
-    }
-
-    if (!tutor?.nombre || !tutor?.parentesco) {
-      return "Faltan datos del tutor principal";
-    }
-
-    return null;
+    return errors;
   };
 
-  const handlePreSubmit = (e) => {
-    e?.preventDefault();
+  useEffect(() => {
+    const campos = Object.keys(fieldErrors);
 
-    const errorValidation = validateForm();
-    if (errorValidation) {
-      setError(errorValidation);
+    if (campos.length > 0) {
+
+      const etiquetas = {
+        nombre: "Nombre",
+        apellido_p: "Apellido paterno",
+        apellido_m: "Apellido materno",
+        correo: "Correo",
+        telefono: "Teléfono",
+        genero: "Género",
+        fecha_nacimiento: "Fecha de nacimiento",
+
+        cp: "Código postal",
+        municipio: "Municipio",
+        colonia: "Colonia",
+        calle: "Calle",
+        numero: "Número",
+
+      };
+
+      const etiquetasFamilia = {
+        nombre: "Nombre",
+        apellido_p: "Apellido paterno",
+        apellido_m: "Apellido materno",
+        parentesco: "Parentesco",
+        fecha_nacimiento: "Fecha de nacimiento",
+        actividad_principal: "Ocupación o grado escolar",
+        salario: "Salario",
+        telefono: "Teléfono",
+      };
+
+      const nombresBonitos = campos.map((campo) => {
+
+        if (campo.startsWith("familia.")) {
+          const partes = campo.split(".");
+          const indice = Number(partes[1]) + 1;
+          const campoFamilia = partes[2];
+
+          return `${etiquetasFamilia[campoFamilia] || campoFamilia} (Familiar ${indice})`;
+        }
+
+        return etiquetas[campo] || campo;
+      });
+
+      setError(`Revisa los campos: ${nombresBonitos.join(", ")}`);
+
+    } else {
+      setError(null);
+    }
+  }, [fieldErrors]);
+  const handlePreSubmit = (e) => {
+    if (e) e.preventDefault();
+
+    const errors = validarFormulario();
+
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      setError(null);
       return;
     }
 
-    setError(null);
+    setError("");
     setShowConfirm(true);
   };
 
-  const handleConfirmSave = () => {
+  const handleChange = (field, value) => {
+    setForm((prev) => {
+      const updated = { ...prev };
+
+      if (field.includes(".")) {
+        const keys = field.split(".");
+        let current = updated;
+
+        for (let i = 0; i < keys.length - 1; i++) {
+          const key = isNaN(keys[i]) ? keys[i] : Number(keys[i]);
+
+          current[key] = Array.isArray(current[key])
+            ? [...current[key]]
+            : { ...current[key] };
+
+          current = current[key];
+        }
+
+        current[keys[keys.length - 1]] = value;
+      } else {
+        updated[field] = value;
+      }
+
+      return updated;
+    });
+
+    setFieldErrors((prev) => {
+      const nuevos = { ...prev };
+      delete nuevos[field];
+      return nuevos;
+    });
+  };
+
+  const handleConfirmSave = async () => {
     if (isSubmitting.current) return;
 
     isSubmitting.current = true;
     setShowConfirm(false);
 
-    mutation.mutate(form);
+    try {
+      const payload = {
+        estatus: "Activo",
+        fecha_ingreso: form.fecha_ingreso,
+        notas: "",
+        expediente: {
+          nombre: form.nombre,
+          apellido_p: form.apellido_p,
+          apellido_m: form.apellido_m,
+          fecha_nacimiento: form.fecha_nacimiento,
+          telefono: form.telefono,
+          genero: form.genero,
+          correo: form.correo,
+
+          direccion: {
+            calle: form.calle,
+            numero: form.numero,
+            codigo_postal: form.cp,
+            municipio: form.municipio,
+            colonia: form.colonia,
+
+          },
+        },
+
+
+        familia: form.familia,
+      };
+
+      await crearBeneficiarioMutation.mutateAsync(payload);
+      setResultModal({
+        open: true,
+        type: "success",
+        title: "¡Éxito!",
+        message: "Registro completado correctamente.",
+      });
+    } catch (err) {
+
+      const backendErrors =
+        err?.errors ||
+        err?.response?.data?.errors ||
+        {};
+
+      const parsedErrors = {};
+
+      const flattenErrors = (obj, prefix = "") => {
+        Object.entries(obj).forEach(([key, value]) => {
+          let newKey = prefix
+            ? `${prefix}.${key}`
+            : key;
+
+          newKey = newKey
+            .replace(/^id_expediente\./, "")
+            .replace(/^id_expediente\.id_direccion\./, "")
+            .replace(/^id_direccion\./, "")
+            .replace(/^expediente\./, "")
+            .replace(/^estudio\./, "");
+
+          if (
+            Array.isArray(value) &&
+            typeof value[0] === "string"
+          ) {
+            parsedErrors[newKey] = value[0];
+          } else if (Array.isArray(value)) {
+            value.forEach((item, index) => {
+              if (typeof item === "object") {
+                flattenErrors(item, `${newKey}.${index}`);
+              }
+            });
+          } else if (
+            typeof value === "object" &&
+            value !== null
+          ) {
+            flattenErrors(value, newKey);
+          }
+        });
+      };
+
+      flattenErrors(backendErrors);
+
+      console.log(parsedErrors);
+
+      if (Object.keys(parsedErrors).length > 0) {
+        setFieldErrors(parsedErrors);
+        setError(null);
+        return; // <- aquí evita modal
+      }
+
+      setResultModal({
+        open: true,
+        type: "error",
+        title: "Error",
+        message:
+          formatErrorAnidado(err) ||
+          err.message,
+      });
+    } finally {
+      isSubmitting.current = false;
+    }
   };
 
   const handleFinalClose = () => {
-    if (resultModal.type === "success") {
-      onSuccess?.();
-      onClose?.();
+    const wasSuccess = resultModal.type === "success";
+
+    setResultModal({
+      open: false,
+      type: "",
+      title: "",
+      message: "",
+    });
+
+    if (wasSuccess) {
+      setForm(initialForm);
+      setFieldErrors({});
+      setError(null);
+      setShowConfirm(false);
+      onSuccess?.(); // Notifica la actualización de la lista en segundo plano
     }
 
-    setResultModal((prev) => ({
-      ...prev,
-      open: false,
-    }));
+    // Sacamos esto de la condicional para asegurar que ante cualquier 
+    // cierre del ModalResultado, la ventana de creación también se destruya.
+    onClose?.();
   };
 
   return {
     form,
     setForm,
+    handleChange,
+    fieldErrors,
     error,
-    loading: mutation.isPending,
+    loading,
+    loadingCP,// checar
+    cpEncontrado,// checar
+    setLoadingCP,// chercar
+    setCpEncontrado,//c
     showConfirm,
     setShowConfirm,
     resultModal,
     handlePreSubmit,
     handleConfirmSave,
     handleFinalClose,
+
   };
 };
+
+
+

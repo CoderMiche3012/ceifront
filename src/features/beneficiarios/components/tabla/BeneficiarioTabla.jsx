@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import DatosTabla from "../../../../components/tablas/DatosTabla";
 import AvatarGeneral from "../../../../components/shared/AvatarGeneral";
-import { Calendar, Clock, Eye, Printer, Check, X, Lock, PencilLine } from "lucide-react";
+import { Eye, PencilLine } from "lucide-react";
 import EditarDatosGenerales from "../modales/EditarDatosGenerales";
 import { useState } from "react";
 
@@ -13,7 +13,7 @@ const COLUMNS = [
     { key: "escuela", label: "Escuela/grado" },
     { key: "acciones", label: "Acciones" },
 ];
-export default function beneficiariosTabla({ beneficiarios = [], onRefresh, periodo }) {
+export default function beneficiariosTabla({ beneficiarios = [], periodo }) {
     const [openEdit, setOpenEdit] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
     const calcularEdad = (fechaNacimiento) => {
@@ -38,15 +38,17 @@ export default function beneficiariosTabla({ beneficiarios = [], onRefresh, peri
                 return (
                     <div className="flex items-center gap-3">
                         <AvatarGeneral
-                            nombre={expediente.nombre}
-                            apellidoP={expediente.apellido_p}
+                            nombre={expediente.nombre_completo}
                         />
 
                         <div className="flex flex-col min-w-0">
                             <span className="text-sm font-semibold text-slate-800 uppercase truncate">
-                                {`${expediente.nombre || ""} ${expediente.apellido_p || ""} ${expediente.apellido_m || ""}`}
+                                {expediente.nombre_completo || "--"}
                             </span>
 
+                            <span className="text-xs text-slate-500">
+                                {calcularEdad(expediente.fecha_nacimiento)} años
+                            </span>
                         </div>
                     </div>
                 );
@@ -165,7 +167,7 @@ export default function beneficiariosTabla({ beneficiarios = [], onRefresh, peri
             columns={COLUMNS}
             data={beneficiarios}
             renderCell={renderCell}
-            rowKey="id_beneficiarios"
+            rowKey="id_beneficiario"
         />
     );
 }

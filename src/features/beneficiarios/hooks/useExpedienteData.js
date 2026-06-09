@@ -1,61 +1,28 @@
 import { useState, useMemo } from "react";
-
 import { useQuery } from "@tanstack/react-query";
-
-import {
-  obtenerExpedientePorId,
-} from "../../expedientes/services/expedientesService";
-
-import {
-  obtenerBeneficiarioId,
-} from "../services/beneficiariosService";
-
+import { obtenerExpedientePorId, } from "../../expedientes/services/expedientesService";
+import { obtenerBeneficiarioId } from "../services/beneficiariosService";
 import { obtenerEstudios } from "../../postulantes/services/estudiosService";
 import { obtenerVisitas } from "../../postulantes/services/visitasService";
 import { calcularEdad } from "../../../utils/formatters";
+import { useBeneficiario } from "./useBeneficiarios";
+import { useVisitas } from "../../postulantes/hooks/useVisitas";
+import { useExpediente } from "../../expedientes/hooks/useExpedientes";
+import { useEstudios } from "../../postulantes/hooks/useEstudios";
+const mapExpedienteData = ({expediente,beneficiario,estudio,visitas }) => {
 
-const mapExpedienteData = ({
-  expediente,
-  beneficiario,
-  estudio,
-  visitas,
-}) => {
-
-  const familia =
-    expediente?.familia ?? [];
-
-  const fotografias =
-    expediente?.fotografias ?? [];
-
-  const tutor =
-    familia.find(
-      (f) => f?.es_tutor_principal
-    );
-
+  const familia = expediente?.familia ?? [];
+  const fotografias = expediente?.fotografias ?? [];
+  const tutor = familia.find(  (f) => f?.es_tutor_principal);
   return {
-
     ...expediente,
 
     direccion: {
-      cp:
-        expediente?.id_direccion?.cp ??
-        "--",
-
-      municipio:
-        expediente?.id_direccion?.municipio ??
-        "--",
-
-      calle:
-        expediente?.id_direccion?.calle ??
-        "--",
-
-      numero:
-        expediente?.id_direccion?.numero ??
-        "--",
-
-      colonia:
-        expediente?.id_direccion?.colonia ??
-        "--",
+      cp: expediente?.direccion?.geografia?.cp ?? "--",
+      municipio: expediente?.direccion?.geografia?.municipio ?? "--",
+      calle: expediente?.direccion?.calle ?? "--",
+      numero: expediente?.direccion?.numero ?? "--",
+      colonia: expediente?.id_direccion?.geografia?.colonia ?? "--",
     },
 
     familia,
@@ -64,249 +31,88 @@ const mapExpedienteData = ({
 
     visitas,
 
-    tutor_nombre: tutor
-      ? `${tutor.nombre} ${tutor.apellido_p} ${tutor.apellido_m || ""}`.trim()
-      : "--",
+    tutor_nombre: tutor ? `${tutor.nombre} ${tutor.apellido_p} ${tutor.apellido_m || ""}`.trim(): "--",
+    tutor_telefono: tutor?.telefono ?? "--",
 
-    tutor_telefono:
-      tutor?.telefono ?? "--",
+    id_beneficiario:beneficiario?.id_beneficiario ??null,
+    estatus_beneficiario: beneficiario?.estatus_beneficiario ?? beneficiario?.estatus ?? beneficiario?.estado ?? null,
+    fecha_ingreso: beneficiario?.fecha_ingreso ?? "--",
+    nota: beneficiario?.notas ?? "--",
 
-    id_beneficiario:
-      beneficiario?.id_beneficiario ??
-      null,
+    id_estudio: estudio?.id_estudio ?? null,
+    fecha_realizacion: estudio?.fecha_realizacion ?? "--",
 
-    estatus_beneficiario:
-      beneficiario?.estatus_beneficiario ??
-      beneficiario?.estatus ??
-      beneficiario?.estado ??
-      null,
-
-    fecha_ingreso:
-      beneficiario?.fecha_ingreso ??
-      "--",
-
-    nota:
-      beneficiario?.notas ??
-      "--",
-
-    // =========================
-    // ESTUDIO
-    // =========================
-
-    id_estudio:
-      estudio?.id_estudio ??
-      null,
-
-    fecha_realizacion:
-      estudio?.fecha_realizacion ??
-      "--",
-
-    estatus_estudio:
-      estudio?.estatus_estudio ??
-      "--",
-
-    nota_servicio:
-      estudio?.nota_servicio ??
-      "--",
-
-    prioridad_servicio:
-      estudio?.prioridad_servicio ??
-      "--",
-
-    link_documento:
-      estudio?.link_documento ??
-      null,
-
-    nivel_escolar_inicial:
-      estudio?.nivel_escolar_inicial ??
-      "--",
-
-    grado_escolar_inicial:
-      estudio?.grado_escolar_inicial ??
-      "--",
-
-    referencia_casa:
-      estudio?.referencia_casa ??
-      "--",
-
-    referencia_ingreso:
-      estudio?.referencia_ingreso ??
-      "--",
+    estatus_estudio: estudio?.estatus_estudio ?? "--",
+    nota_servicio: estudio?.nota_servicio ?? "--",
+    prioridad_servicio: estudio?.prioridad_servicio ?? "--",
+    link_documento: estudio?.link_documento ?? null,
+    nivel_escolar_inicial: estudio?.nivel_escolar_inicial ?? "--",
+    grado_escolar_inicial: estudio?.grado_escolar_inicial ?? "--",
+    referencia_casa: estudio?.referencia_casa ?? "--",
+    referencia_ingreso: estudio?.referencia_ingreso ?? "--",
   };
 };
+export const useExpedienteData = (id) => {
+  const [tab, setTab] = useState("generales");
 
-export const useExpedienteData = (
-  id
-) => {
+  // 1. Beneficiario
+  const { data: beneficiario, isLoading: loadingBeneficiario } =
+    useBeneficiario(id);
+  console.log(beneficiario)
 
-  const [tab, setTab] =
-    useState("generales");
+  // 2. Expediente
+  const expedienteId = beneficiario?.expediente_resumen?.id_expediente;
 
-  const {
-    data,
-    isLoading,
-    isFetching,
-    error,
-    refetch,
-  } = useQuery({
+  const { data: expediente, isLoading: loadingExpediente } =
+    useExpediente(expedienteId);
 
-    queryKey: [
-      "expediente",
-      id,
-    ],
+  // 3. Estudios
+  const { data: estudiosData } = useEstudios();
 
-    enabled: !!id,
+  const estudio = useMemo(() => {
+    if (!estudiosData || !expediente?.id_expediente) return null;
 
-    queryFn:
-      async () => {
+    const lista = Array.isArray(estudiosData)
+      ? estudiosData
+      : estudiosData?.results ?? [];
 
-        // =====================
-        // BENEFICIARIO
-        // =====================
+    return lista.find(
+      (e) => String(e.id_expediente) === String(expediente.id_expediente)
+    );
+  }, [estudiosData, expediente]);
 
-        const beneficiario =
-          await obtenerBeneficiarioId(
-            id
-          );
+  // 4. Visitas
+  const { data: visitasData } = useVisitas();
 
-        if (!beneficiario) {
+  const visitas = useMemo(() => {
+    if (!visitasData) return [];
 
-          throw new Error(
-            "Beneficiario no encontrado"
-          );
-        }
+    const lista = Array.isArray(visitasData)
+      ? visitasData
+      : visitasData?.results ?? [];
 
-        if (
-          !beneficiario.id_expediente
-        ) {
+    return lista.filter((v) => String(v.id_postulante) === String(id));
+  }, [visitasData, id]);
 
-          throw new Error(
-            "El beneficiario no tiene expediente asociado"
-          );
-        }
+  // Loading global
+  const isLoading = loadingBeneficiario || loadingExpediente;
 
-        // =====================
-        // EXPEDIENTE
-        // =====================
+  // Map final
+  const data = useMemo(() => {
+    if (!expediente || !beneficiario) return null;
 
-        const expediente =
-          await obtenerExpedientePorId(
-            beneficiario.id_expediente
-          );
-
-        if (!expediente) {
-
-          throw new Error(
-            "Expediente no encontrado"
-          );
-        }
-
-        // =====================
-        // ESTUDIOS
-        // =====================
-
-        const estudiosData =
-          await obtenerEstudios();
-
-        const listaEstudios =
-          Array.isArray(
-            estudiosData
-          )
-            ? estudiosData
-            : estudiosData?.results ||
-              [];
-
-        const estudio =
-          listaEstudios.find(
-            (e) =>
-              String(
-                e.id_expediente
-              ) ===
-              String(
-                expediente?.id_expediente
-              )
-          ) || null;
-
-        // =====================
-        // VISITAS
-        // =====================
-
-        const visitasData =
-          await obtenerVisitas();
-
-        const listaVisitas =
-          Array.isArray(
-            visitasData
-          )
-            ? visitasData
-            : visitasData?.results ||
-              [];
-
-        const visitas =
-          listaVisitas.filter(
-            (v) =>
-              String(
-                v.id_postulante
-              ) === String(id)
-          );
-
-        // =====================
-        // MAPEAR DATA
-        // =====================
-
-        return mapExpedienteData({
-          expediente,
-          beneficiario,
-          estudio,
-          visitas,
-        });
-      },
-
-    staleTime:
-      1000 * 60 * 5,
-  });
-
-  // =========================
-  // EDAD
-  // =========================
-
-  const edad =
-    useMemo(() => {
-
-      if (
-        !data?.fecha_nacimiento
-      ) {
-        return "--";
-      }
-
-      return calcularEdad(
-        data.fecha_nacimiento
-      );
-
-    }, [
-      data?.fecha_nacimiento,
-    ]);
+    return mapExpedienteData({
+      expediente,
+      beneficiario,
+      estudio,
+      visitas,
+    });
+  }, [expediente, beneficiario, estudio, visitas]);
 
   return {
-
     data,
-
-    loading:
-      isLoading,
-
-    isFetching,
-
-    error:
-      error?.message ||
-      null,
-
+    loading: isLoading,
     tab,
-
     setTab,
-
-    edad,
-
-    refetch,
   };
 };
-

@@ -1,499 +1,616 @@
-import { useState } from "react";
-import { HiOutlineUser, HiUserGroup, HiPlus, HiTrash, HiArrowRight, HiCheck } from "react-icons/hi";
+import { useState, useEffect } from "react";
+import { HiOutlineUser, HiUserGroup, HiPlus,HiTrash, HiOutlineArrowLeft, HiOutlineSearch} from "react-icons/hi";
+import { ui } from "../../../../styles/ui/index";
+import Select from "../../../../components/ui/Select";
+
 import AlertaError from "../../../../components/ui/AlertaError";
 import Field from "../../../../components/ui/Field";
 import InputG from "../../../../components/ui/InputG";
+import Boton from "../../../../components/ui/Boton";
 import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
+
 import { useBeneficiarioCrearForm } from "../../hooks/useBeneficiarioCrearForm";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
-import { buscarCPCompleto } from "../../../expedientes/services/expedientesService";
 
+import { obtenerDireccionPorCP } from "../../../donadores/services/donadoresService";
 
 export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
   const [step, setStep] = useState(1);
   const [colonias, setColonias] = useState([]);
-  const [loadingCP, setLoadingCP] = useState(false);
-  const [cpEncontrado, setCpEncontrado] =
-    useState(false);
-  const [otraColonia, setOtraColonia] =
-    useState(false);
+  const [cpError, setCpError] = useState("");
+  const [manualAddressMode, setManualAddressMode] = useState(false);
+  const [manualCountryMode, setManualCountryMode] = useState(false);
+  const estadoEditable = manualAddressMode;
+
   const {
-    form, setForm, error, loading, showConfirm, setShowConfirm,
-    resultModal, handlePreSubmit, handleConfirmSave, handleFinalClose
+    form,
+    setForm,
+    handleChange,
+    fieldErrors,
+    loading,
+    loadingCP,// checar
+    cpEncontrado,// checar
+    setLoadingCP,// chercar
+    setCpEncontrado,//c
+    error,
+    showConfirm,
+    setShowConfirm,
+    resultModal,
+    handlePreSubmit,
+    handleConfirmSave,
+    handleFinalClose
   } = useBeneficiarioCrearForm(onSuccess, onClose);
 
+  // reestablece todos los estados a su punto original
+  useEffect(() => {
+    if (!open) {
+      setStep(1);
+
+      setManualAddressMode(false);
+      setManualCountryMode(false);
+
+      setCpError("");
+      setColonias([]);
+
+      setCpEncontrado(false);
+    }
+  }, [open, setCpEncontrado]);
   if (!open) return null;
 
-  const updateExpediente = (field, value) => {
-    setForm(p => ({
-      ...p,
-      id_expediente: { ...p.id_expediente, [field]: value }
-    }));
-  };
-
-  const updateDireccion = (field, value) => {
-    setForm(p => ({
-      ...p,
-      id_expediente: {
-        ...p.id_expediente,
-        id_direccion: { ...p.id_expediente.id_direccion, [field]: value }
-      }
-    }));
-  };
-
-  const updateFamiliar = (index, field, value) => {
-    const nuevaFamilia = [...form.id_expediente.familia];
-    nuevaFamilia[index] = { ...nuevaFamilia[index], [field]: value };
-    updateExpediente("familia", nuevaFamilia);
-  };
-  const handleBuscarCP = async (cp) => {
-
-    if (cp.length !== 5) {
-      setColonias([]);
-      return;
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      setStep(1);
+      onClose();
     }
+  };
+  // para buscar los datos por cep
+  const handleBuscarCP = async (cpValue = form.cp) => {
+    if (!cpValue) return;
 
     try {
-
       setLoadingCP(true);
-
-      const data = await buscarCPCompleto(cp);
-
-      if (data) {
-
-        // solo llenar municipio si está vacío
-        if (
-          !form.id_expediente.id_direccion.municipio
-        ) {
-          updateDireccion(
-            "municipio",
-            data.municipio || ""
-          );
-        }
-
-        setColonias(data.colonias || []);
+      setCpError("");
+      const data = await obtenerDireccionPorCP(cpValue);
+      const opciones = data?.opciones || [];
+      // si no hay resultados
+      if (opciones.length === 0) {
+        setColonias([]);
+        setCpError("Este código postal no está registrado consulte con el administrador");
+        setCpEncontrado(false);
+        updateField("estado", "");
+        updateField("municipio", "");
+        updateField("colonia", "");
+        updateField("id_geografia", null);
+        return;
       }
+      setColonias(opciones);
+      updateField("estado", data.estado || "");
+      updateField("municipio", data.municipio || "");
+      updateField("colonia", opciones[0].nombre);
+      updateField("id_geografia", opciones[0].id_geografia);
+      setCpEncontrado(true);
+    } catch (e) {
+      setColonias([]);
+      setCpError("Error al consultar el código postal");
 
-    } catch (error) {
+      setCpEncontrado(false);
 
-      console.log(error);
-
+      updateField("estado", "");
+      updateField("municipio", "");
+      updateField("colonia", "");
+      updateField("id_geografia", null);
     } finally {
-
       setLoadingCP(false);
-
     }
   };
-  // --- Clases de Estilo Reutilizables ---
-  const inputClass = "h-9 text-sm rounded-lg border-slate-200 focus:ring-[#0E5F63] transition-all";
-  const selectClass = "w-full h-9 px-3 rounded-lg border border-slate-200 bg-white text-sm outline-none focus:ring-1 focus:ring-[#0E5F63] transition-all";
-  const hoy = new Date().toISOString().split("T")[0];
+  const limpiarDireccionCP = () => {
+    setColonias([]);
+    setCpEncontrado(false);
+    setCpError("");
+
+    updateField("estado", "");
+    updateField("municipio", "");
+    updateField("colonia", "");
+    updateField("id_geografia", null);
+  };
+  const updateFamiliar = (index, field, value) => {
+    setForm(prev => {
+      const nueva = [...prev.familia];
+
+      nueva[index] = {
+        ...nueva[index],
+        [field]: value
+      };
+
+      return {
+        ...prev,
+        familia: nueva
+      };
+    });
+
+    handleChange(`familia.${index}.${field}`, value);
+  };
+  const updateField = (field, value) => {
+    handleChange(field, value);
+  };
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-[2px] p-4">
-        <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl flex flex-col max-h-[92vh] border border-slate-100 overflow-hidden">
-
+      <div className={ui.modal.formOverlay} onClick={handleBackdropClick} >
+        <div className={ui.modal.formContainer}>
           {/* Header */}
-          <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-white">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-[#0E5F63] border border-slate-100 shadow-sm">
-                {step === 1 ? <HiOutlineUser size={20} /> : <HiUserGroup size={20} />}
+          <div className={`${ui.modal.formHeader} relative`}>
+            <button
+              type="button"
+              onClick={() => {
+                setStep(1);
+                onClose();
+              }}
+              className="absolute top-5 right-6 text-2xl text-slate-400 hover:text-slate-600"
+            >
+              ×
+            </button>
+
+
+            <div className="flex items-start justify-between gap-4 pr-10">
+              <div className="flex items-start gap-4">
+                <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}>
+                  {step === 1
+                    ? <HiOutlineUser size={20} />
+                    : <HiUserGroup size={20} />}
+                </div>
+
+                <div>
+                  <h2 className={ui.modal.title}>
+                    Nuevo Ingreso
+                  </h2>
+
+                  <p className={ui.modal.description}>
+                    Agrega la información del nuevo beneficiario
+                  </p>
+                  <div className="flex items-center gap-3 mt-4">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Paso {step} de 4
+                    </span>
+
+                    <div className="flex gap-1">
+                      <div
+                        className={`h-1 w-5 rounded-full ${step === 1 ? "bg-[#0E5F63]" : "bg-slate-200"}`}
+                      />
+                      <div
+                        className={`h-1 w-5 rounded-full ${step === 2 ? "bg-[#0E5F63]" : "bg-slate-200"}`}
+                      />
+                      <div
+                        className={`h-1 w-5 rounded-full ${step === 3 ? "bg-[#0E5F63]" : "bg-slate-200"}`}
+                      />
+                      
+                    </div>
+                  </div>
+
+                </div>
               </div>
-              <div>
-                <h2 className="text-base font-bold text-slate-800 leading-none">Nuevo Beneficiario</h2>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 block">
-                  Paso {step} de 2: {step === 1 ? 'Datos Personales' : 'Estructura Familiar'}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex gap-1.5">
-                <div className={`h-1.5 w-6 rounded-full transition-all ${step === 1 ? 'bg-[#0E5F63]' : 'bg-slate-200'}`} />
-                <div className={`h-1.5 w-6 rounded-full transition-all ${step === 2 ? 'bg-[#0E5F63]' : 'bg-slate-200'}`} />
-              </div>
-              <button onClick={onClose} className="text-slate-400 hover:text-red-500 transition-colors text-2xl font-light">×</button>
+
+
             </div>
           </div>
 
-          {/* Formulario */}
-          <form onSubmit={handlePreSubmit} className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar bg-white">
-            <AlertaError mensaje={error} />
+          <form onSubmit={handlePreSubmit} className={ui.modal.formBody}>
+            {error && (
+              <div className="mb-4">
+                <AlertaError mensaje={error} />
+              </div>
+            )}
             <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
               <HiOutlineExclamationCircle className="text-[#0E5F63]" size={18} />
               <span>
                 Los campos con <span className="font-semibold text-red-500">*</span> son obligatorios
               </span>
             </div>
-            {step === 1 && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-300">
-                {/* Información Personal */}
-                <section>
-                  <h3 className="text-[10px] font-black text-[#0E5F63] uppercase tracking-[0.2em] mb-5 flex items-center gap-2">
-                    <span className="w-4 h-[1px] bg-[#0E5F63]/30"></span> Información Personal
-                  </h3>
-                  <div className="grid grid-cols-12 gap-x-4 gap-y-4">
-                    <div className="col-span-12 md:col-span-6"><Field label="Nombre(s)" required><InputG className={inputClass} placeholder="Ej: Juan Antonio" value={form.id_expediente.nombre} onChange={(e) => updateExpediente("nombre", e.target.value)} /></Field></div>
-                    <div className="col-span-6 md:col-span-3"><Field label="Ap. Paterno" required><InputG className={inputClass} placeholder="Ej: Pérez" value={form.id_expediente.apellido_p} onChange={(e) => updateExpediente("apellido_p", e.target.value)} /></Field></div>
-                    <div className="col-span-6 md:col-span-3"><Field label="Ap. Materno"><InputG className={inputClass} placeholder="Ej: García" value={form.id_expediente.apellido_m} onChange={(e) => updateExpediente("apellido_m", e.target.value)} /></Field></div>
+            <div className={ui.modal.formScroll}>
+              {step === 1 && (
+                <div className="space-y-6 animate-in fade-in duration-300">
+                  <div>
+                    <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em] mb-4">
+                      Información Personal
+                    </h3>
 
-                    <div className="col-span-6 md:col-span-3"><Field label="Género" required><select className={selectClass} value={form.id_expediente.genero} onChange={(e) => updateExpediente("genero", e.target.value)}><option value="">Elegir...</option><option value="Femenino">Femenino</option><option value="Masculino">Masculino</option></select></Field></div>
-                    <div className="col-span-6 md:col-span-3"><Field label="Fecha Nac." required><InputG
-                      className={inputClass}
-                      type="date"
-                      max={hoy}
-                      value={form.id_expediente.fecha_nacimiento}
-                      onChange={(e) =>
-                        updateExpediente("fecha_nacimiento", e.target.value)
-                      }
-                    /></Field></div>
-                    <div className="col-span-6 md:col-span-3"><Field label="Teléfono"><InputG className={inputClass} value={form.id_expediente.telefono} onChange={(e) => updateExpediente("telefono", e.target.value)} placeholder="Ej: 9511234567" /></Field></div>
-                    <div className="col-span-6 md:col-span-3"><Field label="Correo Electrónico" required><InputG className={inputClass} type="email" placeholder="ejemplo@correo.com" value={form.id_expediente.correo} onChange={(e) => updateExpediente("correo", e.target.value)} /></Field></div>
-                    <div className="col-span-6 md:col-span-3"><Field label="Fecha Ingreso" required><InputG
-                      className={inputClass}
-                      type="date"
-                      max={hoy}
-                      value={form.fecha_ingreso}
-                      onChange={(e) =>
-                        setForm(prev => ({
-                          ...prev,
-                          fecha_ingreso: e.target.value
-                        }))
-                      }
-                    /></Field></div>
-                  </div>
-                </section>
-
-                {/* Dirección */}
-                <section className="pt-6 border-t border-slate-50">
-                  <h3 className="text-[10px] font-black text-[#0E5F63] uppercase tracking-[0.2em] mb-5 flex items-center gap-2">
-                    <span className="w-4 h-[1px] bg-[#0E5F63]/30"></span> Ubicación de Domicilio
-                  </h3>
-                  <div className="grid grid-cols-12 gap-4 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
-                    <div className="col-span-6 md:col-span-2"><Field label="CP" required>
-                      <InputG
-                        className={inputClass}
-                        placeholder="68000"
-                        value={form.id_expediente.id_direccion.cp}
-                        onChange={async (e) => {
-
-                          const cp = e.target.value;
-
-                          updateDireccion("cp", cp);
-
-                          // limpiar si aún no son 5 dígitos
-                          if (!/^\d{5}$/.test(cp)) {
-
-                            setColonias([]);
-                            updateDireccion("municipio", "");
-                            updateDireccion("colonia", "");
-                            setOtraColonia(false);
-                            updateDireccion("colonia", "");
-                            setCpEncontrado(false);
-                            return;
-                          }
-
-                          try {
-
-                            const data =
-                              await buscarCPCompleto(cp);
-
-                            // municipio automático SOLO si viene info
-                            if (data?.municipio) {
-
-                              updateDireccion(
-                                "municipio",
-                                data.municipio
-                              );
-
-                            }
-
-                            // colonias sugeridas
-                            setColonias(
-                              data?.colonias || []
-                            );
-
-                            if (data?.municipio) {
-
-                              setCpEncontrado(true);
-
-                              updateDireccion(
-                                "municipio",
-                                data.municipio
-                              );
-
-                            } else {
-
-                              setCpEncontrado(false);
-
-                            }
-
-                          } catch (error) {
-                            setCpEncontrado(false);
-                            console.log(error);
-
-                            // fallback manual
-                            setColonias([]);
-
-                          }
-                        }}
-                      />
-                    </Field>
-                    </div>
-                    <div className="col-span-6 md:col-span-4">
-                      <Field label="Municipio" required>
-
+                    <div className={ui.modal.twoCols}>
+                      <Field label="Nombre(s)" required error={fieldErrors.nombre}>
                         <InputG
-                          className={inputClass}
-                          disabled={
-                            form.id_expediente.id_direccion.cp.length !== 5 ||
-                            cpEncontrado
-                          }
-                          placeholder={
-                            form.id_expediente.id_direccion.cp.length !== 5
-                              ? "Primero ingresa CP"
-                              : cpEncontrado
-                                ? "Municipio detectado automáticamente"
-                                : "Escribe el municipio"
-                          }
-                          value={form.id_expediente.id_direccion.municipio}
-                          onChange={(e) =>
-                            updateDireccion(
-                              "municipio",
-                              e.target.value
-                            )
-                          }
+
+                          placeholder="Ej: Juan Antonio"
+                          value={form.nombre}
+                          onChange={(e) => updateField("nombre", e.target.value)}
+                          error={!!fieldErrors.nombre}
+                        />
+                      </Field>
+
+                      <Field label="Apellido paterno" required error={fieldErrors.apellido_p}>
+                        <InputG
+
+                          placeholder="Ej: Pérez"
+                          value={form.apellido_p}
+                          onChange={(e) => updateField("apellido_p", e.target.value)}
+                          error={!!fieldErrors.apellido_p}
+                        />
+                      </Field>
+
+                      <Field label="Apellido materno" >
+                        <InputG
+
+                          placeholder="Ej: García"
+                          value={form.apellido_m}
+                          onChange={(e) => updateField("apellido_m", e.target.value)}
+                        />
+                      </Field>
+
+                      <Field label="Correo electrónico" required error={fieldErrors.correo}>
+                        <InputG
+
+                          type="email"
+                          placeholder="ejemplo@correo.com"
+                          value={form.correo}
+                          onChange={(e) => updateField("correo", e.target.value)}
+                          error={!!fieldErrors.correo}
+                        />
+                      </Field>
+
+                      <Field label="Teléfono" required error={fieldErrors.telefono}>
+                        <InputG
+
+                          placeholder="9511234567"
+                          value={form.telefono}
+                          onChange={(e) => updateField("telefono", e.target.value)}
+                          error={!!fieldErrors.telefono}
+                        />
+                      </Field>
+
+                      <Field label="Género" required error={fieldErrors.genero}>
+                        <Select
+
+                          value={form.genero}
+                          onChange={(e) => updateField("genero", e.target.value)}
+                          error={!!fieldErrors.genero}
+                        >
+                          <option value="">Elegir...</option>
+                          <option value="Femenino">Femenino</option>
+                          <option value="Masculino">Masculino</option>
+                        </Select>
+                      </Field>
+
+                      <Field label="Fecha nacimiento" required error={fieldErrors.fecha_nacimiento}>
+                        <InputG
+
+                          type="date"
+                          max={new Date().toISOString().split("T")[0]}
+                          value={form.fecha_nacimiento}
+                          onChange={(e) => updateField("fecha_nacimiento", e.target.value)}
+                          error={!!fieldErrors.fecha_nacimiento}
+                        />
+                      </Field>
+                      <Field label="Fecha de ingreso" required error={fieldErrors.fecha_ingreso}>
+                        <InputG
+
+                          type="date"
+                          max={new Date().toISOString().split("T")[0]}
+                          value={form.fecha_ingreso}
+                          onChange={(e) => updateField("fecha_ingreso", e.target.value)}
+                          error={!!fieldErrors.fecha_ingreso}
                         />
                       </Field>
                     </div>
-                    <div className="col-span-6 md:col-span-4">
-                      <Field label="Colonia" required>
+                  </div>
+                </div>
+              )}
+              {step === 2 && (
+                <div className="space-y-6 animate-in fade-in duration-300">
+                  <div className="pt-4 border-t border-slate-50">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em]">
+                        Dirección
+                      </h3>
 
-                        {!otraColonia ? (
+                      <button
+                        type="button"
+                        className="flex items-center gap-1 text-xs text-[#0E5F63] font-semibold hover:underline"
+                        onClick={() => {
+                          if (manualAddressMode) {
+                            setManualAddressMode(false);
+                            setManualCountryMode(false);
+                            updateField("colonia", "");
+                            updateField("estado", "");
+                            updateField("municipio", "");
+                            updateField("id_geografia", null);
 
-                          <select
-                            className={selectClass}
-                            disabled={
-                              form.id_expediente.id_direccion.cp.length !== 5
+                            if (form.cp?.trim()) {
+                              handleBuscarCP(form.cp);
                             }
-                            value={form.id_expediente.id_direccion.colonia}
-                            onChange={(e) => {
-
-                              const value = e.target.value;
-
-                              if (value === "__otra__") {
-
-                                setOtraColonia(true);
-
-                                updateDireccion(
-                                  "colonia",
-                                  ""
-                                );
-
-                                return;
-                              }
-
-                              updateDireccion(
-                                "colonia",
-                                value
-                              );
-                            }}
-                          >
-
-                            <option value="">
-                              Seleccionar colonia...
-                            </option>
-
-                            {colonias.map((colonia) => (
-
-                              <option
-                                key={colonia}
-                                value={colonia}
-                              >
-                                {colonia}
-                              </option>
-
-                            ))}
-
-                            <option value="__otra__">
-                              Otra colonia...
-                            </option>
-
-                          </select>
-
+                          } else {
+                            setManualAddressMode(true);
+                            setCpError("");
+                          }
+                        }}
+                      >
+                        {manualAddressMode ? (
+                          <>
+                            <HiOutlineArrowLeft size={14} />
+                            Volver a búsqueda por CP
+                          </>
                         ) : (
-
-                          <div className="space-y-2">
-
-                            <InputG
-                              className={inputClass}
-                              placeholder="Escribe la colonia"
-                              value={form.id_expediente.id_direccion.colonia}
-                              onChange={(e) =>
-                                updateDireccion(
-                                  "colonia",
-                                  e.target.value
-                                )
-                              }
-                            />
-
-                            <button
-                              type="button"
-                              onClick={() => {
-
-                                setOtraColonia(false);
-
-                                updateDireccion(
-                                  "colonia",
-                                  ""
-                                );
-                              }}
-                              className="text-xs text-[#0E5F63] hover:underline"
-                            >
-                              Volver a sugerencias
-                            </button>
-
-                          </div>
-
+                          "Agregar dirección manual"
                         )}
-
-                      </Field>
+                      </button>
                     </div>
 
-                    <div className="col-span-6 md:col-span-2"><Field label="Núm." required><InputG className={inputClass} placeholder="101-A" value={form.id_expediente.id_direccion.numero} onChange={(e) => updateDireccion("numero", e.target.value)} /></Field></div>
-                    <div className="col-span-12"><Field label="Calle" required><InputG className={inputClass} placeholder="Ej: Av. Independencia" value={form.id_expediente.id_direccion.calle} onChange={(e) => updateDireccion("calle", e.target.value)} /></Field></div>
-                  </div>
-                </section>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                <section>
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-[10px] font-black text-[#0E5F63] uppercase tracking-[0.2em]">Estructura Familiar</h3>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const nuevo = { nombre: "", apellido_p: "", apellido_m: "", parentesco: "", edad: "", actividad_principal: "", area_laboral_escuela: "", salario: 0, vive_en_casa: true, telefono: "", es_tutor_principal: false };
-                        updateExpediente("familia", [...form.id_expediente.familia, nuevo]);
-                      }}
-                      className="text-[10px] font-bold bg-[#0E5F63] text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-[#0c5357] shadow-md transition-all active:scale-95"
-                    >
-                      <HiPlus /> Agregar Familiar
-                    </button>
-                  </div>
-
-                  <div className="space-y-5">
-                    {form.id_expediente.familia.map((fam, idx) => (
-                      <div key={idx} className={`p-6 rounded-2xl border-2 transition-all duration-300 ${idx === 0 ? 'border-[#0E5F63]/20 bg-white shadow-sm' : 'border-slate-50 bg-slate-50/30'}`}>
-                        <div className="flex justify-between items-center mb-5">
-                          <div className="flex items-center gap-3">
-                            <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${idx === 0 ? 'bg-[#0E5F63] text-white shadow-sm' : 'bg-slate-200 text-slate-500'}`}>
-                              {idx === 0 ? 'Tutor Principal' : `Familiar ${idx + 1}`}
-                            </span>
+                    <div className={ui.modal.twoCols}>
+                      <Field label="Código Postal" required error={fieldErrors.cp}>
+                        <div
+                          className={`relative rounded-md border transition  
+                                                  ${cpError
+                              ? "border-amber-400" : cpEncontrado ? "border-green-400"
+                                : "border-slate-200 focus-within:border-[#0E5F63]"
+                            }`}
+                        >
+                          <InputG
+                            value={form.cp}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              updateField("cp", value);
+                              limpiarDireccionCP();
+                            }}
+                            error={!!fieldErrors.cp}
+                            className="border-0 focus:ring-0 pl-9 pr-28"
+                          />
+                          <div className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                            <HiOutlineSearch size={16} />
                           </div>
-                          {idx > 0 && (
-                            <button type="button" onClick={() => updateExpediente("familia", form.id_expediente.familia.filter((_, i) => i !== idx))} className="text-slate-300 hover:text-red-500 transition-colors p-1">
-                              <HiTrash size={18} />
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-x-4 gap-y-4">
-                          <Field label="Nombre"><InputG className={inputClass} value={fam.nombre} onChange={(e) => updateFamiliar(idx, "nombre", e.target.value)} /></Field>
-                          <Field label="Ap. Paterno"><InputG className={inputClass} value={fam.apellido_p} onChange={(e) => updateFamiliar(idx, "apellido_p", e.target.value)} /></Field>
-                          <Field label="Ap. Materno"><InputG className={inputClass} value={fam.apellido_m} onChange={(e) => updateFamiliar(idx, "apellido_m", e.target.value)} /></Field>
-                          <Field label="Parentesco">
-                            <select className={selectClass} value={fam.parentesco} onChange={(e) => updateFamiliar(idx, "parentesco", e.target.value)}>
-                              <option value="">Elegir...</option>
-                              <option value="Padre">Padre</option>
-                              <option value="Madre">Madre</option>
-                              <option value="Abuelo/a">Abuelo/a</option>
-                              <option value="Tío/a">Tío/a</option>
-                              <option value="Hermano/a">Hermano/a</option>
-                            </select>
-                          </Field>
-                          <Field label="Fecha Nacimiento">
-                            <InputG
-                              className={inputClass}
-                              type="date"
-                              max={new Date().toISOString().split("T")[0]}
-                              value={fam.fecha_nacimiento || ""}
-                              onChange={(e) => {
-                                const fecha = e.target.value;
-
-                                const hoy = new Date();
-                                const nacimiento = new Date(fecha);
-
-                                let edad = hoy.getFullYear() - nacimiento.getFullYear();
-                                const mes = hoy.getMonth() - nacimiento.getMonth();
-
-                                if (
-                                  mes < 0 ||
-                                  (mes === 0 && hoy.getDate() < nacimiento.getDate())
-                                ) {
-                                  edad--;
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                            <button
+                              type="button"
+                              onClick={() => handleBuscarCP(form.cp)}
+                              disabled={!form.cp || loadingCP || manualAddressMode}
+                              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition
+                                                        ${cpEncontrado
+                                  ? "bg-green-50 text-green-600"
+                                  : "bg-slate-100 text-[#0E5F63] hover:bg-slate-200"
                                 }
-
-                                setForm(prev => {
-                                  const nuevaFamilia = [...prev.id_expediente.familia];
-                                  nuevaFamilia[idx] = {
-                                    ...nuevaFamilia[idx],
-                                    fecha_nacimiento: fecha,
-                                    edad
-                                  };
-
-                                  return {
-                                    ...prev,
-                                    id_expediente: {
-                                      ...prev.id_expediente,
-                                      familia: nuevaFamilia
-                                    }
-                                  };
-                                });
-                              }}
-                            />
-                          </Field>
-                          <Field label="Teléfono"><InputG className={inputClass} value={fam.telefono} onChange={(e) => updateFamiliar(idx, "telefono", e.target.value)} /></Field>
-                          <Field label="Actividad"><InputG className={inputClass} value={fam.actividad_principal} onChange={(e) => updateFamiliar(idx, "actividad_principal", e.target.value)} /></Field>
-                          <Field label="Salario Mensual"><InputG className={inputClass} type="number" value={fam.salario} onChange={(e) => updateFamiliar(idx, "salario", e.target.value)} /></Field>
+                                                      disabled:opacity-40`}
+                            >
+                              {/* carga */}
+                              {loadingCP ? (
+                                <div className="h-3 w-3 border-2 border-[#0E5F63] border-t-transparent rounded-full animate-spin" />
+                              ) : cpEncontrado ? (
+                                "Encontrado"
+                              ) : (
+                                "Buscar"
+                              )}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              </div>
-            )}
-          </form>
 
-          {/* Footer */}
-          <div className="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/20">
-            <button type="button" onClick={step === 1 ? onClose : () => setStep(1)} className="px-6 py-2 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors">
-              {step === 1 ? 'Cancelar' : 'Anterior'}
-            </button>
-            <button
-              type="button"
-              disabled={loading}
-              onClick={step === 1 ? () => setStep(2) : handlePreSubmit}
-              className="px-8 py-2.5 bg-[#0E5F63] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#0E5F63]/20 hover:bg-[#0c5357] transition-all flex items-center gap-2 disabled:opacity-50 active:scale-95"
-            >
-              {step === 1 ? (
-                <>Siguiente <HiArrowRight /></>
-              ) : (
-                <>{loading ? 'Procesando...' : 'Guardar Registro'} <HiCheck /></>
+                        {/* texto informativo */}
+                        {!manualAddressMode && (
+                          <p className="mt-1 text-[11px] text-slate-400 text-right">
+                            La búsqueda se realiza manualmente
+                          </p>
+                        )}
+                        {/* si no se encontro el cp */}
+                        {cpError && (
+                          <p className="mt-1 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md flex items-center gap-1">
+                            <HiOutlineExclamationCircle size={14} />
+                            {cpError}
+                          </p>
+                        )}
+                      </Field>
+                      <Field label="Municipio" required error={fieldErrors.municipio}>
+                        <InputG
+                          disabled={!estadoEditable}
+                          value={form.municipio || ""}
+                          onChange={(e) => updateField("municipio", e.target.value)}
+                          error={!!fieldErrors.municipio}
+                        />
+                      </Field>
+                      <Field label="Colonia" required error={fieldErrors.colonia}>
+                        {manualAddressMode ? (
+                          <InputG
+                            value={form.colonia}
+                            onChange={(e) => updateField("colonia", e.target.value)}
+                          />
+                        ) : (
+                          <Select
+                            value={form.colonia || ""}
+                            disabled={!cpEncontrado || colonias.length === 0 || loadingCP}
+                            onChange={(e) => {
+                              const colonia = colonias.find((m) => m.nombre === e.target.value);
+                              updateField("colonia", e.target.value);
+                              updateField("id_geografia", colonia?.id_geografia ?? null);
+                            }}
+                            error={!!fieldErrors.colonia}
+                          >
+                            <option value="">Selecciona la colonia</option>
+                            {colonias.map((m) => (
+                              <option key={m.id_geografia ?? m.nombre} value={m.nombre}>
+                                {m.nombre}
+                              </option>
+                            ))}
+                          </Select>
+                        )}
+                      </Field>
+
+                      <Field label="Núm." required error={fieldErrors.numero}>
+                        <InputG
+
+                          placeholder="101-A"
+                          value={form.numero}
+                          error={!!fieldErrors.numero}
+                          onChange={(e) =>
+                            updateField("numero", e.target.value)
+                          }
+                        />
+                      </Field>
+
+
+                      <Field label="Calle" required error={fieldErrors.calle}>
+                        <InputG
+
+                          placeholder="Ej: Av. Independencia"
+                          value={form.calle}
+                          error={!!fieldErrors.calle}
+                          onChange={(e) =>
+                            updateField("calle", e.target.value)
+                          }
+                        />
+                      </Field>
+
+
+                    </div>
+                  </div>
+                </div>
               )}
-            </button>
-          </div>
-        </div>
-      </div>
+              
+              {step === 3 && (
+                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                  {/* Sección: Educación */}
+
+                  {/* Sección: Familia */}
+                  <div className="pt-2">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em]">Estructura Familiar</h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nuevoIntegrante = {
+                            nombre: "",
+                            apellido_p: "",
+                            apellido_m: "",
+                            parentesco: "",
+                            fecha_nacimiento: "",
+                            actividad_principal: "",
+                            salario: "0.00",
+                            vive_en_casa: true,
+                            telefono: "",
+                            es_tutor_principal: false
+                          };
+                          const nuevaFamilia = [...(form.familia || []), nuevoIntegrante];
+
+                          setForm(prev => ({
+                            ...prev,
+                            familia: nuevaFamilia
+                          }));
+
+                          handleChange("familia", nuevaFamilia);
+                        }}
+                        className="text-[10px] font-bold bg-[#0E5F63] text-white px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-[#0c5357]"
+                      >
+                        <HiPlus /> Registrar Ingreso
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {(form.familia || []).map((fam, idx) => (
+                        <div key={idx} className={`p-5 rounded-2xl border-2 transition-all ${idx === 0 ? 'border-[#0E5F63]/20 bg-white shadow-sm' : 'border-slate-50 bg-white'}`}>
+                          <div className="flex justify-between mb-4">
+                            <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest ${idx === 0 ? 'bg-[#0E5F63] text-white' : 'bg-slate-100 text-slate-500'}`}>
+                              {idx === 0 ? 'Tutor Principal' : `Integrante ${idx + 1}`}
+                            </span>
+                            {idx > 0 && <button type="button" onClick={() => { const n = form.familia.filter((_, i) => i !== idx); updateField("familia", n); }} className="text-red-400 hover:text-red-600"><HiTrash size={16} /></button>}
+                          </div>
+
+                          {/* Grid de 4 columnas para familia */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3">
+                            <Field label="Nombre" required error={fieldErrors[`familia.${idx}.nombre`]}><InputG placeholder="Nombre" value={fam.nombre} error={!!fieldErrors[`familia.${idx}.nombre`]} onChange={(e) => updateFamiliar(idx, "nombre", e.target.value)} /></Field>
+                            <Field label="Ap. Paterno" required error={fieldErrors[`familia.${idx}.apellido_p`]}><InputG placeholder="Apellido P." value={fam.apellido_p} error={!!fieldErrors[`familia.${idx}.apellido_p`]} onChange={(e) => updateFamiliar(idx, "apellido_p", e.target.value)} /></Field>
+                            <Field label="Ap. Materno" required error={fieldErrors[`familia.${idx}.apellido_m`]}><InputG placeholder="Apellido M." value={fam.apellido_m} error={!!fieldErrors[`familia.${idx}.apellido_m`]} onChange={(e) => updateFamiliar(idx, "apellido_m", e.target.value)} /></Field>
+                            <Field label="Parentesco" required error={fieldErrors[`familia.${idx}.parentesco`]}>
+                              <Select value={fam.parentesco} error={!!fieldErrors[`familia.${idx}.parentesco`]} onChange={(e) => updateFamiliar(idx, "parentesco", e.target.value)}>
+                                <option value="">Elegir...</option>
+                                <option value="Padre">Padre</option>
+                                <option value="Madre">Madre</option>
+                                <option value="Hermano(a)">Hermano(a)</option>
+                                <option value="Abuelo(a)">Abuelo(a)</option>
+                                <option value="Tío(a)">Tío(a)</option>
+                                <option value="Primo(a)">Primo(a)</option>
+                                <option value="Padrastro/Madrastra">Padrastro/Madrastra</option>
+                                <option value="Cónyuge">Cónyuge</option>
+                                <option value="Hijo(a)">Hijo(a)</option>
+                              </Select>
+                            </Field>
+                            <Field
+                              label="Fecha Nacimiento"
+                              required
+                              error={fieldErrors[`familia.${idx}.fecha_nacimiento`]}
+                            >
+                              <InputG
+                                type="date"
+                                max={new Date().toISOString().split("T")[0]}
+                                value={fam.fecha_nacimiento || ""}
+                                error={!!fieldErrors[`familia.${idx}.fecha_nacimiento`]}
+                                onChange={(e) =>
+                                  updateFamiliar(idx, "fecha_nacimiento", e.target.value)
+                                }
+                              />
+                            </Field>
+                            <Field label="Teléfono" error={fieldErrors[`familia.${idx}.telefono`]}><InputG placeholder="10 dígitos" value={fam.telefono} error={!!fieldErrors[`familia.${idx}.telefono`]} onChange={(e) => updateFamiliar(idx, "telefono", e.target.value)} /></Field>
+                            <Field label="Ocupación o grado escolar" required error={fieldErrors[`familia.${idx}.actividad_principal`]} ><InputG placeholder="Ej: Empleado" value={fam.actividad_principal} error={!!fieldErrors[`familia.${idx}.actividad_principal`]} onChange={(e) => updateFamiliar(idx, "actividad_principal", e.target.value)} /></Field>
+                            <Field label="Salario o Escuela" required error={fieldErrors[`familia.${idx}.salario`]}><InputG value={fam.salario} onChange={(e) => updateFamiliar(idx, "salario", e.target.value)} /></Field>
+                            <Field label="¿Vive en casa?" required error={fieldErrors[`familia.${idx}.vive_en_casa`]}>
+                              <Select value={fam.vive_en_casa} error={!!fieldErrors[`familia.${idx}.vive_en_casa`]} onChange={(e) => updateFamiliar(idx, "vive_en_casa", e.target.value === "true")}>
+                                <option value="true">Sí</option>
+                                <option value="false">No</option>
+                              </Select>
+                            </Field>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+
+            {/* Footer */}
+            {/* Footer */}
+            <div className={ui.modal.formActions}>
+              <Boton
+                type="button" // Evita comportamientos extraños
+                variant="secondary"
+                onClick={() => {
+                  if (step === 1) onClose();
+                  else setStep(step - 1);
+                }}
+              >
+                {step === 1 ? "Cancelar" : "Volver"}
+              </Boton>
+
+              <Boton
+                type="button" // Cambiado de submit implícito a botón controlado
+                onClick={() => {
+                  if (step < 3) {
+                    setStep(step + 1);
+                  } else {
+                    handlePreSubmit(); // Controla la confirmación manualmente
+                  }
+                }}
+                disabled={loading}
+              >
+                {step < 3
+                  ? "Siguiente"
+                  : loading
+                    ? "Guardando..."
+                    : "Registrar"}
+              </Boton>
+            </div>
+          </form>
+        </div >
+      </div >
 
       <ModalConfirmacion
         open={showConfirm}
-        title="¿Confirmar registro?"
-        description="Se creará el expediente médico/social y el grupo familiar vinculado. Asegúrate de que los datos del tutor sean correctos."
-        onConfirm={handleConfirmSave}
         onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirmSave}
+        title="¿Confirmar Registro?"
+        message="Se creará el beneficiario scorrespondiente."
       />
 
       <ModalResultado
@@ -501,8 +618,19 @@ export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
         type={resultModal.type}
         title={resultModal.title}
         message={resultModal.message}
-        onClose={handleFinalClose}
+        onClose={() => {
+          if (resultModal.type === "success") {
+            setStep(1); // Regresa al paso 1 para la próxima vez
+          }
+          handleFinalClose(); // Ejecuta la limpieza del formulario y llama a onSuccess / onClose
+          onClose(); // <-- Sincronización manual: Garantiza que el padre entere el cierre
+        }}
       />
     </>
   );
 }
+
+
+
+
+ 

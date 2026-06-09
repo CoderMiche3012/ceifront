@@ -1,17 +1,19 @@
-//por corregir
-import { useEffect, useMemo, useState } from "react";
-import { actualizarDonador } from "../services/donadoresService";
-import { obtenerBeneficiarios } from "../../beneficiarios/services/beneficiariosService";
-import { obtenerExpedientePorId } from "../../expedientes/services/expedientesService";
-import { obtenerSeguimientosPorBeneficiario } from "../../beneficiarios/services/seguimientoService";
-import { obtenerPeriodos } from "../../periodos/services/periodoService";
+import { useMemo, useState } from "react";
+import { useBeneficiariosActivos } from "../../beneficiarios/hooks/useBeneficiarios";
+import { useActualizarDonador } from "./useDonadores";
 
-export function useBeneficiariosVinculados(data, setData) {
+export function useBeneficiariosVinculados(
+  data,
+  setData
+) {
   const [openModal, setOpenModal] = useState(false);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
   const [loadingId, setLoadingId] = useState(null);
-  const [listaBeneficiarios, setListaBeneficiarios] = useState([]);
+
+  const { data: activos = [], isLoading } =useBeneficiariosActivos();
+
+  const { mutateAsync: actualizarDonador } =
+    useActualizarDonador();
 
   const calcularEdad = (fecha) => {
     if (!fecha) return "--";
@@ -19,202 +21,138 @@ export function useBeneficiariosVinculados(data, setData) {
     const hoy = new Date();
     const nacimiento = new Date(fecha);
 
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const mes = hoy.getMonth() - nacimiento.getMonth();
+    let edad =
+      hoy.getFullYear() -
+      nacimiento.getFullYear();
 
-    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+    const mes =
+      hoy.getMonth() -
+      nacimiento.getMonth();
+
+    if (
+      mes < 0 ||
+      (mes === 0 &&
+        hoy.getDate() <
+        nacimiento.getDate())
+    ) {
       edad--;
     }
 
     return edad;
   };
 
-  useEffect(() => {
-    if (!data?.beneficiarios?.length) return;
+  const listaBeneficiarios = useMemo(() => {
+    const idsVinculados = (
+      data?.beneficiarios_apoyados || []
+    ).map((b) => String(b.id));
 
-    const cargar = async () => {
-      try {
-        const completos = await Promise.all(
-          data.beneficiarios.map(async (item) => {
-            if (!item.id_expediente) return item;
-
-            const expediente = await obtenerExpedientePorId(
-              item.id_expediente
-            );
-
-            return {
-              ...item,
-              nombre: expediente?.nombre || "",
-              apellido_p: expediente?.apellido_p || "",
-              apellido_m: expediente?.apellido_m || "",
-              genero: expediente?.genero || "",
-              fecha_nacimiento: expediente?.fecha_nacimiento || "",
-            };
-          })
-        );
-
-        setData((prev) => ({
-          ...prev,
-          beneficiarios: completos,
-        }));
-      } catch (error) {
-        console.error("Error cargando expedientes:", error);
-      }
-    };
-
-    cargar();
-  }, [data?.beneficiarios?.length, setData]);
-
-  const cargarBeneficiarios = async () => {
-    try {
-      setLoading(true);
-
-      const [resBeneficiarios, resPeriodos] = await Promise.all([
-        obtenerBeneficiarios(),
-        obtenerPeriodos(),
-      ]);
-
-      const todos = resBeneficiarios || [];
-      const periodos = resPeriodos || [];
-
-      const idsVinculados = (data?.beneficiarios_apoyados || []).map(String);
-
-      const ultimoPeriodo = [...periodos]
-        .sort((a, b) => b.id_periodo - a.id_periodo)[0]?.id_periodo;
-
-      const beneficiariosConEstado = await Promise.all(
-        todos.map(async (item) => {
-          try {
-            const seguimientos =
-              await obtenerSeguimientosPorBeneficiario(
-                item.id_beneficiario
-              );
-
-            const seguimientoReciente = (seguimientos || []).find(
-              (s) => s.id_periodo === ultimoPeriodo
-            );
-
-            return {
-              ...item,
-              esActivo: seguimientoReciente?.estatus === "Activo",
-            };
-          } catch (error) {
-            console.error("Error en seguimiento:", error);
-            return { ...item, esActivo: false };
-          }
-        })
+    return activos
+      .filter(
+        (b) => b.estatus === "Activo"
+      )
+      .filter(
+        (b) =>
+          !idsVinculados.includes(
+            String(b.id_beneficiario)
+          )
       );
-
-      const activos = beneficiariosConEstado.filter(
-        (item) =>
-          item.esActivo &&
-          !idsVinculados.includes(String(item.id_beneficiario))
-      );
-
-      const completos = await Promise.all(
-        activos.map(async (item) => {
-          if (!item.id_expediente) return item;
-
-          const expediente = await obtenerExpedientePorId(
-            item.id_expediente
-          );
-
-          return {
-            ...item,
-            nombre: expediente?.nombre || "",
-            apellido_p: expediente?.apellido_p || "",
-            apellido_m: expediente?.apellido_m || "",
-            genero: expediente?.genero || "",
-            fecha_nacimiento: expediente?.fecha_nacimiento || "",
-          };
-        })
-      );
-
-      setListaBeneficiarios(completos);
-    } catch (error) {
-      console.error("Error cargando beneficiarios:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [
+    activos,
+    data?.beneficiarios_apoyados,
+  ]);
 
   const filtrados = useMemo(() => {
-    return listaBeneficiarios.filter((item) =>
-      `${item.nombre} ${item.apellido_p} ${item.apellido_m}`
-        .toLowerCase()
-        .includes(search.toLowerCase())
+    return listaBeneficiarios.filter((b) =>
+      b.expediente_resumen?.nombre_completo
+        ?.toLowerCase()
+        .includes(
+          search.toLowerCase()
+        )
     );
   }, [search, listaBeneficiarios]);
-  const handleAgregar = async (idBeneficiario) => {
-    try {
-      setLoadingId(idBeneficiario);
 
-      const actuales = (data?.beneficiarios_apoyados || []).map(String);
+ const handleAgregar = async (idBeneficiario) => {
+  try {
+    setLoadingId(idBeneficiario);
 
-      if (actuales.includes(String(idBeneficiario))) return;
+    const actuales = (
+      data?.beneficiarios_apoyados || []
+    ).map((b) => b.id);
 
-      const nuevosIds = [...actuales, String(idBeneficiario)];
-
-      await actualizarDonador(data.id_donador, {
-        beneficiarios_apoyados: nuevosIds,
-      });
-
-      const nuevo = listaBeneficiarios.find(
-        (i) => String(i.id_beneficiario) === String(idBeneficiario)
-      );
-
-      setData((prev) => ({
-        ...prev,
-        beneficiarios_apoyados: nuevosIds,
-        beneficiarios: nuevo
-          ? [...(prev.beneficiarios ?? []), nuevo]
-          : prev.beneficiarios ?? [],
-        total_beneficiarios: nuevosIds.length,
-      }));
-
-      setOpenModal(false);
-      setSearch("");
-    } catch (error) {
-      console.error("Error agregando:", error);
-    } finally {
-      setLoadingId(null);
+    if (actuales.includes(idBeneficiario)) {
+      return;
     }
-  };
-  const handleEliminar = async (idBeneficiario) => {
-    try {
-      const actuales = (data?.beneficiarios_apoyados || []).map(String);
 
-      const nuevosIds = actuales.filter(
-        (id) => String(id) !== String(idBeneficiario)
-      );
+    const nuevosIds = [
+      ...actuales,
+      idBeneficiario,
+    ];
 
-      await actualizarDonador(data.id_donador, {
+    await actualizarDonador({
+      id: data.id_donador,
+      data: {
         beneficiarios_apoyados: nuevosIds,
-      });
+      },
+    });
 
-      setData((prev) => ({
-        ...prev,
+    setOpenModal(false);
+    setSearch("");
+  } catch (error) {
+    console.error(
+      "Error agregando beneficiario:",
+      error
+    );
+
+    console.error(
+      error?.response?.data
+    );
+
+    throw error;
+  } finally {
+    setLoadingId(null);
+  }
+};const handleEliminar = async (
+  idBeneficiario
+) => {
+  try {
+    const actuales = (
+      data?.beneficiarios_apoyados || []
+    ).map((b) => b.id);
+
+    const nuevosIds = actuales.filter(
+      (id) => id !== idBeneficiario
+    );
+
+    await actualizarDonador({
+      id: data.id_donador,
+      data: {
         beneficiarios_apoyados: nuevosIds,
-        beneficiarios: prev.beneficiarios.filter(
-          (b) => String(b.id_beneficiario) !== String(idBeneficiario)
-        ),
-        total_beneficiarios: nuevosIds.length,
-      }));
-    } catch (error) {
-      console.error("Error eliminando:", error);
-    }
-  };
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Error al desvincular beneficiario:",
+      error
+    );
+
+    console.error(
+      "Respuesta backend:",
+      error?.response?.data
+    );
+
+    throw error;
+  }
+};
 
   return {
     openModal,
     setOpenModal,
     search,
     setSearch,
-    loading,
+    loading: isLoading,
     loadingId,
     listaBeneficiarios,
     filtrados,
-    cargarBeneficiarios,
     handleAgregar,
     handleEliminar,
     calcularEdad,

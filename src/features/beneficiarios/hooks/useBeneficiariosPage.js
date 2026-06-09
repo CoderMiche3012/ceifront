@@ -1,8 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { obtenerExpedientes } from "../../expedientes/services/expedientesService";
-import { obtenerBeneficiarios } from "../services/beneficiariosService";
-import { obtenerDonadores } from "../../donadores/services/donadoresService";
+import { useBeneficiarios } from "./useBeneficiarios";
 import { obtenerPeriodos } from "../../periodos/services/periodoService";
 
 const INITIAL_FILTERS = {
@@ -23,64 +21,33 @@ export const useBeneficiariosPage = (pageSize = 4) => {
     queryKey: ["periodos"],
     queryFn: obtenerPeriodos,
   });
-  const { data = [], isLoading, error, refetch } = useQuery({
-    queryKey: ["beneficiarios"],
-    queryFn: async () => {
-      const [beneficiariosRes, expedientesRes, donadoresRes] =
-        await Promise.all([
-          obtenerBeneficiarios(),
-          obtenerExpedientes(),
-          obtenerDonadores(),
-        ]);
-      const beneficiarios =
-        beneficiariosRes?.results || beneficiariosRes || [];
-      const expedientes =
-        expedientesRes?.results || expedientesRes || [];
-      const donadores = donadoresRes?.results || donadoresRes || [];
-      const expedientesMap = new Map(
-        expedientes.map((e) => [String(e.id_expediente), e])
-      );
-      return beneficiarios.map((b) => {
-        const id =
-          typeof b.id_expediente === "object"
-            ? b.id_expediente?.id_expediente
-            : b.id_expediente;
-        const tieneDonador = donadores.some((d) =>
-          (d.beneficiarios_apoyados || []).some(
-            (ben) =>
-              String(
-                typeof ben === "object"
-                  ? ben.id_beneficiario
-                  : ben
-              ) === String(b.id_beneficiario)
-          )
-        );
-        const expediente =
-          expedientesMap.get(String(id)) || b.id_expediente;
 
-        return {
-          ...b,
-          expediente: {
-            ...expediente,
-            direccion: {
-              cp: expediente?.id_direccion?.cp ?? "--",
-              municipio:
-                expediente?.id_direccion?.municipio ?? "--",
-              calle: expediente?.id_direccion?.calle ?? "--",
-              numero: expediente?.id_direccion?.numero ?? "--",
-              colonia:
-                expediente?.id_direccion?.colonia ?? "--",
-            },
-          },
+  const {
+    data: beneficiariosData = [],
+    isLoading,
+    error,
+  } = useBeneficiarios();
 
-          tieneDonador,
-        };
-      });
-    },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
-  });
+  const data = useMemo(() => {
+    const beneficiarios =
+      beneficiariosData?.results || beneficiariosData || [];
 
+    return beneficiarios.map((b) => ({
+      ...b,
+      expediente: {
+        nombre_completo:
+          b.expediente_resumen?.nombre_completo ?? "",
+        telefono:
+          b.expediente_resumen?.telefono ?? "",
+        fecha_nacimiento:
+          b.expediente_resumen?.fecha_nacimiento ?? "",
+        municipio:
+          b.expediente_resumen?.municipio ?? "--",
+      },
+      tieneDonador:
+        (b.donadores?.length || 0) > 0,
+    }));
+  }, [beneficiariosData]);
 
   const periodosDisponibles = useMemo(() => {
     const periodos = Array.isArray(periodosRes?.results)
@@ -165,9 +132,8 @@ export const useBeneficiariosPage = (pageSize = 4) => {
 
     return beneficiariosConPeriodo.filter((item) => {
       const nombre =
-        `${item.expediente?.nombre || ""} ${item.expediente?.apellido_p || ""
-          }`.toLowerCase();
-
+        (item.expediente?.nombre_completo || "")
+          .toLowerCase();
       const matchSearch =
         !searchLower || nombre.includes(searchLower);
 
@@ -263,9 +229,9 @@ export const useBeneficiariosPage = (pageSize = 4) => {
     handleClearFilters,
     setCurrentPage,
     PAGE_SIZE,
-    refetch,
     periodosDisponibles,
     periodo,
     setPeriodo,
   };
 };
+ 

@@ -3,10 +3,12 @@ import { Calendar, ArrowLeft, RefreshCw, AlertCircle } from "lucide-react";
 import AvatarGeneral from "../../components/shared/AvatarGeneral";
 import TabsExpediente from "../../features/beneficiarios/components/detalles/TabsExpediente";
 import DatosGenerales from "../../features/beneficiarios/components/detalles/DatosGenerales";
-import FamiliaCard from "../../features/beneficiarios/components/detalles/FamiliaCard";
 import { useExpedienteData } from "../../features/beneficiarios/hooks/useExpedienteData";
 import { useBeneficiariosPage } from "../../features/beneficiarios/hooks/useBeneficiariosPage";
 import { useQueryClient } from "@tanstack/react-query";
+
+{/*
+import FamiliaCard from "../../features/beneficiarios/components/detalles/FamiliaCard";
 import HistorialEscolarCard from "../../features/beneficiarios/components/detalles/seguimiento/informacionEscolar/HistorialEscolar";
 import HistorialServicios from "../../features/beneficiarios/components/detalles/seguimiento//Servicios/HistorialServicios";
 import HistorialEconomicoCard from "../../features/beneficiarios/components/detalles/seguimiento/ApoyosEconomicos/HistorialEconomico";
@@ -14,6 +16,7 @@ import HistorialObligaciones from "../../features/beneficiarios/components/detal
 import HistorialFotografia from "../../features/beneficiarios/components/detalles/seguimiento/Fotografias/HistorialFotografias";
 import ExpedienteDigital from "../../features/beneficiarios/components/detalles/seguimiento/Documentos/Documentos";
 import EstudioSos from "../../features/beneficiarios/components/detalles/EstudioSocioeconomico";
+*/}
 export default function ExpedientePagina() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -136,6 +139,7 @@ export default function ExpedientePagina() {
 
       <main className="min-h-[400px] mt-4">
         {tab === "generales" && <DatosGenerales data={data} />}
+        {/*
         {tab === "familia" && (
           <FamiliaCard data={data} refetch={refetch} />
         )}
@@ -146,6 +150,7 @@ export default function ExpedientePagina() {
         {tab === "fotografias" && <HistorialFotografia data={data} refetch={refetch} />}
         {tab === "documentos" && <ExpedienteDigital data={data} />}
         {tab === "estudio" && <EstudioSos data={data} refetch={refetch}/>}
+      */}
       </main>
     </section>
   );

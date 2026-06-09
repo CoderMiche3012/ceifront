@@ -16,7 +16,6 @@ export default function Resultados({ data }) {
       <div className={ui.layout.twoColumnAside}>
         <EstatusCard
           data={data}
-          canEdit={canEdit}
         />
       </div>
     </div>

@@ -5,8 +5,11 @@ import { ui } from "../../../../../styles/ui/index";
 
 import { useActualizarPostulanteDetalle, useAceptarPostulante, } from "../../../hooks/usePostulantes";
 import Card from "../../../../../components/ui/Card";
+import { usePermissions } from "../../../../../context/PermissionsContext";
 
-export default function EstatusCard({ data, canEdit }) {
+export default function EstatusCard({ data }) {
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canEdit = hasModulePermission("postulantes", "editar");
 
   const aceptarPostulante = useAceptarPostulante();
   const actualizarPostulanteMutation = useActualizarPostulanteDetalle(data.id_postulante);

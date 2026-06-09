@@ -1,5 +1,5 @@
 import { UserPlus } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Boton from "../../components/ui/Boton";
 import { useLocation, useNavigate } from "react-router-dom";
 import EncabezadoPagina from "../../components/shared/EncabezadoPagina";
@@ -8,13 +8,11 @@ import BeneficiarioTabla from "../../features/beneficiarios/components/tabla/Ben
 import BeneficiarioFiltros from "../../features/beneficiarios/components/tabla/BeneficiarioFiltros";
 import PaginacionTabla from "../../components/tablas/PaginacionTabla";
 import { useBeneficiariosPage } from "../../features/beneficiarios/hooks/useBeneficiariosPage";
-import { useQueryClient } from "@tanstack/react-query";
 import { usePermissions } from "../../context/PermissionsContext";
 
 
 export default function BeneficiariosPagina() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const queryClient = useQueryClient();
   const {
     hasModulePermission,
     loading: isPermsLoading,
@@ -35,7 +33,6 @@ export default function BeneficiariosPagina() {
     totalPages,
     setCurrentPage,
     PAGE_SIZE,
-    refetch,
     periodosDisponibles,
     periodo,
     setPeriodo
@@ -52,7 +49,6 @@ export default function BeneficiariosPagina() {
   }, [location, navigate]);
   const handleCreateSuccess = () => {
     setIsModalOpen(false);
-    queryClient.invalidateQueries({ queryKey: ["beneficiarios"] });
     setCurrentPage(1);
   };
 
@@ -88,7 +84,7 @@ export default function BeneficiariosPagina() {
           periodos={periodosDisponibles}
           periodo={periodo}
         />
-        <BeneficiarioTabla beneficiarios={beneficiarios} onRefresh={refetch} periodo={periodo} />
+        <BeneficiarioTabla beneficiarios={beneficiarios} periodo={periodo} />
         {loading && (
           <div className="flex flex-col items-center gap-2">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>

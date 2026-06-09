@@ -1,6 +1,4 @@
-// por corregir si se cambia backend
-
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -25,18 +23,13 @@ import { useBeneficiariosVinculados } from "../../hooks/useBeneficiariosVinculad
 
 export default function BeneficiariosVinculadosCard({
   data,
-  setData,
 }) {
   const navigate = useNavigate();
 
-  const [modalEliminar, setModalEliminar] =
-    useState(false);
-
-  const [idEliminar, setIdEliminar] =
-    useState(null);
-
-  const donadorActivo =
-    data?.estatus?.toLowerCase() === "activo";
+  const [modalEliminar, setModalEliminar] = useState(false);
+  const [idEliminar, setIdEliminar] = useState(null);
+  const [modalAgregar, setModalAgregar] = useState(false);
+  const [idAgregar, setIdAgregar] = useState(null);
 
   const [resultado, setResultado] = useState({
     open: false,
@@ -44,6 +37,9 @@ export default function BeneficiariosVinculadosCard({
     title: "",
     message: "",
   });
+
+  const donadorActivo =
+    data?.estatus?.toLowerCase() === "activo";
 
   const {
     openModal,
@@ -56,24 +52,16 @@ export default function BeneficiariosVinculadosCard({
     handleAgregar,
     handleEliminar,
     calcularEdad,
-    cargarBeneficiarios,
-  } = useBeneficiariosVinculados(
-    data,
-    setData
-  );
+  } = useBeneficiariosVinculados(data);
+  console.log(data?.beneficiarios);
+  console.log("filtrados", filtrados);
 
-  useEffect(() => {
-    if (openModal) {
-      cargarBeneficiarios();
-    }
-  }, [openModal]);
-
+  // 🔎 navegar a expediente
   const irExpediente = (id) => {
-    navigate(
-      `/App/beneficiarios/expediente/${id}`
-    );
+    navigate(`/App/beneficiarios/expediente/${id}`);
   };
 
+  // 🗑 confirmar eliminación
   const confirmarEliminar = async () => {
     try {
       await handleEliminar(idEliminar);
@@ -84,20 +72,39 @@ export default function BeneficiariosVinculadosCard({
         open: true,
         type: "success",
         title: "Beneficiario eliminado",
-        message:
-          "El beneficiario fue desvinculado correctamente.",
+        message: "El beneficiario fue desvinculado correctamente.",
       });
     } catch {
       setResultado({
         open: true,
         type: "error",
         title: "Error al eliminar",
-        message:
-          "No se pudo eliminar el beneficiario.",
+        message: "No se pudo eliminar el beneficiario.",
       });
     }
   };
+  const confirmarAgregar = async () => {
+    try {
+      await handleAgregar(idAgregar);
 
+      setModalAgregar(false);
+      setOpenModal(false);
+
+      setResultado({
+        open: true,
+        type: "success",
+        title: "Beneficiario agregado",
+        message: "El beneficiario fue vinculado correctamente.",
+      });
+    } catch {
+      setResultado({
+        open: true,
+        type: "error",
+        title: "Error al agregar",
+        message: "No se pudo vincular el beneficiario.",
+      });
+    }
+  };
   return (
     <>
       {/* CARD */}
@@ -106,10 +113,7 @@ export default function BeneficiariosVinculadosCard({
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="flex items-center gap-2 text-base font-bold text-slate-800">
-              <Users
-                className={`w-5 h-5 ${ui.primaryIcon}`}
-              />
-
+              <Users className={`w-5 h-5 ${ui.primaryIcon}`} />
               Beneficiarios vinculados
             </h3>
 
@@ -128,18 +132,12 @@ export default function BeneficiariosVinculadosCard({
                   message:
                     "Solo se pueden asignar beneficiarios a donadores activos.",
                 });
-
                 return;
               }
 
               setOpenModal(true);
             }}
-            className={`
-              ${ui.button.base}
-              ${ui.button.sm}
-              ${ui.button.primary}
-              w-10 px-0
-            `}
+            className={`${ui.button.base} ${ui.button.sm} ${ui.button.primary} w-10 px-0`}
           >
             <Plus className="w-7 h-7" />
           </button>
@@ -147,45 +145,32 @@ export default function BeneficiariosVinculadosCard({
 
         {/* LISTA */}
         <div className="space-y-3">
-          {data?.beneficiarios?.length > 0 ? (
-            data.beneficiarios.map((item) => (
+          {data?.beneficiarios_apoyados?.length > 0 ? (
+            data.beneficiarios_apoyados.map((item) => (
               <div
-                key={item.id_beneficiario}
+                key={item.id}
                 role="button"
                 tabIndex={0}
-                onClick={() =>
-                  irExpediente(
-                    item.id_beneficiario
-                  )
-                }
+                onClick={() => irExpediente(item.id)}
                 className="
-                  group
-                  flex items-center gap-4
-                  rounded-2xl
-                  border border-slate-100
-                  p-4
-                  transition-all
-                  hover:bg-slate-50
+                  group flex items-center gap-4
+                  rounded-2xl border border-slate-100
+                  p-4 transition-all hover:bg-slate-50
                   cursor-pointer
                 "
               >
                 <AvatarGeneral
                   nombre={item.nombre}
-                  apellidoP={item.apellido_p}
                   className="h-12 w-12 text-sm"
                 />
 
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-slate-800 truncate">
-                    {item.nombre}{" "}
-                    {item.apellido_p}
+                    {item.nombre} {item.apellido_p}
                   </p>
 
                   <p className="text-sm text-slate-500">
-                    {calcularEdad(
-                      item.fecha_nacimiento
-                    )}{" "}
-                    años •{" "}
+                    {calcularEdad(item.fecha_nacimiento)} años •{" "}
                     {item.genero || "--"}
                   </p>
                 </div>
@@ -193,39 +178,26 @@ export default function BeneficiariosVinculadosCard({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-
-                    setIdEliminar(
-                      item.id_beneficiario
-                    );
-
+                    setIdEliminar(item.id);
                     setModalEliminar(true);
                   }}
-                  className={`
+                  className="
                     ${ui.button.base}
-                    h-10 w-10
-                    rounded-xl
-                    bg-red-50
-                    text-red-500
-                    hover:bg-red-100
-                    hover:text-red-700
-                    opacity-0
-                    group-hover:opacity-100
-                  `}
+                    h-10 w-10 rounded-xl
+                    bg-red-50 text-red-500
+                    hover:bg-red-100 hover:text-red-700
+                    opacity-0 group-hover:opacity-100
+                  "
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))
           ) : (
-            <div
-              className="
-                rounded-2xl
-                border-2 border-dashed border-slate-200
-                bg-slate-50
-                p-10
-                text-center
-              "
-            >
+            <div className="
+              rounded-2xl border-2 border-dashed border-slate-200
+              bg-slate-50 p-10 text-center
+            ">
               <Users className="w-8 h-8 text-slate-300 mx-auto mb-3" />
 
               <p className="font-semibold text-slate-600">
@@ -240,28 +212,15 @@ export default function BeneficiariosVinculadosCard({
         </div>
       </Card>
 
-      {/* MODAL */}
+      {/* MODAL SELECCIÓN */}
       {openModal && (
         <div className={ui.modal.formOverlay}>
-          <div
-            className="absolute inset-0"
-            onClick={() =>
-              setOpenModal(false)
-            }
-          />
+          <div className="absolute inset-0" onClick={() => setOpenModal(false)} />
 
-          <div
-            className={`${ui.modal.formContainer} relative max-w-2xl`}
-          >
+          <div className={`${ui.modal.formContainer} relative max-w-2xl`}>
             {/* HEADER */}
             <div className={ui.modal.formHeader}>
-              <div
-                className={`
-                  ${ui.modal.iconWrapper}
-                  bg-[#0E5F63]/10
-                  text-[#0E5F63]
-                `}
-              >
+              <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}>
                 <Users size={24} />
               </div>
 
@@ -269,27 +228,14 @@ export default function BeneficiariosVinculadosCard({
                 <h2 className={ui.modal.title}>
                   Vincular beneficiario
                 </h2>
-
-                <p
-                  className={
-                    ui.modal.description
-                  }
-                >
-                  Solo beneficiarios activos
-                  disponibles
+                <p className={ui.modal.description}>
+                  Solo beneficiarios activos disponibles
                 </p>
               </div>
 
               <button
-                onClick={() =>
-                  setOpenModal(false)
-                }
-                className="
-                  h-10 w-10
-                  rounded-xl
-                  hover:bg-slate-100
-                  flex items-center justify-center
-                "
+                onClick={() => setOpenModal(false)}
+                className="h-10 w-10 rounded-xl hover:bg-slate-100 flex items-center justify-center"
               >
                 <X className="w-5 h-5 text-slate-500" />
               </button>
@@ -297,30 +243,22 @@ export default function BeneficiariosVinculadosCard({
 
             {/* BODY */}
             <div className={ui.modal.formBody}>
-              {/* BUSCADOR */}
+              {/* SEARCH */}
               <div className="mb-5">
                 <div className="relative">
-                  <Search
-                    className={ui.filters.searchIcon}
-                  />
+                  <Search className={ui.filters.searchIcon} />
 
                   <input
                     value={search}
-                    onChange={(e) =>
-                      setSearch(
-                        e.target.value
-                      )
-                    }
+                    onChange={(e) => setSearch(e.target.value)}
                     placeholder="Buscar beneficiario..."
                     className={ui.filters.input}
                   />
                 </div>
               </div>
 
-              {/* LISTA */}
-              <div
-                className={`${ui.modal.formScroll} space-y-3`}
-              >
+              {/* LIST */}
+              <div className={`${ui.modal.formScroll} space-y-3`}>
                 {loading ? (
                   <div className="py-10 text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-slate-400 mx-auto" />
@@ -328,67 +266,42 @@ export default function BeneficiariosVinculadosCard({
                 ) : filtrados.length > 0 ? (
                   filtrados.map((item) => (
                     <div
-                      key={
-                        item.id_beneficiario
-                      }
-                      className="
-                        flex items-center justify-between
-                        rounded-2xl
-                        border border-slate-100
-                        p-4
-                      "
+                      key={item.id_beneficiario}
+                      className="flex items-center justify-between rounded-2xl border border-slate-100 p-4"
                     >
                       <div className="flex items-center gap-4">
                         <AvatarGeneral
-                          nombre={item.nombre}
-                          apellidoP={
-                            item.apellido_p
-                          }
+                          nombre={item.expediente_resumen?.nombre_completo}
+                          apellidoP=""
                           className="h-12 w-12 text-sm"
                         />
 
                         <div>
                           <p className="font-semibold text-slate-800">
-                            {item.nombre}{" "}
-                            {
-                              item.apellido_p
-                            }
+                            {item.expediente_resumen?.nombre_completo}
                           </p>
 
                           <p className="text-sm text-slate-500">
                             {calcularEdad(
-                              item.fecha_nacimiento
+                              item.expediente_resumen?.fecha_nacimiento
                             )}{" "}
-                            años •{" "}
-                            {item.genero ||
-                              "--"}
+                            años
                           </p>
                         </div>
                       </div>
 
                       <button
-                        disabled={
-                          loadingId ===
-                          item.id_beneficiario
-                        }
-                        onClick={() =>
-                          handleAgregar(
-                            item.id_beneficiario
-                          )
-                        }
-                        className={`
-                          ${ui.button.base}
-                          ${ui.button.sm}
-                          ${ui.button.primary}
-                        `}
+                        disabled={loadingId === item.id_beneficiario}
+                        onClick={() => {
+                          setIdAgregar(item.id_beneficiario);
+                          setModalAgregar(true);
+                        }} className={`${ui.button.base} ${ui.button.sm} ${ui.button.primary}`}
                       >
-                        {loadingId ===
-                        item.id_beneficiario ? (
+                        {loadingId === item.id_beneficiario ? (
                           "Agregando..."
                         ) : (
                           <>
                             <UserPlus className="w-4 h-4" />
-
                             Agregar
                           </>
                         )}
@@ -398,10 +311,8 @@ export default function BeneficiariosVinculadosCard({
                 ) : (
                   <div className="py-10 text-center">
                     <CheckCircle2 className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-
                     <p className="font-semibold text-slate-600">
-                      No hay beneficiarios
-                      disponibles
+                      No hay beneficiarios disponibles
                     </p>
                   </div>
                 )}
@@ -411,6 +322,7 @@ export default function BeneficiariosVinculadosCard({
         </div>
       )}
 
+      {/* MODALES */}
       <ModalConfirmacion
         open={modalEliminar}
         title="Eliminar beneficiario"
@@ -418,10 +330,18 @@ export default function BeneficiariosVinculadosCard({
         confirmText="Sí, eliminar"
         cancelText="Cancelar"
         color="red"
-        onClose={() =>
-          setModalEliminar(false)
-        }
+        onClose={() => setModalEliminar(false)}
         onConfirm={confirmarEliminar}
+      />
+      <ModalConfirmacion
+        open={modalAgregar}
+        title="Agregar beneficiario"
+        description="¿Deseas vincular este beneficiario al donador?"
+        confirmText="Sí, agregar"
+        cancelText="Cancelar"
+        color="green"
+        onClose={() => setModalAgregar(false)}
+        onConfirm={confirmarAgregar}
       />
 
       <ModalResultado
@@ -430,10 +350,7 @@ export default function BeneficiariosVinculadosCard({
         title={resultado.title}
         message={resultado.message}
         onClose={() =>
-          setResultado((prev) => ({
-            ...prev,
-            open: false,
-          }))
+          setResultado((prev) => ({ ...prev, open: false }))
         }
       />
     </>

@@ -4,7 +4,7 @@ import ResumenCard from "./ResumenCard";
 
 import { usePermissions } from "../../../../context/PermissionsContext";
 
-//import BeneficiariosVinculadosCard from "./BeneficiariosVinculadosCard";
+import BeneficiariosVinculadosCard from "./BeneficiariosVinculadosCard";
 import { ui } from "../../../../styles/ui/index";
 
 export default function DatosGenerales({ data }) {
@@ -19,7 +19,7 @@ export default function DatosGenerales({ data }) {
 
       <div className={ui.layout.twoColumnAside}>
         <ResumenCard data={data} canEdit={canEdit}/>
-        {/*<BeneficiariosVinculadosCard data={data} />*/}
+        <BeneficiariosVinculadosCard data={data} />
       </div>
     </div>
   );

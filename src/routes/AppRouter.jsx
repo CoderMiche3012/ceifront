@@ -22,6 +22,11 @@ import DonadoresDetalle from "../pages/donadores/DonadoresDetalle";
 import PostulantesPagina from "../pages/postulantes/PostulantesPagina";
 import ExpedientePagina from "../pages/postulantes/ExpedientePagina";
 import ReportePostulantes from "../features/reportes/ReportePostulantes";
+import BeneficiariosPagina from "../pages/beneficiarios/BeneficiariosPagina";
+import ExpedientePaginaB from "../pages/beneficiarios/ExpedientePaginaB";
+
+
+
 
 
 {/*
@@ -161,10 +166,6 @@ export default function AppRouter() {
                 </PermissionRoute>
               }
             />
-
-            {/* donadores 
-            
-            /* beneficiarios
             <Route
               path="beneficiarios"
               element={
@@ -176,6 +177,22 @@ export default function AppRouter() {
                 </PermissionRoute>
               }
             />
+            <Route
+              path="beneficiarios/expediente/:id"
+              element={
+                <PermissionRoute
+                  modulo="beneficiarios"
+                  accion="ver"
+                >
+                  <ExpedientePaginaB />
+                </PermissionRoute>
+              }
+            />
+
+            {/* donadores 
+            
+            /* beneficiarios
+            
 
             <Route
               path="beneficiarios/expediente/:id"

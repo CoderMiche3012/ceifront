@@ -5,7 +5,8 @@ import {
   crearBeneficiario,
   actualizarBeneficiario,
   eliminarBeneficiario,
-  obtenerBeneficiariosActivos
+  obtenerBeneficiariosActivos,
+  obtenerBeneficiarioId
 } from "../services/beneficiariosService";
 
 import { beneficiariosKeys } from "../services/beneficiariosKeys";
@@ -17,7 +18,13 @@ export function useBeneficiarios() {
     queryFn: obtenerBeneficiarios,
   });
 }
-
+export function useBeneficiario(id) {
+  return useQuery({
+    queryKey: beneficiariosKeys.detail(id),
+    queryFn: () => obtenerBeneficiarioId(id),
+    enabled: !!id,
+  });
+}
 // crear beneficiario
 export function useCrearBeneficiario() {
   const queryClient = useQueryClient();
