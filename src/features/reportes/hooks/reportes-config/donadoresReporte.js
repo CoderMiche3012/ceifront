@@ -24,6 +24,77 @@ export const generarExcelEstrategia = async (datos, logoBase64) => {
   workbook.created = new Date();
 
   const worksheet = workbook.addWorksheet("Directorio Donadores");
+  const resumen = workbook.addWorksheet("Resumen");
+  resumen.getColumn(2).alignment = {
+    horizontal: "center",
+  };
+  resumen.mergeCells("A1:B1");
+
+  resumen.getCell("A1").value = "RESUMEN GENERAL";
+  resumen.getCell("A1").font = {
+  bold: true,
+  size: 14,
+  color: { argb: "0D6F6B" },
+};
+
+  resumen.getCell("A1").alignment = {
+    horizontal: "center",
+  };
+
+  resumen.addRow([]);
+  resumen.addRow(["Indicador", "Total"]);
+
+["A3", "B3"].forEach((cell) => {
+  resumen.getCell(cell).fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "0D6F6B" },
+  };
+
+  resumen.getCell(cell).font = {
+    bold: true,
+    color: { argb: "FFFFFF" },
+  };
+
+  resumen.getCell(cell).alignment = {
+    horizontal: "center",
+  };
+});
+
+ 
+
+  resumen.addRow([
+    "Total Donadores",
+    datos.length,
+  ]);
+
+  resumen.addRow([
+    "Activos",
+    datos.filter((d) => d.estatus === "Activo").length,
+  ]);
+
+  resumen.addRow([
+    "Inactivos",
+    datos.filter((d) => d.estatus === "Inactivo").length,
+  ]);
+
+  resumen.addRow([
+    "Beneficiarios",
+    datos.reduce(
+      (acc, d) => acc + (d.beneficiarios_apoyados?.length || 0),
+      0
+    ),
+  ]);
+  resumen.columns = [
+    { width: 22 },
+    { width: 12 },
+  ];
+
+  resumen.getRow(1).font = {
+    bold: true,
+  };
+
+
   // llaves
   worksheet.columns = [
     { key: "nombreCompleto", width: 35 },
@@ -41,7 +112,7 @@ export const generarExcelEstrategia = async (datos, logoBase64) => {
   // columna de excel
   const headers = [
     "Nombre Completo",
-    "Tipo Donador",
+    "Origen Donador",
     "Correo Electrónico",
     "Teléfono",
     "Estatus",
@@ -54,6 +125,12 @@ export const generarExcelEstrategia = async (datos, logoBase64) => {
   ];
 
   worksheet.getRow(5).values = headers;
+  worksheet.views = [
+    {
+      state: "frozen",
+      ySplit: 5,
+    },
+  ];
 
   const calcularEdad = (fechaNacimiento) => {
     if (!fechaNacimiento) return "N/D";
@@ -69,9 +146,6 @@ export const generarExcelEstrategia = async (datos, logoBase64) => {
 
   //obtener los datos
   datos.forEach((d) => {
-    console.log(d.domicilio);
-    console.log(d.domicilio?.geografia);
-    console.log(d.domicilio?.geografia?.pais);
     const calle = d.domicilio?.calle || "";
     const numero = d.domicilio?.numero_exterior || "";
     const estado = d.domicilio?.geografia?.estado || "";
@@ -81,7 +155,7 @@ export const generarExcelEstrategia = async (datos, logoBase64) => {
         ? d.beneficiarios_apoyados.map((b) => `${b.nombre} (${calcularEdad(b.fecha_nacimiento)} años)`).join("\n")
         : "Sin beneficiarios";
 
-    worksheet.addRow([
+    const row = worksheet.addRow([
       d.nombreCompleto || "",
       d.tipo_donador || "",
       d.correo || "",
@@ -94,6 +168,10 @@ export const generarExcelEstrategia = async (datos, logoBase64) => {
       obtenerNombrePais(d.domicilio?.geografia?.pais_codigo),
       d.nota || "",
     ]);
+    row.height = Math.max(
+      20,
+      beneficiariosTexto.split("\n").length * 15
+    );
   });
 
   worksheet.getColumn(7).alignment = {
@@ -101,7 +179,7 @@ export const generarExcelEstrategia = async (datos, logoBase64) => {
     vertical: "top",
   };
   // para el encabezado  
-  worksheet.autoFilter = "A5:J5";
+  worksheet.autoFilter = "A5:K5";
   // para el logo
   await aplicarEstilosExcelGlobal(
     worksheet,
@@ -121,6 +199,8 @@ export const generarPdfEstrategia = async (datos, logoBase64) => {
     orientation: "landscape",
     format: "a3",
   });
+
+
 
   if (logoBase64) {
     try {
@@ -153,9 +233,16 @@ export const generarPdfEstrategia = async (datos, logoBase64) => {
     logoBase64 ? 50 : 14,
     27
   );
+  doc.setFontSize(10);
+  doc.setTextColor(120);
 
+  doc.text(
+    `Total de donadores registrados: ${datos.length}`,
+    logoBase64 ? 50 : 14,
+    33
+  );
   autoTable(doc, {
-    startY: 38,
+    startY: 40,
     theme: "striped",
     headStyles: {
       fillColor: [13, 111, 107],
@@ -175,7 +262,7 @@ export const generarPdfEstrategia = async (datos, logoBase64) => {
     head: [
       [
         "Nombre Completo",
-        "Tipo",
+        "Origen",
         "Correo",
         "Teléfono",
         "Estatus",
@@ -226,9 +313,21 @@ export const generarPdfEstrategia = async (datos, logoBase64) => {
       ];
     }),
   });
+  const paginas = doc.internal.getNumberOfPages();
 
+  for (let i = 1; i <= paginas; i++) {
+    doc.setPage(i);
+
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+
+    doc.text(
+      `Centro de Esperanza Infantil A.C. | Página ${i} de ${paginas}`,
+      doc.internal.pageSize.width - 95,
+      doc.internal.pageSize.height - 10
+    );
+  }
   const buffer = doc.output("arraybuffer");
   return new Uint8Array(buffer).buffer;
 };
-
 

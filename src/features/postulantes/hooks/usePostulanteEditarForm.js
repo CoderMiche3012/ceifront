@@ -231,7 +231,7 @@ export const usePostulanteEditarForm = (open, postulante, onSuccess, onClose) =>
       };
 
       await actualizarMutation.mutateAsync({
-        id: postulante.id_expediente,
+        id: postulante.id_postulante,
         data: payload
       });
 

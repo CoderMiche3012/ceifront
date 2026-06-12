@@ -70,8 +70,8 @@ export const reportesSubmenu = [
   },
 
   {
-    label: "Postulantes",
-    path: "/app/reportes/postulantes",
+    label: "Nuevos Ingresos",
+    path: "/app/reportes/ingresos",
     permission: {
       module: "reportes",
       action: "ver",

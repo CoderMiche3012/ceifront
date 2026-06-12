@@ -7,6 +7,7 @@ import TabsExpediente from "../../features/postulantes/components/detalles/TabsE
 import ResultadosCard from "../../features/postulantes/components/detalles/resultados/ResultadosCard";
 import VisitasCard from "../../features/postulantes/components/detalles/visitas/VisitasCard";
 import DatosGenerales from "../../features/postulantes/components/detalles/generales/DatosGenerales";
+import FamiliaCard from "../../features/postulantes/components/detalles/familia/FamiliaCar";
 
 import { useExpedienteData } from "../../features/postulantes/hooks/useExpedienteData";
 import { ui } from "../../styles/ui/uiClasses";
@@ -18,8 +19,8 @@ export default function ExpedientePagina() {
 
   const { id } = useParams();
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
-  const canEdit =hasModulePermission("postulantes", "editar");
- 
+  const canEdit = hasModulePermission("postulantes", "editar");
+
   const {
     data,
     loading,
@@ -30,7 +31,7 @@ export default function ExpedientePagina() {
     edad,
   } = useExpedienteData(id);
 
-   const estudio = useSubirEstudio(data);
+  const estudio = useSubirEstudio(data);
   // loading
   if (loading) {
     return (
@@ -100,10 +101,13 @@ export default function ExpedientePagina() {
 
       {/* contenido */}
       <main className="flex-1 overflow-y-auto pr-2 custom-scroll pb-10 space-y-6">
-        
+
         {/* generales */}
         {tab === "generales" && (
-          <DatosGenerales data={data} canEdit={canEdit}/>
+          <DatosGenerales data={data} canEdit={canEdit} />
+        )}
+        {tab === "familia" && (
+          <FamiliaCard data={data} canEdit={canEdit} />
         )}
 
         {/* visitas */}
@@ -117,10 +121,10 @@ export default function ExpedientePagina() {
         )}
 
         {tab === "Resultados" && (
-          <ResultadosCard data={data} canEdit={canEdit}/>
+          <ResultadosCard data={data} canEdit={canEdit} />
         )}
 
-        
+
       </main>
     </section>
   );

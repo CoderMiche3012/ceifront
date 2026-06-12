@@ -1,6 +1,6 @@
 import { AlignLeft, PencilLine } from "lucide-react";
 import React, { useState } from "react";
-import EditarNotaFamilia from "../modales/EditarNotaFamilia";
+import EditarNotaFamilia from "./EditarNotaFamilia";
 import NotasCard from "../../../../components/ui/NotasCard";
 
 export default function NotasFamilaCard({ data }) {
@@ -8,6 +8,8 @@ export default function NotasFamilaCard({ data }) {
   const canEdit=true;
 
   const nota = data?.nota_situacion_familiar?.trim();
+   console.log("data",data)
+  console.log("nota",nota)
   const hayNota = Boolean(nota);
 
   return (

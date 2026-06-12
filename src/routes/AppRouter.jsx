@@ -159,7 +159,7 @@ export default function AppRouter() {
               />
             </Route>
             <Route
-              path="reportes/postulantes"
+              path="reportes/ingresos"
               element={
                 <PermissionRoute
                   modulo="usuarios"

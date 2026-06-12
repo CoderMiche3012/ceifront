@@ -85,11 +85,11 @@ export function useReportePostulantes() {
                     : "No programada",
                 estadoVisita: visita?.estado_visita || "No programada",
                 notaVisita: visita?.nota_visita || "",
-
+                nota_familiar: expediente?.nota_situacion_familiar || "",
+                referenciaIngreso: estudio?.referencia_ingreso || "",
                 estatusEstudio: estudio?.estatus_estudio || "",
                 nivelEscolar: estudio?.nivel_escolar_inicial || "",
                 gradoEscolar: estudio?.grado_escolar_inicial || "",
-                referenciaIngreso: estudio?.referencia_ingreso || "",
                 referenciaCasa: estudio?.referencia_casa || "",
                 notaServicio: estudio?.nota_servicio || "",
                 documentoEstudio: estudio?.link_documento || "",

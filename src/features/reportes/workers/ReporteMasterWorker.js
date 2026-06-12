@@ -2,7 +2,11 @@ import { obtenerLogoBase64 } from "../../../utils/imageUrlToBase64 ";
 
 self.onmessage = async (event) => {
   const logoBase64 = await obtenerLogoBase64();
-  const { tipoReporte, formato, datos = [], requestId } = event.data;
+  const { tipoReporte, formato, datos = [], requestId, meta = {} } = event.data;
+  
+  // 🛡️ TRUCO DE PROTECCIÓN: Si algún script heredado busca 'periodoLabel' de forma global en el worker,
+  // lo definimos globalmente apuntando al meta para que nunca más lance un "is not defined".
+  self.periodoLabel = meta.periodoLabel || meta.periodo || "General";
 
   try {
     const moduloReporte = await import(
@@ -12,11 +16,13 @@ self.onmessage = async (event) => {
     let buffer;
 
     if (formato === "excel") {
-      buffer = await moduloReporte.generarExcelEstrategia(datos,logoBase64);
+      // Pasamos 'meta' explícitamente a la estrategia
+      buffer = await moduloReporte.generarExcelEstrategia(datos, logoBase64, meta);
     }
 
     if (formato === "pdf") {
-      buffer = await moduloReporte.generarPdfEstrategia(datos,logoBase64);
+      // Pasamos 'meta' explícitamente a la estrategia
+      buffer = await moduloReporte.generarPdfEstrategia(datos, logoBase64, meta);
     }
 
     if (!buffer) throw new Error("Buffer vacío");
@@ -40,4 +46,3 @@ self.onmessage = async (event) => {
     });
   }
 };
-

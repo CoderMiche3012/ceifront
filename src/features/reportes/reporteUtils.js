@@ -43,6 +43,21 @@ export const aplicarEstilosExcelGlobal = async (
     bold: true,
     color: { argb: COLOR_PRIMARIO },
   };
+  const celdaSubtitulo = worksheet.getCell("B4");
+
+  celdaSubtitulo.value =
+    `Centro de Esperanza Infantil A.C. | Fecha: ${new Date().toLocaleDateString("es-MX")}`;
+
+  celdaSubtitulo.font = {
+    name: "Segoe UI",
+    size: 10,
+    color: { argb: "6B7280" },
+  };
+
+  celdaSubtitulo.alignment = {
+    vertical: "middle",
+    horizontal: "left",
+  };
   celdaTitulo.alignment = { vertical: "middle", horizontal: "left" };
 
   const filaHeader = worksheet.getRow(5);

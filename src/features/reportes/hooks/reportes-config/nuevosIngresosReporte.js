@@ -1,26 +1,22 @@
 import ExcelJS from "exceljs";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import {
-  aplicarEstilosExcelGlobal,
-} from "../../reporteUtils";
-import logoCei from "../../../../assets/imagenes/logo.png";
-const obtenerBase64 = async (url) => {
-    const response = await fetch(url);
-    const blob = await response.blob();
-
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => { resolve(reader.result.split(",")[1]); };
-        reader.readAsDataURL(blob);
-    });
-};
-const LOGO_CEI_BASE64 = await obtenerBase64(logoCei);
+import { aplicarEstilosExcelGlobal } from "../../reporteUtils";
 
 // ==========================================
-// EXCEL
+// EXCEL - NUEVOS INGRESOS
 // ==========================================
-export const generarExcelEstrategia = async (datos) => {
+export const generarExcelEstrategia = async (datos, logoBase64Param, meta = {}) => {
+  const logoFinal = logoBase64Param;
+
+  const periodoRaw = (meta.periodoLabel || meta.periodo || "General").trim();
+  const esGeneral = periodoRaw.toLowerCase() === "general";
+  const nombrePeriodo = esGeneral ? "General" : periodoRaw;
+
+  const tituloReporte = esGeneral
+    ? "REPORTE DE NUEVOS INGRESOS"
+    : `REPORTE DE NUEVOS INGRESOS - ${nombrePeriodo}`;
+
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Centro de Esperanza Infantil";
   workbook.created = new Date();
@@ -41,6 +37,10 @@ export const generarExcelEstrategia = async (datos) => {
     { key: "telefonoTutor", width: 18 },
     { key: "familiares", width: 14 },
     { key: "fechaVisita", width: 18 },
+    { key: "nota_familiar", width: 25 }, // Ajustado ancho para notas
+    { key: "notaVisita", width: 25 },     // Ajustado ancho para notas
+    { key: "notaServicio", width: 25 },   // Ajustado ancho para notas
+    { key: "referenciaIngreso", width: 25 },   // Ajustado ancho para notas
   ];
 
   const headers = [
@@ -57,6 +57,10 @@ export const generarExcelEstrategia = async (datos) => {
     "Tel. Tutor",
     "Fam.",
     "Fecha Visita",
+    "Nota Familiar",
+    "Nota de la visita",
+    "Nota de prioridad",
+    "Recomendacion",
   ];
 
   worksheet.getRow(5).values = headers;
@@ -76,70 +80,53 @@ export const generarExcelEstrategia = async (datos) => {
       p.telefonoTutor || "",
       p.familiares || "",
       p.fechaVisita || "",
+      p.nota_familiar || "",
+      p.notaVisita || "",
+      p.notaServicio || "",
+      p.referenciaIngreso || "",
     ]);
   });
 
-  worksheet.autoFilter = "A5:M5";
+  // 🛠️ CORRECCIÓN 1: Extendemos el filtro hasta la columna P (columna 16)
+  worksheet.autoFilter = "A5:Q5";
 
-  // =========================
-  // LOGO
-  // =========================
-  if (LOGO_CEI_BASE64) {
-    try {
-      const cleanBase64 = LOGO_CEI_BASE64.includes("base64,")
-        ? LOGO_CEI_BASE64.split("base64,")[1]
-        : LOGO_CEI_BASE64;
-
-      const imageId = workbook.addImage({
-        base64: cleanBase64,
-        extension: "png",
-      });
-
-      worksheet.addImage(imageId, {
-        tl: { col: 0, row: 0 },
-        ext: { width: 100, height: 70 },
-        editAs: "oneCell",
-      });
-    } catch (e) {
-      console.error("Error cargando logo en Excel", e);
-    }
-  }
-
-  // =========================
-  // ESTILOS GLOBALES (CORREGIDO)
-  // =========================
   await aplicarEstilosExcelGlobal(
     worksheet,
-    "REPORTE DE NUEVOS INGRESOS",
+    tituloReporte,
     workbook,
-    LOGO_CEI_BASE64
+    logoFinal
   );
 
   const buffer = await workbook.xlsx.writeBuffer();
-  return buffer instanceof ArrayBuffer
-    ? buffer
-    : new Uint8Array(buffer).buffer;
+  return buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer).buffer;
 };
 
 // ==========================================
-// PDF (SIN CAMBIOS IMPORTANTES)
+// PDF - NUEVOS INGRESOS
 // ==========================================
-export const generarPdfEstrategia = async (datos) => {
+export const generarPdfEstrategia = async (datos, logoBase64Param, meta = {}) => {
+  const logoFinal = logoBase64Param;
+
+  const periodoRaw = (meta.periodoLabel || meta.periodo || "General").trim();
+  const esGeneral = periodoRaw.toLowerCase() === "general";
+
+  const nombrePeriodo = esGeneral ? "General" : periodoRaw;
+  const sufijoTexto = esGeneral ? "General" : "de este periodo";
+
+  const tituloReporte = esGeneral
+    ? "REPORTE DE NUEVOS INGRESOS"
+    : `REPORTE DE NUEVOS INGRESOS - ${nombrePeriodo}`;
+
   const doc = new jsPDF({
     orientation: "landscape",
     format: "a3",
   });
 
-  if (LOGO_CEI_BASE64) {
+  const pageWidth = doc.internal.pageSize.width;
+
+  if (logoFinal) {
     try {
-      doc.addImage(
-        `data:image/png;base64,${LOGO_CEI_BASE64}`,
-        "PNG",
-        14,
-        10,
-        32,
-        24
-      );
+      doc.addImage(`data:image/png;base64,${logoFinal}`, "PNG", 14, 8, 30, 30);
     } catch (e) {
       console.error("Error agregando el logo al PDF", e);
     }
@@ -148,41 +135,56 @@ export const generarPdfEstrategia = async (datos) => {
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(22);
   doc.setTextColor(13, 111, 107);
-  doc.text(
-    "REPORTE DE NUEVOS INGRESOS",
-    LOGO_CEI_BASE64 ? 50 : 14,
-    20
-  );
+  doc.text(tituloReporte, logoFinal ? 50 : 14, 20);
 
   doc.setFont("Helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(107, 114, 128);
   doc.text(
-    `Centro de Esperanza Infantil A.C.  |  Fecha: ${new Date().toLocaleDateString(
-      "es-MX"
-    )}`,
-    LOGO_CEI_BASE64 ? 50 : 14,
+    `Centro de Esperanza Infantil A.C.  |  Fecha: ${new Date().toLocaleDateString("es-MX")}`,
+    logoFinal ? 50 : 14,
     27
   );
 
+  const totalSolicitudes = datos.length;
+  const prioridadAlta = datos.filter(p => p.prioridad?.toString().toLowerCase().includes("alta")).length;
+
+  doc.setFontSize(10);
+  doc.setTextColor(120);
+
+  const col1 = logoFinal ? 50 : 14;
+  const col2 = pageWidth * 0.38;
+  const col3 = pageWidth * 0.68;
+
+  doc.text(`Total de Solicitudes ${sufijoTexto}: ${totalSolicitudes}`, col1, 33);
+  doc.text(`Casos Prioridad Alta: ${prioridadAlta}`, col2, 33);
+  doc.text(`Institución: Centro de Esperanza Infantil`, col3, 33);
+
   autoTable(doc, {
-    startY: 38,
+    startY: 42,
     theme: "striped",
     headStyles: {
       fillColor: [13, 111, 107],
       textColor: [255, 255, 255],
-      fontSize: 9,
+      fontSize: 8.5, // 🛠️ Reducido ligeramente para optimizar las 16 columnas
       fontStyle: "bold",
       halign: "center",
       valign: "middle",
     },
     styles: {
       font: "Helvetica",
-      fontSize: 8.5,
-      cellPadding: 3,
+      fontSize: 7.5, // 🛠️ Reducido a 7.5 para que las notas quepan perfectamente sin desbordar
+      cellPadding: 2,
       textColor: [55, 65, 81],
       lineColor: [229, 231, 235],
       lineWidth: 0.2,
+      cellWidth: "wrap", // 🛠️ CORRECCIÓN 2: Fuerza saltos de línea automáticos si el texto es largo
+    },
+    // Añadimos configuraciones específicas para que las columnas de notas no se miniaturicen
+    columnStyles: {
+      13: { cellWidth: 35 }, // Nota Familiar
+      14: { cellWidth: 35 }, // Nota de la visita
+      15: { cellWidth: 35 }, // Nota de prioridad
     },
     head: [[
       "Nombre Completo",
@@ -198,6 +200,10 @@ export const generarPdfEstrategia = async (datos) => {
       "Tel. Tutor",
       "Fam.",
       "Fecha Visita",
+      "Nota Familiar",
+      "Nota de la visita",
+      "Nota de prioridad",
+      "Recomendacion",
     ]],
     body: datos.map((p) => [
       p.nombreCompleto || "",
@@ -213,11 +219,26 @@ export const generarPdfEstrategia = async (datos) => {
       p.telefonoTutor || "",
       p.familiares || "",
       p.fechaVisita || "",
+      p.nota_familiar || "",
+      p.notaVisita || "",
+      p.notaServicio || "",
+      p.referenciaIngreso || "",
     ]),
   });
 
-const pdfBlob = doc.output("blob");
+  const paginas = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= paginas; i++) {
+    doc.setPage(i);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(
+      `Centro de Esperanza Infantil A.C. | Página ${i} de ${paginas}`,
+      pageWidth - 95,
+      doc.internal.pageSize.height - 10
+    );
+  }
 
-const buffer = await pdfBlob.arrayBuffer();
-
-return buffer;};
+  const pdfBlob = doc.output("blob");
+  const buffer = await pdfBlob.arrayBuffer();
+  return buffer;
+};

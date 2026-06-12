@@ -28,7 +28,7 @@ export default function PostulanteFiltros({
       label: "Estudio S.E",
       options: [
         { value: "todos", label: "Todos los estudios" },
-        { value: "Completado", label: "Completado" },
+        { value: "completo", label: "Completo" },
         { value: "Pendiente", label: "Pendiente" },
         { value: "En revisión", label: "En revisión" },
       ],

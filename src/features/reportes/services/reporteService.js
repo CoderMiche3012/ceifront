@@ -16,7 +16,7 @@ function obtenerWorker() {
  * @param {'excel'|'pdf'} formato - Formato de salida solicitado
  * @param {Array} datos - Datos ya procesados listos para estampar
  */
-export const solicitarDescargaReporte = (tipoReporte, formato, datos) => {
+export const solicitarDescargaReporte = (tipoReporte, formato, datos, meta = {}) => {
   const worker = obtenerWorker();
 
   return new Promise((resolve, reject) => {
@@ -43,8 +43,9 @@ export const solicitarDescargaReporte = (tipoReporte, formato, datos) => {
       tipoReporte,
       formato,
       datos,
+      meta,
       requestId,
     });
-    
+
   });
 };

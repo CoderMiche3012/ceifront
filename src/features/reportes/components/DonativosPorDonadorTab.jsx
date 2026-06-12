@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Users, HandCoins, FileSpreadsheet, FileText, } from "lucide-react";
+import { Users, HandCoins, FileSpreadsheet, FileText } from "lucide-react";
 
 import Card from "../../../components/ui/Card";
 import Boton from "../../../components/ui/Boton";
@@ -13,23 +13,30 @@ import { usePeriodos } from "../../periodos/hooks/usePeriodos";
 import { solicitarDescargaReporte } from "../services/reporteService";
 
 export default function DonativosPorDonadorTab() {
-
   const [periodo, setPeriodo] = useState("");
+
   // obtener datos
   const { data: resumenGeneral = [] } = useResumenPeriodoTotalesGenerales();
   const { data: periodos = [] } = usePeriodos();
   const { data: resumenPeriodo = [] } = useResumenPeriodoTotales(periodo);
 
+  // 🛠️ CORRECCIÓN 1: Forzamos la comparación a String para evitar fallos de tipo (Numero vs String)
+  const periodoLabel = useMemo(() => {
+    if (!periodo) return "General";
+    const p = periodos.find((x) => String(x.id_periodo) === String(periodo));
+    return p?.ciclo_escolar || "General";
+  }, [periodo, periodos]);
+
   const resumen = periodo ? resumenPeriodo : resumenGeneral;
 
   // tabla final
-
   const datosTabla = useMemo(() => {
     return resumen.map((item, index) => ({
       key: `${item.id_donador}-${index}`,
       id_donador: item.id_donador,
       donador: item.nombreCompleto,
       tipo: item.tipo,
+      amount: item.cantidad_donativos, 
       cantidad_donativos: item.cantidad_donativos,
       ultima_fecha: item.ultimaFechaDonacion || item.ultimasFechaDonacion || "Sin donaciones registradas",
       aportaciones:
@@ -44,42 +51,45 @@ export default function DonativosPorDonadorTab() {
     const acumulado = {};
     resumen.forEach((item) => {
       Object.entries(item.totales || {}).forEach(([moneda, monto]) => {
-        acumulado[moneda] =
-          (acumulado[moneda] || 0) + Number(monto || 0);
+        acumulado[moneda] = (acumulado[moneda] || 0) + Number(monto || 0);
       });
     });
-
     return acumulado;
   }, [resumen]);
-  
-  const ejecutarDescargaBlob = (buffer, nombreArchivo, mimeType) => {
-    if (!buffer) {
-      return;
-    }
 
+  const ejecutarDescargaBlob = (buffer, nombreArchivo, mimeType) => {
+    if (!buffer) return;
     const realBuffer = buffer instanceof ArrayBuffer ? buffer : buffer.buffer;
     const blob = new Blob([realBuffer], { type: mimeType });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
-
     a.href = url;
     a.download = nombreArchivo;
     a.click();
-
     window.URL.revokeObjectURL(url);
   };
 
   // excel
   const descargarExcel = async () => {
     try {
+      // 🕵️ MIRA LA CONSOLA: Aquí verificarás si el label realmente cambió antes de enviarse
+      console.log("Descargando Excel con Periodo ID:", periodo, "Label:", periodoLabel);
+
+      const meta = {
+        periodo: periodoLabel,
+        periodoLabel: periodoLabel 
+      };
+
       const buffer = await solicitarDescargaReporte(
         "donativos",
         "excel",
-        datosTabla
+        datosTabla,
+        meta
       );
+
       ejecutarDescargaBlob(
         buffer,
-        `donadores_${periodo || "General"}.xlsx`,
+        `donativos_${periodoLabel}.xlsx`,
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       );
     } catch (error) {
@@ -90,24 +100,32 @@ export default function DonativosPorDonadorTab() {
   // pdf
   const descargarPDF = async () => {
     try {
+      console.log("Descargando PDF con Periodo ID:", periodo, "Label:", periodoLabel);
+
+      const meta = {
+        periodo: periodoLabel,
+        periodoLabel: periodoLabel
+      };
+
       const buffer = await solicitarDescargaReporte(
         "donativos",
         "pdf",
-        datosTabla
+        datosTabla,
+        meta
       );
 
       ejecutarDescargaBlob(
         buffer,
-        `donadores_${periodo || "General"}.pdf`,
+        `donativos_${periodoLabel}.pdf`,
         "application/pdf"
       );
     } catch (error) {
+      console.error("Error PDF:", error);
     }
   };
 
   return (
     <div className="space-y-6">
-
       <TarjetasEstadisticas
         items={[
           {
@@ -118,36 +136,33 @@ export default function DonativosPorDonadorTab() {
           },
           {
             label: "Total Donativos",
-            value: resumen.reduce(
-              (acc, item) =>
-                acc + Number(item.cantidad_donativos || 0),
-              0
-            ),
+            value: resumen.reduce((acc, item) => acc + Number(item.cantidad_donativos || 0), 0),
             icon: HandCoins,
             color: "violet",
           },
-
-          ...Object.entries(totalesPorMoneda).map(
-            ([moneda, total]) => ({
-              label: `Total ${moneda}`,
-              value: total,
-              icon: HandCoins,
-              color: "emerald",
-            })
-          ),
+          ...Object.entries(totalesPorMoneda).map(([moneda, total]) => ({
+            label: `Total ${moneda}`,
+            value: total,
+            icon: HandCoins,
+            color: "emerald",
+          })),
         ]}
       />
 
       <Card>
         <FiltrosReporte
           search=""
-          onSearchChange={() => { }}
+          onSearchChange={() => {}}
           searchPlaceholder="Buscar donador..."
           filtros={[
             {
               key: "periodo",
               value: periodo || "",
-              onChange: (value) => setPeriodo(value),
+              // 🛠️ CORRECCIÓN 2: Tolerancia a si el componente regresa el evento o el valor puro
+              onChange: (val) => {
+                const actualValue = val?.target ? val.target.value : val;
+                setPeriodo(actualValue);
+              },
               options: [
                 { value: "", label: "Todos los períodos" },
                 ...periodos.map((p) => ({
@@ -191,7 +206,7 @@ export default function DonativosPorDonadorTab() {
           totalPages={1}
           totalItems={datosTabla.length}
           pageSize={10}
-          onPageChange={() => { }}
+          onPageChange={() => {}}
         />
       </Card>
     </div>

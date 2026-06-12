@@ -3,8 +3,21 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { aplicarEstilosExcelGlobal } from "../../reporteUtils";
 
-// generar excel
-export const generarExcelEstrategia = async (datos, logoBase64) => {
+// ==========================================
+// EXCEL - DONADORES
+// ==========================================
+export const generarExcelEstrategia = async (datos, logoBase64, meta = {}) => {
+  const periodoRaw = (meta.periodoLabel || meta.periodo || "General").trim();
+  const esGeneral = periodoRaw.toLowerCase() === "general";
+  
+  const nombrePeriodo = esGeneral ? "General" : periodoRaw;
+  const sufijoTexto = esGeneral ? "General" : "de este periodo";
+
+  // 🛠️ CONDICIÓN DEL TÍTULO: Si es general se limpia el guion y la palabra
+  const tituloReporte = esGeneral 
+    ? "REPORTE DE DONATIVOS" 
+    : `REPORTE DE DONATIVOS - ${nombrePeriodo}`;
+
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Centro de Esperanza Infantil";
   workbook.created = new Date();
@@ -20,61 +33,144 @@ export const generarExcelEstrategia = async (datos, logoBase64) => {
   ];
 
   const headers = [
-  "Donador",
-  "Tipo",
-  "Cantidad de Donativos",
-  "Última Donación",
-  "Aportaciones",
-];
+    "Donador",
+    "Origen",
+    "Cantidad de Donativos",
+    "Última Donación",
+    "Aportaciones",
+  ];
 
   worksheet.getRow(5).values = headers;
 
   datos.forEach((d) => {
-  worksheet.addRow([
-    d.donador || "",
-    d.tipo || "-",
-    d.cantidad_donativos || 0,
-    d.ultima_fecha || "Sin donaciones",
-    d.aportaciones || "Sin aportaciones registradas",
-  ]);
-});
+    worksheet.addRow([
+      d.donador || "",
+      d.tipo || "-",
+      d.cantidad_donativos || 0,
+      d.ultima_fecha || "Sin donaciones",
+      d.aportaciones || "Sin aportaciones registradas",
+    ]);
+  });
 
   worksheet.autoFilter = "A5:E5";
 
-
+  // Usamos el nuevo título limpio aquí
   await aplicarEstilosExcelGlobal(
     worksheet,
-    "REPORTE DE DONADORES",
+    tituloReporte,
     workbook,
     logoBase64
   );
 
+  // ==========================================
+  // HOJA RESUMEN (EXCEL)
+  // ==========================================
+  const resumen = workbook.addWorksheet("Resumen");
+
+  resumen.getColumn(2).alignment = { horizontal: "center" };
+  resumen.mergeCells("A1:B1");
+  
+  resumen.getCell("A1").value = esGeneral ? "RESUMEN GENERAL" : "RESUMEN DEL PERIODO";
+  resumen.getCell("A1").font = { bold: true, size: 14, color: { argb: "0D6F6B" } };
+  resumen.getCell("A1").alignment = { horizontal: "center" };
+
+  resumen.addRow([]);
+  resumen.addRow(["Indicador", "Total"]);
+
+  ["A3", "B3"].forEach((cell) => {
+    resumen.getCell(cell).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "0D6F6B" },
+    };
+    resumen.getCell(cell).font = { bold: true, color: { argb: "FFFFFF" } };
+    resumen.getCell(cell).alignment = { horizontal: "center" };
+  });
+
+  const totalDonadores = datos.length;
+  const totalDonativos = datos.reduce((acc, d) => acc + (Number(d.cantidad_donativos) || 0), 0);
+  const promedioDonativos = totalDonadores > 0 ? Number((totalDonativos / totalDonadores).toFixed(2)) : 0;
+
+  const donadorMasActivo = datos.reduce(
+    (max, actual) => (actual.cantidad_donativos || 0) > (max.cantidad_donativos || 0) ? actual : max,
+    {}
+  ) || {};
+
+  resumen.addRow([`Total de donadores ${sufijoTexto}`, totalDonadores]);
+  resumen.addRow([`Total de donativos ${sufijoTexto}`, totalDonativos]);
+  resumen.addRow(["Promedio por donador", promedioDonativos]);
+  resumen.addRow(["Donador más activo", donadorMasActivo.donador || "N/A"]);
+  resumen.addRow(["Donativos del líder", donadorMasActivo.cantidad_donativos || 0]);
+
+  // ==========================================
+  // DISTRIBUCIÓN POR TIPO
+  // ==========================================
+  resumen.addRow([]);
+  resumen.addRow([]);
+
+  const distribucion = {};
+  datos.forEach((d) => {
+    const tipo = d.tipo || "Sin tipo";
+    distribucion[tipo] = (distribucion[tipo] || 0) + (Number(d.cantidad_donativos) || 0);
+  });
+
+  const filaTitulo = resumen.addRow(["DISTRIBUCIÓN DE DONACIONES POR ORIGEN"]);
+  resumen.mergeCells(`A${filaTitulo.number}:B${filaTitulo.number}`);
+
+  filaTitulo.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "0D6F6B" } };
+  filaTitulo.getCell(1).font = { bold: true, color: { argb: "FFFFFF" } };
+  filaTitulo.getCell(1).alignment = { horizontal: "center" };
+
+  const encabezado = resumen.addRow(["Origen", "Cantidad de Donativos"]);
+  encabezado.eachCell((cell) => {
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "0D6F6B" } };
+    cell.font = { bold: true, color: { argb: "FFFFFF" } };
+    cell.alignment = { horizontal: "center" };
+  });
+
+  Object.entries(distribucion).forEach(([tipo, cantidad]) => {
+    const row = resumen.addRow([tipo, cantidad]);
+    row.eachCell((cell) => {
+      cell.border = {
+        top: { style: "thin", color: { argb: "D1D5DB" } },
+        left: { style: "thin", color: { argb: "D1D5DB" } },
+        bottom: { style: "thin", color: { argb: "D1D5DB" } },
+        right: { style: "thin", color: { argb: "D1D5DB" } },
+      };
+    });
+  });
+
+  resumen.columns = [{ width: 35 }, { width: 25 }];
   const buffer = await workbook.xlsx.writeBuffer();
 
-  return buffer instanceof ArrayBuffer
-    ? buffer
-    : new Uint8Array(buffer).buffer;
+  return buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer).buffer;
 };
 
 // ==========================================
 // PDF - DONADORES
 // ==========================================
-export const generarPdfEstrategia = async (datos, logoBase64) => {
+export const generarPdfEstrategia = async (datos, logoBase64, meta = {}) => {
+  const periodoRaw = (meta.periodoLabel || meta.periodo || "General").trim();
+  const esGeneral = periodoRaw.toLowerCase() === "general";
+  
+  const nombrePeriodo = esGeneral ? "General" : periodoRaw;
+  const sufijoTexto = esGeneral ? "General" : "de este periodo";
+
+  // 🛠️ CONDICIÓN DEL TÍTULO: Misma lógica limpia para el PDF principal
+  const tituloReporte = esGeneral 
+    ? "REPORTE DE DONATIVOS" 
+    : `REPORTE DE DONATIVOS - ${nombrePeriodo}`;
+
   const doc = new jsPDF({
     orientation: "landscape",
     format: "a3",
   });
 
+  const pageWidth = doc.internal.pageSize.width;
+
   if (logoBase64) {
     try {
-      doc.addImage(
-        `data:image/png;base64,${logoBase64}`,
-        "PNG",
-        14,
-        8,
-        30,
-        30
-      );
+      doc.addImage(`data:image/png;base64,${logoBase64}`, "PNG", 14, 8, 30, 30);
     } catch (e) {
       console.error("Error agregando logo al PDF", e);
     }
@@ -83,8 +179,10 @@ export const generarPdfEstrategia = async (datos, logoBase64) => {
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(22);
   doc.setTextColor(13, 111, 107);
+  
+  // Renderizamos el título controlado condicionalmente
   doc.text(
-    "REPORTE DE DONADORES",
+    tituloReporte,
     logoBase64 ? 50 : 14,
     20
   );
@@ -98,8 +196,26 @@ export const generarPdfEstrategia = async (datos, logoBase64) => {
     27
   );
 
+  const totalDonadores = datos.length;
+  const totalDonativos = datos.reduce((acc, d) => acc + (Number(d.cantidad_donativos) || 0), 0);
+  const donadorMasActivo = datos.reduce(
+    (max, actual) => (actual.cantidad_donativos || 0) > (max.cantidad_donativos || 0) ? actual : max,
+    {}
+  ) || {};
+
+  doc.setFontSize(10);
+  doc.setTextColor(120);
+
+  const col1 = logoBase64 ? 50 : 14;           
+  const col2 = pageWidth * 0.38;               
+  const col3 = pageWidth * 0.68;               
+
+  doc.text(`Total de Donadores con Donaciones registradas ${sufijoTexto}: ${totalDonadores}`, col1, 33);
+  doc.text(`Total Donativos Registrados ${sufijoTexto}: ${totalDonativos}`, col2, 33);
+  doc.text(`Donador con más donaciones: ${donadorMasActivo.donador || "N/A"}`, col3, 33);
+
   autoTable(doc, {
-    startY: 38,
+    startY: 42,
     theme: "striped",
     headStyles: {
       fillColor: [13, 111, 107],
@@ -115,24 +231,30 @@ export const generarPdfEstrategia = async (datos, logoBase64) => {
       lineColor: [229, 231, 235],
       lineWidth: 0.2,
     },
-    head: [[
-  "Donador",
-  "Tipo",
-  "Cantidad Donativos",
-  "Última Donación",
-  "Aportaciones"
-]],
+    head: [["Donador", "Origen", "Cantidad Donativos", "Última Donación", "Aportaciones"]],
     body: datos.map((d) => [
-  d.donador || "",
-  d.tipo || "-",
-  d.cantidad_donativos || 0,
-  d.ultima_fecha || "Sin donaciones",
-  d.aportaciones || "Sin aportaciones registradas",
-]),
+      d.donador || "",
+      d.tipo || "-",
+      d.cantidad_donativos || 0,
+      d.ultima_fecha || "Sin donaciones",
+      d.aportaciones || "Sin aportaciones registradas",
+    ]),
   });
+
+  const paginas = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= paginas; i++) {
+    doc.setPage(i);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(
+      `Centro de Esperanza Infantil A.C. | Página ${i} de ${paginas}`,
+      pageWidth - 95,
+      doc.internal.pageSize.height - 10
+    );
+  }
 
   const pdfBlob = doc.output("blob");
   const buffer = await pdfBlob.arrayBuffer();
-
   return buffer;
 };
+

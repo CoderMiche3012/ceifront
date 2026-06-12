@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'; // Importam
 import ModalConfirmacion from '../../../../components/shared/ModalConfirmacion';
 import ModalResultado from '../../../../components/shared/ModalResultado';
 import Field from '../../../../components/ui/Field';
-import { actualizarExpediente } from '../../../expedientes/services/expedientesService';
+import { actualizarExpediente } from '../../services/expedientesService';
 
 export default function EditarNotaFamilia({ isOpen, onClose, data }) {
     const queryClient = useQueryClient();

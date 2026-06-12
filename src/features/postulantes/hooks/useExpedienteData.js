@@ -45,7 +45,7 @@ export const useExpedienteData = (id) => {
     colonia: expediente?.direccion?.geografia?.colonia,
     calle: expediente?.direccion?.calle,
     numero: expediente?.direccion?.numero,
-
+    nota_situacion_familiar: expediente?.nota_situacion_familiar,
     familia,
     idDocumentoEstudio,
     fotografias,
