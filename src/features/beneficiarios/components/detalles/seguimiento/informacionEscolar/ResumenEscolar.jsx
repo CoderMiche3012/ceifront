@@ -1,4 +1,7 @@
-export default function ResumenEscolar({ escolar, grado, institucion, promedioGeneral,}) {
+import Card from "../../../../../../components/ui/Card";
+import { ui } from "../../../../../../styles/ui/index";
+
+export default function ResumenEscolar({ escolar, grado, institucion, promedioGeneral, }) {
   const tienePromedio =
     promedioGeneral !== null &&
     promedioGeneral !== undefined &&
@@ -33,24 +36,24 @@ export default function ResumenEscolar({ escolar, grado, institucion, promedioGe
     return "--";
   })();
   const nombreMunicipio = (() => {
-  if (!institucion?.municipio_escuela) return "";
+    if (!institucion?.municipio_escuela) return "";
 
-  if (
-    typeof institucion.municipio_escuela === "object"
-  ) {
-    return (
-      institucion.municipio_escuela.nombre || ""
-    );
-  }
+    if (
+      typeof institucion.municipio_escuela === "object"
+    ) {
+      return (
+        institucion.municipio_escuela.nombre || ""
+      );
+    }
 
-  return institucion.municipio_nombre || "";
-})();
+    return institucion.municipio_nombre || "";
+  })();
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+    <Card className="space-y-6">
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-6">
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase mb-1">
+          <p className={ui.text.label}>
             Institución
           </p>
 
@@ -59,10 +62,10 @@ export default function ResumenEscolar({ escolar, grado, institucion, promedioGe
           </h3>
 
           {nombreMunicipio && (
-  <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 font-medium mt-1 inline-block">
-    {nombreMunicipio}
-  </span>
-)}
+            <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 font-medium mt-1 inline-block">
+              {nombreMunicipio}
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
@@ -105,7 +108,7 @@ export default function ResumenEscolar({ escolar, grado, institucion, promedioGe
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-slate-100 pt-5">
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase mb-1">
+          <p className={ui.text.label}>
             Nivel educativo
           </p>
 
@@ -115,7 +118,7 @@ export default function ResumenEscolar({ escolar, grado, institucion, promedioGe
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase mb-1">
+          <p className={ui.text.label}>
             Grado escolar
           </p>
           <p className="text-slate-700 font-medium">
@@ -124,7 +127,7 @@ export default function ResumenEscolar({ escolar, grado, institucion, promedioGe
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase mb-1">
+          <p className={ui.text.label}>
             Grado y grupo
           </p>
           <p className="text-slate-700 font-medium">
@@ -134,7 +137,7 @@ export default function ResumenEscolar({ escolar, grado, institucion, promedioGe
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase mb-1">
+          <p className={ui.text.label}>
             Turno
           </p>
           <p className="text-slate-700 font-medium">
@@ -144,7 +147,7 @@ export default function ResumenEscolar({ escolar, grado, institucion, promedioGe
 
         {escolar?.especialidad && (
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase mb-1">
+            <p className={ui.text.label}>
               Licenciatura/ Especialidad
             </p>
 
@@ -155,7 +158,7 @@ export default function ResumenEscolar({ escolar, grado, institucion, promedioGe
         )}
 
         <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase mb-1">
+          <p className={ui.text.label}>
             Periodo académico
           </p>
           <p className="text-slate-700 font-medium">
@@ -164,6 +167,6 @@ export default function ResumenEscolar({ escolar, grado, institucion, promedioGe
         </div>
 
       </div>
-    </div>
+    </Card>
   );
 }

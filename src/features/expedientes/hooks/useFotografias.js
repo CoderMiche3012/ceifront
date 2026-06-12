@@ -8,6 +8,8 @@ import {
 
 import { fotografiasKeys } from "../services/fotografiasKeys";
 import { postulantesKeys } from "../../postulantes/services/postulantesKeys";
+import { seguimientosKeys } from "../../beneficiarios/services/seguimientosKeys";
+import { expedientesKeys } from "../services/expedientesKeys";
 
 
 export const useFotografias = (idExpediente) => {
@@ -32,10 +34,18 @@ export const useSubirFotografia = (idExpediente, idPostulante) => {
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.detail(idPostulante),
       });
+      queryClient.invalidateQueries({
+        queryKey: expedientesKeys.all,
+      });
+
 
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: seguimientosKeys.all,
+      });
+
     },
   });
 };
@@ -56,6 +66,36 @@ export const useEliminarFotografia = (idExpediente, idPostulante) => {
       });
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: seguimientosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: expedientesKeys.all,
+      });
+    },
+    
+  });
+};
+
+export const useEliminarFotografiaBeneficiarios = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (idFotografia) =>
+      eliminarFotografia(idFotografia),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: expedientesKeys.all,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: postulantesKeys.all,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: seguimientosKeys.all,
       });
     },
   });

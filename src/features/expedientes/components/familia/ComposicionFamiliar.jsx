@@ -109,7 +109,7 @@ export default function ComposicionFamiliar({
         type: "success",
         title: "Eliminado con éxito",
         message:
-          "El miembro de la familia ha sido removido del expediente.",
+          "El miembro de la familia ha sido removido correctamente.",
       });
 
     } catch (error) {

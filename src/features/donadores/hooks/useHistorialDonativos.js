@@ -58,9 +58,7 @@ export default function useHistorialDonativos(data) {
 
   const loading = isLoading;
 
-  const saving =
-    crearMutation.isPending ||
-    actualizarMutation.isPending;
+  const saving = crearMutation.isPending || actualizarMutation.isPending;
 
   const periodosOrdenados = useMemo(() => {
     return [...periodosDonador]
@@ -124,9 +122,7 @@ export default function useHistorialDonativos(data) {
       data?.estatus?.toLowerCase() ===
       "inactivo"
     ) {
-      setErrorForm(
-        "No se pueden registrar nuevos donativos para un donador inactivo."
-      );
+      setErrorForm("No se pueden registrar nuevos donativos para un donador inactivo.");
       return;
     }
 

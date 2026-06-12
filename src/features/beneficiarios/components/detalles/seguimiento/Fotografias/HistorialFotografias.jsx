@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 
 import {
   Camera,
+  Trash2,
   Plus,
   ImagePlus,
   Calendar,
@@ -14,53 +15,21 @@ import {
   Expand,
 } from "lucide-react";
 
-import {
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useSubirFotografia, useEliminarFotografia } from "../../../../../expedientes/hooks/useFotografias";
+import ModalConfirmacion from "../../../../../../components/shared/ModalConfirmacion";
+import ModalResultado from "../../../../../../components/shared/ModalResultado";
 
-import { obtenerSeguimientosPorBeneficiario } from "../../../../services/seguimientoService";
+export default function HistorialFotografias({ data }) {
+  const id_beneficiario = data?.id_beneficiario;
+  const id_expediente = data?.id_expediente;
 
-import { obtenerPeriodos } from "../../../../../periodos/services/periodoService";
+  const periodoActivo = data?.periodoActivo
 
-import { subirFotografia } from "../../../../../expedientes/services/fotografiaService";
+  const seguimientos = data?.historial_seguimientos ?? []
+  const periodos = data?.periodos ?? []
 
-export default function HistorialFotografias({ data, refetch }) {
-
-  const queryClient =
-    useQueryClient();
-
-  const id_beneficiario =
-    data?.id_beneficiario;
-
-  const id_expediente =
-    data?.id_expediente;
-
-  const {
-    data: seguimientos = [],
-    isLoading: loadingSeg,
-  } = useQuery({
-    queryKey: [
-      "seguimientos",
-      id_beneficiario,
-    ],
-
-    queryFn: () =>
-      obtenerSeguimientosPorBeneficiario(
-        id_beneficiario
-      ),
-
-    enabled: !!id_beneficiario,
-  });
-
-  const {
-    data: periodos = [],
-    isLoading: loadingPer,
-  } = useQuery({
-    queryKey: ["periodos"],
-    queryFn: obtenerPeriodos,
-  });
-
+  const { mutateAsync: subirFoto } = useSubirFotografia(id_expediente);
+  const { mutateAsync: eliminarFoto } = useEliminarFotografia(id_expediente);
   const [preview, setPreview] =
     useState(null);
 
@@ -87,11 +56,16 @@ export default function HistorialFotografias({ data, refetch }) {
 
   const inputRef =
     useRef(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  if (
-    loadingSeg ||
-    loadingPer
-  ) {
+  const [resultado, setResultado] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
+
+  if (!data) {
     return (
       <div className="rounded-3xl bg-white p-6 border border-slate-200">
         <p className="text-sm text-slate-500">
@@ -109,25 +83,16 @@ export default function HistorialFotografias({ data, refetch }) {
       ])
     );
 
-  const listaOrdenada = [
-    ...seguimientos,
-  ].sort((a, b) => {
+  const listaOrdenada = [...seguimientos].sort((a, b) => {
+    const aEsActivo = a.id_periodo === periodoActivo?.id_periodo;
+    const bEsActivo = b.id_periodo === periodoActivo?.id_periodo;
 
-    const indexA =
-      periodos.findIndex(
-        (p) =>
-          p.id_periodo ===
-          a.id_periodo
-      );
+    // 1. periodo activo siempre primero
+    if (aEsActivo && !bEsActivo) return -1;
+    if (!aEsActivo && bEsActivo) return 1;
 
-    const indexB =
-      periodos.findIndex(
-        (p) =>
-          p.id_periodo ===
-          b.id_periodo
-      );
-
-    return indexA - indexB;
+    // 2. si ninguno es activo, ordena por periodo (nuevo → viejo)
+    return b.id_periodo - a.id_periodo;
   });
 
   const seleccionarArchivo =
@@ -305,33 +270,11 @@ export default function HistorialFotografias({ data, refetch }) {
           descripcion
         );
 
-        await subirFotografia(
+        await subirFoto(
           formData
         );
-        await refetch();
 
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: [
-              "seguimientos",
-              id_beneficiario,
-            ],
-          }),
 
-          queryClient.invalidateQueries({
-            queryKey: [
-              "expediente",
-              id_expediente,
-            ],
-          }),
-
-          queryClient.invalidateQueries({
-            queryKey: [
-              "beneficiarios",
-              id_beneficiario,
-            ],
-          }),
-        ]);
 
         cancelar();
 
@@ -348,7 +291,37 @@ export default function HistorialFotografias({ data, refetch }) {
         setSaving(false);
       }
     };
+  const eliminarFotografiaActual = async () => {
+    try {
+      const foto = modalFoto?.fotos?.[modalFoto?.index];
 
+      if (!foto) return;
+
+      await eliminarFoto(foto.id_foto);
+
+      setShowDeleteConfirm(false);
+      setModalFoto(null);
+
+      setResultado({
+        open: true,
+        type: "success",
+        title: "Fotografía eliminada",
+        message: "La fotografía se eliminó correctamente.",
+      });
+
+    } catch (error) {
+      console.error(error);
+
+      setShowDeleteConfirm(false);
+
+      setResultado({
+        open: true,
+        type: "error",
+        title: "Error",
+        message: "No fue posible eliminar la fotografía.",
+      });
+    }
+  };
   return (
     <>
       <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-200">
@@ -747,6 +720,12 @@ export default function HistorialFotografias({ data, refetch }) {
               size={18}
             />
           </button>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="absolute top-5 right-35 h-11 w-11 rounded-full bg-red-500/80 text-white hover:bg-red-600 flex items-center justify-center"
+          >
+            <Trash2 size={18} />
+          </button>
 
           {/* IZQUIERDA */}
           {modalFoto.fotos
@@ -852,6 +831,29 @@ export default function HistorialFotografias({ data, refetch }) {
               }
             </span>
           </div>
+          <ModalConfirmacion
+            open={showDeleteConfirm}
+            title="Eliminar fotografía"
+            description="¿Deseas eliminar esta fotografía?"
+            confirmText="Eliminar"
+            cancelText="Cancelar"
+            color="red"
+            onClose={() => setShowDeleteConfirm(false)}
+            onConfirm={eliminarFotografiaActual}
+          />
+
+          <ModalResultado
+            open={resultado.open}
+            type={resultado.type}
+            title={resultado.title}
+            message={resultado.message}
+            onClose={() =>
+              setResultado((prev) => ({
+                ...prev,
+                open: false,
+              }))
+            }
+          />
         </div>
       )}
     </>

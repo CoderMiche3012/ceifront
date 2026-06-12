@@ -1,38 +1,50 @@
-import { useMemo, useState, useCallback, } from "react";
-import { useQuery, useQueryClient, } from "@tanstack/react-query";
-import { obtenerSeguimiento } from "../../../../../services/seguimientoService";
-import { crearObligacion, actualizarObligacion, } from "../../../../../services/obligacionesService";
-import { initialPayload, normalizarFecha, } from "./carta.helpers";
+import { useMemo, useState, useCallback } from "react";
 
-export default function useCartaCard(idSeguimiento) {
-  const queryClient = useQueryClient();
+import {
+  useCrearObligacion,
+  useActualizarObligacion,
+} from "../../../../../hooks/seguimiento/useobligaciones";
 
-  const [modalForm, setModalForm,] = useState(false);
-  const [modalConfirm, setModalConfirm,] = useState(false);
-  const [modalResultado, setModalResultado,] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [alerta, setAlerta] = useState("");
-  const [payload, setPayload] = useState(initialPayload(idSeguimiento));
+import {
+  initialPayload,
+  normalizarFecha,
+} from "./carta.helpers";
 
-  const { data, isLoading, } = useQuery({
-    queryKey: [
-      "seguimiento-obligaciones",
-      idSeguimiento,
-    ],
-    queryFn: () =>
-      obtenerSeguimiento(
-        idSeguimiento
-      ),
-    enabled:
-      !!idSeguimiento,
-  });
+export default function useCartaCard(seguimiento) {
+  const idSeguimiento = seguimiento?.id_seguimiento
+
+  const crearObligacionMutation =
+    useCrearObligacion();
+
+  const actualizarObligacionMutation =
+    useActualizarObligacion();
+
+  const [modalForm, setModalForm] =
+    useState(false);
+
+  const [modalConfirm, setModalConfirm] =
+    useState(false);
+
+  const [modalResultado, setModalResultado] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [alerta, setAlerta] =
+    useState("");
+
+  const [payload, setPayload] =
+    useState(
+      initialPayload(idSeguimiento)
+    );
+
+   const data = seguimiento
 
   const carta = useMemo(() => {
     return (
       data?.obligaciones?.find(
-        (o) =>
-          o.tipo ===
-          "carta"
+        (o) => o.tipo === "carta"
       ) ?? null
     );
   }, [data]);
@@ -49,10 +61,9 @@ export default function useCartaCard(idSeguimiento) {
         estatus:
           carta?.estatus ||
           "Pendiente",
-        fecha:
-          normalizarFecha(
-            carta?.fecha
-          ),
+        fecha: normalizarFecha(
+          carta?.fecha
+        ),
         observaciones:
           carta?.observaciones ||
           "",
@@ -60,10 +71,7 @@ export default function useCartaCard(idSeguimiento) {
 
       setAlerta("");
       setModalForm(true);
-    }, [
-      carta,
-      idSeguimiento,
-    ]);
+    }, [carta, idSeguimiento]);
 
   const abrirConfirmacion =
     () => {
@@ -78,81 +86,43 @@ export default function useCartaCard(idSeguimiento) {
       setModalConfirm(true);
     };
 
-  const confirmarAccion =
-    async () => {
-      setLoading(true);
+  const confirmarAccion = async () => {
+  setLoading(true);
 
-      try {
-        const body = {
-          id_seguimiento:
-            idSeguimiento,
-          tipo: "carta",
-          estatus:
-            payload.estatus,
-          fecha:
-            payload.fecha,
-          observaciones:
-            payload.observaciones,
-        };
-
-        if (
-          payload.id_servicio_social
-        ) {
-          await actualizarObligacion(
-            payload.id_servicio_social,
-            body
-          );
-        } else {
-          await crearObligacion(
-            body
-          );
-        }
-
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: [
-              "seguimiento-obligaciones",
-              idSeguimiento,
-            ],
-          }),
-          queryClient.invalidateQueries({
-            queryKey: ["seguimientos"],
-          }),
-        ]);
-
-        setModalConfirm(
-          false
-        );
-        setModalForm(false);
-        setModalResultado(
-          true
-        );
-
-      } catch (error) {
-        setModalConfirm(
-          false
-        );
-
-        const mensaje =
-          error?.response
-            ?.data?.message ||
-          error?.response
-            ?.data?.mensaje ||
-          error?.message ||
-          "Error al guardar";
-
-        setAlerta(
-          mensaje
-        );
-
-      } finally {
-        setLoading(false);
-      }
+  try {
+    const body = {
+      id_seguimiento: idSeguimiento,
+      tipo: "carta",
+      estatus: payload.estatus,
+      fecha: payload.fecha,
+      observaciones: payload.observaciones,
     };
 
+    if (payload.id_servicio_social) {
+      await actualizarObligacionMutation.mutateAsync({
+        id: payload.id_servicio_social,
+        payload: body,
+      });
+    } else {
+      await crearObligacionMutation.mutateAsync(body);
+    }
+
+    setModalConfirm(false);
+    setModalForm(false);
+    setModalResultado(true);
+
+  } catch (error) {
+    setModalConfirm(false);
+    setAlerta(
+      error?.message ||
+      "Error al guardar"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
   return {
     carta,
-    isLoading,
     loading,
     alerta,
     payload,
@@ -166,22 +136,13 @@ export default function useCartaCard(idSeguimiento) {
     abrirConfirmacion,
     confirmarAccion,
 
-    cerrarFormulario:
-      () =>
-        setModalForm(
-          false
-        ),
+    cerrarFormulario: () =>
+      setModalForm(false),
 
-    cerrarConfirmacion:
-      () =>
-        setModalConfirm(
-          false
-        ),
+    cerrarConfirmacion: () =>
+      setModalConfirm(false),
 
-    cerrarResultado:
-      () =>
-        setModalResultado(
-          false
-        ),
+    cerrarResultado: () =>
+      setModalResultado(false),
   };
 }

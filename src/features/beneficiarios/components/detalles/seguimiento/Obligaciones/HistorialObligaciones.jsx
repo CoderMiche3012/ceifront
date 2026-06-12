@@ -1,207 +1,91 @@
-import { HandHelping, ChevronDown } from "lucide-react";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { obtenerSeguimientosPorBeneficiario } from "../../../../services/seguimientoService";
-import { obtenerPeriodos } from "../../../../../periodos/services/periodoService";
-import CartaCard from "./carta/CartaCard";
+import HistorialBase from "../Historial";
 import ResumenServicioSocialCard from "./servicioSocial/ResumenServicioSocialCard";
+import CartaCard from "./carta/CartaCard";
 
-export default function HistorialObligaciones({ data }) {
-  const id_beneficiario = data?.id_beneficiario;
-  const [abierto, setAbierto] = useState(null);
-
-  const {
-    data: seguimientos = [],
-    isLoading: loadingSeg,
-  } = useQuery({
-    queryKey: ["seguimientos", id_beneficiario],
-    queryFn: () =>
-      obtenerSeguimientosPorBeneficiario(
-        id_beneficiario
-      ),
-    enabled: !!id_beneficiario,
-  });
-
-  const {
-    data: periodos = [],
-    isLoading: loadingPer,
-  } = useQuery({
-    queryKey: ["periodos"],
-    queryFn: obtenerPeriodos,
-  });
-
-  if (loadingSeg || loadingPer) {
-    return (
-      <div className="rounded-2xl bg-white p-6 border border-slate-200">
-        <p className="text-sm text-slate-500 text-center">
-          Cargando historial de obligaciones...
-        </p>
-      </div>
-    );
-  }
-
-  const periodosMap = Object.fromEntries(
-    periodos.map((p) => [p.id_periodo, p])
-  );
-
-  const listaOrdenada = [...seguimientos].sort(
-    (a, b) => {
-      const indexA = periodos.findIndex(
-        (p) =>
-          p.id_periodo === a.id_periodo
-      );
-
-      const indexB = periodos.findIndex(
-        (p) =>
-          p.id_periodo === b.id_periodo
-      );
-
-      return indexB - indexA;
+export default function HistorialObligacionesCard({ data }) {
+  const obtenerEstado = (obligaciones = []) => {
+    if (!obligaciones.length) {
+      return {
+        texto: "Sin obligaciones",
+        color: "text-slate-500",
+      };
     }
-  );
 
-  const toggle = (id) => {
-    setAbierto((prev) =>
-      prev === id ? null : id
+    const tienePendientes = obligaciones.some(
+      (o) => o.estatus?.toLowerCase() === "pendiente"
     );
-  };
 
-  if (!listaOrdenada.length) {
-    return (
-      <div className="rounded-2xl bg-white p-6 border border-slate-200">
-        <p className="text-sm text-slate-500 text-center">
-          Sin historial de obligaciones
-        </p>
-      </div>
-    );
-  }
-
-  const contarServicios = (
-    servicios = []
-  ) => {
-    return servicios.filter(
-      (s) => s.asistencia
-    ).length;
+    return tienePendientes
+      ? {
+        texto: "Obligaciones pendientes",
+        color: "text-amber-600",
+      }
+      : {
+        texto: "Cumplió con todas sus obligaciones",
+        color: "text-emerald-600",
+      };
   };
 
   return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
-      <h3 className="text-sm font-bold text-slate-800 mb-4">
-        Historial de Obligaciones
-      </h3>
+    <HistorialBase
+      title="Historial de Obligaciones"
+      items={data?.historial_seguimientos ?? []}
+      periodos={data?.periodos ?? []}
+      periodoActivo={data?.periodoActivo}
 
-      <div className="space-y-3">
-        {listaOrdenada.map((item) => {
-          const periodo =
-            periodosMap[item.id_periodo];
+      renderTitulo={(item, periodo) => (
+        <p className="text-sm font-semibold text-slate-800">
+          {periodo?.ciclo_escolar || "Periodo"}
+        </p>
+      )}
 
-          const isOpen =
-            abierto ===
-            item.id_seguimiento;
+      renderSubtitulo={(item) => {
+        const estado = obtenerEstado(item.obligaciones);
 
-          const totalServicios =
-            contarServicios(
-              item.usos_servicios
-            );
+        return (
+          <p className={`text-xs font-medium ${estado.color}`}>
+            {estado.texto}
+          </p>
+        );
+      }}
 
-          const tieneObligaciones =
-            (item.obligaciones
-              ?.length || 0) > 0;
+      renderMeta={(item) => {
+        const total = item.obligaciones?.length || 0;
+        const pendientes =
+          item.obligaciones?.filter(
+            (o) => o.estatus?.toLowerCase() === "pendiente"
+          ).length || 0;
 
-          const tienePendientes =
-            item.obligaciones?.some(
-              (o) =>
-                o.estatus?.toLowerCase() ===
-                "pendiente"
-            );
-
-          const estadoObligaciones =
-            !tieneObligaciones
-              ? "Sin obligaciones"
-              : tienePendientes
-                ? "Obligaciones pendientes"
-                : "Cumplió con todas sus obligaciones";
-
-          return (
-            <div
-              key={
-                item.id_seguimiento
-              }
-            >
-              <div
-                onClick={() =>
-                  toggle(
-                    item.id_seguimiento
-                  )
-                }
-                className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 hover:bg-slate-50 transition cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-teal-100 text-teal-600">
-                    <HandHelping
-                      size={18}
-                    />
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">
-                      {periodo?.ciclo_escolar ||
-                        "Periodo"}
-                    </p>
-
-                    <p
-                      className={`text-xs font-medium ${
-                        tienePendientes
-                          ? "text-amber-600"
-                          : "text-emerald-600"
-                      }`}
-                    >
-                      {
-                        estadoObligaciones
-                      }
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                
-                  <ChevronDown
-                    className={`w-4 h-4 text-slate-400 transition-transform ${
-                      isOpen
-                        ? "rotate-180"
-                        : ""
-                    }`}
-                  />
-                </div>
-              </div>
-
-              <div
-                className={`transition-all duration-300 ${
-                  isOpen
-                    ? "mt-2"
-                    : "hidden"
+        return (
+          <div className="text-right">
+            <p className="text-[10px] uppercase text-slate-400 font-semibold">
+              Pendientes
+            </p>
+            <p
+              className={`text-sm font-bold ${pendientes > 0
+                ? "text-amber-600"
+                : "text-emerald-600"
                 }`}
-              >
-                <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <ResumenServicioSocialCard
-                      idSeguimiento={
-                        item.id_seguimiento
-                      }
-                    />
+            >
+              {pendientes}/{total}
+            </p>
+          </div>
+        );
+      }}
 
-                    <CartaCard
-                      idSeguimiento={
-                        item.id_seguimiento
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+      renderDetalle={(item) => (
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ResumenServicioSocialCard
+              seguimiento={item}
+            />
+
+            <CartaCard
+              seguimiento={item}
+            />
+          </div>
+        </div>
+      )}
+    />
   );
 }

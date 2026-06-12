@@ -1,482 +1,482 @@
-import { X, Save, Loader2, User } from 'lucide-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import ModalConfirmacion from '../../../../components/shared/ModalConfirmacion';
-import ModalResultado from '../../../../components/shared/ModalResultado';
-import Input from '../../../../components/ui/InputG';
-import Field from '../../../../components/ui/Field';
-import { actualizarExpediente, actualizarDireccion } from '../../../expedientes/services/expedientesService';
-import { buscarCPCompleto } from "../../../expedientes/services/expedientesService";
-import { useState, useEffect } from 'react';
-import { formatErrorAnidado } from '../../../../utils/errorHandlers';
-const getErrorMessage = (err) => {
+import { useState, useEffect } from "react";
+import {
+  HiOutlineUser,
+  HiUserGroup,
+  HiPlus,
+  HiTrash,
+  HiOutlineArrowLeft,
+  HiOutlineSearch
+} from "react-icons/hi";
 
-  if (err?.response?.data) {
-    return formatErrorAnidado(err.response.data);
-  }
 
-  if (err?.message) {
-    return formatErrorAnidado(err);
-  }
+import { ui } from "../../../../styles/ui/index";
+import Select from "../../../../components/ui/Select";
 
-  return "Error inesperado";
-};
+import AlertaError from "../../../../components/ui/AlertaError";
+import Field from "../../../../components/ui/Field";
+import InputG from "../../../../components/ui/InputG";
+import Boton from "../../../../components/ui/Boton";
 
-export default function EditarDatosGenerales({ isOpen, onClose, data }) {
-  const queryClient = useQueryClient();
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [formDataCache, setFormDataCache] = useState(null);
-  const [resultado, setResultado] = useState({ open: false, type: 'success', title: '', message: '' });
+import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
+import ModalResultado from "../../../../components/shared/ModalResultado";
+
+import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { obtenerDireccionPorCP } from "../../../donadores/services/donadoresService";
+import { useBeneficiarioEditarForm } from "../../hooks/useBeneficiarioEditarForm";
+
+export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose }) {
+  const [step, setStep] = useState(1);
   const [colonias, setColonias] = useState([]);
-  const [loadingCP, setLoadingCP] = useState(false);
-  const [cpEncontrado, setCpEncontrado] =
-    useState(false);
-  const [otraColonia, setOtraColonia] =
-    useState(false);
-  const [direccionForm, setDireccionForm] = useState({
-    calle: data?.direccion?.calle || "",
-    numero: data?.direccion?.numero || "",
-    colonia: data?.direccion?.colonia || "",
-    municipio: data?.direccion?.municipio || "",
-    cp: data?.direccion?.cp || "",
-  });
-  const updateDireccion = (field, value) => {
-    setDireccionForm(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  const [cpError, setCpError] = useState("");
+  const [manualAddressMode, setManualAddressMode] = useState(false);
+
+  const estadoEditable = manualAddressMode;
+
+  const {
+    form,
+    setForm,
+    handleChange,
+    fieldErrors,
+    loading,
+    loadingCP,
+    cpEncontrado,
+    setLoadingCP,
+    setCpEncontrado,
+    error,
+    showConfirm,
+    setShowConfirm,
+    resultModal,
+    handlePreSubmit,
+    handleConfirmSave,
+    handleFinalClose
+  } = useBeneficiarioEditarForm(open, data, onSuccess, onClose);
+
+  
   useEffect(() => {
-
-    if (!isOpen) return;
-
-    // RESET COMPLETO DEL FORMULARIO
-    setDireccionForm({
-      calle: data?.direccion?.calle || "",
-      numero: data?.direccion?.numero || "",
-      colonia: data?.direccion?.colonia || "",
-      municipio: data?.direccion?.municipio || "",
-      cp: data?.direccion?.cp || "",
-    });
-
-    setOtraColonia(false);
-    setCpEncontrado(false);
-    setColonias([]);
-
-    const cargarCPInicial = async () => {
-
-      const cp = data?.direccion?.cp;
-
-      if (!cp || String(cp).length !== 5) return;
-
-      try {
-
-        setLoadingCP(true);
-
-        const dataCP = await buscarCPCompleto(cp);
-
-        setColonias(dataCP?.colonias || []);
-
-        if (dataCP?.municipio) {
-
-          setCpEncontrado(true);
-
-          setDireccionForm(prev => ({
-            ...prev,
-            municipio: dataCP.municipio
-          }));
-
-        }
-
-        const coloniaActual = data?.direccion?.colonia;
-
-        if (
-          coloniaActual &&
-          dataCP?.colonias &&
-          !dataCP.colonias.includes(coloniaActual)
-        ) {
-
-          setOtraColonia(true);
-
-        }
-
-      } catch (error) {
-
-        console.log(error);
-
-      } finally {
-
-        setLoadingCP(false);
-
-      }
-    };
-
-    cargarCPInicial();
-
-  }, [isOpen, data]);
-  const mutation = useMutation({
-    mutationFn: async (payload) => {
-      const id_expediente = data?.id_expediente;
-      const id_direccion = data?.id_direccion?.id_direccion;
-
-      // Ejecutamos ambas actualizaciones
-      const promesas = [
-        actualizarExpediente(id_expediente, {
-          nombre: payload.nombre,
-          apellido_p: payload.apellido_p,
-          apellido_m: payload.apellido_m,
-          telefono: payload.telefono,
-          correo: payload.correo,
-          fecha_nacimiento: payload.fecha_nacimiento,
-          genero: payload.genero,
-        })
-      ];
-
-      if (id_direccion) {
-        promesas.push(
-          actualizarDireccion(id_direccion, {
-            calle: direccionForm.calle,
-            numero: direccionForm.numero,
-            colonia: direccionForm.colonia,
-            municipio: direccionForm.municipio,
-            cp: direccionForm.cp,
-          })
-        );
-      }
-
-      return Promise.all(promesas);
-    },
-    onSuccess: () => {
-      // Invalidamos para refrescar listas y detalles
-      queryClient.invalidateQueries(['beneficiarios']);
-      queryClient.invalidateQueries(['expediente', data?.id_expediente]);
-
-      setResultado({
-        open: true,
-        type: 'success',
-        title: '¡Actualización Exitosa!',
-        message: 'Los datos personales y de ubicación se han guardado correctamente.'
-      });
-      setShowConfirm(false);
-    },
-    onError: (error) => {
-
-      setResultado({
-        open: true,
-        type: 'error',
-        title: 'Error de actualización',
-        message: getErrorMessage(error)
-      });
-
-      setShowConfirm(false);
+    if (!open) {
+      setStep(1);
+      setManualAddressMode(false);
+      setCpError("");
+      setColonias([]);
+      setCpEncontrado(false);
     }
-  });
+  }, [open, setCpEncontrado]);
+  useEffect(() => {
+  if (
+    open &&
+    form.cp &&
+    form.colonia &&
+    colonias.length === 0
+  ) {
+    handleBuscarCP(form.cp);
+  }
+}, [open, form.cp]);
 
-  if (!isOpen) return null;
+  if (!open) return null;
 
-  const preSubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const payload = Object.fromEntries(formData.entries());
-    setFormDataCache(payload);
-    setShowConfirm(true);
+  const updateField = (field, value) => {
+    handleChange(field, value);
   };
 
-  const handleFinalConfirm = () => {
-    mutation.mutate(formDataCache);
+
+  const handleBuscarCP = async (cpValue = form.cp) => {
+    if (!cpValue) return;
+
+    try {
+      setLoadingCP(true);
+      setCpError("");
+
+      const data = await obtenerDireccionPorCP(cpValue);
+      const opciones = data?.opciones || [];
+
+      if (opciones.length === 0) {
+        setColonias([]);
+        setCpError("Este código postal no está registrado");
+        setCpEncontrado(false);
+        updateField("estado", "");
+        updateField("municipio", "");
+        updateField("colonia", "");
+        updateField("id_geografia", null);
+        return;
+      }
+      setColonias(opciones);
+      updateField("estado", data.estado || "");
+      updateField("municipio", data.municipio || "");
+      updateField("colonia", opciones[0].nombre);
+      updateField("id_geografia", opciones[0].id_geografia);
+      setCpEncontrado(true);
+    } catch (e) {
+      setColonias([]);
+      setCpError("Error al consultar el código postal");
+
+      setCpEncontrado(false);
+
+      updateField("estado", "");
+      updateField("municipio", "");
+      updateField("colonia", "");
+      updateField("id_geografia", null);
+    } finally {
+      setLoadingCP(false);
+    }
   };
 
-  const handleCloseSuccess = () => {
-    setResultado(prev => ({ ...prev, open: false }));
-    if (resultado.type === 'success') onClose();
+  const limpiarDireccionCP = () => {
+    setColonias([]);
+    setCpEncontrado(false);
+    setCpError("");
+
+    updateField("estado", "");
+    updateField("municipio", "");
+    updateField("colonia", "");
+    updateField("id_geografia", null);
+  };
+
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      setStep(1);
+      onClose();
+    }
   };
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4">
-        <div className="bg-[#F8FAFC] rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-white">
+      <div className={ui.modal.formOverlay} onClick={handleBackdropClick}>
+        <div className={ui.modal.formContainer}>
 
-          {/* Header */}
-          <div className="flex items-center justify-between p-8 bg-white border-b border-slate-100">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-[#0E5F63]/10 rounded-2xl">
-                <User className="w-6 h-6 text-[#0E5F63]" />
+          {/* HEADER */}
+          <div className={`${ui.modal.formHeader} relative`}>
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute top-5 right-6 text-2xl text-slate-400 hover:text-slate-600"
+            >
+              ×
+            </button>
+
+            <div className="flex items-start gap-4">
+              <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}>
+                <HiOutlineUser size={20} />
               </div>
+
               <div>
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Editar Datos Personales</h2>
-                <p className="text-sm text-slate-500 font-medium">Actualiza la información general y de contacto</p>
+                <h2 className={ui.modal.title}>
+                  Editar Beneficiario
+                </h2>
+
+                <p className={ui.modal.description}>
+                  Actualiza la información del benefiarios
+                </p>
+
+                <div className="flex items-center gap-3 mt-4">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Paso {step} de 2
+                  </span>
+
+                  <div className="flex gap-1">
+                    <div className={`h-1 w-5 rounded-full ${step === 1 ? "bg-[#0E5F63]" : "bg-slate-200"}`} />
+                    <div className={`h-1 w-5 rounded-full ${step === 2 ? "bg-[#0E5F63]" : "bg-slate-200"}`} />
+                  </div>
+                </div>
+
               </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-all active:scale-90">
-              <X className="w-6 h-6 text-slate-400" />
-            </button>
           </div>
 
-          <form onSubmit={preSubmit} className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-            <div className="space-y-10">
-              {/* SECCIÓN PERSONAL */}
-              <section>
-                <div className="flex items-center gap-2 mb-6">
-                  <span className="h-px w-8 bg-[#0E5F63]/20"></span>
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0E5F63]">Información Personal</h3>
+          <form className={ui.modal.formBody} onSubmit={handlePreSubmit}>
+
+            {error && (
+              <div className="mb-4">
+                <AlertaError mensaje={error} />
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
+              <HiOutlineExclamationCircle className="text-[#0E5F63]" size={18} />
+              <span>
+                Los campos con <span className="font-semibold text-red-500">*</span> son obligatorios
+              </span>
+            </div>
+
+            <div className={ui.modal.formScroll}>
+
+              {/* ================= STEP 1 ================= */}
+              {step === 1 && (
+                <div className="space-y-6 animate-in fade-in duration-300">
+                  <div>
+                    <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em] mb-4">
+                      Información Personal
+                    </h3>
+
+                    <div className={ui.modal.twoCols}>
+                      <Field label="Nombre(s)" required error={fieldErrors.nombre}>
+                        <InputG
+                          placeholder="Ej: Juan Antonio"
+                          value={form.nombre}
+                          onChange={(e) => updateField("nombre", e.target.value)}
+                          error={!!fieldErrors.nombre}
+                        />
+                      </Field>
+
+                      <Field label="Apellido paterno" required error={fieldErrors.apellido_p}>
+                        <InputG
+                          value={form.apellido_p}
+                          onChange={(e) => updateField("apellido_p", e.target.value)}
+                          error={!!fieldErrors.apellido_p}
+                        />
+                      </Field>
+
+                      <Field label="Apellido materno" error={fieldErrors.apellido_m}>
+                        <InputG
+                          value={form.apellido_m}
+                          onChange={(e) => updateField("apellido_m", e.target.value)}
+                          error={!!fieldErrors.apellido_m}
+                        />
+                      </Field>
+
+                      <Field label="Correo electrónico" required error={fieldErrors.correo}>
+                        <InputG
+                          type="email"
+                          value={form.correo}
+                          onChange={(e) => updateField("correo", e.target.value)}
+                          error={!!fieldErrors.correo}
+                        />
+                      </Field>
+
+                      <Field label="Teléfono" required error={fieldErrors.telefono}>
+                        <InputG
+                          value={form.telefono}
+                          onChange={(e) => updateField("telefono", e.target.value)}
+                          error={!!fieldErrors.telefono}
+                        />
+                      </Field>
+
+                      <Field label="Género" required error={fieldErrors.genero}>
+                        <Select
+                          value={form.genero}
+                          onChange={(e) => updateField("genero", e.target.value)}
+                          error={!!fieldErrors.genero}
+                        >
+                          <option value="">Elegir...</option>
+                          <option value="Femenino">Femenino</option>
+                          <option value="Masculino">Masculino</option>
+                        </Select>
+                      </Field>
+
+                      <Field label="Fecha nacimiento" required error={fieldErrors.fecha_nacimiento}>
+                        <InputG
+                          type="date"
+                          value={form.fecha_nacimiento}
+                          onChange={(e) => updateField("fecha_nacimiento", e.target.value)}
+                          error={!!fieldErrors.fecha_nacimiento}
+                        />
+                      </Field>
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Field label="Nombre(s)" required>
-                    <Input name="nombre" defaultValue={data.nombre} required placeholder="Ej. Juan Manuel" />
-                  </Field>
-                  <Field label="Apellido Paterno">
-                    <Input name="apellido_p" defaultValue={data.apellido_p} placeholder="Ej. García" />
-                  </Field>
-                  <Field label="Apellido Materno">
-                    <Input name="apellido_m" defaultValue={data.apellido_m} placeholder="Ej. López" />
-                  </Field>
-                  <Field label="Teléfono">
-                    <Input name="telefono" defaultValue={data.telefono} placeholder="000 000 0000" />
-                  </Field>
-                  <Field label="Correo Electrónico">
-                    <Input name="correo" type="email" defaultValue={data.correo} placeholder="ejemplo@correo.com" />
-                  </Field>
-                </div>
-              </section>
+              )}
 
-              {/* SECCIÓN DIRECCIÓN */}
-              <section>
-                <div className="flex items-center gap-2 mb-6">
-                  <span className="h-px w-8 bg-[#0E5F63]/20"></span>
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0E5F63]">Ubicación y Domicilio</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Field label="C.P.">
-                    <Input
-                      value={direccionForm.cp}
-                      placeholder="68000"
-                      onChange={async (e) => {
+              {/* ================= STEP 2 ================= */}
+              {step === 2 && (
+                <div className="space-y-6 animate-in fade-in duration-300">
+                  <div className="pt-4 border-t border-slate-50">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em]">
+                        Dirección
+                      </h3>
 
-                        const cp = e.target.value;
+                      <button
+                        type="button"
+                        className="flex items-center gap-1 text-xs text-[#0E5F63] font-semibold hover:underline"
+                        onClick={() => {
+                          if (manualAddressMode) {
+                            setManualAddressMode(false);
+                            updateField("colonia", "");
+                            updateField("estado", "");
+                            updateField("municipio", "");
+                            updateField("id_geografia", null);
 
-                        updateDireccion("cp", cp);
-
-                        if (!/^\d{5}$/.test(cp)) {
-
-                          setColonias([]);
-                          setCpEncontrado(false);
-
-                          updateDireccion("municipio", "");
-                          updateDireccion("colonia", "");
-
-                          return;
-                        }
-
-                        try {
-
-                          setLoadingCP(true);
-
-                          const dataCP = await buscarCPCompleto(cp);
-
-                          setColonias(dataCP?.colonias || []);
-
-                          if (dataCP?.municipio) {
-
-                            setCpEncontrado(true);
-
-                            updateDireccion(
-                              "municipio",
-                              dataCP.municipio
-                            );
-
+                            if (form.cp?.trim()) {
+                              handleBuscarCP(form.cp);
+                            }
                           } else {
-
-                            setCpEncontrado(false);
-
+                            setManualAddressMode(true);
+                            setCpError("");
                           }
-
-                        } catch (error) {
-
-                          console.log(error);
-
-                          setCpEncontrado(false);
-                          setColonias([]);
-
-                        } finally {
-
-                          setLoadingCP(false);
-
-                        }
-                      }}
-                    />
-                  </Field>
-
-                  <Field label="Municipio">
-
-                    <Input
-                      value={direccionForm.municipio}
-                      disabled={
-                        direccionForm.cp.length === 5 &&
-                        cpEncontrado
-                      }
-                      placeholder={
-                        cpEncontrado
-                          ? "Municipio detectado automáticamente"
-                          : "Escribe el municipio"
-                      }
-                      onChange={(e) =>
-                        updateDireccion(
-                          "municipio",
-                          e.target.value
-                        )
-                      }
-                    />
-
-                  </Field>
-
-                  <Field label="Colonia">
-
-                    {!otraColonia ? (
-
-                      <select
-                        className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-[#0E5F63]"
-                        value={direccionForm.colonia}
-                        disabled={loadingCP}
-                        onChange={(e) => {
-
-                          const value = e.target.value;
-
-                          if (value === "__otra__") {
-
-                            setOtraColonia(true);
-
-                            updateDireccion(
-                              "colonia",
-                              ""
-                            );
-
-                            return;
-                          }
-
-                          updateDireccion(
-                            "colonia",
-                            value
-                          );
                         }}
                       >
+                        {manualAddressMode ? (
+                          <>
+                            <HiOutlineArrowLeft size={14} />
+                            Volver a búsqueda por CP
+                          </>
+                        ) : (
+                          "Agregar dirección manual"
+                        )}
+                      </button>
+                    </div>
 
-                        <option value="">
-                          Seleccionar colonia...
-                        </option>
-
-                        {colonias.map((colonia) => (
-
-                          <option
-                            key={colonia}
-                            value={colonia}
-                          >
-                            {colonia}
-                          </option>
-
-                        ))}
-
-                        <option value="__otra__">
-                          Otra colonia...
-                        </option>
-
-                      </select>
-
-                    ) : (
-
-                      <div className="space-y-2">
-
-                        <Input
-                          value={direccionForm.colonia}
-                          placeholder="Escribe la colonia"
-                          onChange={(e) =>
-                            updateDireccion(
-                              "colonia",
-                              e.target.value
-                            )
-                          }
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => {
-
-                            setOtraColonia(false);
-
-                            updateDireccion(
-                              "colonia",
-                              ""
-                            );
-                          }}
-                          className="text-xs text-[#0E5F63] hover:underline"
+                    <div className={ui.modal.twoCols}>
+                      <Field label="Código Postal" required error={fieldErrors.cp}>
+                        <div
+                          className={`relative rounded-md border transition  
+                                                  ${cpError
+                              ? "border-amber-400" : cpEncontrado ? "border-green-400"
+                                : "border-slate-200 focus-within:border-[#0E5F63]"
+                            }`}
                         >
-                          Volver a sugerencias
-                        </button>
 
-                      </div>
+                          <InputG
+                            value={form.cp}
+                            onChange={(e) => {
+                              updateField("cp", e.target.value);
+                              limpiarDireccionCP();
+                            }}
+                            error={!!fieldErrors.cp}
+                            className="border-0 focus:ring-0 pl-9 pr-28"
+                          />
+                          <div className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                            <HiOutlineSearch size={16} />
+                          </div>
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2">
 
-                    )}
+                            <button
+                              type="button"
+                              onClick={() => handleBuscarCP(form.cp)}
+                              disabled={!form.cp || loadingCP || manualAddressMode}
+                              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition
+                                                        ${cpEncontrado
+                                  ? "bg-green-50 text-green-600"
+                                  : "bg-slate-100 text-[#0E5F63] hover:bg-slate-200"
+                                }
+                                                      disabled:opacity-40`}
+                            >
+                              {/* carga */}
+                              {loadingCP ? (
+                                <div className="h-3 w-3 border-2 border-[#0E5F63] border-t-transparent rounded-full animate-spin" />
+                              ) : cpEncontrado ? (
+                                "Encontrado"
+                              ) : (
+                                "Buscar"
+                              )}
+                            </button>
+                          </div>
 
-                  </Field>
-                  <div className="md:col-span-2">
-                    <Field label="Calle">
-                      <Input
-                        value={direccionForm.calle}
-                        onChange={(e) =>
-                          updateDireccion("calle", e.target.value)
-                        }
-                      />
-                    </Field>
+                        </div>
+
+                        {cpError && (
+                          <p className="mt-1 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md flex items-center gap-1">
+                            <HiOutlineExclamationCircle size={14} />
+                            {cpError}
+                          </p>
+                        )}
+                      </Field>
+
+                      <Field label="Municipio" required error={fieldErrors.municipio}>
+                        <InputG
+                          disabled={!estadoEditable}
+                          value={form.municipio || ""}
+                          onChange={(e) => updateField("municipio", e.target.value)}
+                          error={!!fieldErrors.municipio}
+                        />
+                      </Field>
+                      <Field label="Colonia" required error={fieldErrors.colonia}>
+                        {manualAddressMode ? (
+                          <InputG
+                            value={form.colonia}
+                            onChange={(e) => updateField("colonia", e.target.value)}
+                          />
+                        ) : (
+                          <Select
+                            value={form.colonia || ""}
+                            disabled={!cpEncontrado || colonias.length === 0 || loadingCP}
+                            onChange={(e) => {
+                              const colonia = colonias.find((m) => m.nombre === e.target.value);
+                              updateField("colonia", e.target.value);
+                              updateField("id_geografia", colonia?.id_geografia ?? null);
+                            }}
+                            error={!!fieldErrors.colonia}
+                          >
+                            <option value="">Selecciona la colonia</option>
+                            {colonias.map((m) => (
+                              <option key={m.id_geografia ?? m.nombre} value={m.nombre}>
+                                {m.nombre}
+                              </option>
+                            ))}
+                          </Select>
+                        )}
+                      </Field>
+
+
+                      <Field label="Calle" required error={fieldErrors.calle}>
+                        <InputG
+                          value={form.calle}
+                          onChange={(e) => updateField("calle", e.target.value)}
+                          error={!!fieldErrors.calle}
+                        />
+                      </Field>
+
+                      <Field label="Número" required error={fieldErrors.numero}>
+                        <InputG
+                          value={form.numero}
+                          onChange={(e) => updateField("numero", e.target.value)}
+                          error={!!fieldErrors.numero}
+                        />
+                      </Field>
+
+                    </div>
                   </div>
-                  <Field label="Número">
-                    <Input
-                      value={direccionForm.numero}
-                      onChange={(e) =>
-                        updateDireccion("numero", e.target.value)
-                      }
-                    />
-                  </Field>
-
-
                 </div>
-              </section>
+              )}
+
+              {/* ================= STEP 3 ================= */}
+              
+
             </div>
 
-            <div className="flex justify-end gap-4 mt-12">
-              <button
+            {/* FOOTER */}
+            <div className={ui.modal.formActions}>
+
+              <Boton
                 type="button"
-                onClick={onClose}
-                className="px-8 py-3.5 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-2xl transition-all"
+                variant="secondary"
+                onClick={() => (step === 1 ? onClose() : setStep(step - 1))}
               >
-                Descartar
-              </button>
-              <button
-                type="submit"
-                disabled={mutation.isLoading}
-                className="flex items-center gap-3 px-10 py-3.5 bg-[#0E5F63] text-white text-sm font-bold rounded-2xl hover:bg-[#0A4D50] shadow-xl shadow-[#0E5F63]/20 transition-all active:scale-95 disabled:opacity-50"
+                {step === 1 ? "Cancelar" : "Volver"}
+              </Boton>
+
+              <Boton
+                type="button"
+                onClick={() => {
+                  if (step < 2) setStep(step + 1);
+                  else handlePreSubmit();
+                }}
+                disabled={loading}
               >
-                {mutation.isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                Confirmar Cambios
-              </button>
+                {step < 2 ? "Siguiente" : loading ? "Guardando..." : "Guardar cambios"}
+              </Boton>
+
             </div>
+
           </form>
+
         </div>
       </div>
 
+      {/* MODALES */}
       <ModalConfirmacion
         open={showConfirm}
-        title="¿Guardar cambios?"
-        description="Se actualizarán los datos personales y la dirección de forma permanente."
-        onConfirm={handleFinalConfirm}
         onClose={() => setShowConfirm(false)}
-        loading={mutation.isLoading}
-        color="teal"
+        onConfirm={handleConfirmSave}
+        title="Confirmar cambios"
+        description="¿Deseas actualizar al beneficiario?"
       />
 
       <ModalResultado
-        open={resultado.open}
-        type={resultado.type}
-        title={resultado.title}
-        message={resultado.message}
-        onClose={handleCloseSuccess}
+        open={resultModal.open}
+        type={resultModal.type}
+        title={resultModal.title}
+        message={resultModal.message}
+        onClose={handleFinalClose}
       />
     </>
   );

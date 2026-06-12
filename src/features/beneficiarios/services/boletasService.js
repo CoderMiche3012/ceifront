@@ -45,10 +45,9 @@ export const crearBoleta = async (payload) => {
   }
 };
 
-//editar o desactivar periodo
 export const actualizarBoleta = async (id, payload) => {
   try {
-    const res = await API.put(`${BASE_URL}/${id}/`, payload);
+    const res = await API.patch(`${BASE_URL}/${id}/`, payload);
     return res.data;
   } catch (error) {
     console.log(error)

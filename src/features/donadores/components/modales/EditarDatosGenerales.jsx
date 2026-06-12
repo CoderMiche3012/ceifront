@@ -200,7 +200,7 @@ export default function EditarDatosGenerales({ open, onClose, onSuccess, donador
                         disabled={!puedeEditarNombre} onChange={(e) => updateField("apellido_p", e.target.value)} error={!!fieldErrors.apellido_p} />
                     </Field>
 
-                    <Field label="Apellido materno" required error={fieldErrors.apellido_m} >
+                    <Field label="Apellido materno"  error={fieldErrors.apellido_m} >
                       <Input value={form.apellido_m}
                         disabled={!puedeEditarNombre} onChange={(e) => updateField("apellido_m", e.target.value)} error={!!fieldErrors.apellido_m} />
                     </Field>
@@ -223,12 +223,6 @@ export default function EditarDatosGenerales({ open, onClose, onSuccess, donador
                         <option value="OYE">OYE</option>
                         <option value="CANFRO">CANFRO</option>
                       </Select>
-                    </Field>
-
-                    <Field label="Fecha ingreso" required error={fieldErrors.fecha_ingreso}>
-                      <Input type="date"
-                        value={form.fecha_ingreso}
-                        onChange={(e) => updateField("fecha_ingreso", e.target.value)} error={!!fieldErrors.fecha_ingreso} />
                     </Field>
                   </div>
                 </>

@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import {crearDatosEscolaresInd,actualizarDatosEscolaresInd,} from "../../services/escuelaService";
-import {obtenerInstituciones,crearInstitucion,} from "../../services/institucionesService";
+import { useCrearDatosEscolares, useActualizarDatosEscolares, } from "../../hooks/seguimiento/useDatosEscolaresK";
+import { obtenerInstituciones, crearInstitucion, } from "../../services/institucionesService";
 import { obtenerMunicipios } from "../../services/municipiosService";
 
 export default function useDatosEscolares(
@@ -10,6 +10,8 @@ export default function useDatosEscolares(
   datosIniciales
 ) {
   const queryClient = useQueryClient();
+  const crearDatosEscolares = useCrearDatosEscolares();
+  const actualizarDatosEscolares = useActualizarDatosEscolares();
 
   const esEdicion =
     !!datosIniciales?.id_datos_escolares;
@@ -23,7 +25,7 @@ export default function useDatosEscolares(
     modalidad_educativa: "",
     especialidad: "",
     id_escolaridad: "",
-    nivel_educativo: "", 
+    nivel_educativo: "",
   });
 
   const [institucionSeleccionada,
@@ -76,30 +78,30 @@ export default function useDatosEscolares(
       );
     });
   }, [instituciones, busqueda]);
-const obtenerNombreMunicipio = (inst) => {
-  if (typeof inst.municipio_escuela === "object") {
-    return inst.municipio_escuela?.nombre || "";
-  }
+  const obtenerNombreMunicipio = (inst) => {
+    if (typeof inst.municipio_escuela === "object") {
+      return inst.municipio_escuela?.nombre || "";
+    }
 
-  return (
-    municipios.find(
-      (m) => Number(m.id) === Number(inst.municipio_escuela)
-    )?.nombre || ""
-  );
-};
+    return (
+      municipios.find(
+        (m) => Number(m.id) === Number(inst.municipio_escuela)
+      )?.nombre || ""
+    );
+  };
   const seleccionarInstitucion = (inst) => {
-  const municipio = obtenerNombreMunicipio(inst);
+    const municipio = obtenerNombreMunicipio(inst);
 
-  setInstitucionSeleccionada(inst);
+    setInstitucionSeleccionada(inst);
 
-  setBusqueda(
-    municipio
-      ? `${inst.nombre} - ${municipio}`
-      : inst.nombre
-  );
+    setBusqueda(
+      municipio
+        ? `${inst.nombre} - ${municipio}`
+        : inst.nombre
+    );
 
-  setMostrarResultados(false);
-};
+    setMostrarResultados(false);
+  };
 
   const handleCrearEscuela = async () => {
     try {
@@ -123,13 +125,13 @@ const obtenerNombreMunicipio = (inst) => {
 
       setInstitucionSeleccionada(nueva);
 
-const municipio = obtenerNombreMunicipio(nueva);
+      const municipio = obtenerNombreMunicipio(nueva);
 
-setBusqueda(
-  municipio
-    ? `${nueva.nombre} - ${municipio}`
-    : nueva.nombre
-);
+      setBusqueda(
+        municipio
+          ? `${nueva.nombre} - ${municipio}`
+          : nueva.nombre
+      );
       setCrearModo(false);
       setNuevaEscuela({ nombre: "", municipio_escuela: "" }); // Resetear
       setError(""); // Limpiar errores previos
@@ -208,11 +210,11 @@ setBusqueda(
 
         const municipio = obtenerNombreMunicipio(inst);
 
-setBusqueda(
-  municipio
-    ? `${inst.nombre} - ${municipio}`
-    : inst.nombre
-);
+        setBusqueda(
+          municipio
+            ? `${inst.nombre} - ${municipio}`
+            : inst.nombre
+        );
       }
     }
   }, [datosIniciales]);
@@ -422,68 +424,50 @@ setBusqueda(
       setLoading(true);
       setError("");
 
-      if (
-        !institucionSeleccionada
-      ) {
-        throw new Error(
-          "Selecciona una escuela"
-        );
+      if (!institucionSeleccionada) {
+        throw new Error("Selecciona una escuela");
       }
 
-      if (
-        !form.id_escolaridad
-      ) {
-        throw new Error(
-          "Selecciona escolaridad"
-        );
+      if (!form.id_escolaridad) {
+        throw new Error("Selecciona escolaridad");
       }
 
-      if (
-        mostrarEspecialidad &&
-        !form.especialidad
-      ) {
-        throw new Error(
-          "La especialidad es requerida"
-        );
+      if (mostrarEspecialidad && !form.especialidad) {
+        throw new Error("La especialidad es requerida");
       }
 
-      const {
-        nivel_educativo,
-        ...formularioLimpio
-      } = form;
+      const { nivel_educativo, ...formularioLimpio } = form;
 
       const payload = {
         ...formularioLimpio,
-
-        id_institucion:
-          institucionSeleccionada
-            .id_institucion,
-
+        id_institucion: institucionSeleccionada.id_institucion,
         id_seguimiento,
       };
 
+      let result;
+
+      // =========================
+      // EDITAR
+      // =========================
       if (esEdicion) {
-        await actualizarDatosEscolaresInd(
-          datosIniciales.id_datos_escolares,
-          payload
-        );
-      } else {
-        await crearDatosEscolaresInd(
-          payload
-        );
+        result = await actualizarDatosEscolares.mutateAsync({
+          id: datosIniciales.id_datos_escolares,
+          data: payload,
+        });
       }
 
-      queryClient.invalidateQueries([
-        "seguimiento",
-        id_seguimiento,
-      ]);
+      // =========================
+      // CREAR
+      // =========================
+      else {
+        result = await crearDatosEscolares.mutateAsync(payload);
+      }
 
       return true;
-
     } catch (err) {
-      setError(err.message);
+      console.log(err);
+      setError(err.message || "Error inesperado");
       return false;
-
     } finally {
       setLoading(false);
     }
@@ -516,7 +500,7 @@ setBusqueda(
     handleCrearEscuela,
     refEscuela,
     institucionSeleccionada,
-      obtenerNombreMunicipio, 
+    obtenerNombreMunicipio,
     gradosMock:
       gradosFiltrados,
     mostrarEspecialidad,

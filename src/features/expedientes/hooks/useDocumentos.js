@@ -10,6 +10,8 @@ import {
 
 import { documentosKeys } from "../services/documentosKeys";
 import { postulantesKeys } from "../../postulantes/services/postulantesKeys";
+import { expedientesKeys } from "../services/expedientesKeys";
+import { seguimientosKeys } from "../../beneficiarios/services/seguimientosKeys";
 
 // =========================
 // LISTAR TODOS
@@ -45,6 +47,15 @@ export function useSubirDocumento() {
       queryClient.invalidateQueries({
         queryKey: documentosKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: seguimientosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: expedientesKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: postulantesKeys.all,
+      });
     },
   });
 }
@@ -66,6 +77,13 @@ export function useActualizarDocumento() {
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
       });
+       queryClient.invalidateQueries({
+        queryKey: seguimientosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: expedientesKeys.all,
+      });
+      
     },
   });
 }
@@ -86,6 +104,13 @@ export function useEliminarDocumento() {
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
       });
+       queryClient.invalidateQueries({
+        queryKey: seguimientosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: expedientesKeys.all,
+      });
+     
     },
   });
 }

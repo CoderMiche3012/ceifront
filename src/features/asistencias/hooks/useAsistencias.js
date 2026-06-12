@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient, } from "@tanstack/react-query";
 import { crearAsistencias } from "../services/asistenciasService";
 import { obtenerSeguimientos } from "../../beneficiarios/services/seguimientoService";
-import { obtenerExpediente } from "../../expedientes/services/expedientesService";
-import { obtenerBeneficiario } from "../../beneficiarios/services/beneficiariosService";
+import { obtenerExpedientes } from "../../expedientes/services/expedientesService";
+import { obtenerBeneficiarios } from "../../beneficiarios/services/beneficiariosService";
 import { actualizarAsistenciasMasivo } from "../services/asistenciasService";
 
 export const useAsistenciaData = (periodoId) => {
@@ -13,17 +13,24 @@ export const useAsistenciaData = (periodoId) => {
     queryFn: async () => {
       const [expedientes, beneficiarios, seguimientos] =
         await Promise.all([
-          obtenerExpediente(),
-          obtenerBeneficiario(),
+          obtenerExpedientes(),
+          obtenerBeneficiarios(),
           obtenerSeguimientos(),
         ]);
+
+      console.log("EXPEDIENTES:", expedientes);
+      console.log("BENEFICIARIOS:", beneficiarios);
+      console.log("SEGUIMIENTOS:", seguimientos);
+
       return {
         expedientes: expedientes?.data || expedientes || [],
         beneficiarios: beneficiarios?.data || beneficiarios || [],
-        seguimientos: seguimientos?.data || seguimientos || []
+        seguimientos: seguimientos?.data || seguimientos || [],
       };
     },
     select: (res) => {
+        console.log("RES COMPLETO:", res);
+
       const { expedientes, beneficiarios, seguimientos } = res;
       const seguimientoMap = {};
       //mapeo de seguimientos
@@ -48,25 +55,17 @@ export const useAsistenciaData = (periodoId) => {
 
       const beneficiariosProcesados = beneficiarios
   .filter((b) => seguimientoMap[b.id_beneficiario])
-  .map((b) => {
-    const exp = expedientes.find(
-      (e) => String(e.id_expediente) === String(b.id_expediente)
-    );
+  .map((b) => ({
+    id: b.id_beneficiario,
 
-    return {
-      id: b.id_beneficiario,
+    nombreCompleto:
+      b.expediente_resumen?.nombre_completo?.toUpperCase() ||
+      "SIN NOMBRE",
 
-      nombreCompleto: exp
-        ? `${exp.nombre} ${exp.apellido_p} ${exp.apellido_m}`
-            .trim()
-            .toUpperCase()
-        : "SIN NOMBRE",
-
-      id_seguimiento:
-        seguimientoMap[b.id_beneficiario]?.id_seguimiento || null,
-    };
-  });
-
+    id_seguimiento:
+      seguimientoMap[b.id_beneficiario]?.id_seguimiento || null,
+  }));
+console.log("PROCESADOS", beneficiariosProcesados);
       return {
         beneficiarios: beneficiariosProcesados,
         seguimientoMap,
@@ -97,3 +96,4 @@ export const useAsistenciaData = (periodoId) => {
     mutation,
   };
 };
+

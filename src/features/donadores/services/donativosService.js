@@ -78,7 +78,6 @@ export const obtenerDonativosPeriodoActivo =
     const { data } = await API.get(`${BASE_URL}/periodo-activo/`);
     return data;
   };
-
 // resumen total por donador en un periodo
 export const obtenerResumenPeriodo = async (idPeriodo) => {
   const { data } = await API.get("/api/donadores/donadores/resumen-periodo/",
@@ -90,4 +89,19 @@ export const obtenerResumenPeriodo = async (idPeriodo) => {
   );
   return data;
 };
+// obtener resumen de los totales por periodo
+export const obtenerResumenTotales = async (id_periodo) => {
+  const res = await API.get(`/api/donadores/donadores/resumenTotales/`, {
+    params: {
+      id_periodo,
+    },
+  });
 
+  return res.data;
+};
+// obtener el resumen de todos los donadores
+export const obtenerResumenTotalesGenerales =
+  async () => {
+    const { data } = await API.get("/api/donadores/donadores/resumen-totales/");
+    return data;
+  };

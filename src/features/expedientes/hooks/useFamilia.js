@@ -14,7 +14,8 @@ import {
 
 import { familiaKeys } from "../services/familiaKeys";
 import { postulantesKeys } from "../../postulantes/services/postulantesKeys";
-
+import { beneficiariosKeys } from "../../beneficiarios/services/beneficiariosKeys";
+import { expedientesKeys } from "../services/expedientesKeys";
 // lista
 export function useFamilia() {
   return useQuery({
@@ -50,6 +51,13 @@ export function useCrearFamilia() {
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
       });
+
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: expedientesKeys.all,
+      });
     },
   });
 }
@@ -70,6 +78,13 @@ export function useActualizarFamilia() {
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
       });
+
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: expedientesKeys.all,
+      });
     },
   });
 }
@@ -89,6 +104,14 @@ export function useEliminarFamilia() {
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
       });
+
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: expedientesKeys.all,
+      });
+
     },
   });
 }

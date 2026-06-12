@@ -1,4 +1,10 @@
+import { HiOutlineBriefcase, HiOutlineX } from "react-icons/hi";
 import Alerta from "../../../../../../../components/ui/AlertaError";
+import Field from "../../../../../../../components/ui/Field";
+import Input from "../../../../../../../components/ui/InputG";
+import Select from "../../../../../../../components/ui/Select";
+import Boton from "../../../../../../../components/ui/Boton";
+import { ui } from "../../../../../../../styles/ui/index";
 
 export default function ModalFormularioServicioSocial({
   open,
@@ -12,120 +18,111 @@ export default function ModalFormularioServicioSocial({
   if (!open) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-    >
-      <div className="bg-white w-full max-w-[550px] rounded-3xl shadow-2xl overflow-hidden">
-        <div className="px-6 py-5 border-b border-slate-200">
-          <h2 className="text-xl font-bold text-slate-800">
-            Servicio social
-          </h2>
+    <div className={ui.modal.formOverlay}>
+      <div className="w-full max-w-2xl">
+        {/* Contenedor Ejecutivo del Modal */}
+        <div className={ui.modal.formContainer}>
+          <div className={ui.modal.formHeader}>
+            <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}>
+              <HiOutlineBriefcase size={24} />
+            </div>
 
-          <p className="text-sm text-slate-500 mt-1">
-            Actualiza la información del servicio social
-          </p>
-        </div>
+            <div className="flex-1">
+              <h2 className={ui.modal.title}>
+                Servicio social
+              </h2>
+              <p className={ui.modal.description}>
+                Actualiza la información del servicio social
+              </p>
+            </div>
 
-        <div className="p-6 space-y-5">
-          {alerta && (
-            <Alerta
-              mensaje={alerta}
-              tipo="error"
-            />
-          )}
-
-          {/* estatus */}
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-2">
-              Estatus
-            </label>
-
-            <select
-              value={data.estatus}
-              onChange={(e) =>
-                setData((prev) => ({
-                  ...prev,
-                  estatus:
-                    e.target.value,
-                }))
-              }
-              className="w-full border border-slate-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-teal-500 outline-none transition"
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl hover:bg-slate-100 transition"
             >
-              <option value="Pendiente">
-                Pendiente
-              </option>
-              <option value="Cumplio">
-                Cumplió
-              </option>
-              <option value="No cumplio">
-                No cumplió
-              </option>
-            </select>
+              <HiOutlineX size={20} />
+            </button>
           </div>
+          {/* BODY: Implementando tus componentes UI globales en contenedor limpio */}
+          <div className={ui.modal.formBody}>
+            {alerta && (
+              <Alerta
+                mensaje={alerta}
+                tipo="error"
+              />
+            )}
 
-          {/* fecha */}
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-2">
-              Fecha de cumplimiento
-            </label>
+            <div className={ui.modal.formScroll}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                {/* Estatus */}
+                <Field label="Estatus" required>
+                  <Select
+                    value={data.estatus}
+                    onChange={(e) =>
+                      setData((prev) => ({
+                        ...prev,
+                        estatus: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Cumplio">Cumplió</option>
+                    <option value="No cumplio">No cumplió</option>
+                  </Select>
+                </Field>
 
-            <input
-              type="date"
-              value={data.fecha}
-              onChange={(e) =>
-                setData((prev) => ({
-                  ...prev,
-                  fecha:
-                    e.target.value,
-                }))
-              }
-              className="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-teal-500 outline-none transition"
-            />
+                {/* Fecha */}
+                <Field label="Fecha de cumplimiento" required>
+                  <Input
+                    type="date"
+                    value={data.fecha}
+                    onChange={(e) =>
+                      setData((prev) => ({
+                        ...prev,
+                        fecha: e.target.value,
+                      }))
+                    }
+                  />
+                </Field>
+                <div className="md:col-span-2">
+                  {/* Observaciones (Usando textarea nativo pero con clases unificadas de InputG) */}
+                  <Field label="Observaciones">
+                    <textarea
+                      rows={4}
+                      value={data.observaciones}
+                      onChange={(e) =>
+                        setData((prev) => ({
+                          ...prev,
+                          observaciones: e.target.value,
+                        }))
+                      }
+                      placeholder="Agregar observaciones..."
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 resize-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600/20 outline-none transition"
+                    />
+                  </Field>
+                </div>
+              </div>
+            </div>
+
+
+            {/* FOOTER: Botones reutilizables <Boton /> */}
+            <div className={ui.modal.formActions}>
+              <Boton
+                variant="secondary"
+                onClick={onClose}
+                disabled={loading}
+              >
+                Cancelar
+              </Boton>
+
+              <Boton
+                onClick={onNext}
+                disabled={loading}
+              >
+                {loading ? "Procesando..." : "Continuar"}
+              </Boton>
+            </div>
           </div>
-
-          {/* nota */}
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-2">
-              Observaciones
-            </label>
-
-            <textarea
-              rows={4}
-              value={
-                data.observaciones
-              }
-              onChange={(e) =>
-                setData((prev) => ({
-                  ...prev,
-                  observaciones:
-                    e.target.value,
-                }))
-              }
-              placeholder="Agregar observaciones..."
-              className="w-full border border-slate-300 rounded-xl p-3 resize-none focus:ring-2 focus:ring-teal-500 outline-none transition"
-            />
-          </div>
-        </div>
-
-        {/* footer */}
-        <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
-          <button
-            onClick={onClose}
-            disabled={loading}
-            className="px-5 py-2 rounded-xl text-slate-600 hover:bg-slate-200 transition disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-
-          <button
-            onClick={onNext}
-            disabled={loading}
-            className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-xl font-medium transition disabled:opacity-50"
-          >
-            Continuar
-          </button>
         </div>
       </div>
     </div>

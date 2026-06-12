@@ -1,16 +1,6 @@
+import {Users,Plus,Search,X,UserPlus,Loader2,CheckCircle2,Trash2} from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-import {
-  Users,
-  Plus,
-  Search,
-  X,
-  UserPlus,
-  Loader2,
-  CheckCircle2,
-  Trash2,
-} from "lucide-react";
 
 import AvatarGeneral from "../../../../components/shared/AvatarGeneral";
 import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
@@ -21,9 +11,8 @@ import { ui } from "../../../../styles/ui/uiClasses";
 
 import { useBeneficiariosVinculados } from "../../hooks/useBeneficiariosVinculados";
 
-export default function BeneficiariosVinculadosCard({
-  data,
-}) {
+export default function BeneficiariosVinculadosCard({data}) {
+  
   const navigate = useNavigate();
 
   const [modalEliminar, setModalEliminar] = useState(false);
@@ -38,8 +27,7 @@ export default function BeneficiariosVinculadosCard({
     message: "",
   });
 
-  const donadorActivo =
-    data?.estatus?.toLowerCase() === "activo";
+  const donadorActivo = data?.estatus?.toLowerCase() === "activo";
 
   const {
     openModal,
@@ -53,21 +41,15 @@ export default function BeneficiariosVinculadosCard({
     handleEliminar,
     calcularEdad,
   } = useBeneficiariosVinculados(data);
-  console.log(data?.beneficiarios);
-  console.log("filtrados", filtrados);
-
-  // 🔎 navegar a expediente
+  // navegar a expediente del beneficiario
   const irExpediente = (id) => {
     navigate(`/App/beneficiarios/expediente/${id}`);
   };
-
-  // 🗑 confirmar eliminación
+  // confirmar eliminación
   const confirmarEliminar = async () => {
     try {
       await handleEliminar(idEliminar);
-
       setModalEliminar(false);
-
       setResultado({
         open: true,
         type: "success",
@@ -86,10 +68,8 @@ export default function BeneficiariosVinculadosCard({
   const confirmarAgregar = async () => {
     try {
       await handleAgregar(idAgregar);
-
       setModalAgregar(false);
       setOpenModal(false);
-
       setResultado({
         open: true,
         type: "success",
@@ -107,9 +87,7 @@ export default function BeneficiariosVinculadosCard({
   };
   return (
     <>
-      {/* CARD */}
       <Card>
-        {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="flex items-center gap-2 text-base font-bold text-slate-800">
@@ -134,7 +112,6 @@ export default function BeneficiariosVinculadosCard({
                 });
                 return;
               }
-
               setOpenModal(true);
             }}
             className={`${ui.button.base} ${ui.button.sm} ${ui.button.primary} w-10 px-0`}
@@ -142,9 +119,9 @@ export default function BeneficiariosVinculadosCard({
             <Plus className="w-7 h-7" />
           </button>
         </div>
-
-        {/* LISTA */}
+        {/* lista */}
         <div className="space-y-3">
+          <div className="space-y-3 max-h-[180px] overflow-y-auto pr-2 custom-scroll">
           {data?.beneficiarios_apoyados?.length > 0 ? (
             data.beneficiarios_apoyados.map((item) => (
               <div
@@ -170,8 +147,7 @@ export default function BeneficiariosVinculadosCard({
                   </p>
 
                   <p className="text-sm text-slate-500">
-                    {calcularEdad(item.fecha_nacimiento)} años •{" "}
-                    {item.genero || "--"}
+                    {calcularEdad(item.fecha_nacimiento)} años 
                   </p>
                 </div>
 
@@ -181,25 +157,21 @@ export default function BeneficiariosVinculadosCard({
                     setIdEliminar(item.id);
                     setModalEliminar(true);
                   }}
-                  className="
-                    ${ui.button.base}
+                  className={`
+                  ${ui.button.base}
                     h-10 w-10 rounded-xl
                     bg-red-50 text-red-500
                     hover:bg-red-100 hover:text-red-700
                     opacity-0 group-hover:opacity-100
-                  "
+                   `}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))
           ) : (
-            <div className="
-              rounded-2xl border-2 border-dashed border-slate-200
-              bg-slate-50 p-10 text-center
-            ">
+            <div className=" rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-10 text-center ">
               <Users className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-
               <p className="font-semibold text-slate-600">
                 Aún no tiene beneficiarios asignados
               </p>
@@ -209,6 +181,7 @@ export default function BeneficiariosVinculadosCard({
               </p>
             </div>
           )}
+          </div>
         </div>
       </Card>
 
@@ -240,14 +213,11 @@ export default function BeneficiariosVinculadosCard({
                 <X className="w-5 h-5 text-slate-500" />
               </button>
             </div>
-
-            {/* BODY */}
             <div className={ui.modal.formBody}>
-              {/* SEARCH */}
+              {/* buscar */}
               <div className="mb-5">
                 <div className="relative">
                   <Search className={ui.filters.searchIcon} />
-
                   <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -256,8 +226,7 @@ export default function BeneficiariosVinculadosCard({
                   />
                 </div>
               </div>
-
-              {/* LIST */}
+              {/* lista */}
               <div className={`${ui.modal.formScroll} space-y-3`}>
                 {loading ? (
                   <div className="py-10 text-center">
@@ -275,16 +244,12 @@ export default function BeneficiariosVinculadosCard({
                           apellidoP=""
                           className="h-12 w-12 text-sm"
                         />
-
                         <div>
                           <p className="font-semibold text-slate-800">
                             {item.expediente_resumen?.nombre_completo}
                           </p>
-
                           <p className="text-sm text-slate-500">
-                            {calcularEdad(
-                              item.expediente_resumen?.fecha_nacimiento
-                            )}{" "}
+                            {calcularEdad( item.expediente_resumen?.fecha_nacimiento )}{" "}
                             años
                           </p>
                         </div>

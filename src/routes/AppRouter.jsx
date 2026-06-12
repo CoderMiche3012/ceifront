@@ -24,6 +24,10 @@ import ExpedientePagina from "../pages/postulantes/ExpedientePagina";
 import ReportePostulantes from "../features/reportes/ReportePostulantes";
 import BeneficiariosPagina from "../pages/beneficiarios/BeneficiariosPagina";
 import ExpedientePaginaB from "../pages/beneficiarios/ExpedientePaginaB";
+import AsistenciasPagina from "../pages/AsistenciasPagina";
+import ReporteDonativos from "../features/reportes/ReporteDonativos";
+
+import ReporteBeneficiarios from "../features/reportes/ReporteBeneficiarios";
 
 
 
@@ -41,7 +45,6 @@ import ReportePostulantes from "../features/reportes/ReportePostulantes";
 import ReporteDonativos from "../features/reportes/ReporteDonativos";
 import ReporteBeneficiarios from "../features/reportes/ReporteBeneficiarios";
 */}
-//import AsistenciasPagina from "../pages/AsistenciasPagina";
 
 export default function AppRouter() {
 
@@ -185,6 +188,39 @@ export default function AppRouter() {
                   accion="ver"
                 >
                   <ExpedientePaginaB />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="asistencias"
+              element={
+                <PermissionRoute
+                  modulo="beneficiarios"
+                  accion="ver"
+                >
+                  <AsistenciasPagina />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="reportes/donadores"
+              element={
+                <PermissionRoute
+                  modulo="usuarios"
+                  accion="ver"
+                >
+                  <ReporteDonativos />
+                </PermissionRoute>
+              }
+            />
+            <Route
+              path="reportes/beneficiarios"
+              element={
+                <PermissionRoute
+                  modulo="usuarios"
+                  accion="ver"
+                >
+                  <ReporteBeneficiarios />
                 </PermissionRoute>
               }
             />

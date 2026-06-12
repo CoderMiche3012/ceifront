@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
 import { obtenerPeriodos, obtenerPeriodoActivo, crearPeriodo, actualizarPeriodo } from "../services/periodoService";
 import { periodosKeys } from "../services/periodosKeys";
+import { beneficiariosKeys } from "../../beneficiarios/services/beneficiariosKeys";
+import { donadoresKeys } from "../../donadores/services/donadoresKeys";
+import { expedientesKeys } from "../../expedientes/services/expedientesKeys";
 
 // obtener todos los periodos
 export function usePeriodos() {
@@ -34,6 +36,18 @@ export function useCrearPeriodo() {
       queryClient.invalidateQueries({
         queryKey: periodosKeys.active(),
       });
+      queryClient.invalidateQueries({
+        queryKey:
+          beneficiariosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          expedientesKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          donadoresKeys.all,
+      });
     },
   });
 }
@@ -52,6 +66,19 @@ export function useActualizarPeriodo() {
 
       queryClient.invalidateQueries({
         queryKey: periodosKeys.active(),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey:
+          beneficiariosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          expedientesKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          donadoresKeys.all,
       });
     },
   });

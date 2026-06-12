@@ -6,6 +6,7 @@ import ReporteBeneficiariosTab from "./components/BeneficiariosGeneral";
 import ReporteAcademicoTab from "./components/ReporteAcademicoTab";
 import ReporteApoyosEconomicosTab from "./components/ReporteApoyosEconomicosTab";
 import ReporteObligacionesTab from "./components/ReporteObligacionesTab";
+import ReporteAsistenciasTab from "./components/ReporteAsistencias";
 
 export default function ReporteBeneficiarios() {
     const [tabActiva, setTabActiva] = useState("general");
@@ -13,7 +14,7 @@ export default function ReporteBeneficiarios() {
     return (
         <div className="space-y-6">
             <EncabezadoPagina
-                titulo="Reporte de Donativos"
+                titulo="Reporte de Beneficiarios"
                 descripcion="Consulta, filtra y exporta información relacionada con los donativos registrados."
             />
 
@@ -55,7 +56,15 @@ export default function ReporteBeneficiarios() {
                     >
                         Obligaciones
                     </button>
-                    
+                    <button
+                        onClick={() => setTabActiva("asistencias")}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${tabActiva === "asistencias"
+                                ? "border-blue-600 text-blue-600"
+                                : "border-transparent text-gray-500 hover:text-gray-700"
+                            }`}
+                    >
+                        Asistencias
+                    </button>
                 </nav>
             </div>
 
@@ -63,6 +72,7 @@ export default function ReporteBeneficiarios() {
             {tabActiva === "rendimiento" && <ReporteAcademicoTab />}
             {tabActiva === "apoyos" && <ReporteApoyosEconomicosTab />}
             {tabActiva === "obligaciones" && <ReporteObligacionesTab />}
+            {tabActiva === "asistencias" && <ReporteAsistenciasTab />}
 
         </div>
     );

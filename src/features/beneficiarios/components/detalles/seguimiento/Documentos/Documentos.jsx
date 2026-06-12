@@ -13,32 +13,35 @@ import {
   Plus,
 } from "lucide-react";
 
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
 
 import DatosTabla from "../../../../../../components/tablas/DatosTabla";
 import FiltrosTabla from "../../../../../../components/tablas/FiltrosTabla";
 import PaginacionTabla from "../../../../../../components/tablas/PaginacionTabla";
 import AccionesTabla from "../../../../../../components/tablas/AccionesTabla";
 import Boton from "../../../../../../components/ui/BotonInterno";
+import ModalConfirmacion from "../../../../../../components/shared/ModalConfirmacion";
+import ModalResultado from "../../../../../../components/shared/ModalResultado";
+const API_URL =  "http://localhost:8000";
 
-import {
-  obtenerDocumentos,
-  subirDocumento,
-  eliminarDocumento,
-} from "../../../../../../features/expedientes/services/documentosService";
+  
+
+import { useSubirDocumento, useEliminarDocumento } from "../../../../../expedientes/hooks/useDocumentos";
 
 const PAGE_SIZE = 10;
 
 export default function ExpedienteDigital({
   data,
 }) {
-
-  const queryClient =
-    useQueryClient();
+ const [confirmOpen, setConfirmOpen] = useState(false);
+const [resultado, setResultado] = useState({
+  open: false,
+  type: "success",
+  title: "",
+  message: ""
+});
+const [confirmAction, setConfirmAction] = useState(null);
+const [pendingDelete, setPendingDelete] = useState(null);
+const [pendingFile, setPendingFile] = useState(null);
 
   const inputRef =
     useRef(null);
@@ -59,63 +62,18 @@ export default function ExpedienteDigital({
   // QUERY
   // =========================
 
-  const {
-    data: documentos = [],
-    isLoading,
-  } = useQuery({
-    queryKey: [
-      "documentos",
-      id_expediente,
-    ],
-
-    queryFn: () =>
-      obtenerDocumentos(
-        id_expediente
-      ),
-
-    enabled:
-      !!id_expediente,
-  });
+  const documentos = data?.documentos ?? [];
 
   // =========================
   // SUBIR
   // =========================
 
-  const uploadMutation =
-    useMutation({
-      mutationFn:
-        subirDocumento,
-
-      onSuccess: () => {
-
-        queryClient.invalidateQueries({
-          queryKey: [
-            "documentos",
-            id_expediente,
-          ],
-        });
-      },
-    });
-
+const uploadMutation = useSubirDocumento();
   // =========================
   // ELIMINAR
   // =========================
 
-  const deleteMutation =
-    useMutation({
-      mutationFn:
-        eliminarDocumento,
-
-      onSuccess: () => {
-
-        queryClient.invalidateQueries({
-          queryKey: [
-            "documentos",
-            id_expediente,
-          ],
-        });
-      },
-    });
+  const deleteMutation = useEliminarDocumento();
 
   // =========================
   // SUBIR ARCHIVO
@@ -144,70 +102,61 @@ const limpiarNombreDocumento =
       );
   };
 
-  const handleFile =
-    async (e) => {
+  const confirmarSubida = async () => {
+  if (!pendingFile) return;
 
-      const file =
-        e.target.files?.[0];
+  try {
+    const formData = new FormData();
 
-      if (!file) return;
+    formData.append("archivo", pendingFile);
 
-      try {
+    const nombreLimpio = limpiarNombreDocumento(pendingFile.name);
 
-        const formData =
-          new FormData();
+    formData.append("nombre_documento", nombreLimpio);
+    formData.append("tipo_documento", "General");
+    formData.append("id_expediente", id_expediente);
 
-        formData.append(
-          "archivo",
-          file
-        );
+    await uploadMutation.mutateAsync(formData);
 
-        const nombreLimpio =
-          limpiarNombreDocumento(
-            file.name
-          );
+    setResultado({
+      open: true,
+      type: "success",
+      title: "Documento subido",
+      message: "El archivo se cargó correctamente.",
+    });
 
-        formData.append(
-          "nombre_documento",
-          nombreLimpio
-        );
+  } catch (error) {
+    setResultado({
+      open: true,
+      type: "error",
+      title: "Error",
+      message: "No se pudo subir el documento.",
+    });
+  } finally {
+    setConfirmOpen(false);
+    setPendingFile(null);
 
+    if (inputRef.current) inputRef.current.value = "";
+  }
+};
+ const handleFile = (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
+  setPendingFile(file);
+  setConfirmAction("upload");
+  setConfirmOpen(true);
+};
+const handleConfirm = async () => {
+  if (!confirmAction) return;
+  if (confirmAction === "delete" && pendingDelete) {
+    await confirmarDelete();
+  }
 
-        formData.append(
-          "tipo_documento",
-          "General"
-        );
-
-        formData.append(
-          "id_expediente",
-          id_expediente
-        );
-
-        await uploadMutation.mutateAsync(
-          formData
-        );
-
-        if (inputRef.current) {
-          inputRef.current.value =
-            "";
-        }
-
-      } catch (error) {
-
-        console.error(
-          error
-        );
-
-        alert(
-          "Error subiendo archivo"
-        );
-      }
-    };
-
-  // =========================
-  // DESCARGAR
-  // =========================
+  if (confirmAction === "upload" && pendingFile) {
+    await confirmarSubida();
+  }
+};
 
   const descargarArchivo =
     async (url, nombre) => {
@@ -259,77 +208,51 @@ const limpiarNombreDocumento =
   // =========================
   // ELIMINAR
   // =========================
+const confirmarDelete = async () => {
+  try {
+    await deleteMutation.mutateAsync(pendingDelete.id_documento);
 
-  const handleDelete =
-    async (row) => {
+    setResultado({
+      open: true,
+      type: "success",
+      title: "Eliminado",
+      message: "Documento eliminado correctamente.",
+    });
 
-      const confirmar =
-        window.confirm(
-          "¿Eliminar documento?"
-        );
-
-      if (!confirmar)
-        return;
-
-      try {
-
-        await deleteMutation.mutateAsync(
-          row.id_documento
-        );
-
-      } catch (error) {
-
-        console.error(
-          error
-        );
-
-        alert(
-          "Error eliminando documento"
-        );
-      }
-    };
+  } catch (error) {
+    setResultado({
+      open: true,
+      type: "error",
+      title: "Error",
+      message: "No se pudo eliminar el documento.",
+    });
+  } finally {
+    setConfirmOpen(false);
+    setPendingDelete(null);
+  }
+};
 
   // =========================
   // FILTRADO
   // =========================
+const filtrados = useMemo(() => {
+  return documentos.filter((doc) => {
+    const tipo =
+      doc.tipo_documento?.toLowerCase();
 
-  const filtrados =
-  useMemo(() => {
+    // ocultar boletas y estudios
+    if (
+      tipo === "boleta" ||
+      tipo === "estudio" || tipo === "Apoyo"
+    ) {
+      return false;
+    }
 
-    return documentos.filter(
-      (doc) => {
-
-        // 🔥 SOLO documentos del expediente actual
-        if (
-          doc.id_expediente !==
-          id_expediente
-        ) {
-          return false;
-        }
-
-        // 🔥 ocultar boletas
-        if (
-          doc.tipo_documento
-            ?.toLowerCase() ===
-          "boleta"
-        ) {
-          return false;
-        }
-
-        // 🔥 búsqueda
-        return doc.nombre_documento
-          ?.toLowerCase()
-          .includes(
-            search.toLowerCase()
-          );
-      }
-    );
-
-  }, [
-    documentos,
-    search,
-    id_expediente,
-  ]);
+    return doc.nombre_documento
+      ?.toLowerCase()
+      .includes(search.toLowerCase());
+  });
+}, [documentos, search]);
   // =========================
   // PAGINACIÓN
   // =========================
@@ -501,7 +424,7 @@ const limpiarNombreDocumento =
                 onClick:
                   (row) =>
                     window.open(
-                      row.archivo,
+                        `${API_URL}${row.archivo}`,
                       "_blank"
                     ),
               },
@@ -517,7 +440,7 @@ const limpiarNombreDocumento =
                 onClick:
                   (row) =>
                     descargarArchivo(
-                      row.archivo,
+                      `${API_URL}${row.archivo}`,
                       row.nombre_documento
                     ),
               },
@@ -535,8 +458,11 @@ const limpiarNombreDocumento =
                 className:
                   "hover:text-red-600",
 
-                onClick:
-                  handleDelete,
+                onClick: (row) => {
+  setPendingDelete(row);
+  setConfirmAction("delete");
+  setConfirmOpen(true);
+}
               },
             ]}
           />
@@ -551,17 +477,6 @@ const limpiarNombreDocumento =
   // LOADING
   // =========================
 
-  if (isLoading) {
-
-    return (
-      <div className="rounded-3xl border border-slate-200 bg-white p-6">
-
-        <p className="text-sm text-slate-500">
-          Cargando documentos...
-        </p>
-      </div>
-    );
-  }
 
   // =========================
   // RENDER
@@ -577,7 +492,7 @@ const limpiarNombreDocumento =
         <div>
 
           <h3 className="text-lg font-bold text-slate-800">
-            Expediente Digital
+            Documentacion del beneficiario
           </h3>
 
           <p className="text-sm text-slate-500">
@@ -641,8 +556,48 @@ const limpiarNombreDocumento =
         className="hidden"
         onChange={handleFile}
       />
+     <ModalConfirmacion
+  open={confirmOpen}
+  onClose={() => {
+    setConfirmOpen(false);
+    setPendingDelete(null);
+    setPendingFile(null);
+    setConfirmAction(null);
+  }}
+  onConfirm={handleConfirm}
+  title={
+    confirmAction === "delete"
+      ? "Eliminar documento"
+      : "Subir documento"
+  }
+  description={
+    confirmAction === "delete"
+      ? "¿Seguro que deseas eliminar este documento?"
+      : "¿Deseas subir este documento?"
+  }
+/>
+<ModalResultado
+  open={resultado.open}
+  type={resultado.type}
+  title={resultado.title}
+  message={resultado.message}
+  onClose={() =>
+    setResultado((prev) => ({
+      ...prev,
+      open: false,
+    }))
+  }
+/>
     </div>
+    
   );
+  
+
 }
 
 
+onClick: (row) => {
+  setPendingDelete(row);
+  setConfirmAction("delete");
+  setConfirmOpen(true);
+}

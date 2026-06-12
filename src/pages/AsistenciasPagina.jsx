@@ -5,14 +5,18 @@ import PaginacionTabla from "../components/tablas/PaginacionTabla";
 import { useAsistenciaData } from "../features/asistencias/hooks/useAsistencias";
 import AsistenciasFiltros from "../features/asistencias/components/AsistenciaFiltros";
 import AsistenciasTabla from "../features/asistencias/components/AsistenciaTabla";
-import { usePeriodoActivo } from "../features/periodos/hooks/usePeriodoActivo";
+import { usePeriodoActivo } from "../features/periodos/hooks/usePeriodos";
 import { generarSemanasLaborales } from "../utils/dateHelpers";
 import ModalResultado from "../components/shared/ModalResultado";
 import ModalConfirmacion from "../components/shared/ModalConfirmacion";
 
+
 const AsistenciasPagina = () => {
-  const { data: periodoActivo } = usePeriodoActivo();
-  const periodoId = periodoActivo?.idPeriodoActivo;
+  const { data: periodoActivo = null, isLoading: loadingActivo, error: errorActivo } = usePeriodoActivo();
+  console.log("PERIODO ACTIVO:", periodoActivo);
+  const periodoId = periodoActivo?.id_periodo;
+  console.log("PERIODO ID:", periodoId);
+  console.log(periodoActivo)
   const [cambios, setCambios] = useState({});
   const [showConfirm, setShowConfirm] = useState(false);
   const [showResult, setShowResult] = useState(false);
@@ -68,30 +72,20 @@ const AsistenciasPagina = () => {
 
   const limitesFecha = useMemo(() => {
     const hoy = new Date().toLocaleDateString("en-CA");
-    const fin = periodoActivo?.periodoActivo?.fecha_fin;
+    const fin = periodoActivo?.fecha_fin;
 
     return {
-      min: periodoActivo?.periodoActivo?.fecha_inicio,
+      min: periodoActivo?.fecha_inicio,
       max: fin && fin < hoy ? fin : hoy,
     };
   }, [periodoActivo]);
-
   const semanas = useMemo(() => {
-    const inicio =
-      periodoActivo?.periodoActivo?.fecha_inicio;
-    const fin =
-      periodoActivo?.periodoActivo?.fecha_fin;
+    const inicio = periodoActivo?.fecha_inicio;
+    const fin = periodoActivo?.fecha_fin;
 
     if (!inicio || !fin) return [];
 
-    const todas = generarSemanasLaborales(inicio, fin);
-
-    const hoy = new Date();
-    hoy.setHours(23, 59, 59, 999);
-
-    return todas.filter(
-      (s) => new Date(s.inicio) <= hoy
-    );
+    return generarSemanasLaborales(inicio, fin);
   }, [periodoActivo]);
 
   useEffect(() => {
@@ -212,7 +206,7 @@ const AsistenciasPagina = () => {
       <div className="flex justify-center p-10 text-red-500">
         <AlertCircle />
       </div>
-    );
+    ); console.log("DIAS:", dias);
 
   return (
     <section className="space-y-6">

@@ -46,6 +46,7 @@ export default function EditarNotaGeneral({ isOpen, onClose, data }) {
         message: "La nota se guardó correctamente.",
       });
     } catch (error) {
+      
       setShowConfirm(false);
       setResultado({
         open: true,

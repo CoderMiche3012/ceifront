@@ -98,9 +98,8 @@ export const ui = {
     `,
   },
   table: {
-    wrapper: "overflow-x-auto",
-
-    table: "w-full min-w-[980px]",
+    wrapper: "w-full min-w-0 overflow-x-auto",
+table: "w-full",
 
     headerRow: "border-b border-[#edf2f7] text-left",
 
@@ -613,6 +612,7 @@ export const ui = {
   }
   
 };
+
 
 
 

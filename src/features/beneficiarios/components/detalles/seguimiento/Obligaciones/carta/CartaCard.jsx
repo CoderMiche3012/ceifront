@@ -4,9 +4,10 @@ import useCartaCard from "./useCartaCard";
 import ModalConfirmacion from "../../../../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../../../../components/shared/ModalResultado";
 
-export default function CartaCard({ idSeguimiento }) {
-  const vm = useCartaCard(idSeguimiento);
-  if (vm.isLoading) return <div className="p-6 text-slate-500">Cargando...</div>;
+export default function CartaCard({ seguimiento }) {
+
+  const vm = useCartaCard(seguimiento);
+  if (!seguimiento) return <div className="p-6 text-slate-500">Cargando...</div>;
   return (
     <>
       <CartaInfoCard carta={vm.carta} onEditar={vm.handleEditar} loading={vm.loading} />

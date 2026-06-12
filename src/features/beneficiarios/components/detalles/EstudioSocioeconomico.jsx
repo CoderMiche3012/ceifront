@@ -5,7 +5,7 @@ import CardVisitaSocial from "./CardVisitaSocial";
 import FotosCard from "./FotosCard";
 import EstudioCard from "./EstudioCard";
 
-export default function EstudioSos({ data,  refetch}) {
+export default function EstudioSos({ data}) {
 
   if (!data) return (
     <div className="p-4 text-slate-500 animate-pulse font-medium">
@@ -20,8 +20,8 @@ export default function EstudioSos({ data,  refetch}) {
       </div>
 
       <div className="md:col-span-1 space-y-6">
-        <EstudioCard data={data} refetch={refetch}/>
-        <FotosCard data={data} refetch={refetch}/>
+        <EstudioCard data={data} />
+        <FotosCard data={data} />
       </div>
     </div>
   );

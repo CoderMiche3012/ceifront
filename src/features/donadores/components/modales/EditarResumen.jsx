@@ -6,6 +6,7 @@ import Field from "../../../../components/ui/Field";
 import Input from "../../../../components/ui/InputG";
 import Select from "../../../../components/ui/Select";
 import Boton from "../../../../components/ui/Boton";
+import Alerta from "../../../../components/ui/AlertaError";
 
 import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
@@ -15,9 +16,11 @@ import { obtenerUsuario } from "../../../../storage/userStorage";
 
 export default function EditarResumen({ isOpen, onClose, data }) {
   // estados locales
-const usuarioActual = obtenerUsuario();
+  const usuarioActual = obtenerUsuario();
   const puedeEditarFechaIngreso = usuarioActual?.esAdmin === true || usuarioActual?.esSuperUser === true;
   const [showConfirm, setShowConfirm] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [error, setError] = useState("");
   const [resultado, setResultado] =
     useState({
       open: false,
@@ -35,6 +38,7 @@ const usuarioActual = obtenerUsuario();
   // precargar datos
   useEffect(() => {
     if (isOpen && data) {
+      setError("");
       setForm({
         fecha_ingreso: data.fecha_ingreso || "",
         estatus: data.estatus || "",
@@ -43,8 +47,21 @@ const usuarioActual = obtenerUsuario();
   }, [isOpen, data]);
 
   if (!isOpen) return null;
+  const validar = () => {
+    const errors = {};
 
-  const updateField = ( field, value ) => {
+    if (!form.fecha_ingreso) {
+      errors.fecha_ingreso = "Fecha de ingreso obligatoria";
+    }
+
+    if (!form.estatus) {
+      errors.estatus = "Estatus obligatorio";
+    }
+
+    return errors;
+  };
+
+  const updateField = (field, value) => {
     setForm((prev) => ({
       ...prev,
       [field]: value,
@@ -53,7 +70,7 @@ const usuarioActual = obtenerUsuario();
 
   const handleGuardar = async () => {
     try {
-      await actualizarMutation.mutateAsync({ id: data.id_donador, data: { fecha_ingreso: form.fecha_ingreso,  estatus: form.estatus, }, });
+      await actualizarMutation.mutateAsync({ id: data.id_donador, data: { fecha_ingreso: form.fecha_ingreso, estatus: form.estatus, }, });
       setShowConfirm(false);
       setResultado({
         open: true,
@@ -61,13 +78,35 @@ const usuarioActual = obtenerUsuario();
         title: "Datos actualizados",
         message: "La información se guardó correctamente.",
       });
-    } catch (error) {
+    } catch (err) {
       setShowConfirm(false);
+
+      const backendErrors = err?.errors || err?.response?.data;
+      if (
+        backendErrors &&
+        typeof backendErrors === "object" &&
+        !Array.isArray(backendErrors)
+      ) {
+        const parsedErrors = {};
+        Object.entries(backendErrors).forEach(([key, value]) => {
+          parsedErrors[key] = Array.isArray(value) ? value[0] : value;
+        });
+        setFieldErrors(parsedErrors);
+        const labels = {
+          fecha_ingreso: "Fecha de ingreso",
+        };
+
+        const campos = Object.keys(parsedErrors)
+          .map((key) => labels[key] || key)
+          .join(", ");
+        setError(`Revisa los siguientes campos: ${campos}`);
+        return;
+      }
       setResultado({
         open: true,
         type: "error",
-        title: "Error",
-        message: error.message || "Ocurrió un problema al guardar.",
+        title: "Error al actualizar",
+        message: err.message || "No se pudo actualizar el donador.",
       });
     }
   };
@@ -113,22 +152,29 @@ const usuarioActual = obtenerUsuario();
             </div>
 
             <div className={ui.modal.formBody}>
+              {error && (
+                <div className="mb-4">
+                  <Alerta mensaje={error} />
+                </div>
+              )}
               <div className={ui.modal.formScroll}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                  <Field label="Fecha de ingreso" required >
+                  <Field label="Fecha de ingreso" required error={fieldErrors.fecha_ingreso}>
                     <Input
                       type="date"
                       disabled={!puedeEditarFechaIngreso}
-                      value={ form.fecha_ingreso }
-                      onChange={(e) => updateField("fecha_ingreso", e.target.value ) }
+                      value={form.fecha_ingreso}
+                      onChange={(e) => updateField("fecha_ingreso", e.target.value)}
+                      error={fieldErrors.fecha_ingreso}
                     />
                   </Field>
 
                   <Field label="Estatus" required >
                     <Select
                       value={form.estatus}
-                      onChange={(e) => updateField( "estatus", e.target.value ) }
+                      onChange={(e) => updateField("estatus", e.target.value)}
+                      error={fieldErrors.estatus}
                     >
                       <option value="">
                         Selecciona un estatus
@@ -155,8 +201,31 @@ const usuarioActual = obtenerUsuario();
                 </Boton>
 
                 <Boton
-                  onClick={() => setShowConfirm(true) }
-                  disabled={ actualizarMutation.isPending }
+                  onClick={() => {
+                    const errors = validar();
+
+                    if (Object.keys(errors).length > 0) {
+                      setFieldErrors(errors);
+
+                      const labels = {
+                        fecha_ingreso: "Fecha de ingreso",
+                        estatus: "Estatus",
+                      };
+
+                      const campos = Object.keys(errors)
+                        .map((k) => labels[k])
+                        .join(", ");
+
+                      setError(`Revisa los siguientes campos: ${campos}`);
+
+                      setShowConfirm(false); 
+                      return;
+                    }
+
+                    setError("");
+                    setShowConfirm(true);
+                  }}
+                  disabled={actualizarMutation.isPending}
                 >
                   {actualizarMutation.isPending ? "Guardando..." : "Guardar Cambios"}
                 </Boton>
@@ -173,8 +242,8 @@ const usuarioActual = obtenerUsuario();
         confirmText="Guardar"
         cancelText="Cancelar"
         onConfirm={handleGuardar}
-        onClose={() => setShowConfirm(false) }
-        loading={ actualizarMutation.isPending }
+        onClose={() => setShowConfirm(false)}
+        loading={actualizarMutation.isPending}
         color="teal"
       />
 

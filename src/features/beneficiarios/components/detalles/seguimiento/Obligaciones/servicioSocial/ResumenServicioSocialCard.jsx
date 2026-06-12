@@ -6,14 +6,11 @@ import ModalFormularioServicioSocial from "./ModalFormularioServicioSocial";
 import useServicioSocialCard from "./useServicioSocialCard";
 
 export default function ResumenServicioSocialCard({
-  idSeguimiento,
+  seguimiento,
 }) {
-  const vm =
-    useServicioSocialCard(
-      idSeguimiento
-    );
+  const vm =useServicioSocialCard( seguimiento );
 
-  if (vm.isLoading) {
+  if (!seguimiento) {
     return (
       <div className="p-6 text-slate-500">
         Cargando...
@@ -46,32 +43,22 @@ export default function ResumenServicioSocialCard({
           </button>
         </div>
 
-        <div className="space-y-4">
-          {vm.servicios
-            .length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
-              Sin servicios registrados
-            </div>
-          ) : (
-            vm.servicios.map(
-              (
-                item
-              ) => (
-                <ServicioSocialItemCard
-                  key={
-                    item.id_servicio_social
-                  }
-                  item={
-                    item
-                  }
-                  onEditar={
-                    vm.editar
-                  }
-                />
-              )
-            )
-          )}
-        </div>
+        <div className="max-h-[350px] overflow-y-auto custom-scroll pr-2 space-y-4">
+
+  {vm.servicios.length === 0 ? (
+    <div className="text-center py-8 text-slate-500">
+      Sin servicios registrados
+    </div>
+  ) : (
+    vm.servicios.map((item) => (
+      <ServicioSocialItemCard
+        key={item.id_servicio_social}
+        item={item}
+        onEditar={vm.editar}
+      />
+    ))
+  )}
+</div>
       </div>
 
       <ModalFormularioServicioSocial

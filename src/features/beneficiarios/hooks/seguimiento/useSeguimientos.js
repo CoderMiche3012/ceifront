@@ -16,6 +16,9 @@ import {
 } from "./../../services/seguimientoService";
 
 import { seguimientosKeys } from "./../../services/seguimientosKeys";
+import { beneficiariosKeys } from "../../services/beneficiariosKeys";
+import { expedientesKeys } from "../../../expedientes/services/expedientesKeys";
+import { donadoresKeys } from "../../../donadores/services/donadoresKeys";
 
 // ==============================
 // obtener todos
@@ -115,6 +118,18 @@ export function useCrearSeguimiento() {
         queryKey:
           seguimientosKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey:
+          beneficiariosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          expedientesKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          donadoresKeys.all,
+      });
     },
   });
 }
@@ -151,6 +166,18 @@ export function useActualizarSeguimiento() {
             variables.id
           ),
       });
+      queryClient.invalidateQueries({
+        queryKey:
+          beneficiariosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          expedientesKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          donadoresKeys.all,
+      });
     },
   });
 }
@@ -170,6 +197,18 @@ export function useEliminarSeguimiento() {
       queryClient.invalidateQueries({
         queryKey:
           seguimientosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          beneficiariosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          expedientesKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          donadoresKeys.all,
       });
     },
   });

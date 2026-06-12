@@ -67,9 +67,12 @@ export default function DatosPersonalesCard({ data }) {
       </div>
 
       <EditarDatosGenerales
-        isOpen={modalAbierto}
+        open={modalAbierto}
         onClose={() => setModalAbierto(false)}
         data={data}
+        onSuccess={() => {
+          setModalAbierto(false);
+        }}
       />
     </div>
   );

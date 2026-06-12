@@ -1,8 +1,10 @@
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+
 import Card from "../../../components/ui/Card";
 import Boton from "../../../components/ui/Boton";
 
 import TarjetasEstadisticas from "../../../components/shared/TarjetasEstadisticas";
-
 import FiltrosReporte from "../../../components/tablas/FiltrosReporte";
 import DatosTabla from "../../../components/tablas/DatosTabla";
 import PaginacionTabla from "../../../components/tablas/PaginacionTabla";
@@ -16,192 +18,315 @@ import {
   FileText,
 } from "lucide-react";
 
+// 📊 GRAFICA
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
+// services
+import { obtenerBeneficiarios } from "../../beneficiarios/services/beneficiariosService";
+import { obtenerPeriodos } from "../../periodos/services/periodoService";
+import { solicitarDescargaReporte } from "../services/reporteService";
+
+/**
+ * 🔥 MAPEO POR PERIODO
+ */
+const mapBeneficiariosAcademicos = (beneficiarios, periodo) => {
+  return beneficiarios.map((b) => {
+    const seguimiento =
+      b.historial_seguimientos?.find(
+        (s) => String(s.id_periodo) === String(periodo)
+      ) || b.historial_seguimientos?.[0];
+
+    const datos = seguimiento?.datos_escolares;
+    const boletas = datos?.boletas || [];
+
+    const promedio =
+      boletas.length > 0
+        ? boletas.reduce(
+          (acc, b) => acc + parseFloat(b.promedio_boleta || 0),
+          0
+        ) / boletas.length
+        : 0;
+
+    const escuela = datos?.id_institucion?.nombre || "Sin escuela";
+
+    const grado = datos?.id_escolaridad?.grado_escolar
+      ? `${datos.id_escolaridad.grado_escolar}°`
+      : "N/A";
+
+    let estatusAcademico = "Sin datos";
+
+    if (promedio >= 8) estatusAcademico = "Alto Rendimiento";
+    else if (promedio >= 6) estatusAcademico = "Rendimiento Medio";
+    else if (promedio > 0) estatusAcademico = "Bajo Rendimiento";
+
+    return {
+      id_beneficiario: b.id_beneficiario,
+      beneficiario: b.expediente_resumen?.nombre_completo || "Sin nombre",
+      escuela,
+      grado,
+      promedio: Number(promedio.toFixed(1)),
+      estatusAcademico,
+      seguimientos: b.historial_seguimientos || [],
+    };
+  });
+};
+
 export default function ReporteAcademicoTab() {
+  const { data: beneficiarios = [] } = useQuery({
+    queryKey: ["beneficiarios"],
+    queryFn: obtenerBeneficiarios,
+  });
+
+  const { data: periodos = [] } = useQuery({
+    queryKey: ["periodos"],
+    queryFn: obtenerPeriodos,
+  });
+
+  const [periodo, setPeriodo] = useState("");
+  const [search, setSearch] = useState("");
+
+  // =========================
+  // DATA BASE
+  // =========================
+  const dataBase = useMemo(() => {
+    return mapBeneficiariosAcademicos(beneficiarios, periodo);
+  }, [beneficiarios, periodo]);
+
+  // =========================
+  // FILTRO
+  // =========================
+  const dataFiltrada = useMemo(() => {
+    return dataBase.filter((b) => {
+      const matchPeriodo = periodo
+        ? b.seguimientos?.some(
+          (s) => String(s.id_periodo) === String(periodo)
+        )
+        : true;
+
+      const matchSearch = search
+        ? b.beneficiario.toLowerCase().includes(search.toLowerCase())
+        : true;
+
+      return matchPeriodo && matchSearch;
+    });
+  }, [dataBase, periodo, search]);
+
+  // =========================
+  // ESTADISTICAS
+  // =========================
+  const stats = useMemo(() => {
+    const data = dataFiltrada;
+
+    const alto = data.filter((d) => d.promedio >= 8).length;
+    const medio = data.filter((d) => d.promedio >= 6 && d.promedio < 8).length;
+    const bajo = data.filter((d) => d.promedio > 0 && d.promedio < 6).length;
+
+    const promedioGeneral =
+      data.reduce((acc, d) => acc + (d.promedio || 0), 0) /
+      (data.length || 1);
+
+    return {
+      alto,
+      medio,
+      bajo,
+      promedioGeneral: promedioGeneral.toFixed(1),
+    };
+  }, [dataFiltrada]);
+
+  // =========================
+  // DATA GRAFICA
+  // =========================
+  const chartData = useMemo(() => {
+    return [
+      { name: "Alto", value: stats.alto },
+      { name: "Medio", value: stats.medio },
+      { name: "Bajo", value: stats.bajo },
+    ];
+  }, [stats]);
+
+  const ejecutarDescargaBlob = (buffer, nombreArchivo, mimeType) => {
+    if (!buffer) return;
+
+    const realBuffer =
+      buffer instanceof ArrayBuffer ? buffer : buffer.buffer;
+
+    const blob = new Blob([realBuffer], { type: mimeType });
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = nombreArchivo;
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+  };
+
+  // EXCEL
+  const descargarExcel = async () => {
+    try {
+      const buffer = await solicitarDescargaReporte(
+        "academico",
+        "excel",
+        dataFiltrada // ✅ FIX
+      );
+
+      ejecutarDescargaBlob(
+        buffer,
+        `academico_${periodo || "todos"}.xlsx`,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+    } catch (error) {
+      console.error("Error Excel:", error);
+    }
+  };
+
+  // PDF
+  const descargarPDF = async () => {
+    try {
+      const buffer = await solicitarDescargaReporte(
+        "academico",
+        "pdf",
+        dataFiltrada // ✅ FIX
+      );
+
+      ejecutarDescargaBlob(
+        buffer,
+        `academico_${periodo || "todos"}.pdf`,
+        "application/pdf"
+      );
+    } catch (error) {
+      console.error("Error PDF:", error);
+    }
+  };
+
+
   return (
     <div className="space-y-6">
+
+      {/* =========================
+          TARJETAS
+      ========================= */}
       <TarjetasEstadisticas
         items={[
           {
             label: "Promedio General",
-            value: "0.0",
+            value: stats.promedioGeneral,
             icon: GraduationCap,
             color: "blue",
           },
           {
             label: "Alto Rendimiento",
-            value: 0,
+            value: stats.alto,
             icon: Trophy,
             color: "emerald",
           },
           {
-            label: "Rendimiento Medio",
-            value: 0,
+            label: "Medio",
+            value: stats.medio,
             icon: BookOpen,
             color: "amber",
           },
           {
-            label: "Bajo Rendimiento",
-            value: 0,
+            label: "Bajo",
+            value: stats.bajo,
             icon: AlertTriangle,
             color: "red",
           },
         ]}
       />
 
+      {/* =========================
+          GRAFICA
+      ========================= */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4">
+          Distribución de Rendimiento
+        </h3>
+
+        <div style={{ width: "100%", height: 280 }}>
+          <ResponsiveContainer>
+            <BarChart data={chartData}>
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
       <Card>
+
+        {/* =========================
+            FILTROS
+        ========================= */}
         <FiltrosReporte
-          search=""
-          onSearchChange={() => {}}
+          search={search}
+          onSearchChange={setSearch}
           searchPlaceholder="Buscar beneficiario..."
+
           filtros={[
             {
               key: "periodo",
-              value: "",
-              onChange: () => {},
+              value: periodo,
+              onChange: setPeriodo,
               options: [
                 { value: "", label: "Todos los periodos" },
-                { value: "2024-2025", label: "2024-2025" },
-              ],
-            },
-            {
-              key: "nivel",
-              value: "",
-              onChange: () => {},
-              options: [
-                { value: "", label: "Todos los niveles" },
-                { value: "primaria", label: "Primaria" },
-                { value: "secundaria", label: "Secundaria" },
-                { value: "bachillerato", label: "Bachillerato" },
-                { value: "universidad", label: "Universidad" },
-              ],
-            },
-            {
-              key: "rendimiento",
-              value: "",
-              onChange: () => {},
-              options: [
-                { value: "", label: "Todos" },
-                { value: "alto", label: "Alto (≥ 8)" },
-                { value: "medio", label: "Medio (6 - 7.9)" },
-                { value: "bajo", label: "Bajo (< 6)" },
+                ...periodos.map((p) => ({
+                  value: p.id_periodo,
+                  label: p.ciclo_escolar,
+                })),
               ],
             },
           ]}
+
           acciones={[
             {
               component: Boton,
               variant: "secondary",
               icon: FileSpreadsheet,
               label: "Exportar Excel",
-              onClick: () => {},
+              onClick: descargarExcel,
             },
             {
               component: Boton,
               icon: FileText,
               label: "Descargar PDF",
-              onClick: () => {},
+              onClick: descargarPDF,
             },
           ]}
         />
 
+        {/* =========================
+            TABLA
+        ========================= */}
         <DatosTabla
           columns={[
-            {
-              key: "beneficiario",
-              label: "Beneficiario",
-            },
-            {
-              key: "escuela",
-              label: "Escuela",
-            },
-            {
-              key: "grado",
-              label: "Grado",
-            },
-            {
-              key: "promedio",
-              label: "Promedio",
-            },
-            {
-              key: "estatusAcademico",
-              label: "Estatus Académico",
-            },
+            { key: "beneficiario", label: "Beneficiario" },
+            { key: "escuela", label: "Escuela" },
+            { key: "grado", label: "Grado" },
+            { key: "promedio", label: "Promedio" },
+            { key: "estatusAcademico", label: "Estatus Académico" },
           ]}
-          data={[
-            {
-              id_beneficiario: 1,
-              beneficiario: "Ana López",
-              escuela: "Primaria Benito Juárez",
-              grado: "6°",
-              promedio: "9.4",
-              estatusAcademico: "Alto Rendimiento",
-            },
-            {
-              id_beneficiario: 2,
-              beneficiario: "Carlos Pérez",
-              escuela: "Secundaria Técnica 12",
-              grado: "2°",
-              promedio: "7.3",
-              estatusAcademico: "Rendimiento Medio",
-            },
-            {
-              id_beneficiario: 3,
-              beneficiario: "María García",
-              escuela: "COBAO Plantel 01",
-              grado: "4° Semestre",
-              promedio: "5.8",
-              estatusAcademico: "Bajo Rendimiento",
-            },
-          ]}
+          data={dataFiltrada}
           rowKey="id_beneficiario"
         />
 
         <PaginacionTabla
           currentPage={1}
           totalPages={1}
-          totalItems={3}
+          totalItems={dataFiltrada.length}
           pageSize={10}
-          onPageChange={() => {}}
+          onPageChange={() => { }}
         />
-      </Card>
-
-      {/* Gráfico */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">
-          Distribución por Rangos de Promedio
-        </h3>
-
-        <div className="space-y-4">
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span>Alto Rendimiento (≥ 8)</span>
-              <span>18</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
-              <div className="bg-emerald-500 h-4 rounded-full w-[60%]" />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span>Rendimiento Medio (6 - 7.9)</span>
-              <span>10</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
-              <div className="bg-amber-500 h-4 rounded-full w-[30%]" />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span>Bajo Rendimiento (&lt; 6)</span>
-              <span>4</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
-              <div className="bg-red-500 h-4 rounded-full w-[10%]" />
-            </div>
-          </div>
-        </div>
       </Card>
     </div>
   );

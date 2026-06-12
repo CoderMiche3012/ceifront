@@ -6,10 +6,13 @@ import {
   actualizarBeneficiario,
   eliminarBeneficiario,
   obtenerBeneficiariosActivos,
-  obtenerBeneficiarioId
+  obtenerBeneficiarioId,
+  obtenerAntecedentesIngreso
 } from "../services/beneficiariosService";
 
 import { beneficiariosKeys } from "../services/beneficiariosKeys";
+import { expedientesKeys } from "../../expedientes/services/expedientesKeys";
+
 
 // obtener beneficiarios
 export function useBeneficiarios() {
@@ -36,6 +39,9 @@ export function useCrearBeneficiario() {
       queryClient.invalidateQueries({
         queryKey: beneficiariosKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: expedientesKeys.all,
+      });
     },
   });
 }
@@ -50,6 +56,9 @@ export function useActualizarBeneficiario() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: beneficiariosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: expedientesKeys.all,
       });
     },
   });
@@ -66,6 +75,9 @@ export function useEliminarBeneficiario() {
       queryClient.invalidateQueries({
         queryKey: beneficiariosKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: expedientesKeys.all,
+      });
     },
   });
 }
@@ -74,5 +86,12 @@ export const useBeneficiariosActivos = () => {
   return useQuery({
     queryKey: beneficiariosKeys.active(),
     queryFn: obtenerBeneficiariosActivos,
+  });
+};
+export const useAntecedentesIngreso = (idBeneficiario) => {
+  return useQuery({
+    queryKey: ["antecedentes-ingreso", idBeneficiario],
+    queryFn: () => obtenerAntecedentesIngreso(idBeneficiario),
+    enabled: !!idBeneficiario,
   });
 };

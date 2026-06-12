@@ -1,34 +1,50 @@
-import { useMemo, useState, useCallback, } from "react";
-import { useQuery, useQueryClient, } from "@tanstack/react-query";
-import { obtenerSeguimiento } from "../../../../../services/seguimientoService";
-import { crearObligacion, actualizarObligacion, } from "../../../../../services/obligacionesService";
-import { initialPayload, normalizarFecha, } from "./servicioSocial.helpers";
+import {
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
 
-export default function useServicioSocialCard(idSeguimiento) {
-  const queryClient = useQueryClient();
-  const [modalForm, setModalForm] = useState(false);
-  const [modalConfirm, setModalConfirm,] = useState(false);
-  const [modalResultado, setModalResultado,] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [alerta, setAlerta] = useState("");
+import {
+  useCrearObligacion,
+  useActualizarObligacion,
+} from "../../../../../hooks/seguimiento/useobligaciones";
 
-  const [payload, setPayload] = useState(initialPayload(idSeguimiento));
+import {
+  initialPayload,
+  normalizarFecha,
+} from "./servicioSocial.helpers";
 
-  const {
-    data,
-    isLoading,
-  } = useQuery({
-    queryKey: [
-      "seguimiento-servicio-social",
-      idSeguimiento,
-    ],
-    queryFn: () =>
-      obtenerSeguimiento(
-        idSeguimiento
-      ),
-    enabled:
-      !!idSeguimiento,
-  });
+export default function useServicioSocialCard(
+  seguimiento
+) {
+  const idSeguimiento = seguimiento?.id_seguimiento
+  const crearObligacionMutation =
+    useCrearObligacion();
+
+  const actualizarObligacionMutation =
+    useActualizarObligacion();
+
+  const [modalForm, setModalForm] =
+    useState(false);
+
+  const [modalConfirm, setModalConfirm] =
+    useState(false);
+
+  const [modalResultado, setModalResultado] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [alerta, setAlerta] =
+    useState("");
+
+  const [payload, setPayload] =
+    useState(
+      initialPayload(idSeguimiento)
+    );
+
+  const data = seguimiento
 
   const servicios =
     useMemo(() => {
@@ -44,8 +60,11 @@ export default function useServicioSocialCard(idSeguimiento) {
   const abrirNuevo =
     useCallback(() => {
       setPayload(
-        initialPayload(idSeguimiento)
+        initialPayload(
+          idSeguimiento
+        )
       );
+
       setAlerta("");
       setModalForm(true);
     }, [idSeguimiento]);
@@ -54,13 +73,30 @@ export default function useServicioSocialCard(idSeguimiento) {
     useCallback(
       (item) => {
         setPayload({
-          id_servicio_social: item.id_servicio_social,
-          id_seguimiento: idSeguimiento,
-          tipo: "servicioSocial",
-          nombre: item.nombre || "",
-          estatus: item.estatus || "Pendiente",
-          fecha: normalizarFecha(item.fecha),
-          observaciones: item.observaciones || "",
+          id_servicio_social:
+            item.id_servicio_social,
+
+          id_seguimiento:
+            idSeguimiento,
+
+          tipo:
+            "servicioSocial",
+
+          nombre:
+            item.nombre || "",
+
+          estatus:
+            item.estatus ||
+            "Pendiente",
+
+          fecha:
+            normalizarFecha(
+              item.fecha
+            ),
+
+          observaciones:
+            item.observaciones ||
+            "",
         });
 
         setAlerta("");
@@ -88,53 +124,51 @@ export default function useServicioSocialCard(idSeguimiento) {
 
       try {
         const body = {
-          id_seguimiento: idSeguimiento,
-          tipo: "servicioSocial",
-          nombre: payload.nombre.trim(),
-          estatus: payload.estatus,
-          fecha: payload.fecha,
-          observaciones: payload.observaciones?.trim() || "",
+          id_seguimiento:
+            idSeguimiento,
+
+          tipo:
+            "servicioSocial",
+
+          nombre:
+            payload.nombre.trim(),
+
+          estatus:
+            payload.estatus,
+
+          fecha:
+            payload.fecha,
+
+          observaciones:
+            payload.observaciones?.trim() ||
+            "",
         };
 
-        if (payload.id_servicio_social) {
-          await actualizarObligacion(
-            payload.id_servicio_social,
-            body
+        if (
+          payload.id_servicio_social
+        ) {
+          await actualizarObligacionMutation.mutateAsync(
+            {
+              id:
+                payload.id_servicio_social,
+              payload: body,
+            }
           );
         } else {
-          await crearObligacion(
+          await crearObligacionMutation.mutateAsync(
             body
           );
         }
 
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: [
-              "seguimiento-servicio-social",
-              idSeguimiento,
-            ],
-          }),
-          queryClient.invalidateQueries({
-            queryKey: ["seguimientos"],
-          }),
-        ]);
-
-        setModalConfirm(
-          false
-        );
-        setModalResultado(
-          true
-        );
+        setModalConfirm(false);
+        setModalResultado(true);
 
       } catch (error) {
-        setModalConfirm(
-          false
-        );
+        setModalConfirm(false);
 
         setAlerta(
-          error?.response
-            ?.data?.message ||
-          "Error al guardar"
+          error?.message ||
+            "Error al guardar"
         );
 
       } finally {
@@ -144,7 +178,6 @@ export default function useServicioSocialCard(idSeguimiento) {
 
   return {
     servicios,
-    isLoading,
     loading,
     alerta,
     payload,
@@ -161,20 +194,14 @@ export default function useServicioSocialCard(idSeguimiento) {
 
     cerrarFormulario:
       () =>
-        setModalForm(
-          false
-        ),
+        setModalForm(false),
 
     cerrarConfirmacion:
       () =>
-        setModalConfirm(
-          false
-        ),
+        setModalConfirm(false),
 
     cerrarResultado:
       () =>
-        setModalResultado(
-          false
-        ),
+        setModalResultado(false),
   };
 }

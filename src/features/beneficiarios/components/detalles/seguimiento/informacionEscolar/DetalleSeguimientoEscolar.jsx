@@ -8,60 +8,25 @@ import {
   Eye,
 } from "lucide-react";
 
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-
-import { obtenerSeguimiento } from "../../../../services/seguimientoService";
-
 import ResumenEscolar from "./ResumenEscolar";
 import ModalDatosEscolares from "./ModalDatosEscolares";
 import ModalBoleta from "./ModalBoleta";
+import NotasSeguimientoCard from "./NotasSeguimientoCard";
+import Card from "../../../../../../components/ui/Card";
 
 export default function DetalleSeguimiento({
-  idSeguimiento,
+  seguimiento,
   id_expediente,
 }) {
 
-  const [openModal,
-    setOpenModal] =
-    useState(false);
-
-  const [openBoleta,
-    setOpenBoleta] =
-    useState(false);
-
-  const [boletaSeleccionada,
-    setBoletaSeleccionada] =
-    useState(null);
-
-  const [indexPeriodo,
-    setIndexPeriodo] =
-    useState(0);
-
-  const {
-    data,
-    isLoading,
-  } = useQuery({
-    queryKey: [
-      "seguimiento",
-      idSeguimiento,
-    ],
-
-    queryFn: () =>
-      obtenerSeguimiento(
-        idSeguimiento
-      ),
-
-    enabled:
-      !!idSeguimiento,
-  });
-
-  // =========================
-  // LOADING
-  // =========================
-
-  if (isLoading) {
-
+  const [openModal, setOpenModal] = useState(false);
+  const [openBoleta, setOpenBoleta] = useState(false);
+  const [boletaSeleccionada, setBoletaSeleccionada] = useState(null);
+  const [indexPeriodo, setIndexPeriodo] = useState(0);
+  const idSeguimiento = seguimiento?.id_seguimiento
+  // cargar
+  if (!seguimiento) {
     return (
       <p className="text-sm text-slate-500">
         Cargando detalle...
@@ -69,27 +34,13 @@ export default function DetalleSeguimiento({
     );
   }
 
-  // =========================
-  // DATA
-  // =========================
+  // datos
+  const escolar = seguimiento?.datos_escolares;
+  const grado = escolar?.id_escolaridad || null;
+  const institucion = escolar?.id_institucion || null;
+  const boletas = escolar?.boletas || [];
 
-  const escolar =
-    data?.datos_escolares;
-
-  const grado =
-    escolar?.id_escolaridad ||
-    null;
-
-  const institucion =
-    escolar?.id_institucion ||
-    null;
-
-  const boletas =
-    escolar?.boletas || [];
-
-  // =========================
-  // PERIODOS
-  // =========================
+  // =
 
   const generarPeriodos =
     (periodicidad) => {
@@ -133,107 +84,61 @@ export default function DetalleSeguimiento({
       }
     };
 
-  const periodos =
-    generarPeriodos(
-      escolar?.periodicidad ||
-      escolar?.modalidad_educativa
-    );
+  const periodos = generarPeriodos(escolar?.periodicidad || escolar?.modalidad_educativa);
 
   const getBoleta =
     (periodo) =>
       boletas.find(
         (b) =>
-          b.periodo_boleta ===
-          periodo
+          b.periodo_boleta === periodo
       );
 
-  const periodoActual =
-    periodos[indexPeriodo];
+  const periodoActual = periodos[indexPeriodo];
+  const boleta = getBoleta(periodoActual);
 
-  const boleta =
-    getBoleta(periodoActual);
-
-  // =========================
-  // PROMEDIO
-  // =========================
+  // promedio
 
   const promedioGeneral =
     boletas.length > 0
       ? (
-          boletas.reduce(
-            (acc, b) =>
-              acc +
-              Number(
-                b.promedio_boleta
-              ),
-            0
-          ) / boletas.length
-        ).toFixed(2)
+        boletas.reduce(
+          (acc, b) =>
+            acc +
+            Number(
+              b.promedio_boleta
+            ),
+          0
+        ) / boletas.length
+      ).toFixed(2)
       : "--";
-
-  // =========================
-  // DESCARGAR
-  // =========================
-
+  // descarga
   const descargarArchivo =
-    async (
-      url,
-      nombre = "boleta"
-    ) => {
+    async (url, nombre = "boleta") => {
 
       try {
 
-        const response =
-          await fetch(url);
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
 
-        const blob =
-          await response.blob();
-
-        const blobUrl =
-          window.URL.createObjectURL(
-            blob
-          );
-
-        const link =
-          document.createElement(
-            "a"
-          );
-
-        link.href =
-          blobUrl;
-
-        link.download =
-          nombre;
-
-        document.body.appendChild(
-          link
-        );
-
+        link.href = blobUrl;
+        link.download = nombre;
+        document.body.appendChild(link);
         link.click();
-
         link.remove();
-
-        window.URL.revokeObjectURL(
-          blobUrl
-        );
+        window.URL.revokeObjectURL(blobUrl);
 
       } catch (error) {
-
-        console.error(
-          error
-        );
       }
     };
 
   return (
     <>
-      <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
+      <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4 w-full items-stretch">
 
-        {/* ========================= */}
-        {/* INFORMACIÓN ESCOLAR */}
-        {/* ========================= */}
 
-        <div className="lg:col-span-2 rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+        <div className="lg:col-span-2 h-full rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
 
           <div className="flex items-center justify-between mb-6">
 
@@ -277,269 +182,175 @@ export default function DetalleSeguimiento({
                 promedioGeneral
               }
             />
+
+
           )}
         </div>
+        {/* boletas */}
+        <div className="relative h-full">
+          
 
-        {/* ========================= */}
-        {/* BOLETAS */}
-        {/* ========================= */}
+          {/* Dentro de la sección de boletas de tu componente principal */}
+<Card className="relative h-full p-6 bg-white border border-slate-200 rounded-2xl shadow-sm">
+  {!escolar || periodos.length === 0 ? (
+    <p className="text-slate-400 text-sm">No hay periodos disponibles</p>
+  ) : (
+    <>
+      {/* Cabecera del periodo: Limpia y Profesional */}
+      <div className="flex items-center justify-between mb-6 pb-2 border-b border-slate-100">
+        <div>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Periodo Escolar</p>
+          <h4 className="font-bold text-slate-800 text-base">{periodoActual}</h4>
+        </div>
 
-        <div className="lg:col-span-1 rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
-
-          {!escolar ||
-          periodos.length === 0 ? (
-
-            <p className="text-slate-400 text-sm">
-              No hay periodos disponibles
-            </p>
-
-          ) : (
-            <>
-
-              {/* HEADER */}
-
-              <div className="flex items-center justify-between mb-5">
-
-                <div>
-
-                  <p className="text-xs font-semibold text-slate-400 uppercase mb-1">
-                    Periodo
-                  </p>
-
-                  <h4 className="font-bold text-slate-800 text-lg">
-                    {periodoActual}
-                  </h4>
-                </div>
-
-                <div className="flex items-center gap-2">
-
-                  <button
-                    disabled={
-                      indexPeriodo ===
-                      0
-                    }
-                    onClick={() =>
-                      setIndexPeriodo(
-                        (i) =>
-                          i - 1
-                      )
-                    }
-                    className="
-                      h-8 w-8 rounded-lg
-                      border border-slate-200
-                      flex items-center justify-center
-                      hover:bg-slate-50
-                      disabled:opacity-40
-                    "
-                  >
-                    ←
-                  </button>
-
-                  <button
-                    disabled={
-                      indexPeriodo ===
-                      periodos.length -
-                        1
-                    }
-                    onClick={() =>
-                      setIndexPeriodo(
-                        (i) =>
-                          i + 1
-                      )
-                    }
-                    className="
-                      h-8 w-8 rounded-lg
-                      border border-slate-200
-                      flex items-center justify-center
-                      hover:bg-slate-50
-                      disabled:opacity-40
-                    "
-                  >
-                    →
-                  </button>
-                </div>
-              </div>
-
-              {/* PROMEDIO */}
-
-              <div className="rounded-2xl bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-100 p-5 mb-4">
-
-                <div className="flex items-center gap-3">
-
-                  <div className="h-12 w-12 rounded-xl bg-white shadow-sm flex items-center justify-center">
-
-                    <Star className="w-6 h-6 text-yellow-500" />
-                  </div>
-
-                  <div>
-
-                    <p className="text-xs uppercase font-semibold text-slate-400">
-                      Calificación
-                    </p>
-
-                    <h3 className="text-3xl font-black text-slate-800 leading-none mt-1">
-
-                      {boleta?.promedio_boleta ??
-                        "--"}
-                    </h3>
-                  </div>
-                </div>
-              </div>
-
-              {/* DOCUMENTO */}
-
-              {boleta?.link ? (
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-4">
-
-                  <div className="flex items-start gap-3">
-
-                    <div className="h-11 w-11 rounded-xl bg-white flex items-center justify-center shadow-sm">
-
-                      <FileText className="w-5 h-5 text-red-500" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-
-                      <p className="font-semibold text-slate-700 text-sm">
-                        Documento de boleta
-                      </p>
-
-                      <p className="text-xs text-slate-400 truncate mt-1">
-                        Archivo adjunto del periodo
-                      </p>
-
-                      <div className="flex items-center gap-2 mt-4">
-
-                        {/* VER */}
-
-                        <a
-                          href={
-                            boleta.link
-                          }
-                          target="_blank"
-                          rel="noreferrer"
-                          className="
-                            flex items-center gap-2
-                            px-3 py-2 rounded-xl
-                            bg-white border border-slate-200
-                            text-sm text-slate-700
-                            hover:bg-slate-100
-                            transition
-                          "
-                        >
-
-                          <Eye className="w-4 h-4" />
-
-                          Ver
-                        </a>
-
-                        {/* DESCARGAR */}
-
-                        <button
-                          onClick={() =>
-                            descargarArchivo(
-                              boleta.link,
-                              `Boleta-${periodoActual}`
-                            )
-                          }
-                          className="
-                            flex items-center gap-2
-                            px-3 py-2 rounded-xl
-                            bg-teal-600 text-white
-                            text-sm
-                            hover:bg-teal-700
-                            transition
-                          "
-                        >
-
-                          <Download className="w-4 h-4" />
-
-                          Descargar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              ) : (
-
-                <div className="
-                  border-2 border-dashed
-                  border-slate-200
-                  rounded-2xl
-                  p-6
-                  text-center
-                  mb-4
-                ">
-
-                  <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-
-                  <p className="text-sm font-medium text-slate-500">
-                    Sin documento de boleta
-                  </p>
-
-                  <p className="text-xs text-slate-400 mt-1">
-                    Adjunta un archivo para este periodo
-                  </p>
-                </div>
-              )}
-
-              {/* BOTÓN */}
-
-              <button
-                onClick={() => {
-
-                  setBoletaSeleccionada({
-                    ...boleta,
-
-                    periodo_boleta:
-                      periodoActual,
-
-                    tipo_boleta:
-                      escolar?.periodicidad,
-
-                    id_datos_escolares:
-                      escolar?.id_datos_escolares,
-                  });
-
-                  setOpenBoleta(true);
-                }}
-                className="
-                  w-full
-                  flex items-center justify-center gap-2
-                  rounded-xl
-                  py-3
-                  text-sm font-medium
-                  border border-teal-200
-                  bg-teal-50
-                  text-teal-700
-                  hover:bg-teal-100
-                  transition
-                "
-              >
-
-                {boleta ? (
-                  <>
-                    <PencilLine className="w-4 h-4" />
-                    Editar boleta
-                  </>
-                ) : (
-                  <>
-                    <PlusCircle className="w-4 h-4" />
-                    Agregar calificación
-                  </>
-                )}
-              </button>
-            </>
+        <div className="flex items-center gap-4">
+          {/* BOTÓN SUTIL EDITAR */}
+          {boleta && (
+            <button
+              onClick={() => {
+                setBoletaSeleccionada({
+                  ...boleta,
+                  periodo_boleta: periodoActual,
+                  tipo_boleta: escolar?.periodicidad,
+                  id_datos_escolares: escolar?.id_datos_escolares,
+                });
+                setOpenBoleta(true);
+              }}
+              className="flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-700"
+            >
+              <PencilLine className="w-3.5 h-3.5" />
+              Editar
+            </button>
           )}
+
+          {/* Flechas de navegación micro-compactas */}
+          <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+            <button
+              disabled={indexPeriodo === 0}
+              onClick={() => setIndexPeriodo((i) => i - 1)}
+              className="h-7 w-7 flex items-center justify-center text-slate-500 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition"
+            >
+              ←
+            </button>
+            <div className="w-[1px] h-4 bg-slate-200" />
+            <button
+              disabled={indexPeriodo === periodos.length - 1}
+              onClick={() => setIndexPeriodo((i) => i + 1)}
+              className="h-7 w-7 flex items-center justify-center text-slate-500 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition"
+            >
+              →
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* ========================= */}
-      {/* MODAL DATOS */}
-      {/* ========================= */}
+      {/* Si NO hay boleta, mostramos el botón llamativo de Agregar (Estilo limpio) */}
+      {!boleta ? (
+        <div className="border-2 border-dashed border-slate-200 bg-slate-50/50 rounded-xl p-8 text-center my-2 flex flex-col items-center justify-center">
+          <FileText className="w-9 h-9 text-slate-300 mb-2" />
+          <p className="text-sm font-semibold text-slate-700 mb-1">
+            Sin información para este periodo
+          </p>
+          <p className="text-xs text-slate-400 max-w-xs mb-4">
+            Registra la calificación y el archivo adjunto para el {periodoActual}.
+          </p>
+          <button
+            onClick={() => {
+              setBoletaSeleccionada({
+                periodo_boleta: periodoActual,
+                tipo_boleta: escolar?.periodicidad,
+                id_datos_escolares: escolar?.id_datos_escolares,
+                promedio_boleta: "",
+                link: ""
+              });
+              setOpenBoleta(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-[#0e5f63] text-white font-medium text-xs rounded-lg shadow-sm hover:bg-[#0c4f52] active:scale-95 transition-all"
+          >
+            <PlusCircle className="w-3.5 h-3.5" />
+            Agregar Boleta
+          </button>
+        </div>
+      ) : (
+        /* VISTA DE INFORMACIÓN CUANDO SÍ HAY BOLETA */
+        <div className="space-y-4">
+          
+          {/* Bloque de Calificación Ejecutivo */}
+          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Calificación General
+              </p>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Estatus: <span className="text-emerald-600 font-medium">Registrado</span>
+              </p>
+            </div>
+            <div className="text-right">
+              <span className="text-3xl font-black tracking-tight text-slate-800 tabular-nums">
+                {Number(boleta?.promedio_boleta).toFixed(2) ?? "--"}
+              </span>
+            </div>
+          </div>
 
+          {/* Bloque del Archivo Adjunto (Estilo Fila de Documentos de Sistema) */}
+          {boleta?.link ? (
+            <div className="border border-slate-200 rounded-xl p-3 bg-white flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="h-9 w-9 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0 border border-red-100">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-700 text-xs truncate">
+                    Boleta_{periodoActual.replace(/\s+/g, "")}.pdf
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    Documento oficial adjunto
+                  </p>
+                </div>
+              </div>
+
+              {/* Botones de acción minimalistas */}
+              <div className="flex items-center gap-1 shrink-0">
+                <a
+                  href={boleta.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
+                  title="Ver documento"
+                >
+                  <Eye className="w-4 h-4" />
+                </a>
+                <button
+                  onClick={() => descargarArchivo(boleta.link, `Boleta-${periodoActual}`)}
+                  className="p-1.5 text-slate-500 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition"
+                  title="Descargar"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="border border-dashed border-slate-200 rounded-xl py-3 px-4 text-left bg-slate-50/30 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+              <p className="text-[11px] text-slate-400 font-medium">
+                No se adjuntó un archivo PDF para esta calificación.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  )}
+</Card>
+        </div>
+        <div className="lg:col-span-3">
+          <NotasSeguimientoCard
+            data={escolar}
+          />
+        </div>
+      </div>
+
+      {/* MODAL DATOS */}
       <ModalDatosEscolares
         open={openModal}
         onClose={() =>
@@ -553,9 +364,7 @@ export default function DetalleSeguimiento({
         }
       />
 
-      {/* ========================= */}
       {/* MODAL BOLETA */}
-      {/* ========================= */}
 
       <ModalBoleta
         open={openBoleta}
@@ -572,3 +381,4 @@ export default function DetalleSeguimiento({
     </>
   );
 }
+

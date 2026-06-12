@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { useActualizarSeguimiento } from "./useSeguimientos";
-export function useEditarSeguimientoFlow() {
+import { usePeriodoActivo } from "../../../periodos/hooks/usePeriodos";
+import { useActualizarBeneficiario } from "../../hooks/useBeneficiarios";
+
+export function useEditarSeguimientoForm() {
+
+  const { data: periodoActivo } = usePeriodoActivo();
+  const idPeriodoActivo = periodoActivo?.id_periodo;
+
   const mutationEditar = useActualizarSeguimiento();
+  const mutationBeneficiario = useActualizarBeneficiario();
 
   const [editando, setEditando] = useState(null);
   const [nota, setNota] = useState("");
@@ -33,7 +41,27 @@ export function useEditarSeguimientoFlow() {
         data: { estatus, nota_seguimiento: nota },
       },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+
+          const esPeriodoActivo =
+            editando?.id_periodo === idPeriodoActivo;
+
+          // 🔴 Inactivar beneficiario
+          if (estatus === "Inactivo" && esPeriodoActivo) {
+            mutationBeneficiario.mutate({
+              id: editando.id_beneficiario,
+              data: { estatus: "Inactivo" },
+            });
+          }
+
+          // 🟢 Activar beneficiario
+          if (estatus === "Activo" && esPeriodoActivo) {
+            mutationBeneficiario.mutate({
+              id: editando.id_beneficiario,
+              data: { estatus: "Activo" },
+            });
+          }
+
           setExitoEdicion(true);
           setEditando(null);
           setConfirmarEdicion(false);

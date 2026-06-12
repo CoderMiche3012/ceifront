@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 
 import { useDonadores } from "./useDonadores";
-import { useResumenPeriodo } from "./useDonativos";
+import { useResumenPeriodoTotales } from "./useDonativos";
 
 import { usePeriodoActivo } from "../../periodos/hooks/usePeriodos";
 
 export const useDonadoresPage = () => {
   const { data: donadores = [], isLoading: loadingDonadores, error: errorDonadores, } = useDonadores();
-  const { periodoActivo, isLoading: loadingPeriodo, error: errorPeriodo } = usePeriodoActivo();
-  const { data: resumenPeriodo = [], isLoading: loadingResumen, error: errorResumen } = useResumenPeriodo(periodoActivo?.id_periodo);
-
+  const { data: periodoActivo, isLoading: loadingPeriodo, error: errorPeriodo } = usePeriodoActivo();
+  const { data: resumenPeriodo = [], isLoading: loadingResumen, error: errorResumen } = useResumenPeriodoTotales(periodoActivo?.id_periodo);
+  console.log("periodoActivo",periodoActivo)
+  console.log("resumen",resumenPeriodo)
+  console.log("donadores",donadores)
   const [filters, setFilters] = useState({ estatus: "todos", tipo: "todos" });
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);

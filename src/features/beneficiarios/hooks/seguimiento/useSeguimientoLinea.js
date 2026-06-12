@@ -72,6 +72,7 @@ export function useSeguimientoLinea(id_beneficiario) {
   // RETURN
   // ======================
   return {
+    listaOrdenada,
     // data lista principal
     seguimientos: listaOrdenada,
 

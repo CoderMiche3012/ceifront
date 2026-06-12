@@ -27,7 +27,7 @@ export default function AppLayout() {
   }, [perfil]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f3f1f4]">
+    <div className="flex h-screen bg-[#f3f1f4]">
       {/* Si el menu se abre*/}
       {sidebarOpen && (
         <button
@@ -42,15 +42,18 @@ export default function AppLayout() {
         <Menu sidebarOpen={sidebarOpen} />
       </aside>
 
-      <div className={`flex min-w-0 flex-1 flex-col transition-all duration-300 ${sidebarOpen ? "lg:ml-72" : "lg:ml-0"}`} >
-        <Encabezado
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-        <main className="flex-1 overflow-y-auto bg-[#f3f1f4] p-4 sm:p-6 md:p-8">
-          <Outlet />
-        </main>
-      </div>
+      {/* Cambios aquí: Añadido h-screen y overflow-hidden */}
+<div className={`flex h-screen min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300 ${sidebarOpen ? "lg:ml-72" : "lg:ml-0"}`} >
+  <Encabezado
+    sidebarOpen={sidebarOpen}
+    setSidebarOpen={setSidebarOpen}
+  />
+  
+  {/* El padding inferior pb-16 asegura que la última fila no choque contra el borde del celular */}
+  <main className="flex-1 overflow-y-auto bg-[#f3f1f4] p-4 pb-16 sm:p-6 sm:pb-20 md:p-8">
+    <Outlet />
+  </main>
+</div>
     </div>
   )
 }

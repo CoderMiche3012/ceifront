@@ -1,31 +1,50 @@
-let worker;
+// src/shared/services/reporteService.js
+
+const workerUrl = new URL("../workers/reporteMasterWorker.js", import.meta.url);
+let masterWorkerInstance = null;
 
 function obtenerWorker() {
-    if (!worker) {
-        worker = new Worker(
-            new URL( "../workers/reporteWorker.js", import.meta.url ),
-            { type: "module", }
-        );
-    }
-    return worker;
+  if (!masterWorkerInstance) {
+    masterWorkerInstance = new Worker(workerUrl, { type: "module" });
+  }
+  return masterWorkerInstance;
 }
 
-export const exportarReporte = ( tipo, datos ) => {
-    return new Promise(
-        (resolve, reject) => {
-            const worker = obtenerWorker();
+/**
+ * Disparador universal de reportes asíncronos en segundo plano.
+ * @param {string} tipoReporte - Nombre del archivo del reporte (ej: 'donadores', 'beneficiarios')
+ * @param {'excel'|'pdf'} formato - Formato de salida solicitado
+ * @param {Array} datos - Datos ya procesados listos para estampar
+ */
+export const solicitarDescargaReporte = (tipoReporte, formato, datos) => {
+  const worker = obtenerWorker();
 
-            worker.onmessage = ( event ) => {
-                const { success, buffer, error, } = event.data;
+  return new Promise((resolve, reject) => {
+    const requestId = crypto.randomUUID();
 
-                if (!success) {
-                    reject(error);
-                    return;
-                }
-                resolve(buffer);
-            };
+    const handleMessage = (event) => {
+      const { success, buffer, error, requestId: resId } = event.data;
 
-            worker.postMessage({ tipo, datos,});
-        }
-    );
+      if (resId !== requestId) return; // Evitar colisiones de descargas simultáneas
+
+      worker.removeEventListener("message", handleMessage);
+
+      if (!success) {
+        reject(error);
+        return;
+      }
+
+      resolve(buffer);
+    };
+
+    worker.addEventListener("message", handleMessage);
+    console.log("ENVIANDO WORKER:", tipoReporte, formato, datos.length);
+    worker.postMessage({
+      tipoReporte,
+      formato,
+      datos,
+      requestId,
+    });
+    
+  });
 };

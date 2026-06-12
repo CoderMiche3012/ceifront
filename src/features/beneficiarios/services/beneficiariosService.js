@@ -2,6 +2,7 @@ import API from "../../../config/apiClient";
 import { formatError } from "../../../utils/errorHandlers";
 
 const BASE_URL = "/api/beneficiarios/beneficiarios";
+const BASE_URL2 = "/api/beneficiarios/beneficiarios";
 
 // obtener todos
 export const obtenerBeneficiarios = async () => {
@@ -38,3 +39,15 @@ export const obtenerBeneficiariosActivos = async () => {
   return Array.isArray(data) ? data : data?.data ?? [];
 };
 
+export const obtenerAntecedentesIngreso = async (idBeneficiario) => {
+  try {
+    const res = await API.get(
+      `${BASE_URL2}/${idBeneficiario}/antecedentes-ingreso/`
+    );
+
+    return res.data;
+  } catch (error) {
+    const errorData = error.response?.data;
+    throw formatError(errorData, "Error al obtener antecedentes de ingreso");
+  }
+};

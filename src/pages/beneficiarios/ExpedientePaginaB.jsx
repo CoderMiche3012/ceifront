@@ -1,22 +1,23 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { Calendar, ArrowLeft, RefreshCw, AlertCircle } from "lucide-react";
+import { Calendar, ArrowLeft, RefreshCw, AlertCircle, Download } from "lucide-react";
 import AvatarGeneral from "../../components/shared/AvatarGeneral";
 import TabsExpediente from "../../features/beneficiarios/components/detalles/TabsExpediente";
 import DatosGenerales from "../../features/beneficiarios/components/detalles/DatosGenerales";
 import { useExpedienteData } from "../../features/beneficiarios/hooks/useExpedienteData";
 import { useBeneficiariosPage } from "../../features/beneficiarios/hooks/useBeneficiariosPage";
 import { useQueryClient } from "@tanstack/react-query";
-
-{/*
 import FamiliaCard from "../../features/beneficiarios/components/detalles/FamiliaCard";
 import HistorialEscolarCard from "../../features/beneficiarios/components/detalles/seguimiento/informacionEscolar/HistorialEscolar";
-import HistorialServicios from "../../features/beneficiarios/components/detalles/seguimiento//Servicios/HistorialServicios";
-import HistorialEconomicoCard from "../../features/beneficiarios/components/detalles/seguimiento/ApoyosEconomicos/HistorialEconomico";
 import HistorialObligaciones from "../../features/beneficiarios/components/detalles/seguimiento/Obligaciones/HistorialObligaciones";
 import HistorialFotografia from "../../features/beneficiarios/components/detalles/seguimiento/Fotografias/HistorialFotografias";
 import ExpedienteDigital from "../../features/beneficiarios/components/detalles/seguimiento/Documentos/Documentos";
+import HistorialEconomicoCard from "../../features/beneficiarios/components/detalles/seguimiento/ApoyosEconomicos/HistorialEconomico";
+import HistorialServicios from "../../features/beneficiarios/components/detalles/seguimiento//Servicios/HistorialServicios";
 import EstudioSos from "../../features/beneficiarios/components/detalles/EstudioSocioeconomico";
-*/}
+import { calcularEdad } from "../../utils/formatters";
+import { generarExpedientePDF } from "../../utils/generarExpedientePDF";
+
+
 export default function ExpedientePagina() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -28,9 +29,10 @@ export default function ExpedientePagina() {
     error,
     tab,
     setTab,
-    edad,
+
     refetch,
   } = useExpedienteData(id);
+  const edad = calcularEdad(data?.fecha_nacimiento)
 
   // Validación de ID (se queda igual)
   if (!id) return <div className="p-10 text-center text-red-500">ID inválido</div>;
@@ -52,6 +54,14 @@ export default function ExpedientePagina() {
           <h3 className="text-lg font-bold text-red-800">Hubo un problema</h3>
           <p className="text-red-600">{error}</p>
         </div>
+        <button
+          onClick={() => generarExpedientePDF(data, edad)}
+          title="Descargar expediente PDF"
+          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
+        >
+          <Download size={20} />
+        </button>
+
         <button
           onClick={() => refetch()}
           className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
@@ -122,14 +132,14 @@ export default function ExpedientePagina() {
               </div>
             </div>
           </div>
-
           <button
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-all disabled:opacity-50"
+            onClick={() => generarExpedientePDF(data, edad)}
+            title="Descargar expediente PDF"
+            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
           >
-            <RefreshCw size={20} className={isFetching ? "animate-spin" : ""} />
+            <Download size={20} />
           </button>
+
         </div>
       </header>
 
@@ -139,18 +149,17 @@ export default function ExpedientePagina() {
 
       <main className="min-h-[400px] mt-4">
         {tab === "generales" && <DatosGenerales data={data} />}
-        {/*
-        {tab === "familia" && (
-          <FamiliaCard data={data} refetch={refetch} />
-        )}
+
+        {tab === "familia" && (<FamiliaCard data={data} />)}
+
         {tab === "escuela" && <HistorialEscolarCard data={data} />}
-        {tab === "apoyos" && <HistorialEconomicoCard data={data} />}
         {tab === "obligaciones" && <HistorialObligaciones data={data} />}
-        {tab === "asistencias" && <HistorialServicios data={data} />}
-        {tab === "fotografias" && <HistorialFotografia data={data} refetch={refetch} />}
+        {tab === "fotografias" && <HistorialFotografia data={data} />}
         {tab === "documentos" && <ExpedienteDigital data={data} />}
-        {tab === "estudio" && <EstudioSos data={data} refetch={refetch}/>}
-      */}
+        {tab === "apoyos" && <HistorialEconomicoCard data={data} />}
+        {tab === "asistencias" && <HistorialServicios data={data} />}
+        {tab === "estudio" && <EstudioSos data={data} />}
+
       </main>
     </section>
   );

@@ -13,8 +13,7 @@ import {
 } from "../../../expedientes/services/documentosService";
 
 export default function EstudioCard({
-  data,
-  refetch
+  data
 }) {
 
   const inputRef =
@@ -27,9 +26,18 @@ export default function EstudioCard({
   const [loading,
     setLoading] =
     useState(false);
+  
+  const documentoEstudio = data?.documentos?.find(
+  (doc) =>
+    doc.tipo_documento?.toLowerCase() ===
+    "estudio"
+);
 
-  const estudioUrl =
-    data?.link_documento;
+
+
+const estudioUrl = documentoEstudio?.archivo
+  ? `http://localhost:8000${documentoEstudio.archivo}`
+  : null;
 
   // =========================
   // SELECCIONAR

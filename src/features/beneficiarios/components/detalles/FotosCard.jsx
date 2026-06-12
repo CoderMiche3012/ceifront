@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Camera, Plus, ChevronLeft, ChevronRight, ImagePlus } from "lucide-react";
 import { subirFotografia } from "../../../expedientes/services/fotografiaService";;
 
-export default function FotosCard({ data, refetch}) {
+export default function FotosCard({ data}) {
   const inputRef = useRef(null);
 
   const fotos = data?.fotografias || [];

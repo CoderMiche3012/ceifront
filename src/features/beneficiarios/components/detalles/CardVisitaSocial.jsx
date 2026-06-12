@@ -8,13 +8,13 @@ import {
 } from "lucide-react";
 
 export default function CardVisitaSocial({
-  data,
+  data
 }) {
 
   const tieneVisita =
-    data?.fecha_realizacion ||
-    data?.estatus_estudio ||
-    data?.nota_servicio;
+    data?.visitas?.fecha_visita ||
+    data?.visitas?.nota_visita ||
+    data?.visitas?.nota_servicio;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -73,7 +73,7 @@ export default function CardVisitaSocial({
               </p>
 
               <p className="text-sm text-slate-700 font-medium">
-                {data?.fecha_realizacion || "--"}
+                {data?.visitas?.fecha_visita || "--"}
               </p>
             </div>
           </div>

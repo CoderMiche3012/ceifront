@@ -11,6 +11,8 @@ import {
   obtenerPeriodosDonativosPorDonador,
   obtenerDonativosPeriodoActivo,
   obtenerResumenPeriodo,
+  obtenerResumenTotales,
+  obtenerResumenTotalesGenerales
 } from "../services/donativosService";
 
 import { donativosKeys } from "../services/donativosKeys";
@@ -104,6 +106,30 @@ export function useResumenPeriodo(
   });
 }
 
+export function useResumenPeriodoTotales(
+  idPeriodo
+) {
+  return useQuery({
+    queryKey:
+      donativosKeys.resumenPeriodo(
+        idPeriodo
+      ),
+    queryFn: () =>
+      obtenerResumenTotales(
+        idPeriodo
+      ),
+    enabled: !!idPeriodo,
+  });
+}
+// obtener los donativos generales
+export function useResumenPeriodoTotalesGenerales() {
+  return useQuery({
+    queryKey:
+      donativosKeys.periodoActivo(),
+    queryFn:
+      obtenerResumenTotalesGenerales,
+  });
+}
 // periodos válidos de un donador
 export function usePeriodosDonativosPorDonador(
   idDonador

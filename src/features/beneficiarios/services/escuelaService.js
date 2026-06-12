@@ -22,6 +22,6 @@ export const crearDatosEscolaresInd = async (payload) => {
 
 // actualizar
 export const actualizarDatosEscolaresInd = async (id, payload) => {
-  const { data } = await API.put(`${BASE_URL}/${id}/`, payload);
+  const { data } = await API.patch(`${BASE_URL}/${id}/`, payload);
   return data;
 };

@@ -44,8 +44,4 @@ export const obtenerPaises = async () => {
   return Array.isArray(data) ? data : [];
 };
 
-export const obtenerBeneficiariosActivos = async () => {
-  const { data } = await API.get("/api/beneficiarios/beneficiarios/activos/ ");
-  return Array.isArray(data) ? data : data?.data ?? [];
-};
 

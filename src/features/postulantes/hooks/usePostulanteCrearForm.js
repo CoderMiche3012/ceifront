@@ -281,7 +281,7 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
           referencia_casa: form.referencia_casa,
           gastos: [
             {
-              nombre: "alimentacion",
+              nombre: "Alimentacion",
               monto: String(form.gasto_alimentacion || "0.00"),
             },
             {

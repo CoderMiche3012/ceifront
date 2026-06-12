@@ -2,7 +2,7 @@ import { ui } from "../../styles/ui/index";
 
 export default function DatosTabla({ columns, data, renderCell, rowKey = "id", }) {
   return (
-    <div className={ui.table.wrapper}>
+    <div className={`${ui.table.wrapper} touch-pan-x`}>
       <table className={ui.table.table}>
         <thead>
           <tr className={ui.table.headerRow}>

@@ -16,7 +16,6 @@ export function useDonadorEditarForm(open, donador, onSuccess, onClose) {
     correo: "",
     telefono: "",
     tipo: "",
-    fecha_ingreso: "",
     calle: "",
     numero: "",
     cp: "",
@@ -64,7 +63,6 @@ export function useDonadorEditarForm(open, donador, onSuccess, onClose) {
       correo: donador.correo || "",
       telefono: donador.telefono || "",
       tipo: donador.tipo_donador || "",
-      fecha_ingreso: donador.fecha_ingreso ? donador.fecha_ingreso.slice(0, 10) : "",
       calle: donador.domicilio_detalle?.calle || "",
       numero: donador.domicilio_detalle?.numero || "",
       cp: donador.domicilio_detalle?.geografia_detalle?.codigo_postal || "",
@@ -159,7 +157,6 @@ export function useDonadorEditarForm(open, donador, onSuccess, onClose) {
           correo: form.correo,
           telefono: form.telefono,
           tipo_donador: form.tipo,
-          fecha_ingreso: form.fecha_ingreso,
           domicilio: {
             calle: form.calle,
             numero_exterior: form.numero,
@@ -187,6 +184,7 @@ export function useDonadorEditarForm(open, donador, onSuccess, onClose) {
           message: "Los cambios se guardaron correctamente.",
         });
       } catch (err) {
+        setShowConfirm(false);
         const backendErrors = err?.errors || err?.response?.data;
         if (
           backendErrors &&
@@ -205,7 +203,6 @@ export function useDonadorEditarForm(open, donador, onSuccess, onClose) {
             correo: "Correo",
             telefono: "Teléfono",
             tipo: "Tipo de donador",
-            fecha_ingreso: "Fecha de ingreso",
             pais: "País",
             cp: "Código postal",
             estado: "Estado",
