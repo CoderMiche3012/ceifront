@@ -1,194 +1,130 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useBeneficiarios } from "./useBeneficiarios";
-import { obtenerPeriodos } from "../../periodos/services/periodoService";
+import { usePeriodos } from "../../periodos/hooks/usePeriodos";
 
 const INITIAL_FILTERS = {
   estatus: "todos",
   nivel: "todos",
   rendimiento: "todos",
   donador: "todos",
-  periodo: "actual",
 };
 
 export const useBeneficiariosPage = (pageSize = 4) => {
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [periodo, setPeriodo] = useState("actual");
+  const [periodo, setPeriodo] = useState(null);
+
   const PAGE_SIZE = pageSize;
-  const { data: periodosRes = [] } = useQuery({
-    queryKey: ["periodos"],
-    queryFn: obtenerPeriodos,
-  });
 
-  const {
-    data: beneficiariosData = [],
-    isLoading,
-    error,
-  } = useBeneficiarios();
-
+  const { data: periodosRes = [] } = usePeriodos();
+  // obtener los datos del beneficiario segun el periodo
+  const { data: beneficiariosData = [], isLoading, error,} = useBeneficiarios(periodo);
+  // para unificar tanto el general como el de por periodo
   const data = useMemo(() => {
-    const beneficiarios =
-      beneficiariosData?.results || beneficiariosData || [];
-
-    return beneficiarios.map((b) => ({
-      ...b,
-      expediente: {
-        nombre_completo:
-          b.expediente_resumen?.nombre_completo ?? "",
-        telefono:
-          b.expediente_resumen?.telefono ?? "",
-        fecha_nacimiento:
-          b.expediente_resumen?.fecha_nacimiento ?? "",
-        municipio:
-          b.expediente_resumen?.municipio ?? "--",
-      },
-      tieneDonador:
-        (b.donadores?.length || 0) > 0,
-    }));
-  }, [beneficiariosData]);
-
-  const periodosDisponibles = useMemo(() => {
-    const periodos = Array.isArray(periodosRes?.results)
-      ? periodosRes.results
-      : Array.isArray(periodosRes) ? periodosRes : [];
-    const base = [{ value: "actual", label: "Periodo actual" }];
-    const mapeados = periodos
-      .filter(p => p && (p.id_periodo || p.id))
-      .map((p) => ({
-        value: String(p.id_periodo || p.id),
-        label: p.ciclo_escolar || p.nombre || "Periodo Desconocido",
-      }));
-    return [...base, ...mapeados];
-  }, [periodosRes]);
-  const beneficiariosConPeriodo = useMemo(() => {
-    const periodos =
-      periodosRes?.results || periodosRes || [];
-    return data.map((item) => {
-      const seguimientos =
-        item.historial_seguimientos || [];
-      const ordenados = [...seguimientos].sort(
-        (a, b) => b.id_periodo - a.id_periodo
-      );
-      const seguimientoSeleccionado =
-        periodo === "actual"
-          ? ordenados[0]
-          : ordenados.find(
-            (s) =>
-              String(s.id_periodo) ===
-              String(periodo)
+    const beneficiarios = beneficiariosData?.results || beneficiariosData || [];
+    return beneficiarios.map((b) => {
+      const seguimiento = b.seguimiento || b.ultimo_seguimiento || null;
+      const datosEscolares = seguimiento?.datos_escolares || null;
+      let promedioFinal = null;
+      // obtener el promedio ya sea el que ya manda backend o el calculado
+      if (datosEscolares) {
+        if (datosEscolares.boletas?.length) {
+          // Formato para periodo específico 
+          const suma = datosEscolares.boletas.reduce(
+            (acc, x) => acc + Number(x.promedio_boleta || 0),
+            0
           );
-      const periodoEncontrado = periodos.find(
-        (p) =>
-          String(p.id_periodo || p.id) ===
-          String(seguimientoSeleccionado?.id_periodo)
-      );
+          promedioFinal = (suma / datosEscolares.boletas.length).toFixed(1);
+        } else if (datosEscolares.Promedio && datosEscolares.Promedio !== "Sin calificaciones") {
+          promedioFinal = Number(datosEscolares.Promedio).toFixed(1);
+        }
+      }
+      // para el nivel y grado
+      let nivelGradoFinal = "Sin datos";
+      if (datosEscolares) {
+        if (datosEscolares.id_escolaridad?.nivel_escolar) {
+          nivelGradoFinal = `${datosEscolares.id_escolaridad.nivel_escolar} ${datosEscolares.id_escolaridad.grado_escolar || ""}`;
+        } else if (datosEscolares.nivel) {
+          nivelGradoFinal = `${datosEscolares.nivel} ${datosEscolares.grado || ""}`;
+        }
+      }
 
-      const boletas =
-        seguimientoSeleccionado?.datos_escolares
-          ?.boletas || [];
-
-      const escolaridad =
-        seguimientoSeleccionado?.datos_escolares
-          ?.id_escolaridad;
-
-      let promedio = null;
-      if (boletas.length > 0) {
-        const suma = boletas.reduce(
-          (acc, b) =>
-            acc + Number(b.promedio_boleta || 0),
-          0
-        );
-        promedio = (
-          suma / boletas.length
-        ).toFixed(1);
+      // obtener el ciclo escolar al que pertenece
+      let cicloEscolarFinal = "--";
+      if (seguimiento) {
+        if (seguimiento.periodo?.ciclo_escolar) {
+          cicloEscolarFinal = seguimiento.periodo.ciclo_escolar;
+        } else if (seguimiento.id_periodo) {
+          const periodoEncontrado = periodosRes.find(p => p.id_periodo === seguimiento.id_periodo);
+          if (periodoEncontrado) {
+            cicloEscolarFinal = periodoEncontrado.ciclo_escolar;
+          }
+        }
       }
 
       return {
-        ...item,
-        estatus:
-          seguimientoSeleccionado?.estatus ||
-          "Sin seguimiento",
-
-        promedio,
-
-        nivelGrado: escolaridad
-          ? `${escolaridad.nivel_escolar} ${escolaridad.grado_escolar}`
-          : "Sin datos",
-
-        cicloEscolar:
-          periodoEncontrado?.ciclo_escolar ||
-          "Sin periodo",
-
-        idPeriodoSeguimiento:
-          seguimientoSeleccionado?.id_periodo,
+        ...b,
+        expediente: {
+          nombre_completo: b.expediente_resumen?.nombre_completo ?? "",
+          telefono: b.expediente_resumen?.telefono ?? "",
+          fecha_nacimiento: b.expediente_resumen?.fecha_nacimiento ?? "",
+          municipio: b.expediente_resumen?.municipio ?? "--",
+        },
+        seguimientoActivo: seguimiento,
+        estatusSeguimiento: seguimiento?.estatus ?? "Sin seguimiento",
+        nivelGrado: nivelGradoFinal.trim(),
+        promedio: promedioFinal,
+        cicloEscolar: cicloEscolarFinal,
+        tieneDonador: (b.donadores?.length || 0) > 0,
       };
     });
-  }, [data, periodosRes, periodo]);
+  }, [beneficiariosData, periodosRes]);
+
+  // filtros
   const filtered = useMemo(() => {
     const searchLower = search.trim().toLowerCase();
-    const statusFilter = filters.estatus?.toLowerCase();
+    return data.filter((item) => {
 
-    return beneficiariosConPeriodo.filter((item) => {
-      const nombre =
-        (item.expediente?.nombre_completo || "")
-          .toLowerCase();
-      const matchSearch =
-        !searchLower || nombre.includes(searchLower);
+      // si el usuario seleccionó un periodo específico y el alumno no pertenece a ese periodo (seguimiento null o inexistente).
+      if (periodo !== null) {
+        if (!item.seguimientoActivo || item.estatusSeguimiento === "Sin seguimiento") {
+          return false;
+        }
+      }
+      const nombre = item.expediente?.nombre_completo?.toLowerCase() || "";
+      const matchSearch = !searchLower || nombre.includes(searchLower);
+      const matchStatus = filters.estatus === "todos" || item.estatusSeguimiento?.toLowerCase() === filters.estatus.toLowerCase();
 
-      const status = String(item.estatus || "").toLowerCase();
-      const matchStatus =
-        statusFilter === "todos" || status === statusFilter;
-
-      const nivel = item.nivelGrado?.toLowerCase() || "";
-      const matchNivel =
-        filters.nivel === "todos" ||
-        nivel.includes(filters.nivel.toLowerCase());
+      const matchNivel = filters.nivel === "todos" || item.nivelGrado?.toLowerCase().includes(filters.nivel.toLowerCase());
+      let rendimiento = "sin_datos";
 
       const promedio = Number(item.promedio);
 
-      let rendimiento = "sin_datos";
-      if (!isNaN(promedio)) {
+      if (!isNaN(promedio) && item.promedio !== null) {
         if (promedio < 7.5) rendimiento = "regularizacion";
         else if (promedio < 8) rendimiento = "bajo";
         else rendimiento = "bueno";
       }
+      const matchRendimiento = filters.rendimiento === "todos" || rendimiento === filters.rendimiento;
+      const matchDonador = filters.donador === "todos" || (filters.donador === "con" && item.tieneDonador) ||(filters.donador === "sin" && !item.tieneDonador);
 
-      const matchRendimiento =
-        filters.rendimiento === "todos" ||
-        rendimiento === filters.rendimiento;
-
-      const matchDonador =
-        filters.donador === "todos" ||
-        (filters.donador === "con" && item.tieneDonador) ||
-        (filters.donador === "sin" && !item.tieneDonador);
-
-      const matchPeriodo =
-        periodo === "actual"
-          ? true
-          : item.historial_seguimientos?.some(
-            (s) =>
-              String(s.id_periodo) === String(periodo)
-          );
       return (
         matchSearch &&
         matchStatus &&
         matchNivel &&
         matchRendimiento &&
-        matchDonador &&
-        matchPeriodo
+        matchDonador
       );
     });
-  }, [beneficiariosConPeriodo, search, filters, periodo]);
+  }, [data, search, filters, periodo]); 
 
+  // paginacion
   const totalPages = Math.max(
     1,
     Math.ceil(filtered.length / PAGE_SIZE)
   );
-
   const safePage = Math.min(currentPage, totalPages);
-
   const paginated = useMemo(() => {
     const start = (safePage - 1) * PAGE_SIZE;
     return filtered.slice(start, start + PAGE_SIZE);
@@ -204,14 +140,14 @@ export const useBeneficiariosPage = (pageSize = 4) => {
     setCurrentPage(1);
 
     if (key === "periodo") {
-      setPeriodo(value);
+      setPeriodo(value === "" || value === "actual" ? null : value);
     }
   };
 
   const handleClearFilters = () => {
     setSearch("");
     setFilters(INITIAL_FILTERS);
-    setPeriodo("actual"); // ✔
+    setPeriodo(null);
     setCurrentPage(1);
   };
 
@@ -220,18 +156,22 @@ export const useBeneficiariosPage = (pageSize = 4) => {
     totalCount: filtered.length,
     loading: isLoading,
     error: error?.message || null,
+
     search,
     filters,
+
     currentPage: safePage,
     totalPages,
+
     handleSearchChange,
     handleFilterChange,
     handleClearFilters,
     setCurrentPage,
+
     PAGE_SIZE,
-    periodosDisponibles,
+
+    periodosDisponibles: periodosRes,
     periodo,
     setPeriodo,
   };
 };
- 

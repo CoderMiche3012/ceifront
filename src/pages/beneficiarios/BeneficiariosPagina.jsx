@@ -10,16 +10,11 @@ import PaginacionTabla from "../../components/tablas/PaginacionTabla";
 import { useBeneficiariosPage } from "../../features/beneficiarios/hooks/useBeneficiariosPage";
 import { usePermissions } from "../../context/PermissionsContext";
 
-
 export default function BeneficiariosPagina() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const {
-    hasModulePermission,
-    loading: isPermsLoading,
-  } = usePermissions();
-
+ 
+  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const {hasModulePermission,loading: isPermsLoading,} = usePermissions();
   const canCreate = hasModulePermission("beneficiarios", "crear");
-
   const {
     filters,
     beneficiarios,
@@ -35,18 +30,18 @@ export default function BeneficiariosPagina() {
     PAGE_SIZE,
     periodosDisponibles,
     periodo,
-    setPeriodo
   } = useBeneficiariosPage();
+
   const location = useLocation();
   const navigate = useNavigate();
+
   useEffect(() => {
     if (location.state?.openModal) {
       setIsModalOpen(true);
-
-      // Limpiamos el estado del historial para que no se reabra al actualizar la página
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, navigate]);
+
   const handleCreateSuccess = () => {
     setIsModalOpen(false);
     setCurrentPage(1);
@@ -56,9 +51,9 @@ export default function BeneficiariosPagina() {
     <section className="space-y-6">
       <EncabezadoPagina
         titulo="Gestión de Beneficiarios"
-        descripcion="Monitoreo y organizacion de beneficiarios"
+        descripcion="Monitoreo y organización de beneficiarios"
         accion={
-          canCreate && (
+          !isPermsLoading && canCreate && (
             <Boton
               icon={<UserPlus size={18} />}
               onClick={() => setIsModalOpen(true)}
@@ -68,29 +63,31 @@ export default function BeneficiariosPagina() {
           )
         }
       />
+
       <div className="rounded-[24px] border border-[#dbe3eb] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] relative">
+        {/* Componente de Filtros y Búsqueda */}
         <BeneficiarioFiltros
           search={search}
           filters={filters}
           onSearchChange={handleSearchChange}
-          onFilterChange={(key, value) => {
-            if (key === "periodo") {
-              setPeriodo(value);
-            } else {
-              handleFilterChange(key, value);
-            }
-          }}
+          onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
           periodos={periodosDisponibles}
           periodo={periodo}
         />
-        <BeneficiarioTabla beneficiarios={beneficiarios} periodo={periodo} />
+
+        {/* Tabla de registros filtrados */}
+        <BeneficiarioTabla 
+          beneficiarios={beneficiarios} 
+          periodo={periodo} 
+        />
         {loading && (
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center justify-center gap-2 py-12 absolute inset-0 bg-white/70 rounded-[24px] z-10">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
-            <span className="text-sm text-slate-500">Cargando beneficiarios...</span>
+            <span className="text-sm font-medium text-slate-500">Cargando beneficiarios...</span>
           </div>
         )}
+        {/* Paginación de la tabla */}
         {!loading && totalPages >= 1 && (
           <PaginacionTabla
             currentPage={currentPage}
@@ -101,6 +98,7 @@ export default function BeneficiariosPagina() {
           />
         )}
       </div>
+      {/* Modal para inserción de nuevos beneficiarios */}
       <BeneficiarioCrearModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}

@@ -84,11 +84,10 @@ export default function SeguimientoLinea({ data }) {
                   </button>
                 </div>
 
-                <span className={`inline-block text-xs font-semibold px-2 py-1 rounded-full mb-2 ${
-                  esReciente
+                <span className={`inline-block text-xs font-semibold px-2 py-1 rounded-full mb-2 ${esReciente
                     ? "bg-teal-100 text-teal-700"
                     : "bg-slate-100 text-slate-600"
-                }`}>
+                  }`}>
                   {item.estatus}
                 </span>
 
@@ -114,146 +113,147 @@ export default function SeguimientoLinea({ data }) {
           MODAL CREAR
       ========================= */}
       {crearFlow.mostrarSelector && (
-  <div className={ui.modal.formOverlay}>
-    <div className="w-full max-w-lg">
-      <div className={ui.modal.formContainer}>
+        <div className={ui.modal.formOverlay}>
+          <div className="w-full max-w-lg">
+            <div className={ui.modal.formContainer}>
 
-        {/* HEADER */}
-        <div className={ui.modal.formHeader}>
-          <div className={`${ui.modal.iconWrapper} bg-teal-100 text-teal-600`}>
-            <Plus className="w-5 h-5" />
-          </div>
+              {/* HEADER */}
+              <div className={ui.modal.formHeader}>
+                <div className={`${ui.modal.iconWrapper} bg-teal-100 text-teal-600`}>
+                  <Plus className="w-5 h-5" />
+                </div>
 
-          <div className="flex-1">
-            <h2 className={ui.modal.title}>Agregar seguimiento</h2>
-            <p className={ui.modal.description}>
-              Selecciona un periodo escolar
-            </p>
-          </div>
+                <div className="flex-1">
+                  <h2 className={ui.modal.title}>Agregar seguimiento</h2>
+                  <p className={ui.modal.description}>
+                    Selecciona un periodo escolar
+                  </p>
+                </div>
 
-          <button
-            onClick={() => crearFlow.setMostrarSelector(false)}
-            className="p-2 rounded-xl hover:bg-slate-100"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* BODY */}
-        <div className={ui.modal.formBody}>
-          <div className={ui.modal.formScroll}>
-
-            {!periodosDisponibles.length ? (
-              <p className="text-sm text-slate-500 text-center">
-                No hay periodos disponibles
-              </p>
-            ) : (
-              periodosDisponibles.map((p) => (
                 <button
-                  key={p.id_periodo}
-                  onClick={() => crearFlow.handleCrear(p.id_periodo)}
-                  className="w-full flex justify-between p-4 border rounded-xl hover:bg-teal-50"
+                  onClick={() => crearFlow.setMostrarSelector(false)}
+                  className="p-2 rounded-xl hover:bg-slate-100"
                 >
-                  <span className="font-semibold">{p.ciclo_escolar}</span>
-                  <Plus />
+                  <X className="w-5 h-5" />
                 </button>
-              ))
-            )}
+              </div>
 
+              {/* BODY */}
+              <div className={ui.modal.formBody}>
+                <div className={ui.modal.formScroll}>
+
+                  {!periodosDisponibles.length ? (
+                    <p className="text-sm text-slate-500 text-center">
+                      No hay periodos disponibles
+                    </p>
+                  ) : (
+                    periodosDisponibles.map((p) => (
+                      <button
+                        key={p.id_periodo}
+                        onClick={() => crearFlow.handleCrear(p.id_periodo)}
+                        className="w-full flex justify-between p-4 border rounded-xl hover:bg-teal-50"
+                      >
+                        <span className="font-semibold">{p.ciclo_escolar}</span>
+                        <Plus />
+                      </button>
+                    ))
+                  )}
+
+                </div>
+
+
+                {/* FOOTER (IGUAL QUE TU OTRO MODAL) */}
+                <div className={ui.modal.formActions}>
+                  <Boton
+                    variant="secondary"
+                    onClick={() => crearFlow.setMostrarSelector(false)}
+                  >
+                    Cancelar
+                  </Boton>
+                </div>
+              </div>
+            </div>
           </div>
-        
-
-        {/* FOOTER (IGUAL QUE TU OTRO MODAL) */}
-        <div className={ui.modal.formActions}>
-          <Boton
-            variant="secondary"
-            onClick={() => crearFlow.setMostrarSelector(false)}
-          >
-            Cancelar
-          </Boton>
         </div>
-</div>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
       {/* =========================
           MODAL EDITAR
       ========================= */}
       {editarFlow.editando && (
-  <div className={ui.modal.formOverlay}>
-    <div className="w-full max-w-md">
-      <div className={ui.modal.formContainer}>
+        <div className={ui.modal.formOverlay}>
+          <div className="w-full max-w-md">
+            <div className={ui.modal.formContainer}>
 
-        {/* HEADER */}
-        <div className={ui.modal.formHeader}>
-          <div className={`${ui.modal.iconWrapper} bg-teal-100 text-teal-600`}>
-            <PencilLine className="w-5 h-5" />
+              {/* HEADER */}
+              <div className={ui.modal.formHeader}>
+                <div className={`${ui.modal.iconWrapper} bg-teal-100 text-teal-600`}>
+                  <PencilLine className="w-5 h-5" />
+                </div>
+
+                <div className="flex-1">
+                  <h2 className={ui.modal.title}>Editar seguimiento</h2>
+                  <p className={ui.modal.description}>
+                    Modifica la información
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => editarFlow.setEditando(null)}
+                  className="p-2 rounded-xl hover:bg-slate-100"
+                >
+                  <X />
+                </button>
+              </div>
+
+              {/* BODY */}
+
+              <div className={ui.modal.formBody}>
+                <div className={ui.modal.formScroll}>
+
+                  <Alerta mensaje={editarFlow.error} />
+
+                  <Field label="Nota">
+                    <Input
+                      as="textarea"
+                      value={editarFlow.nota}
+                      onChange={(e) => editarFlow.setNota(e.target.value)}
+                      rows={4}
+                    />
+                  </Field>
+
+                  <Field label="Estatus">
+                    <Select
+                      value={editarFlow.estatus}
+                      onChange={(e) => editarFlow.setEstatus(e.target.value)}
+                    >
+                      <option value="Activo">Activo</option>
+                      <option value="Inactivo">Inactivo</option>
+                      <option value="Finalizado">Graduado</option>
+                    </Select>
+                  </Field>
+                </div>
+
+
+                {/* FOOTER (MISMO PATRÓN QUE TU OTRO MODAL) */}
+                <div className={ui.modal.formActions}>
+
+                  <Boton
+                    variant="secondary"
+                    onClick={() => editarFlow.setEditando(null)}
+                  >
+                    Cancelar
+                  </Boton>
+
+                  <Boton onClick={editarFlow.guardarEdicion}>
+                    Guardar
+                  </Boton>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <div className="flex-1">
-            <h2 className={ui.modal.title}>Editar seguimiento</h2>
-            <p className={ui.modal.description}>
-              Modifica la información
-            </p>
-          </div>
-
-          <button
-            onClick={() => editarFlow.setEditando(null)}
-            className="p-2 rounded-xl hover:bg-slate-100"
-          >
-            <X />
-          </button>
         </div>
-
-        {/* BODY */}
-
-        <div className={ui.modal.formBody}>
-          <div className={ui.modal.formScroll}>
-
-            <Alerta mensaje={editarFlow.error} />
-
-            <Field label="Nota">
-              <Input
-                as="textarea"
-                value={editarFlow.nota}
-                onChange={(e) => editarFlow.setNota(e.target.value)}
-                rows={4}
-              />
-            </Field>
-
-            <Field label="Estatus">
-              <Select
-                value={editarFlow.estatus}
-                onChange={(e) => editarFlow.setEstatus(e.target.value)}
-              >
-                <option value="Activo">Activo</option>
-                <option value="Inactivo">Inactivo</option>
-              </Select>
-            </Field>
-          </div>
-        
-
-        {/* FOOTER (MISMO PATRÓN QUE TU OTRO MODAL) */}
-              <div className={ui.modal.formActions}>
-
-          <Boton
-            variant="secondary"
-            onClick={() => editarFlow.setEditando(null)}
-          >
-            Cancelar
-          </Boton>
-
-          <Boton onClick={editarFlow.guardarEdicion}>
-            Guardar
-          </Boton>
-        </div>
-</div>
-      </div>
-    </div>
-  </div>
-)}
+      )}
       {/* MODALES EXISTENTES */}
       <ModalConfirmacion
         open={!!crearFlow.confirmar}

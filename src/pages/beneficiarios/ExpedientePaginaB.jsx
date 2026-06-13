@@ -1,11 +1,10 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom"; // 👈 Importamos useSearchParams
+import { useEffect } from "react";
 import { Calendar, ArrowLeft, RefreshCw, AlertCircle, Download } from "lucide-react";
 import AvatarGeneral from "../../components/shared/AvatarGeneral";
 import TabsExpediente from "../../features/beneficiarios/components/detalles/TabsExpediente";
 import DatosGenerales from "../../features/beneficiarios/components/detalles/DatosGenerales";
 import { useExpedienteData } from "../../features/beneficiarios/hooks/useExpedienteData";
-import { useBeneficiariosPage } from "../../features/beneficiarios/hooks/useBeneficiariosPage";
-import { useQueryClient } from "@tanstack/react-query";
 import FamiliaCard from "../../features/beneficiarios/components/detalles/FamiliaCard";
 import HistorialEscolarCard from "../../features/beneficiarios/components/detalles/seguimiento/informacionEscolar/HistorialEscolar";
 import HistorialObligaciones from "../../features/beneficiarios/components/detalles/seguimiento/Obligaciones/HistorialObligaciones";
@@ -17,10 +16,10 @@ import EstudioSos from "../../features/beneficiarios/components/detalles/Estudio
 import { calcularEdad } from "../../utils/formatters";
 import { generarExpedientePDF } from "../../utils/generarExpedientePDF";
 
-
 export default function ExpedientePagina() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams(); // 👈 Instanciamos searchParams
 
   const {
     data,
@@ -29,12 +28,27 @@ export default function ExpedientePagina() {
     error,
     tab,
     setTab,
-
     refetch,
   } = useExpedienteData(id);
-  const edad = calcularEdad(data?.fecha_nacimiento)
 
-  // Validación de ID (se queda igual)
+  // 🟢 SINCRONIZACIÓN DE URL A TU ESTADO INTERNO
+  // Si la URL trae un tab específico al montar el componente, lo asignamos a tu hook
+  useEffect(() => {
+    const tabUrl = searchParams.get("tab");
+    if (tabUrl && tabUrl !== tab) {
+      setTab(tabUrl);
+    }
+  }, [searchParams]);
+
+  // 🟢 SINCRONIZACIÓN DE TU ESTADO INTERNO A LA URL
+  // Si el usuario da clic manual a un Tab, actualizamos la URL para mantener la limpieza del flujo
+  const handleTabChange = (nuevoTab) => {
+    setTab(nuevoTab);
+    setSearchParams({ tab: nuevoTab });
+  };
+
+  const edad = calcularEdad(data?.fecha_nacimiento);
+
   if (!id) return <div className="p-10 text-center text-red-500">ID inválido</div>;
 
   if (loading) {
@@ -51,17 +65,9 @@ export default function ExpedientePagina() {
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4 p-10 bg-red-50 rounded-2xl border border-red-100">
         <AlertCircle className="text-red-500" size={48} />
         <div className="text-center">
-          <h3 className="text-lg font-bold text-red-800">Hubo un problema</h3>
+          <h3 className="text-lg font-bold text-red-800">Hubo un problem</h3>
           <p className="text-red-600">{error}</p>
         </div>
-        <button
-          onClick={() => generarExpedientePDF(data, edad)}
-          title="Descargar expediente PDF"
-          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
-        >
-          <Download size={20} />
-        </button>
-
         <button
           onClick={() => refetch()}
           className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
@@ -84,7 +90,6 @@ export default function ExpedientePagina() {
     );
   }
 
-  // Lógica de visualización (Se mantiene igual, ¡tu diseño es excelente!)
   const nombreCompleto = `${data.nombre} ${data.apellido_p} ${data.apellido_m || ""}`.trim();
 
   const formatearFecha = (fecha) => {
@@ -104,9 +109,8 @@ export default function ExpedientePagina() {
       </button>
 
       <header className="relative rounded-2xl bg-white p-6 shadow-sm border border-slate-200 overflow-hidden">
-        {/* Overlay de actualización sutil */}
         {isFetching && (
-          <div className="absolute inset-0 z-10 bg-white/40 backdrop-blur-[1px] flex items-center justify-center animate-in fade-in">
+          <div className="absolute inset-0 z-10 bg-white/40 backdrop-blur-[1px] flex items-center justify-center">
             <div className="flex items-center gap-3 px-4 py-2 bg-white/90 shadow-lg rounded-full border border-slate-100">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-teal-600"></div>
               <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">Sincronizando...</span>
@@ -139,19 +143,17 @@ export default function ExpedientePagina() {
           >
             <Download size={20} />
           </button>
-
         </div>
       </header>
 
       <nav className="border-b border-slate-200">
-        <TabsExpediente tab={tab} setTab={setTab} />
+        {/* 👈 Pasamos el nuevo manejador interceptor */}
+        <TabsExpediente tab={tab} setTab={handleTabChange} /> 
       </nav>
 
       <main className="min-h-[400px] mt-4">
         {tab === "generales" && <DatosGenerales data={data} />}
-
-        {tab === "familia" && (<FamiliaCard data={data} />)}
-
+        {tab === "familia" && <FamiliaCard data={data} />}
         {tab === "escuela" && <HistorialEscolarCard data={data} />}
         {tab === "obligaciones" && <HistorialObligaciones data={data} />}
         {tab === "fotografias" && <HistorialFotografia data={data} />}
@@ -159,7 +161,6 @@ export default function ExpedientePagina() {
         {tab === "apoyos" && <HistorialEconomicoCard data={data} />}
         {tab === "asistencias" && <HistorialServicios data={data} />}
         {tab === "estudio" && <EstudioSos data={data} />}
-
       </main>
     </section>
   );

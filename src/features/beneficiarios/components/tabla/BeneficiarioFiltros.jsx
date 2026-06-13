@@ -13,18 +13,16 @@ export default function BeneficiarioFiltros({
     {
       key: "periodo",
       label: "Periodo",
-      placeholder: "Seleccionar Periodo", 
-      options: periodos
-        .filter((p) => p.value !== "actual" && p.value !== undefined && p.label) 
-        .map((p) => ({
-          value: String(p.value),
-          label: String(p.label),
-        })),
+      placeholder: "Último Periodo (Por defecto)",
+      options: periodos.map((p) => ({
+        value: String(p.id_periodo),
+        label: String(p.ciclo_escolar),
+      })),
     },
     {
       key: "donador",
       label: "Donador",
-      placeholder: "Todos los Donadores", 
+      placeholder: "Todos los Donadores",
       options: [
         { value: "con", label: "Con donador" },
         { value: "sin", label: "Sin donador" },
@@ -33,7 +31,7 @@ export default function BeneficiarioFiltros({
     {
       key: "nivel",
       label: "Nivel",
-      placeholder: "Todos los Niveles", 
+      placeholder: "Todos los Niveles",
       options: [
         { value: "preescolar", label: "Preescolar" },
         { value: "primaria", label: "Primaria" },
@@ -45,7 +43,7 @@ export default function BeneficiarioFiltros({
     {
       key: "rendimiento",
       label: "Rendimiento",
-      placeholder: "Todos los Rendimientos", 
+      placeholder: "Todos los Rendimientos",
       options: [
         { value: "bueno", label: "Bueno" },
         { value: "bajo", label: "Bajo" },
@@ -62,14 +60,18 @@ export default function BeneficiarioFiltros({
       onClearFilters={onClearFilters}
       filters={opcionesFiltros.map((f) => ({
         ...f,
-        value: 
-          f.key === "periodo" 
-            ? (periodo === "actual" ? "" : periodo)
+        // valor actual del filtro:
+        value:
+          f.key === "periodo"
+            ? (periodo ?? "") // Si periodo es null, le pasamos "" al select para que muestre el placeholder
             : (filters[f.key] === "todos" ? "" : (filters[f.key] ?? "")),
+        
         onChange: (val) => {
+          // Si el usuario selecciona la opción por defecto (vacía), se manda el reset correspondiente
           const finalVal = val === "" 
-            ? (f.key === "periodo" ? "actual" : "todos") 
+            ? (f.key === "periodo" ? "" : "todos") 
             : val;
+          
           onFilterChange(f.key, finalVal);
         },
       }))}

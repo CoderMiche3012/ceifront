@@ -35,7 +35,7 @@ export const eliminarBeneficiario = async (id) => {
 };
 
 export const obtenerBeneficiariosActivos = async () => {
-  const { data } = await API.get("/api/beneficiarios/beneficiarios/activos/ ");
+  const { data } = await API.get("/api/beneficiarios/beneficiarios/activos/");
   return Array.isArray(data) ? data : data?.data ?? [];
 };
 
@@ -50,4 +50,17 @@ export const obtenerAntecedentesIngreso = async (idBeneficiario) => {
     const errorData = error.response?.data;
     throw formatError(errorData, "Error al obtener antecedentes de ingreso");
   }
+};
+
+// obtiene a los beneficiarios que tienen un seguimiento en el periodo selccionado solo manda ese seguimiento
+export const obtenerBeneficiariosPorPeriodo = async ({periodo,}) => {
+  const { data } = await API.get(`${BASE_URL}/`, {
+    params: { periodo },
+  });
+  return data;
+};
+// manda los datos del ultimo periodo que tiene registrado cada beneficiario
+export const obtenerBeneficiariosUltimoPorPeriodo = async () => {
+  const { data } = await API.get("/api/beneficiarios/beneficiarios/resumen/");
+  return Array.isArray(data) ? data : data?.data ?? [];
 };

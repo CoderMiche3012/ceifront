@@ -7,7 +7,9 @@ import {
   eliminarBeneficiario,
   obtenerBeneficiariosActivos,
   obtenerBeneficiarioId,
-  obtenerAntecedentesIngreso
+  obtenerAntecedentesIngreso,
+  obtenerBeneficiariosPorPeriodo,
+  obtenerBeneficiariosUltimoPorPeriodo
 } from "../services/beneficiariosService";
 
 import { beneficiariosKeys } from "../services/beneficiariosKeys";
@@ -15,10 +17,18 @@ import { expedientesKeys } from "../../expedientes/services/expedientesKeys";
 
 
 // obtener beneficiarios
-export function useBeneficiarios() {
+export function useBeneficiarios(periodo) {
   return useQuery({
-    queryKey: beneficiariosKeys.all,
-    queryFn: obtenerBeneficiarios,
+    queryKey: periodo
+      ? beneficiariosKeys.byPeriodo(periodo)
+      : beneficiariosKeys.lastByPeriod(),
+
+    queryFn: () =>
+      periodo
+        ? obtenerBeneficiariosPorPeriodo({ periodo })
+        : obtenerBeneficiariosUltimoPorPeriodo(),
+
+    enabled: true,
   });
 }
 export function useBeneficiario(id) {
@@ -95,3 +105,19 @@ export const useAntecedentesIngreso = (idBeneficiario) => {
     enabled: !!idBeneficiario,
   });
 };
+// obtiene a los beneficiarios que tienen un seguimiento en el periodo selccionado solo manda ese seguimiento
+export function useBeneficiariosPorPeriodo({ periodo }) {
+  return useQuery({
+    queryKey: beneficiariosKeys.byPeriodo(periodo),
+    queryFn: () => obtenerBeneficiariosPorPeriodo({ periodo }),
+    enabled: !!periodo,
+  });
+}
+
+// manda los datos del ultimo periodo que tiene registrado cada beneficiario
+export function useBeneficiariosUltimoPorPeriodo() {
+  return useQuery({
+    queryKey: beneficiariosKeys.lastByPeriod(),
+    queryFn: obtenerBeneficiariosUltimoPorPeriodo,
+  });
+}
