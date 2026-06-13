@@ -9,7 +9,7 @@ import { aplicarEstilosExcelGlobal } from "../../reporteUtils";
 export const generarExcelEstrategia = async (datos, logoBase64, meta = {}) => {
   const periodoRaw = (meta.periodoLabel || meta.periodo || "General").toString().trim();
   const titulo = `REPORTE DE BENEFICIARIOS - ${periodoRaw}`;
-
+  const colorTitulo = "0D6F6B";
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Beneficiarios");
 
@@ -44,25 +44,318 @@ export const generarExcelEstrategia = async (datos, logoBase64, meta = {}) => {
 
   await aplicarEstilosExcelGlobal(worksheet, titulo, workbook, logoBase64);
 
-  // --- HOJA RESUMEN ---
-  const resumen = workbook.addWorksheet("Resumen");
-  resumen.columns = [{ width: 30 }, { width: 20 }];
+  // ==========================================
+  // DATOS PARA RESUMEN
+  // ==========================================
 
-  const addRowStyle = (values, bold = false, size = 11) => {
-    const row = resumen.addRow(values);
-    row.font = { bold, size };
-    return row;
+  const activos = datos.filter(
+    d => d.estatus?.toLowerCase() === "activo"
+  ).length;
+
+  const graduados = datos.filter(
+    d =>
+      d.estatus?.toLowerCase() === "graduado" ||
+      d.estatus?.toLowerCase() === "finalizado"
+  ).length;
+
+  const inactivos = datos.filter(
+    d => d.estatus?.toLowerCase() === "inactivo"
+  ).length;
+
+  const niveles = {};
+
+  datos.forEach((b) => {
+    let nivel = "Sin Registro";
+
+    const escolaridad =
+      b.escolaridad?.toLowerCase() || "";
+
+    if (escolaridad.includes("preescolar")) {
+      nivel = "Preescolar";
+    } else if (escolaridad.includes("primaria")) {
+      nivel = "Primaria";
+    } else if (escolaridad.includes("secundaria")) {
+      nivel = "Secundaria";
+    } else if (
+      escolaridad.includes("preparatoria") ||
+      escolaridad.includes("bachillerato")
+    ) {
+      nivel = "Bachillerato";
+    } else if (
+      escolaridad.includes("universidad") ||
+      escolaridad.includes("licenciatura")
+    ) {
+      nivel = "Universidad";
+    }
+
+    niveles[nivel] =
+      (niveles[nivel] || 0) + 1;
+  });
+
+  const edades = {
+    "0-5": 0,
+    "6-10": 0,
+    "11-15": 0,
+    "16-18": 0,
+    "19+": 0,
   };
 
-  addRowStyle(["DETALLE DEL REPORTE"], true, 14);
-  resumen.addRow(["Generado el:", new Date().toLocaleDateString()]);
-  resumen.addRow(["Periodo seleccionado:", periodoRaw]);
-  resumen.addRow([]);
-  addRowStyle(["MÉTRICAS", "TOTAL"], true);
-  resumen.addRow(["Total de Beneficiarios", datos.length]);
-  resumen.addRow(["Activos", datos.filter(d => d.estatus === "Activo").length]);
-  resumen.addRow(["Graduados", datos.filter(d => d.estatus === "Graduado").length]);
-  resumen.addRow(["Pendientes", datos.filter(d => !["Activo", "Graduado"].includes(d.estatus)).length]);
+  datos.forEach((b) => {
+    const edad = Number(b.edad);
+
+    if (isNaN(edad)) return;
+
+    if (edad <= 5) edades["0-5"]++;
+    else if (edad <= 10) edades["6-10"]++;
+    else if (edad <= 15) edades["11-15"]++;
+    else if (edad <= 18) edades["16-18"]++;
+    else edades["19+"]++;
+  });
+
+  // ==========================================
+  // HOJA RESUMEN
+  // ==========================================
+
+  // ==========================================
+// HOJA RESUMEN
+// ==========================================
+const resumen = workbook.addWorksheet("Resumen");
+  const tituloresumen = `RESUMEN DE BENEFICIARIOS - ${periodoRaw}`;
+
+await aplicarEstilosExcelGlobal(
+  resumen,
+  tituloresumen,
+  workbook,
+  logoBase64,
+  {
+    usarHeader: true,
+    usarTabla: false
+  }
+);
+
+// ==========================================
+// COLUMNAS (ZONA DASHBOARD)
+// ==========================================
+resumen.columns = [
+  { width: 5 },   // A espacio
+  { width: 5 },   // B espacio
+  { width: 28 },  // C bloque 1
+  { width: 18 },  // D bloque 1
+  { width: 5 },   // E espacio
+  { width: 28 },  // F bloque 2
+  { width: 18 },  // G bloque 2
+  { width: 5 },   // H espacio
+  { width: 28 },  // I bloque 3
+  { width: 18 },  // J bloque 3
+];
+
+
+// ==========================================
+// TITULOS DE BLOQUES (MISMA FILA)
+// ==========================================
+
+// DATOS GENERALES
+resumen.getCell("C7").value = "DATOS GENERALES";
+resumen.mergeCells("C7:D7");
+
+// NIVEL EDUCATIVO
+resumen.getCell("F7").value = "NIVEL EDUCATIVO";
+resumen.mergeCells("F7:G7");
+
+// EDADES
+resumen.getCell("I7").value = "RANGOS DE EDAD";
+resumen.mergeCells("I7:J7");
+
+// estilos bloques
+["C7", "F7", "I7"].forEach((c) => {
+  resumen.getCell(c).font = {
+    bold: true,
+    color: { argb: "FFFFFF" },
+  };
+
+  resumen.getCell(c).fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "0D6F6B" },
+  };
+
+  resumen.getCell(c).alignment = {
+    horizontal: "center",
+    vertical: "middle",
+  };
+});
+
+// ==========================================
+// SUBHEADERS
+// ==========================================
+
+// Datos generales
+resumen.getCell("C8").value = "Concepto";
+resumen.getCell("D8").value = "Cantidad";
+
+// Nivel educativo
+resumen.getCell("F8").value = "Nivel";
+resumen.getCell("G8").value = "Beneficiarios";
+
+// Edad
+resumen.getCell("I8").value = "Rango";
+resumen.getCell("J8").value = "Beneficiarios";
+
+// ==========================================
+// DATOS GENERALES
+// ==========================================
+resumen.getCell("C9").value = "Periodo";
+resumen.getCell("D9").value = periodoRaw;
+
+resumen.getCell("C10").value = "Total";
+resumen.getCell("D10").value = datos.length;
+
+resumen.getCell("C11").value = "Activos";
+resumen.getCell("D11").value = activos;
+
+resumen.getCell("C12").value = "Graduados";
+resumen.getCell("D12").value = graduados;
+
+resumen.getCell("C13").value = "Inactivos";
+resumen.getCell("D13").value = inactivos;
+
+// ==========================================
+// NIVEL EDUCATIVO
+// ==========================================
+let filaNivel = 9;
+
+Object.entries(niveles).forEach(([nivel, cantidad]) => {
+  resumen.getCell(`F${filaNivel}`).value = nivel;
+  resumen.getCell(`G${filaNivel}`).value = cantidad;
+  filaNivel++;
+});
+
+// ==========================================
+// EDADES
+// ==========================================
+let filaEdad = 9;
+
+Object.entries(edades).forEach(([rango, cantidad]) => {
+  resumen.getCell(`I${filaEdad}`).value = rango;
+  resumen.getCell(`J${filaEdad}`).value = cantidad;
+  filaEdad++;
+});
+
+  // ==========================================
+// HOJA MUNICIPIOS
+// ==========================================
+// ==========================================
+// HOJA MUNICIPIOS
+// ==========================================
+
+const hojaMunicipios = workbook.addWorksheet("Municipios");
+
+await aplicarEstilosExcelGlobal(
+  hojaMunicipios,
+  titulo,
+  workbook,
+  logoBase64
+);
+
+// ==========================================
+// COLUMNAS (ESPACIO + F Y G)
+// ==========================================
+
+hojaMunicipios.columns = [
+  { width: 15 }, // A
+  { width: 15 }, // B
+  { width: 15 }, // C
+  { width: 15 }, // D
+  { width: 15 }, // E (espacio)
+  { width: 40 }, // F (Municipio)
+  { width: 25 }, // G (Cantidad)
+];
+
+// ==========================================
+// TÍTULO
+// ==========================================
+
+hojaMunicipios.mergeCells("F7:G7");
+
+hojaMunicipios.getCell("F7").value =
+  "Distribución de Beneficiarios por Municipio";
+
+hojaMunicipios.getCell("F7").alignment = {
+  horizontal: "center",
+  vertical: "middle",
+};
+
+hojaMunicipios.getCell("F7").font = {
+  bold: true,
+  size: 14,
+};
+
+// ==========================================
+// ENCABEZADOS
+// ==========================================
+
+hojaMunicipios.getCell("F9").value = "Municipio";
+hojaMunicipios.getCell("G9").value = "Cantidad Beneficiarios";
+
+// ✔️ AUTO FILTER CORRECTO
+hojaMunicipios.autoFilter = {
+  from: { row: 9, column: 6 }, // F
+  to: { row: 9, column: 7 },   // G
+};
+
+["F9", "G9"].forEach((celdaRef) => {
+  const cell = hojaMunicipios.getCell(celdaRef);
+
+  cell.font = {
+    bold: true,
+    color: { argb: "FFFFFF" },
+  };
+
+  cell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: colorTitulo },
+  };
+
+  cell.alignment = {
+    horizontal: "center",
+    vertical: "middle",
+  };
+});
+
+// ==========================================
+// DATOS
+// ==========================================
+
+const municipios = {};
+
+datos.forEach((b) => {
+  const municipio = b.municipio || "Sin Registro";
+
+  municipios[municipio] =
+    (municipios[municipio] || 0) + 1;
+});
+
+let filaMunicipio = 10;
+
+Object.entries(municipios)
+  .sort((a, b) => b[1] - a[1])
+  .forEach(([municipio, cantidad]) => {
+    hojaMunicipios.getCell(`F${filaMunicipio}`).value = municipio;
+    hojaMunicipios.getCell(`G${filaMunicipio}`).value = cantidad;
+
+    hojaMunicipios.getCell(`F${filaMunicipio}`).alignment = {
+      vertical: "middle",
+    };
+
+    hojaMunicipios.getCell(`G${filaMunicipio}`).alignment = {
+      horizontal: "center",
+      vertical: "middle",
+    };
+
+    filaMunicipio++;
+  });
+
 
   return await workbook.xlsx.writeBuffer();
 };
@@ -173,108 +466,73 @@ export const generarPdfEstrategia = async (datos, logoBase64, meta = {}) => {
     ]),
   });
 
-  // ==========================================
-  // RESUMEN EJECUTIVO
-  // ==========================================
 
-  if (meta.resumen) {
-    doc.addPage();
-
-    doc.setFontSize(18);
-    doc.setTextColor(13, 111, 107);
-    doc.text("Resumen Ejecutivo", 14, 20);
-
-    autoTable(doc, {
-      startY: 30,
-      theme: "grid",
-
-      head: [["Indicador", "Total"]],
-
-      body: [
-        ["Beneficiarios", meta.resumen.total],
-        ["Activos", meta.resumen.activos],
-        ["Graduados", meta.resumen.graduados],
-        ["Inactivos", meta.resumen.inactivos],
-        ["En Pausa", meta.resumen.pausa],
-      ],
-    });
-  }
-
-  // ==========================================
-  // GRÁFICO DE ESTATUS
-  // ==========================================
-
-  // ==========================================
-// GRÁFICO DE NIVEL ESCOLAR
+// ==========================================
+// ÚLTIMA HOJA: GRÁFICOS
 // ==========================================
 
-if (meta.graficaEscolaridad) {
+if (meta.graficaEscolaridad || meta.graficaEdades) {
   doc.addPage();
 
   doc.setFontSize(16);
   doc.setTextColor(13, 111, 107);
-  doc.text("Distribución por Nivel Escolar", 14, 20);
+  doc.text("Análisis General del Sistema", 14, 20);
+
+  // 🔵 GRÁFICA NIVEL ESCOLAR (IZQUIERDA)
+ // 🔵 GRÁFICA NIVEL ESCOLAR
+if (meta.graficaEscolaridad) {
+  doc.setFontSize(12);
+  doc.text("Nivel Escolar", 20, 30);
 
   doc.addImage(
     meta.graficaEscolaridad,
     "PNG",
     20,
-    35,
-    220,
-    110
+    40,
+    160,
+    160
   );
 }
 
-  // ==========================================
-  // GRÁFICO DE EDADES
-  // ==========================================
+// 🔵 GRÁFICA EDADES
+if (meta.graficaEdades) {
+  doc.setFontSize(12);
+  doc.text("Rangos de Edad", 230, 30);
 
-  if (meta.graficaEdades) {
-    doc.addPage();
-
-    doc.setFontSize(16);
-    doc.setTextColor(13, 111, 107);
-    doc.text("Distribución por Rangos de Edad", 14, 20);
-
-    doc.addImage(
-      meta.graficaEdades,
-      "PNG",
-      20,
-      35,
-      220,
-      110
-    );
-  }
-
+  doc.addImage(
+    meta.graficaEdades,
+    "PNG",
+    220,
+    40,
+    180,
+    140
+  );
+}
+}
   // ==========================================
   // DISTRIBUCIÓN POR MUNICIPIO
   // ==========================================
 
-  if (meta.municipiosTabla?.length) {
-    doc.addPage();
+ // ==========================================
+// GRÁFICO MUNICIPIOS (TOP 10)
+// ==========================================
 
-    doc.setFontSize(16);
-    doc.setTextColor(13, 111, 107);
-    doc.text("Distribución por Municipio", 14, 20);
+if (meta.graficaMunicipios) {
+  doc.addPage();
 
-    autoTable(doc, {
-      startY: 30,
-      theme: "grid",
+  doc.setFontSize(16);
+  doc.setTextColor(13, 111, 107);
+  doc.text("Top 10 Municipios con más Beneficiarios", 14, 20);
 
-      headStyles: {
-        fillColor: [13, 111, 107],
-      },
-
-      head: [["Municipio", "Beneficiarios"]],
-
-      body: meta.municipiosTabla.map(
-        ([municipio, cantidad]) => [
-          municipio,
-          cantidad,
-        ]
-      ),
-    });
-  }
+  doc.addImage(
+    meta.graficaMunicipios,
+    "PNG",
+    20,
+    35,
+    240,
+    120
+  );
+}
 
   // ==========================================
   // PIE DE PÁGINA
@@ -297,3 +555,4 @@ if (meta.graficaEscolaridad) {
 
   return await doc.output("arraybuffer");
 };
+

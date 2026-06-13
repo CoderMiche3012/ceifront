@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useReporteBeneficiarios } from "./../hooks/useReporteBeneficiarios"; 
+import { useReporteBeneficiarios } from "./../hooks/useReporteBeneficiarios";
+import { Bar, Doughnut } from "react-chartjs-2";
+import Chart from "chart.js/auto";
 
 import Card from "../../../components/ui/Card";
 import Boton from "../../../components/ui/Boton";
 
 import TarjetasEstadisticas from "../../../components/shared/TarjetasEstadisticas";
-import FiltrosReporte from "../../../components/tablas/FiltrosAvanzados"; 
+import FiltrosReporte from "../../../components/tablas/FiltrosAvanzados";
 import AvatarGeneral from "../../../components/shared/AvatarGeneral";
 import DatosTabla from "../../../components/tablas/DatosTabla";
 import PaginacionTabla from "../../../components/tablas/PaginacionTabla";
 
-import { ui } from "../../../styles/ui/index"; 
+import { ui } from "../../../styles/ui/index";
 
 import {
   Users,
@@ -32,21 +34,38 @@ import {
 
 // 📋 COLUMNAS FIJAS: Ya no agregamos dinámicamente la columna Periodo horizontalmente
 const COLUMNS = [
-  { key: "beneficiarios", label: "Beneficiarios" },
+  { key: "beneficiarios", label: "Beneficiario" },
   { key: "escolaridad", label: "Escolaridad" },
-  { key: "escuela", label: "Escuela" },
-  { key: "promedio", label: "Promedio" },
+  { key: "municipio", label: "Municipio" },
+  { key: "tutor", label: "Tutor" },
   { key: "estatus", label: "Estatus" },
   { key: "donador", label: "Donador" },
 ];
-
 export default function ReporteBeneficiariosTab() {
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const { state, actions, loading } = useReporteBeneficiarios();
-  const { search, periodo, estatus, nivel, rendimiento, dataFiltrada, stats, periodosOptions } = state;
+  const {
+    search,
+    periodo,
+    estatus,
+    nivel,
+    rendimiento,
+    dataFiltrada,
+    stats,
+    periodosOptions,
+    graficaEdades,
+    graficaEscolaridad,
+  } = state;
+
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [menuData, setMenuData] = useState({ id: null, top: 0, right: 0, haciaArriba: false });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, periodo, estatus, nivel, rendimiento]);
 
   // Manejo del menú desplegable inteligente (Acciones)
   const handleToggleMenu = (e, id) => {
@@ -93,22 +112,25 @@ export default function ReporteBeneficiariosTab() {
       case "escolaridad":
         return <span className="text-sm font-medium text-slate-600 uppercase">{item.escolaridad || "—"}</span>;
 
-      case "escuela":
-        return <span className="text-sm font-medium text-slate-600 uppercase truncate max-w-[180px] block">{item.escuela || "—"}</span>;
+      case "municipio":
+        return (
+          <span className="text-sm text-slate-600">
+            {item.municipio || "Sin Registro"}
+          </span>
+        );
 
-      case "promedio": {
-        const promedioFinal = item.promedio;
-        const valorNumerico = parseFloat(promedioFinal);
-        let color = "text-slate-500";
+      case "tutor":
+        return (
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-slate-700">
+              {item.tutor || "Sin Registro"}
+            </span>
 
-        // 🎨 Aplicación de colores limpia basada en el valor ya calculado por el hook
-        if (promedioFinal !== "—" && !isNaN(valorNumerico)) {
-          if (valorNumerico < 7.5) color = "text-red-600";
-          else if (valorNumerico < 8) color = "text-amber-600";
-          else color = "text-emerald-600";
-        }
-        return <span className={`text-sm font-bold ${color}`}>{promedioFinal}</span>;
-      }
+            <span className="text-xs text-slate-500">
+              {item.telefono_tutor || "Sin Teléfono"}
+            </span>
+          </div>
+        );
 
       case "estatus": {
         const estatusNormalizado = item.estatus?.toLowerCase();
@@ -202,6 +224,21 @@ export default function ReporteBeneficiariosTab() {
   const filtrosBasicos = opcionesFiltros.filter((f) => ["periodo", "estatus"].includes(f.key));
   const filtrosAvanzados = opcionesFiltros.filter((f) => ["nivel", "rendimiento"].includes(f.key));
 
+  const totalPages = Math.max(
+    1,
+    Math.ceil(dataFiltrada.length / pageSize)
+  );
+
+  const dataPaginada = dataFiltrada.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handlePageSizeChange = (e) => {
+    setPageSize(Number(e.target.value));
+    setCurrentPage(1);
+  };
+
   return (
     <div className="space-y-6">
       <TarjetasEstadisticas
@@ -212,14 +249,54 @@ export default function ReporteBeneficiariosTab() {
           { label: "Graduados", value: stats.graduados, icon: GraduationCap, color: "violet" },
         ]}
       />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <h3 className="text-sm font-semibold mb-4">
+            Distribución por edades
+          </h3>
 
+          <div className="h-72">
+            <Bar
+              data={graficaEdades}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                },
+              }}
+            />
+          </div>
+        </Card>
+
+        <Card>
+          <h3 className="text-sm font-semibold mb-4">
+            Nivel educativo
+          </h3>
+
+          <div className="h-72">
+            <Doughnut
+              data={graficaEscolaridad}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: "bottom",
+                  },
+                },
+              }}
+            />
+          </div>
+        </Card>
+      </div>
       <Card>
         <FiltrosReporte
           searchValue={search}
           onSearchChange={actions.setSearch}
           searchPlaceholder="Buscar beneficiario..."
           showClearButton={false}
-          filters={filtrosBasicos} 
+          filters={filtrosBasicos}
           extraAction={
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -285,19 +362,24 @@ export default function ReporteBeneficiariosTab() {
         />
 
         <DatosTabla
-          columns={COLUMNS} 
-          data={dataFiltrada}
+          columns={COLUMNS}
+          data={dataPaginada}
           renderCell={renderCell}
           rowKey="id_beneficiario"
         />
 
         <PaginacionTabla
-          currentPage={1}
-          totalPages={1}
+          currentPage={currentPage}
+          totalPages={totalPages}
           totalItems={dataFiltrada.length}
-          pageSize={10}
-          onPageChange={() => {}}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          }}
         />
+
       </Card>
     </div>
   );

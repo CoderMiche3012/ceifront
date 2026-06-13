@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
-import { useBeneficiarios } from "./../../beneficiarios/hooks/useBeneficiarios"; 
-import { usePeriodos } from "./../../periodos/hooks/usePeriodos"; 
+import { useState, useEffect, useMemo } from "react";
+import { useBeneficiarios } from "./../../beneficiarios/hooks/useBeneficiarios";
+import { usePeriodos } from "./../../periodos/hooks/usePeriodos";
 import { solicitarDescargaReporte } from "../services/reporteService";
 
 import { Chart } from "chart.js/auto";
@@ -15,18 +15,25 @@ const calcularEdad = (fechaNacimiento) => {
   }
   return edad;
 };
- const generarGraficaBase64 = (config) => {
+const generarGraficaBase64 = (config) => {
   return new Promise((resolve) => {
     const canvas = document.createElement("canvas");
 
-    canvas.width = 900;
-    canvas.height = 450;
+    if (config.type === "doughnut") {
+  canvas.width = 1200;
+  canvas.height = 1200;
+} else {
+  canvas.width = 1200;
+  canvas.height = 700;
+}
 
     const chart = new Chart(canvas, {
       ...config,
       options: {
         responsive: false,
         animation: false,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
         ...(config.options || {}),
       },
     });
@@ -39,7 +46,7 @@ const calcularEdad = (fechaNacimiento) => {
   });
 };
 const ejecutarDescargaBlob = (buffer, nombreArchivo, mimeType) => {
- 
+
   if (!buffer) return;
   const realBuffer = buffer instanceof ArrayBuffer ? buffer : buffer.buffer;
   const blob = new Blob([realBuffer], { type: mimeType });
@@ -77,86 +84,86 @@ export function useReporteBeneficiarios() {
   }, [periodo, periodos]);
 
   const dataTabla = useMemo(() => {
-  return beneficiarios.map((b) => {
-    const expResumen = b?.expediente_resumen || {};
-    const seg = b?.ultimo_seguimiento || b?.seguimiento || {};
-    const datosEscolares = seg?.datos_escolares || {};
+    return beneficiarios.map((b) => {
+      const expResumen = b?.expediente_resumen || {};
+      const seg = b?.ultimo_seguimiento || b?.seguimiento || {};
+      const datosEscolares = seg?.datos_escolares || {};
 
-    let estatusSeguimiento = seg?.estatus === "Finalizado" ? "Graduado" : (seg?.estatus || "Desconocido");
+      let estatusSeguimiento = seg?.estatus === "Finalizado" ? "Graduado" : (seg?.estatus || "Desconocido");
 
-    let nivelEscolarBase = "";
-    let escolaridad = "Sin Registro";
+      let nivelEscolarBase = "";
+      let escolaridad = "Sin Registro";
 
-    if (datosEscolares?.id_escolaridad) {
-      nivelEscolarBase = datosEscolares.id_escolaridad.nivel_escolar || "";
-      escolaridad = `${nivelEscolarBase} - ${datosEscolares.id_escolaridad.grado_escolar}°`;
-    } else if (datosEscolares?.nivel && datosEscolares?.grado) {
-      nivelEscolarBase = datosEscolares.nivel || "";
-      escolaridad = `${nivelEscolarBase} - ${datosEscolares.grado}°`;
-    }
-
-    const escuela = typeof datosEscolares?.id_institucion === "object"
-      ? datosEscolares.id_institucion?.nombre
-      : datosEscolares?.escuela || "Sin escuela";
-
-    let promedioFinal = "Sin Registro";
-    if (datosEscolares) {
-      if (datosEscolares.boletas?.length) {
-        const suma = datosEscolares.boletas.reduce((acc, x) => acc + Number(x.promedio_boleta || 0), 0);
-        promedioFinal = (suma / datosEscolares.boletas.length).toFixed(1);
-      } else if (datosEscolares.Promedio && datosEscolares.Promedio !== "Sin calificaciones") {
-        promedioFinal = Number(datosEscolares.Promedio).toFixed(1);
-      } else if (b.promedio != null) {
-        promedioFinal = Number(b.promedio).toFixed(1);
+      if (datosEscolares?.id_escolaridad) {
+        nivelEscolarBase = datosEscolares.id_escolaridad.nivel_escolar || "";
+        escolaridad = `${nivelEscolarBase} - ${datosEscolares.id_escolaridad.grado_escolar}°`;
+      } else if (datosEscolares?.nivel && datosEscolares?.grado) {
+        nivelEscolarBase = datosEscolares.nivel || "";
+        escolaridad = `${nivelEscolarBase} - ${datosEscolares.grado}°`;
       }
-    }
 
-    let rendimientoCalculado = "N/A"; 
-    const promedioNumerico = parseFloat(promedioFinal);
-    if (!isNaN(promedioNumerico)) {
-      if (promedioNumerico < 7.5) rendimientoCalculado = "regularizacion";
-      else if (promedioNumerico < 8.0) rendimientoCalculado = "bajo";
-      else rendimientoCalculado = "bueno";
-    }
+      const escuela = typeof datosEscolares?.id_institucion === "object"
+        ? datosEscolares.id_institucion?.nombre
+        : datosEscolares?.escuela || "Sin escuela";
 
-    // --- NUEVA LÓGICA AGREGADA ---
-    let tutorObj = b?.familia?.find((f) => f.es_tutor_principal);
-    const nombreTutor = tutorObj 
-      ? `${tutorObj.nombre} ${tutorObj.apellido_p || ""} ${tutorObj.apellido_m || ""}`.trim()
-      : expResumen.tutor || "Sin Registro";
-    const telTutor = tutorObj ? tutorObj.telefono : expResumen.telefonoTutor || "Sin Registro";
-    
-    const idPeriodo = seg?.periodo?.id_periodo || seg?.id_periodo || "";
-    const nombrePeriodo = mapaPeriodos[idPeriodo] || "N/A";
-    // -----------------------------
+      let promedioFinal = "Sin Registro";
+      if (datosEscolares) {
+        if (datosEscolares.boletas?.length) {
+          const suma = datosEscolares.boletas.reduce((acc, x) => acc + Number(x.promedio_boleta || 0), 0);
+          promedioFinal = (suma / datosEscolares.boletas.length).toFixed(1);
+        } else if (datosEscolares.Promedio && datosEscolares.Promedio !== "Sin calificaciones") {
+          promedioFinal = Number(datosEscolares.Promedio).toFixed(1);
+        } else if (b.promedio != null) {
+          promedioFinal = Number(b.promedio).toFixed(1);
+        }
+      }
 
-    return {
-      id_beneficiario: b.id_beneficiario,
-      nombre_completo: expResumen.nombre_completo || "Sin nombre",
-      edad: calcularEdad(expResumen.fecha_nacimiento) || "-",
-      estatus: estatusSeguimiento, 
-      donador: b.donadores?.length > 0 ? "Con donador" : "Sin donador",
-      escolaridad,
-      escuela: escuela !== "Sin escuela" ? escuela : "Sin Registro",
-      promedio: promedioFinal,
-      nivelEscolarBase,      
-      rendimientoCalculado,   
-      municipio: expResumen.municipio || "Sin Registro",
-      colonia: expResumen.colonia || "Sin Registro",
-      cp: expResumen.codigo_postal || "Sin Registro",
-      id_periodo: idPeriodo,
-      periodo_nombre: nombrePeriodo,
-      // --- CAMPOS NUEVOS ---
-      calle: expResumen.calle || "Sin Registro",
-      numero: expResumen.numero || "Sin Registro",
-      telefono: expResumen.telefono || "Sin Registro",
-      tutor: nombreTutor,
-      telefono_tutor: telTutor,
-      nota_seguimiento: seg.nota_seguimiento || "Sin notas",
-      periodo_columna: periodo === "" ? nombrePeriodo : null
-    };
-  });
-}, [beneficiarios, mapaPeriodos, periodo]); // Se agregó "periodo" como dependencia
+      let rendimientoCalculado = "N/A";
+      const promedioNumerico = parseFloat(promedioFinal);
+      if (!isNaN(promedioNumerico)) {
+        if (promedioNumerico < 7.5) rendimientoCalculado = "regularizacion";
+        else if (promedioNumerico < 8.0) rendimientoCalculado = "bajo";
+        else rendimientoCalculado = "bueno";
+      }
+
+      // --- NUEVA LÓGICA AGREGADA ---
+      let tutorObj = b?.familia?.find((f) => f.es_tutor_principal);
+      const nombreTutor = tutorObj
+        ? `${tutorObj.nombre} ${tutorObj.apellido_p || ""} ${tutorObj.apellido_m || ""}`.trim()
+        : expResumen.tutor || "Sin Registro";
+      const telTutor = tutorObj ? tutorObj.telefono : expResumen.telefonoTutor || "Sin Registro";
+
+      const idPeriodo = seg?.periodo?.id_periodo || seg?.id_periodo || "";
+      const nombrePeriodo = mapaPeriodos[idPeriodo] || "N/A";
+      // -----------------------------
+
+      return {
+        id_beneficiario: b.id_beneficiario,
+        nombre_completo: expResumen.nombre_completo || "Sin nombre",
+        edad: calcularEdad(expResumen.fecha_nacimiento) || "-",
+        estatus: estatusSeguimiento,
+        donador: b.donadores?.length > 0 ? "Con donador" : "Sin donador",
+        escolaridad,
+        escuela: escuela !== "Sin escuela" ? escuela : "Sin Registro",
+        promedio: promedioFinal,
+        nivelEscolarBase,
+        rendimientoCalculado,
+        municipio: expResumen.municipio || "Sin Registro",
+        colonia: expResumen.colonia || "Sin Registro",
+        cp: expResumen.codigo_postal || "Sin Registro",
+        id_periodo: idPeriodo,
+        periodo_nombre: nombrePeriodo,
+        // --- CAMPOS NUEVOS ---
+        calle: expResumen.calle || "Sin Registro",
+        numero: expResumen.numero || "Sin Registro",
+        telefono: expResumen.telefono || "Sin Registro",
+        tutor: nombreTutor,
+        telefono_tutor: telTutor,
+        nota_seguimiento: seg.nota_seguimiento || "Sin notas",
+        periodo_columna: periodo === "" ? nombrePeriodo : null
+      };
+    });
+  }, [beneficiarios, mapaPeriodos, periodo]); // Se agregó "periodo" como dependencia
 
   const dataFiltrada = useMemo(() => {
     const searchLower = search.toLowerCase();
@@ -195,37 +202,172 @@ export function useReporteBeneficiarios() {
   };
 
   const descargarPDF = async () => {
-  try {
-    // ==========================
-    // ESTATUS
-    // ==========================
-    // ==========================
-// NIVEL ESCOLAR
-// ==========================
-const escolaridadData = dataFiltrada.reduce((acc, curr) => {
-  let nivel = "Sin Registro";
+    try {
+      // ==========================
+      // ESTATUS
+      // ==========================
+      // ==========================
+      // NIVEL ESCOLAR
+      // ==========================
+      const escolaridadData = dataFiltrada.reduce((acc, curr) => {
+        let nivel = "Sin Registro";
 
-  if (curr.escolaridad?.includes("Primaria")) {
-    nivel = "Primaria";
-  } else if (curr.escolaridad?.includes("Secundaria")) {
-    nivel = "Secundaria";
-  } else if (curr.escolaridad?.includes("Preparatoria")) {
-    nivel = "Preparatoria";
-  } else if (
-    curr.escolaridad?.includes("Universidad") ||
-    curr.escolaridad?.includes("Licenciatura")
-  ) {
-    nivel = "Universidad";
-  }
+        if (curr.escolaridad?.includes("Primaria")) {
+          nivel = "Primaria";
+        } else if (curr.escolaridad?.includes("Secundaria")) {
+          nivel = "Secundaria";
+        } else if (curr.escolaridad?.includes("Preparatoria")) {
+          nivel = "Preparatoria";
+        } else if (
+          curr.escolaridad?.includes("Universidad") ||
+          curr.escolaridad?.includes("Licenciatura")
+        ) {
+          nivel = "Universidad";
+        }
 
-  acc[nivel] = (acc[nivel] || 0) + 1;
+        acc[nivel] = (acc[nivel] || 0) + 1;
 
-  return acc;
-}, {});
+        return acc;
+      }, {});
 
-    // ==========================
-    // RANGOS DE EDAD
-    // ==========================
+      // ==========================
+      // RANGOS DE EDAD
+      // ==========================
+      const edades = {
+        "0-5": 0,
+        "6-10": 0,
+        "11-15": 0,
+        "16-18": 0,
+        "19+": 0,
+      };
+
+      dataFiltrada.forEach((b) => {
+        const edad = Number(b.edad);
+
+        if (isNaN(edad)) return;
+
+        if (edad <= 5) edades["0-5"]++;
+        else if (edad <= 10) edades["6-10"]++;
+        else if (edad <= 15) edades["11-15"]++;
+        else if (edad <= 18) edades["16-18"]++;
+        else edades["19+"]++;
+      });
+
+      // ==========================
+      // MUNICIPIOS
+      // ==========================
+      const municipios = dataFiltrada.reduce((acc, curr) => {
+        const municipio = curr.municipio || "Sin Registro";
+
+        acc[municipio] = (acc[municipio] || 0) + 1;
+
+        return acc;
+      }, {});
+      const municipiosArray = Object.entries(municipios)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+
+      // ==========================
+      // GRAFICA ESTATUS
+      // ==========================
+      // ==========================
+      // GRAFICA NIVEL ESCOLAR
+      // ==========================
+      const graficaEscolaridad = await generarGraficaBase64({
+  type: "doughnut",
+  data: {
+    labels: Object.keys(escolaridadData),
+    datasets: [
+      {
+        data: Object.values(escolaridadData),
+      },
+    ],
+  },
+  options: {
+    responsive: false,
+    maintainAspectRatio: false,
+    cutout: "65%",
+    plugins: {
+      legend: {
+        position: "bottom",
+      },
+    },
+  },
+});
+
+      // ==========================
+      // GRAFICA EDADES
+      // ==========================
+      const graficaEdades = await generarGraficaBase64({
+        type: "bar",
+        data: {
+          labels: Object.keys(edades),
+          datasets: [
+            {
+              label: "Beneficiarios",
+              data: Object.values(edades),
+              backgroundColor: "#0d6f6b",
+            },
+          ],
+        },
+      });
+      const graficaMunicipios = await generarGraficaBase64({
+        type: "bar",
+        data: {
+          labels: municipiosArray.map((m) => m[0]),
+          datasets: [
+            {
+              label: "Beneficiarios",
+              data: municipiosArray.map((m) => m[1]),
+              backgroundColor: "#0d6f6b",
+            },
+          ],
+        },
+      });
+      // ==========================
+      // META
+      // ==========================
+      const meta = {
+        periodo: periodoLabel,
+        periodoLabel,
+
+        graficaEscolaridad,
+        graficaEdades,
+        graficaMunicipios,
+
+        municipiosTabla: Object.entries(municipios)
+          .sort((a, b) => b[1] - a[1]),
+
+        resumen: {
+          total: dataFiltrada.length,
+          activos: dataFiltrada.filter((x) => x.estatus === "Activo").length,
+          graduados: dataFiltrada.filter((x) => x.estatus === "Graduado").length,
+          inactivos: dataFiltrada.filter((x) => x.estatus === "Inactivo").length,
+          pausa: dataFiltrada.filter(
+            (x) =>
+              x.estatus === "Pausa" ||
+              x.estatus === "En Pausa"
+          ).length,
+        },
+      };
+
+      const buffer = await solicitarDescargaReporte(
+        "beneficiarios",
+        "pdf",
+        dataFiltrada,
+        meta
+      );
+
+      ejecutarDescargaBlob(
+        buffer,
+        `beneficiarios_${periodoLabel}.pdf`,
+        "application/pdf"
+      );
+    } catch (error) {
+      console.error("Error PDF:", error);
+    }
+  };
+  const graficaEdades = useMemo(() => {
     const edades = {
       "0-5": 0,
       "6-10": 0,
@@ -246,98 +388,64 @@ const escolaridadData = dataFiltrada.reduce((acc, curr) => {
       else edades["19+"]++;
     });
 
-    // ==========================
-    // MUNICIPIOS
-    // ==========================
-    const municipios = dataFiltrada.reduce((acc, curr) => {
-      const municipio = curr.municipio || "Sin Registro";
+    return {
+      labels: Object.keys(edades),
+      datasets: [
+        {
+          label: "Beneficiarios",
+          data: Object.values(edades),
+          backgroundColor: "#0d6f6b",
+        },
+      ],
+    };
+  }, [dataFiltrada]);
+  const graficaEscolaridad = useMemo(() => {
+    const niveles = {};
 
-      acc[municipio] = (acc[municipio] || 0) + 1;
+    dataFiltrada.forEach((b) => {
+      let nivel = "Sin Registro";
 
-      return acc;
-    }, {});
+      if (b.escolaridad?.includes("Preescolar")) {
+        nivel = "Preescolar";
+      } else if (b.escolaridad?.includes("Primaria")) {
+        nivel = "Primaria";
+      } else if (b.escolaridad?.includes("Secundaria")) {
+        nivel = "Secundaria";
+      } else if (b.escolaridad?.includes("Preparatoria")) {
+        nivel = "Preparatoria";
+      } else if (
+        b.escolaridad?.includes("Universidad") ||
+        b.escolaridad?.includes("Licenciatura")
+      ) {
+        nivel = "Universidad";
+      }
 
-    // ==========================
-    // GRAFICA ESTATUS
-    // ==========================
-    // ==========================
-// GRAFICA NIVEL ESCOLAR
-// ==========================
-const graficaEscolaridad = await generarGraficaBase64({
-  type: "bar",
-  data: {
-    labels: Object.keys(escolaridadData),
-    datasets: [
-      {
-        label: "Beneficiarios",
-        data: Object.values(escolaridadData),
-        backgroundColor: "#0d6f6b",
-      },
-    ],
-  },
-});
-
-    // ==========================
-    // GRAFICA EDADES
-    // ==========================
-    const graficaEdades = await generarGraficaBase64({
-      type: "bar",
-      data: {
-        labels: Object.keys(edades),
-        datasets: [
-          {
-            label: "Beneficiarios",
-            data: Object.values(edades),
-          },
-        ],
-      },
+      niveles[nivel] = (niveles[nivel] || 0) + 1;
     });
 
-    // ==========================
-    // META
-    // ==========================
-    const meta = {
-      periodo: periodoLabel,
-      periodoLabel,
-
-      graficaEscolaridad,
-      graficaEdades,
-
-      municipiosTabla: Object.entries(municipios)
-        .sort((a, b) => b[1] - a[1]),
-
-      resumen: {
-        total: dataFiltrada.length,
-        activos: dataFiltrada.filter((x) => x.estatus === "Activo").length,
-        graduados: dataFiltrada.filter((x) => x.estatus === "Graduado").length,
-        inactivos: dataFiltrada.filter((x) => x.estatus === "Inactivo").length,
-        pausa: dataFiltrada.filter(
-          (x) =>
-            x.estatus === "Pausa" ||
-            x.estatus === "En Pausa"
-        ).length,
-      },
+    return {
+      labels: Object.keys(niveles),
+      datasets: [
+        {
+          data: Object.values(niveles),
+        },
+      ],
     };
-
-    const buffer = await solicitarDescargaReporte(
-      "beneficiarios",
-      "pdf",
-      dataFiltrada,
-      meta
-    );
-
-    ejecutarDescargaBlob(
-      buffer,
-      `beneficiarios_${periodoLabel}.pdf`,
-      "application/pdf"
-    );
-  } catch (error) {
-    console.error("Error PDF:", error);
-  }
-};
+  }, [dataFiltrada]);
 
   return {
-    state: { search, periodo, estatus, nivel, rendimiento, dataFiltrada, stats, periodosOptions },
+    state: {
+      search,
+      periodo,
+      estatus,
+      nivel,
+      rendimiento,
+      dataFiltrada,
+      stats,
+      periodosOptions,
+      graficaEdades,
+      graficaEscolaridad,
+    },
     actions: { setSearch, setPeriodo, setEstatus, setNivel, setRendimiento, descargarExcel, descargarPDF },
     loading: loadingB || loadingP
   };

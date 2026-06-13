@@ -2,20 +2,26 @@ export const aplicarEstilosExcelGlobal = async (
   worksheet,
   tituloReporte,
   workbook,
-  logoBase64
+  logoBase64,
+  options = {} // 👈 NUEVO (no rompe nada)
 ) => {
   const COLOR_PRIMARIO = "0D6F6B";
   const COLOR_TEXTO_LIGHT = "FFFFFF";
   const COLOR_ZEBRA = "F4FAF8";
   const COLOR_BORDE = "E5E7EB";
 
+  const usarHeader = options.usarHeader !== false; // default: true
+  const usarTabla = options.usarTabla !== false;   // default: true
+
   worksheet.getRow(1).height = 20;
   worksheet.getRow(2).height = 15;
-  worksheet.getRow(3).height = 30;
-  worksheet.getRow(4).height = 15;
+  worksheet.getRow(3).height = 35;
+  worksheet.getRow(4).height = 20;
   worksheet.getRow(5).height = 26;
 
-  // logo
+  // ==========================
+  // LOGO
+  // ==========================
   if (logoBase64 && workbook) {
     try {
       const imageId = workbook.addImage({
@@ -24,69 +30,91 @@ export const aplicarEstilosExcelGlobal = async (
       });
 
       worksheet.addImage(imageId, {
-        tl: { col: 0.1, row: 0.1 },
-        ext: {
-          width: 100,
-          height: 100,
-        },
+        tl: { col: 1.2, row: 0.2 },
+        ext: { width: 85, height: 85 },
       });
     } catch (e) {
       console.error("Error insertando logo:", e);
     }
   }
-  // titulo
-  const celdaTitulo = worksheet.getCell("B3");
-  celdaTitulo.value = tituloReporte.toUpperCase();
-  celdaTitulo.font = {
-    name: "Segoe UI",
-    size: 16,
-    bold: true,
-    color: { argb: COLOR_PRIMARIO },
-  };
-  const celdaSubtitulo = worksheet.getCell("B4");
 
-  celdaSubtitulo.value =
-    `Centro de Esperanza Infantil A.C. | Fecha: ${new Date().toLocaleDateString("es-MX")}`;
+  // ==========================
+  // TITULO + SUBTITULO (OPCIONAL)
+  // ==========================
+  if (usarHeader) {
+    worksheet.mergeCells("D3:J3");
+    worksheet.mergeCells("D4:J4");
 
-  celdaSubtitulo.font = {
-    name: "Segoe UI",
-    size: 10,
-    color: { argb: "6B7280" },
-  };
+    const celdaTitulo = worksheet.getCell("D3");
 
-  celdaSubtitulo.alignment = {
-    vertical: "middle",
-    horizontal: "left",
-  };
-  celdaTitulo.alignment = { vertical: "middle", horizontal: "left" };
-
-  const filaHeader = worksheet.getRow(5);
-  filaHeader.eachCell((celda) => {
-    celda.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: COLOR_PRIMARIO },
+    celdaTitulo.value = tituloReporte.toUpperCase();
+    celdaTitulo.font = {
+      name: "Segoe UI",
+      size: 16,
+      bold: true,
+      color: { argb: COLOR_PRIMARIO },
     };
-    celda.font = {
+
+    celdaTitulo.alignment = {
+      horizontal: "center",
+      vertical: "middle",
+    };
+
+    const celdaSubtitulo = worksheet.getCell("D4");
+
+    celdaSubtitulo.value =
+      `Centro de Esperanza Infantil A.C. | Fecha: ${new Date().toLocaleDateString("es-MX")}`;
+
+    celdaSubtitulo.font = {
       name: "Segoe UI",
       size: 10,
-      bold: true,
-      color: { argb: COLOR_TEXTO_LIGHT },
+      color: { argb: "6B7280" },
     };
-    celda.alignment = {
-      vertical: "middle",
-      horizontal: "center",
-      wrapText: true,
-    };
-    celda.border = {
-      top: { style: "thin", color: { argb: COLOR_PRIMARIO } },
-      left: { style: "thin", color: { argb: "FFFFFF" } },
-      bottom: { style: "medium", color: { argb: "0A5451" } },
-      right: { style: "thin", color: { argb: "FFFFFF" } },
-    };
-  });
 
-  // datos
+    celdaSubtitulo.alignment = {
+      horizontal: "center",
+      vertical: "middle",
+    };
+  }
+
+  // ==========================
+  // ENCABEZADOS TABLA (OPCIONAL)
+  // ==========================
+  if (usarTabla) {
+    const filaHeader = worksheet.getRow(5);
+
+    filaHeader.eachCell((celda) => {
+      celda.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: COLOR_PRIMARIO },
+      };
+
+      celda.font = {
+        name: "Segoe UI",
+        size: 10,
+        bold: true,
+        color: { argb: COLOR_TEXTO_LIGHT },
+      };
+
+      celda.alignment = {
+        vertical: "middle",
+        horizontal: "center",
+        wrapText: true,
+      };
+
+      celda.border = {
+        top: { style: "thin", color: { argb: COLOR_PRIMARIO } },
+        left: { style: "thin", color: { argb: "FFFFFF" } },
+        bottom: { style: "medium", color: { argb: "0A5451" } },
+        right: { style: "thin", color: { argb: "FFFFFF" } },
+      };
+    });
+  }
+
+  // ==========================
+  // DATOS
+  // ==========================
   worksheet.eachRow({ includeEmpty: false }, (fila, numeroFila) => {
     if (numeroFila <= 5) return;
 
@@ -122,18 +150,22 @@ export const aplicarEstilosExcelGlobal = async (
           numeroColumna === 1
             ? "left"
             : typeof celda.value === "number"
-              ? "right"
-              : "center",
+            ? "right"
+            : "center",
       };
     });
   });
 
-  worksheet.views = [
-    {
-      state: "frozen",
-      ySplit: 5,
-      topLeftCell: "A6",
-    },
-  ];
+  // ==========================
+  // CONGELAR ENCABEZADO (OPCIONAL)
+  // ==========================
+  if (usarTabla) {
+    worksheet.views = [
+      {
+        state: "frozen",
+        ySplit: 5,
+        topLeftCell: "A6",
+      },
+    ];
+  }
 };
-
