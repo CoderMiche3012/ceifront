@@ -8,13 +8,14 @@ import {
   Upload,
 } from "lucide-react";
 
-import {
-  subirDocumento,
-} from "../../../expedientes/services/documentosService";
+
+import { useSubirDocumento } from "../../../expedientes/hooks/useDocumentos";
 
 export default function EstudioCard({
   data
 }) {
+
+  const uploadMutation = useSubirDocumento();
 
   const inputRef =
     useRef(null);
@@ -129,9 +130,7 @@ const estudioUrl = documentoEstudio?.archivo
           data?.id_expediente
         );
 
-        await subirDocumento(
-          formData
-        );
+        await uploadMutation.mutateAsync(formData);
 
         // 🔥 SOLO ACTUALIZA LOCALMENTE
         data.link_documento =

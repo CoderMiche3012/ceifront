@@ -3,9 +3,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { aplicarEstilosExcelGlobal } from "../../reporteUtils";
 
-// ==========================================
-// EXCEL - NUEVOS INGRESOS
-// ==========================================
+// generar el excel
 export const generarExcelEstrategia = async (datos, logoBase64Param, meta = {}) => {
   const logoFinal = logoBase64Param;
 
@@ -30,17 +28,18 @@ export const generarExcelEstrategia = async (datos, logoBase64Param, meta = {}) 
     { key: "edad", width: 10 },
     { key: "genero", width: 14 },
     { key: "telefono", width: 18 },
+    { key: "nivelEscolar", width: 18 },
     { key: "cp", width: 12 },
     { key: "municipio", width: 22 },
-    { key: "colonia", width: 25 },
+    { key: "direccionCompleta", width: 32 },
     { key: "tutor", width: 32 },
     { key: "telefonoTutor", width: 18 },
     { key: "familiares", width: 14 },
     { key: "fechaVisita", width: 18 },
-    { key: "nota_familiar", width: 25 }, // Ajustado ancho para notas
-    { key: "notaVisita", width: 25 },     // Ajustado ancho para notas
-    { key: "notaServicio", width: 25 },   // Ajustado ancho para notas
-    { key: "referenciaIngreso", width: 25 },   // Ajustado ancho para notas
+    { key: "nota_familiar", width: 25 },
+    { key: "notaVisita", width: 25 },
+    { key: "notaServicio", width: 25 },
+    { key: "referenciaIngreso", width: 25 },
   ];
 
   const headers = [
@@ -50,9 +49,10 @@ export const generarExcelEstrategia = async (datos, logoBase64Param, meta = {}) 
     "Edad",
     "Género",
     "Teléfono",
+    "Nivel Inicial",
     "C.P.",
     "Municipio",
-    "Colonia",
+    "Direccion",
     "Tutor responsable",
     "Tel. Tutor",
     "Fam.",
@@ -73,9 +73,10 @@ export const generarExcelEstrategia = async (datos, logoBase64Param, meta = {}) 
       p.edad || "",
       p.genero || "",
       p.telefono || "",
+      p.nivelEscolar || "",
       p.cp || "",
       p.municipio || "",
-      p.colonia || "",
+      p.direccionCompleta || "",
       p.tutor || "",
       p.telefonoTutor || "",
       p.familiares || "",
@@ -87,8 +88,7 @@ export const generarExcelEstrategia = async (datos, logoBase64Param, meta = {}) 
     ]);
   });
 
-  // 🛠️ CORRECCIÓN 1: Extendemos el filtro hasta la columna P (columna 16)
-  worksheet.autoFilter = "A5:Q5";
+  worksheet.autoFilter = "A5:R5";
 
   await aplicarEstilosExcelGlobal(
     worksheet,
@@ -101,15 +101,13 @@ export const generarExcelEstrategia = async (datos, logoBase64Param, meta = {}) 
   return buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer).buffer;
 };
 
-// ==========================================
-// PDF - NUEVOS INGRESOS
-// ==========================================
-export const generarPdfEstrategia = async (datos, logoBase64Param, meta = {}) => {
-  const logoFinal = logoBase64Param;
+// para el pdf
 
+export const generarPdfEstrategia = async (datos, logoBase64Param, meta = {}) => {
+
+  const logoFinal = logoBase64Param;
   const periodoRaw = (meta.periodoLabel || meta.periodo || "General").trim();
   const esGeneral = periodoRaw.toLowerCase() === "general";
-
   const nombrePeriodo = esGeneral ? "General" : periodoRaw;
   const sufijoTexto = esGeneral ? "General" : "de este periodo";
 
@@ -136,7 +134,6 @@ export const generarPdfEstrategia = async (datos, logoBase64Param, meta = {}) =>
   doc.setFontSize(22);
   doc.setTextColor(13, 111, 107);
   doc.text(tituloReporte, logoFinal ? 50 : 14, 20);
-
   doc.setFont("Helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(107, 114, 128);
@@ -166,25 +163,24 @@ export const generarPdfEstrategia = async (datos, logoBase64Param, meta = {}) =>
     headStyles: {
       fillColor: [13, 111, 107],
       textColor: [255, 255, 255],
-      fontSize: 8.5, // 🛠️ Reducido ligeramente para optimizar las 16 columnas
+      fontSize: 8.5,
       fontStyle: "bold",
       halign: "center",
       valign: "middle",
     },
     styles: {
       font: "Helvetica",
-      fontSize: 7.5, // 🛠️ Reducido a 7.5 para que las notas quepan perfectamente sin desbordar
+      fontSize: 7.5,
       cellPadding: 2,
       textColor: [55, 65, 81],
       lineColor: [229, 231, 235],
       lineWidth: 0.2,
-      cellWidth: "wrap", // 🛠️ CORRECCIÓN 2: Fuerza saltos de línea automáticos si el texto es largo
+      cellWidth: "wrap",
     },
-    // Añadimos configuraciones específicas para que las columnas de notas no se miniaturicen
     columnStyles: {
-      13: { cellWidth: 35 }, // Nota Familiar
-      14: { cellWidth: 35 }, // Nota de la visita
-      15: { cellWidth: 35 }, // Nota de prioridad
+      13: { cellWidth: 35 },
+      14: { cellWidth: 35 },
+      15: { cellWidth: 35 },
     },
     head: [[
       "Nombre Completo",
@@ -193,6 +189,7 @@ export const generarPdfEstrategia = async (datos, logoBase64Param, meta = {}) =>
       "Edad",
       "Género",
       "Teléfono",
+      "Nivel Inicial",
       "C.P.",
       "Municipio",
       "Colonia",
@@ -200,11 +197,9 @@ export const generarPdfEstrategia = async (datos, logoBase64Param, meta = {}) =>
       "Tel. Tutor",
       "Fam.",
       "Fecha Visita",
-      "Nota Familiar",
-      "Nota de la visita",
-      "Nota de prioridad",
       "Recomendacion",
     ]],
+
     body: datos.map((p) => [
       p.nombreCompleto || "",
       p.estatus || "",
@@ -212,6 +207,7 @@ export const generarPdfEstrategia = async (datos, logoBase64Param, meta = {}) =>
       p.edad || "",
       p.genero || "",
       p.telefono || "",
+      p.nivelEscolar || "",
       p.cp || "",
       p.municipio || "",
       p.colonia || "",
@@ -219,9 +215,6 @@ export const generarPdfEstrategia = async (datos, logoBase64Param, meta = {}) =>
       p.telefonoTutor || "",
       p.familiares || "",
       p.fechaVisita || "",
-      p.nota_familiar || "",
-      p.notaVisita || "",
-      p.notaServicio || "",
       p.referenciaIngreso || "",
     ]),
   });

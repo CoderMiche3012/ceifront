@@ -32,7 +32,7 @@ export default function FiltrosReporte({
             onChange={(e) => filtro.onChange(e.target.value)}
             className={ui.filters.select}
           >
-            {filtro.options.map((option) => (
+            {(filtro.options || []).map((option) => (
               <option
                 key={option.value}
                 value={option.value}

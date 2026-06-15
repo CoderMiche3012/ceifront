@@ -68,30 +68,32 @@ export default function PaginacionTabla({
 
       <div className="flex items-center gap-4">
         {/* Selector */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-500">
-            Mostrar
-          </span>
 
-          <select
-            value={pageSize}
-            onChange={(e) =>
-              onPageSizeChange(Number(e.target.value))
-            }
-            className="rounded-lg border border-slate-200 px-2 py-1 text-sm"
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
+        {onPageSizeChange && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500">
+              Mostrar
+            </span>
 
-          <span className="text-sm text-slate-500">
-            registros
-          </span>
-        </div>
+            <select
+              value={pageSize}
+              onChange={(e) =>
+                onPageSizeChange(Number(e.target.value))
+              }
+              className="rounded-lg border border-slate-200 px-2 py-1 text-sm"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
 
+            <span className="text-sm text-slate-500">
+              registros
+            </span>
+          </div>
+        )}
         {/* Paginación */}
         <div className={ui.pagination.controls}>
           <button
@@ -118,10 +120,9 @@ export default function PaginacionTabla({
                 onClick={() => onPageChange(page)}
                 className={`
                   ${ui.pagination.page}
-                  ${
-                    currentPage === page
-                      ? ui.pagination.pageActive
-                      : ui.pagination.pageInactive
+                  ${currentPage === page
+                    ? ui.pagination.pageActive
+                    : ui.pagination.pageInactive
                   }
                 `}
               >

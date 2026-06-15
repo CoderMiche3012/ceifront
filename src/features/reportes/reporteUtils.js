@@ -3,15 +3,20 @@ export const aplicarEstilosExcelGlobal = async (
   tituloReporte,
   workbook,
   logoBase64,
-  options = {} // 👈 NUEVO (no rompe nada)
+  options = {}
 ) => {
   const COLOR_PRIMARIO = "0D6F6B";
   const COLOR_TEXTO_LIGHT = "FFFFFF";
   const COLOR_ZEBRA = "F4FAF8";
   const COLOR_BORDE = "E5E7EB";
 
-  const usarHeader = options.usarHeader !== false; // default: true
-  const usarTabla = options.usarTabla !== false;   // default: true
+  const alineacionHeaders = options.alineacionHeaders || "center";
+
+  const usarHeader = options.usarHeader !== false;
+  const usarTabla = options.usarTabla !== false;
+
+  const headerInicioCol = options.headerInicioCol || "D";
+  const headerFinCol = options.headerFinCol || "J";
 
   worksheet.getRow(1).height = 20;
   worksheet.getRow(2).height = 15;
@@ -19,13 +24,19 @@ export const aplicarEstilosExcelGlobal = async (
   worksheet.getRow(4).height = 20;
   worksheet.getRow(5).height = 26;
 
-  // ==========================
-  // LOGO
-  // ==========================
+  // logo
   if (logoBase64 && workbook) {
     try {
+      const base64Data = logoBase64.startsWith("data:image/")
+        ? logoBase64
+        : `data:image/png;base64,${logoBase64}`;
+
+      const base64Content = base64Data.includes(",")
+        ? base64Data.split(",")[1]
+        : base64Data;
+
       const imageId = workbook.addImage({
-        base64: logoBase64,
+        base64: base64Content,
         extension: "png",
       });
 
@@ -38,16 +49,22 @@ export const aplicarEstilosExcelGlobal = async (
     }
   }
 
-  // ==========================
-  // TITULO + SUBTITULO (OPCIONAL)
-  // ==========================
+  // titulo
   if (usarHeader) {
-    worksheet.mergeCells("D3:J3");
-    worksheet.mergeCells("D4:J4");
+    worksheet.mergeCells(
+      `${headerInicioCol}3:${headerFinCol}3`
+    );
 
-    const celdaTitulo = worksheet.getCell("D3");
+    worksheet.mergeCells(
+      `${headerInicioCol}4:${headerFinCol}4`
+    );
+
+    const celdaTitulo = worksheet.getCell(
+      `${headerInicioCol}3`
+    );
 
     celdaTitulo.value = tituloReporte.toUpperCase();
+
     celdaTitulo.font = {
       name: "Segoe UI",
       size: 16,
@@ -56,11 +73,14 @@ export const aplicarEstilosExcelGlobal = async (
     };
 
     celdaTitulo.alignment = {
-      horizontal: "center",
       vertical: "middle",
+      horizontal: alineacionHeaders,
+      wrapText: true,
     };
 
-    const celdaSubtitulo = worksheet.getCell("D4");
+    const celdaSubtitulo = worksheet.getCell(
+      `${headerInicioCol}4`
+    );
 
     celdaSubtitulo.value =
       `Centro de Esperanza Infantil A.C. | Fecha: ${new Date().toLocaleDateString("es-MX")}`;
@@ -72,14 +92,13 @@ export const aplicarEstilosExcelGlobal = async (
     };
 
     celdaSubtitulo.alignment = {
-      horizontal: "center",
       vertical: "middle",
+      horizontal: alineacionHeaders,
+      wrapText: true,
     };
   }
 
-  // ==========================
-  // ENCABEZADOS TABLA (OPCIONAL)
-  // ==========================
+  // encabezados
   if (usarTabla) {
     const filaHeader = worksheet.getRow(5);
 
@@ -112,16 +131,11 @@ export const aplicarEstilosExcelGlobal = async (
     });
   }
 
-  // ==========================
-  // DATOS
-  // ==========================
+  // datos
   worksheet.eachRow({ includeEmpty: false }, (fila, numeroFila) => {
     if (numeroFila <= 5) return;
-
     fila.height = 22;
-
     const esFilaPar = numeroFila % 2 === 0;
-
     fila.eachCell((celda, numeroColumna) => {
       celda.font = {
         name: "Segoe UI",
@@ -150,15 +164,13 @@ export const aplicarEstilosExcelGlobal = async (
           numeroColumna === 1
             ? "left"
             : typeof celda.value === "number"
-            ? "right"
-            : "center",
+              ? "right"
+              : "center",
       };
     });
   });
 
-  // ==========================
-  // CONGELAR ENCABEZADO (OPCIONAL)
-  // ==========================
+  // congelar encabezado
   if (usarTabla) {
     worksheet.views = [
       {

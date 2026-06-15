@@ -1,15 +1,13 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useMemo } from "react";
+import { useReporteBeneficiariosEconomico } from "../hooks/useReporteBeneficiariosApoyos";
 
 import Card from "../../../components/ui/Card";
 import Boton from "../../../components/ui/Boton";
-
 import TarjetasEstadisticas from "../../../components/shared/TarjetasEstadisticas";
-
-import FiltrosReporte from "../../../components/tablas/FiltrosReporte";
+import FiltrosReporte from "../../../components/tablas/FiltrosAvanzados";
 import DatosTabla from "../../../components/tablas/DatosTabla";
 import PaginacionTabla from "../../../components/tablas/PaginacionTabla";
-import { solicitarDescargaReporte } from "../services/reporteService";
+import AvatarGeneral from "../../../components/shared/AvatarGeneral";
 
 import {
   HandCoins,
@@ -20,306 +18,147 @@ import {
   FileText,
 } from "lucide-react";
 
-import { obtenerBeneficiarios } from "../../beneficiarios/services/beneficiariosService";
-import { obtenerPeriodos } from "../../periodos/services/periodoService";
-
-/**
- * 🔥 MAPEO CON PERIODO
- */
-const mapApoyos = (beneficiarios = [], periodo) => {
-  const rows = [];
-
-  beneficiarios.forEach((b) => {
-    const seguimiento =
-      b.historial_seguimientos?.find(
-        (s) => String(s.id_periodo) === String(periodo)
-      ) || b.historial_seguimientos?.[0];
-
-    const apoyos = seguimiento?.apoyos_economicos || [];
-
-    const nombre =
-      b.expediente_resumen?.nombre_completo || "Sin nombre";
-
-    let total = 0;
-    let entregados = 0;
-    let pendientes = 0;
-
-    apoyos.forEach((a) => {
-      const monto = Number(a.monto || 0);
-
-      total += monto;
-
-      if (a.estatus === "Entregado") entregados++;
-      if (a.estatus === "Pendiente") pendientes++;
-    });
-
-    rows.push({
-      id_beneficiario: b.id_beneficiario,
-      beneficiario: nombre,
-      periodo:
-        seguimiento?.periodo?.ciclo_escolar || "Sin periodo",
-      total_recibido: total,
-      apoyos_entregados: entregados,
-      apoyos_pendientes: pendientes,
-      ultimo_apoyo:
-        apoyos.length > 0
-          ? apoyos[apoyos.length - 1].fecha_entrega ||
-            apoyos[apoyos.length - 1].fecha_creacion
-          : "N/A",
-    });
-  });
-
-  return rows;
-};
-
 export default function ReporteApoyosEconomicosTab() {
-  // =========================
-  // DATA
-  // =========================
-  const { data: beneficiarios = [] } = useQuery({
-    queryKey: ["beneficiarios"],
-    queryFn: obtenerBeneficiarios,
-  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  // 🔥 AQUÍ YA TRAES PERIODOS
-  const { data: periodos = [] } = useQuery({
-    queryKey: ["periodos"],
-    queryFn: obtenerPeriodos,
-  });
+  const { state, actions, loading } = useReporteBeneficiariosEconomico();
 
-  // =========================
-  // FILTROS STATE
-  // =========================
-  const [periodo, setPeriodo] = useState("");
-  const [estatus, setEstatus] = useState("");
-  const [search, setSearch] = useState("");
+  const { search, periodo, estatus, dataFiltrada, periodosOptions } = state;
 
-  // =========================
-  // DATA BASE
-  // =========================
-  const dataBase = useMemo(() => {
-    return mapApoyos(beneficiarios, periodo);
-  }, [beneficiarios, periodo]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, periodo, estatus]);
 
-  // =========================
-  // FILTRO FINAL
-  // =========================
-  const dataFiltrada = useMemo(() => {
-    return dataBase.filter((b) => {
-      const matchSearch = search
-        ? b.beneficiario.toLowerCase().includes(search.toLowerCase())
-        : true;
-
-      const matchEstatus =
-        estatus === ""
-          ? true
-          : estatus === "Entregado"
-          ? b.apoyos_entregados > 0
-          : estatus === "Pendiente"
-          ? b.apoyos_pendientes > 0
-          : true;
-
-      return matchSearch && matchEstatus;
-    });
-  }, [dataBase, search, estatus]);
-
-  // =========================
-  // STATS
-  // =========================
   const stats = useMemo(() => {
     let totalApoyos = 0;
     let entregado = 0;
     let pendiente = 0;
-    let beneficiariosUnicos = new Set();
+    const beneficiarios = new Set();
 
     dataFiltrada.forEach((b) => {
-      totalApoyos +=
-        (b.apoyos_entregados || 0) +
-        (b.apoyos_pendientes || 0);
-
-      entregado += b.apoyos_entregados || 0;
-      pendiente += b.apoyos_pendientes || 0;
-
-      beneficiariosUnicos.add(b.id_beneficiario);
+      totalApoyos += b.total_registrados || 0;
+      entregado += b.total_entregados || 0;
+      pendiente += b.total_pendientes || 0;
+      beneficiarios.add(b.id_beneficiario);
     });
 
     return {
       totalApoyos,
       entregado,
       pendiente,
-      beneficiarios: beneficiariosUnicos.size,
+      beneficiarios: beneficiarios.size,
     };
   }, [dataFiltrada]);
 
-  // =========================
-  // OPTIONS PERIODOS (🔥 NUEVO)
-  // =========================
-  const periodosOptions = useMemo(() => {
-    return [
-      { value: "", label: "Todos los periodos" },
-      ...periodos.map((p) => ({
-        value: p.id_periodo,
-        label: p.ciclo_escolar,
-      })),
-    ];
-  }, [periodos]);
-   const ejecutarDescargaBlob = (buffer, nombreArchivo, mimeType) => {
-      if (!buffer) return;
-  
-      const realBuffer =
-        buffer instanceof ArrayBuffer ? buffer : buffer.buffer;
-  
-      const blob = new Blob([realBuffer], { type: mimeType });
-  
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-  
-      a.href = url;
-      a.download = nombreArchivo;
-      a.click();
-  
-      window.URL.revokeObjectURL(url);
-    };
-  
-    // EXCEL
-    const descargarExcel = async () => {
-      try {
-        const buffer = await solicitarDescargaReporte(
-          "apoyos",
-          "excel",
-          dataFiltrada // ✅ FIX
+  const totalPages = Math.max(1, Math.ceil(dataFiltrada.length / pageSize));
+
+  const dataPaginada = dataFiltrada.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  // Definición de columnas
+  const COLUMNS = [
+    { key: "beneficiario", label: "Beneficiario" },
+    { key: "total_registrados", label: "Apoyos Registrados" },
+    { key: "total_entregados", label: "Entregados" },
+    { key: "total_pendientes", label: "Pendientes" },
+    { key: "fecha_ultimo_apoyo", label: "Último Apoyo Recibido" },
+  ];
+
+  // Función para renderizar celdas con lógica personalizada
+  const renderCell = (item, key) => {
+    switch (key) {
+      case "beneficiario":
+        return (
+          <div className="flex items-center gap-3">
+            <AvatarGeneral nombre={item.nombre_completo} />
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-semibold text-slate-800 truncate">
+                {item.nombre_completo || "--"}
+              </span>
+              <span className="text-xs text-slate-500">
+                {item.edad ? `${item.edad} años` : "--"}
+              </span>
+            </div>
+          </div>
         );
-  
-        ejecutarDescargaBlob(
-          buffer,
-          `apoyos_${periodo || "todos"}.xlsx`,
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        );
-      } catch (error) {
-        console.error("Error Excel:", error);
-      }
-    };
-  
-    // PDF
-    const descargarPDF = async () => {
-      try {
-        const buffer = await solicitarDescargaReporte(
-          "apoyos",
-          "pdf",
-          dataFiltrada // ✅ FIX
-        );
-  
-        ejecutarDescargaBlob(
-          buffer,
-          `apoyos_${periodo || "todos"}.pdf`,
-          "application/pdf"
-        );
-      } catch (error) {
-        console.error("Error PDF:", error);
-      }
-    };
-  
+      case "total_registrados":
+      case "total_entregados":
+      case "total_pendientes":
+        return <span className="font-medium text-slate-700">{item[key] ?? 0}</span>;
+      case "fecha_ultimo_apoyo":
+        return <span className="text-sm text-slate-600">{item[key] || "Sin Registro"}</span>;
+      default:
+        return item[key] ?? "--";
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center text-sm font-semibold text-slate-500">
+        Cargando reporte económico...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-
-      {/* =========================
-          TARJETAS
-      ========================= */}
       <TarjetasEstadisticas
         items={[
-          {
-            label: "Total de Apoyos",
-            value: stats.totalApoyos,
-            icon: HandCoins,
-            color: "blue",
-          },
-          {
-            label: "Entregados",
-            value: stats.entregado,
-            icon: Wallet,
-            color: "emerald",
-          },
-          {
-            label: "Pendientes",
-            value: stats.pendiente,
-            icon: Clock3,
-            color: "amber",
-          },
-          {
-            label: "Beneficiarios",
-            value: stats.beneficiarios,
-            icon: Users,
-            color: "violet",
-          },
+          { label: "Total de Apoyos", value: stats.totalApoyos, icon: HandCoins, color: "blue" },
+          { label: "Entregados", value: stats.entregado, icon: Wallet, color: "emerald" },
+          { label: "Pendientes", value: stats.pendiente, icon: Clock3, color: "amber" },
+          { label: "Beneficiarios", value: stats.beneficiarios, icon: Users, color: "violet" },
         ]}
       />
 
       <Card>
-
-        {/* =========================
-            FILTROS REALES
-        ========================= */}
         <FiltrosReporte
-          search={search}
-          onSearchChange={setSearch}
+          searchValue={search}
+          onSearchChange={actions.setSearch}
           searchPlaceholder="Buscar beneficiario..."
-          filtros={[
-            {
-              key: "periodo",
-              value: periodo,
-              onChange: setPeriodo,
-              options: periodosOptions, // 🔥 YA CON PERIODOS REALES
-            },
-            {
-              key: "estatus",
-              value: estatus,
-              onChange: setEstatus,
+          showClearButton={false}
+          filters={[
+            { key: "periodo", label: "Periodo", value: periodo, onChange: actions.setPeriodo, options: periodosOptions },
+            { 
+              key: "estatus", 
+              label: "Estatus", 
+              value: estatus, 
+              onChange: actions.setEstatus, 
               options: [
                 { value: "", label: "Todos" },
                 { value: "Entregado", label: "Entregado" },
                 { value: "Pendiente", label: "Pendiente" },
-              ],
+              ] 
             },
           ]}
-          acciones={[
-            {
-              component: Boton,
-              variant: "secondary",
-              icon: FileSpreadsheet,
-              label: "Exportar Excel",
-              onClick: descargarExcel,
-            },
-            {
-              component: Boton,
-              icon: FileText,
-              label: "Descargar PDF",
-              onClick: descargarPDF,
-            },
-          ]}
+          extraAction={
+            <div className="flex items-center gap-2">
+              <Boton variant="secondary" icon={<FileSpreadsheet className="h-4 w-4" />} onClick={actions.descargarExcel}>Excel</Boton>
+              <Boton icon={<FileText className="h-4 w-4" />} onClick={actions.descargarPDF}>PDF</Boton>
+            </div>
+          }
         />
 
-        {/* =========================
-            TABLA
-        ========================= */}
         <DatosTabla
-          columns={[
-            { key: "beneficiario", label: "Beneficiario" },
-            { key: "total_recibido", label: "Total Recibido" },
-            { key: "apoyos_entregados", label: "Entregados" },
-            { key: "apoyos_pendientes", label: "Pendientes" },
-            { key: "ultimo_apoyo", label: "Último Apoyo" },
-          ]}
-          data={dataFiltrada}
+          columns={COLUMNS}
+          data={dataPaginada}
           rowKey="id_beneficiario"
+          renderCell={renderCell}
         />
 
         <PaginacionTabla
-          currentPage={1}
-          totalPages={1}
+          currentPage={currentPage}
+          totalPages={totalPages}
           totalItems={dataFiltrada.length}
-          pageSize={10}
-          onPageChange={() => {}}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          }}
         />
       </Card>
     </div>

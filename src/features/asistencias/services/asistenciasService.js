@@ -106,3 +106,22 @@ export const actualizarAsistenciasMasivo = async (payload) => {
     throw new Error(formatErrorAnidado(error.message));
   }
 };
+
+export const obtenerAsistenciasPorFiltro = async (mes, servicio) => {
+  try {
+    const res = await API.get(
+      `/api/beneficiarios/asistencias?mes=${mes}&servicio=${servicio}`
+    );
+    return res.data;
+  } catch (error) {
+    console.log(error);
+
+    const errorData = error.response?.data || error;
+
+    if (errorData) {
+      throw new Error(formatError(errorData));
+    }
+
+    throw new Error(formatError(error.message));
+  }
+};

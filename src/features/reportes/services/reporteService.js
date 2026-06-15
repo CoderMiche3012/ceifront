@@ -1,5 +1,4 @@
-// src/shared/services/reporteService.js
-
+import { obtenerLogoBase64 } from "../../../utils/imageUrlToBase64";
 const workerUrl = new URL("../workers/reporteMasterWorker.js", import.meta.url);
 let masterWorkerInstance = null;
 
@@ -11,13 +10,19 @@ function obtenerWorker() {
 }
 
 /**
- * Disparador universal de reportes asíncronos en segundo plano.
- * @param {string} tipoReporte - Nombre del archivo del reporte (ej: 'donadores', 'beneficiarios')
+ * Disparador universal de reportes en segundo plano.
+ * @param {string} tipoReporte - Nombre del archivo del reporte 
  * @param {'excel'|'pdf'} formato - Formato de salida solicitado
  * @param {Array} datos - Datos ya procesados listos para estampar
  */
-export const solicitarDescargaReporte = (tipoReporte, formato, datos, meta = {}) => {
+export const solicitarDescargaReporte = async (
+  tipoReporte,
+  formato,
+  datos,
+  meta = {}
+) => {
   const worker = obtenerWorker();
+  const logoBase64 = await obtenerLogoBase64();
 
   return new Promise((resolve, reject) => {
     const requestId = crypto.randomUUID();
@@ -25,7 +30,7 @@ export const solicitarDescargaReporte = (tipoReporte, formato, datos, meta = {})
     const handleMessage = (event) => {
       const { success, buffer, error, requestId: resId } = event.data;
 
-      if (resId !== requestId) return; // Evitar colisiones de descargas simultáneas
+      if (resId !== requestId) return;
 
       worker.removeEventListener("message", handleMessage);
 
@@ -38,14 +43,17 @@ export const solicitarDescargaReporte = (tipoReporte, formato, datos, meta = {})
     };
 
     worker.addEventListener("message", handleMessage);
+
     console.log("ENVIANDO WORKER:", tipoReporte, formato, datos.length);
+
     worker.postMessage({
       tipoReporte,
       formato,
       datos,
       meta,
+      logoBase64,
       requestId,
     });
-
   });
 };
+

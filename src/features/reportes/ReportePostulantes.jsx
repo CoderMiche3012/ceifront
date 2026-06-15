@@ -1,29 +1,27 @@
-// src/features/postulantes/ReportePostulantes.jsx
 import { useMemo, useState } from "react";
 import { Users, Clock3, CheckCircle, XCircle } from "lucide-react";
+
 import EncabezadoPagina from "../../components/shared/EncabezadoPagina";
 import TarjetasEstadisticas from "../../components/shared/TarjetasEstadisticas";
 import Avatar from "../../components/shared/AvatarGeneral";
-
 import Card from "../../components/ui/Card";
-
 import DatosTabla from "../../components/tablas/DatosTabla";
 import PaginacionTabla from "../../components/tablas/PaginacionTabla";
-
 import PostulanteReporteFiltros from "./components/PostulanteReporteFiltros";
 
 import { solicitarDescargaReporte } from "./services/reporteService";
 import { useReportePostulantes } from "./hooks/useReportePostulantes";
 
-const PAGE_SIZE = 10;
 const INITIAL_FILTERS = {
     decision: "Pendiente",
     prioridad: "todos",
     visita: "todos",
     estudio: "todos",
+    nivelEducativo: "todos",
 };
 
 export default function ReportePostulantes() {
+    const [pageSize, setPageSize] = useState(10);
     const [search, setSearch] = useState("");
     const [filters, setFilters] = useState(INITIAL_FILTERS);
     const [page, setPage] = useState(1);
@@ -59,14 +57,28 @@ export default function ReportePostulantes() {
             const coincideEstudio = filters.estudio === "todos" ||
                 p.estatusEstudio?.toString().toLowerCase() === filters.estudio.toLowerCase();
 
-            return coincideBusqueda && coincideEstatus && coincidePrioridad && coincideVisita && coincideEstudio;
+            const coincideNivelEducativo =
+                filters.nivelEducativo === "todos" ||
+                (p.nivelEscolar || "").toString().toLowerCase().trim() ===
+                (filters.nivelEducativo || "").toString().toLowerCase().trim();
+            return coincideBusqueda && coincideEstatus && coincidePrioridad && coincideVisita && coincideEstudio &&
+                coincideNivelEducativo;
         });
     }, [postulantes, search, filters]);
 
-    const totalPages = Math.ceil(postulantesFiltrados.length / PAGE_SIZE) || 1;
+    const totalPages = Math.ceil(postulantesFiltrados.length / pageSize) || 1;
     const datosPaginados = useMemo(() => {
-        return postulantesFiltrados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-    }, [postulantesFiltrados, page]);
+        return postulantesFiltrados.slice(
+            (page - 1) * pageSize,
+            page * pageSize
+        );
+    }, [postulantesFiltrados, page, pageSize]);
+
+    const handlePageSizeChange = (size) => {
+        setPageSize(size);
+        setPage(1);
+    };
+
 
     const estadisticas = useMemo(
         () => [
@@ -82,11 +94,10 @@ export default function ReportePostulantes() {
         { key: "nombre", label: "Nombre completo" },
         { key: "estatus", label: "Estatus" },
         { key: "prioridad", label: "Prioridad" },
-        { key: "edad", label: "Edad" },
         { key: "genero", label: "Género" },
         { key: "telefono", label: "Teléfono" },
         { key: "tutor", label: "Tutor principal" },
-        { key: "telefonoTutor", label: "Tel. tutor" },
+        { key: "nivelEscolar", label: "Nivel educativo" },
         { key: "familiares", label: "N° familiares" },
         { key: "fechaVisita", label: "Fecha visita" },
     ];
@@ -96,9 +107,25 @@ export default function ReportePostulantes() {
             return (
                 <div className="flex items-center gap-3">
                     <Avatar nombre={row.nombre} apellidoP={row.apellido_p} />
-                    <div>
+
+                    <div className="flex flex-col">
                         <p className="font-medium">{row.nombreCompleto}</p>
+
+                        <p className="text-xs text-slate-500">
+                            Edad: {row.edad}
+                        </p>
                     </div>
+                </div>
+            );
+        }
+        if (key === "tutor") {
+            return (
+                <div className="flex flex-col">
+                    <p className="font-normal">{row.tutor}</p>
+
+                    <p className="text-xs text-slate-500">
+                        Tel: {row.telefonoTutor}
+                    </p>
                 </div>
             );
         }
@@ -120,7 +147,10 @@ export default function ReportePostulantes() {
     const descargarExcel = async () => {
         try {
             const buffer = await solicitarDescargaReporte("nuevosIngresos", "excel", postulantesFiltrados);
-            ejecutarDescargaBlob(buffer, "padrón_nuevos_ingresos_cei.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            ejecutarDescargaBlob(
+                buffer,
+                "padrón_nuevos_ingresos_cei.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            );
         } catch (error) {
             console.error("Error al descargar Excel:", error);
         }
@@ -165,8 +195,9 @@ export default function ReportePostulantes() {
                     currentPage={page}
                     totalPages={totalPages}
                     totalItems={postulantesFiltrados.length}
-                    pageSize={PAGE_SIZE}
+                    pageSize={pageSize}
                     onPageChange={setPage}
+                    onPageSizeChange={handlePageSizeChange}
                 />
             </Card>
         </div>

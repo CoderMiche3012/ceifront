@@ -1,284 +1,107 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useMemo } from "react";
 
 import Card from "../../../components/ui/Card";
 import Boton from "../../../components/ui/Boton";
-
 import TarjetasEstadisticas from "../../../components/shared/TarjetasEstadisticas";
-import FiltrosReporte from "../../../components/tablas/FiltrosReporte";
+import FiltrosReporte from "../../../components/tablas/FiltrosAvanzados";
 import DatosTabla from "../../../components/tablas/DatosTabla";
 import PaginacionTabla from "../../../components/tablas/PaginacionTabla";
-import { solicitarDescargaReporte } from "../services/reporteService";
+import AvatarGeneral from "../../../components/shared/AvatarGeneral";
+import { useReporteObligaciones } from "../hooks/useReporteBeneficiariosObligaciones";
 
-import {
-  FileText,
-  CheckCircle,
-  XCircle,
-  Clock,
-  FileSpreadsheet,
-} from "lucide-react";
-
-import { obtenerBeneficiarios } from "../../beneficiarios/services/beneficiariosService";
-
-/**
- * 🔥 MAPEO OBLIGACIONES (CON PERIODO)
- */
-const mapObligaciones = (beneficiarios = []) => {
-  const rows = [];
-
-  beneficiarios.forEach((b) => {
-    const nombre =
-      b.expediente_resumen?.nombre_completo || "Sin nombre";
-
-    (b.historial_seguimientos || []).forEach((seg) => {
-      const obligaciones = seg?.obligaciones || [];
-
-      obligaciones.forEach((o) => {
-        rows.push({
-          id_obligacion: o.id_obligacion,
-          beneficiario: nombre,
-          tipo: o.tipo,
-          obligacion:
-            o.tipo === "carta"
-              ? "Carta Donante"
-              : o.tipo === "servicio"
-              ? "Servicio Social"
-              : o.tipo || "N/A",
-
-          estatus: o.estatus,
-          fecha: o.fecha || "Sin fecha",
-
-          // 🔥 CLAVE PARA FILTRO
-          periodo: String(seg?.id_periodo || ""),
-        });
-      });
-    });
-  });
-
-  return rows;
-};
+import { CheckCircle2, AlertCircle, FileText, ClipboardList, FileSpreadsheet } from "lucide-react";
 
 export default function ReporteObligacionesTab() {
-  // =========================
-  // DATA
-  // =========================
-  const { data: beneficiarios = [] } = useQuery({
-    queryKey: ["beneficiarios"],
-    queryFn: obtenerBeneficiarios,
-  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  // =========================
-  // STATE FILTROS
-  // =========================
-  const [search, setSearch] = useState("");
-  const [tipo, setTipo] = useState("");
-  const [estatus, setEstatus] = useState("");
-  const [periodo, setPeriodo] = useState("");
+  const { state, actions, loading } = useReporteObligaciones();
+  const { search, periodo, tipoObligacion, estatus, dataFiltrada, periodosOptions } = state;
 
-  // =========================
-  // DATA BASE
-  // =========================
-  const dataBase = useMemo(() => {
-    return mapObligaciones(beneficiarios);
-  }, [beneficiarios]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, periodo, tipoObligacion, estatus]);
+  
 
-  // =========================
-  // FILTRADO REAL
-  // =========================
-  const dataFiltrada = useMemo(() => {
-    return dataBase.filter((o) => {
-      const matchSearch = search
-        ? o.beneficiario.toLowerCase().includes(search.toLowerCase())
-        : true;
-
-      const matchTipo = tipo ? o.tipo === tipo : true;
-
-      const matchEstatus = estatus ? o.estatus === estatus : true;
-
-      const matchPeriodo = periodo
-        ? String(o.periodo) === String(periodo)
-        : true;
-
-      return matchSearch && matchTipo && matchEstatus && matchPeriodo;
-    });
-  }, [dataBase, search, tipo, estatus, periodo]);
-
-  // =========================
-  // STATS
-  // =========================
   const stats = useMemo(() => {
-    let total = 0;
-    let entregadas = 0;
-    let pendientes = 0;
-    let canceladas = 0;
+    const total = dataFiltrada.length;
+    const cumplidas = dataFiltrada.filter((o) => o.estatus === "Cumplio").length;
+    const pendientes = total - cumplidas;
 
-    dataFiltrada.forEach((o) => {
-      total++;
-
-      if (o.estatus === "Entregado") entregadas++;
-      if (o.estatus === "Pendiente") pendientes++;
-      if (o.estatus === "Cancelado") canceladas++;
-    });
-
-    return { total, entregadas, pendientes, canceladas };
+    return { total, cumplidas, pendientes };
   }, [dataFiltrada]);
- const ejecutarDescargaBlob = (buffer, nombreArchivo, mimeType) => {
-      if (!buffer) return;
-  
-      const realBuffer =
-        buffer instanceof ArrayBuffer ? buffer : buffer.buffer;
-  
-      const blob = new Blob([realBuffer], { type: mimeType });
-  
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-  
-      a.href = url;
-      a.download = nombreArchivo;
-      a.click();
-  
-      window.URL.revokeObjectURL(url);
-    };
-  
-    // EXCEL
-    const descargarExcel = async () => {
-      try {
-        const buffer = await solicitarDescargaReporte(
-          "obligaciones",
-          "excel",
-          dataFiltrada // ✅ FIX
+
+  const totalPages = Math.max(1, Math.ceil(dataFiltrada.length / pageSize));
+  const dataPaginada = dataFiltrada.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const COLUMNS = [
+    { key: "beneficiario", label: "Beneficiario" },
+    { key: "tipo", label: "Tipo" },
+    { key: "estatus", label: "Estatus" },
+    { key: "fecha", label: "Fecha Programada" },
+  ];
+
+  const renderCell = (item, key) => {
+    switch (key) {
+      case "beneficiario":
+        return <div className="font-semibold text-slate-800">{item.nombre_completo}</div>;
+      case "tipo":
+        return <span className="text-sm capitalize">{item.tipo === "servicioSocial" ? "Servicio Social" : "Carta"}</span>;
+      case "estatus":
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+            item.estatus === "Cumplio" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+          }`}>
+            {item.estatus}
+          </span>
         );
-  
-        ejecutarDescargaBlob(
-          buffer,
-          `obligaciones_${periodo || "todos"}.xlsx`,
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        );
-      } catch (error) {
-        console.error("Error Excel:", error);
-      }
-    };
-  
-    // PDF
-    const descargarPDF = async () => {
-      try {
-        const buffer = await solicitarDescargaReporte(
-          "obligaciones",
-          "pdf",
-          dataFiltrada // ✅ FIX
-        );
-  
-        ejecutarDescargaBlob(
-          buffer,
-          `obligaciones_${periodo || "todos"}.pdf`,
-          "application/pdf"
-        );
-      } catch (error) {
-        console.error("Error PDF:", error);
-      }
-    };
-  
+      case "fecha":
+        return <span className="text-sm text-slate-600">{item.fecha}</span>;
+      default:
+        return item[key] ?? "--";
+    }
+  };
+
+  if (loading) return <div className="p-10 text-center">Cargando reporte de obligaciones...</div>;
+
   return (
     <div className="space-y-6">
-
-      {/* 📊 TARJETAS */}
       <TarjetasEstadisticas
         items={[
-          {
-            label: "Total Obligaciones",
-            value: stats.total,
-            icon: FileText,
-            color: "blue",
-          },
-          {
-            label: "Entregadas",
-            value: stats.entregadas,
-            icon: CheckCircle,
-            color: "emerald",
-          },
-          {
-            label: "Pendientes",
-            value: stats.pendientes,
-            icon: Clock,
-            color: "amber",
-          },
-          {
-            label: "Canceladas",
-            value: stats.canceladas,
-            icon: XCircle,
-            color: "red",
-          },
+          { label: "Total Obligaciones", value: stats.total, icon: ClipboardList, color: "blue" },
+          { label: "Cumplidas", value: stats.cumplidas, icon: CheckCircle2, color: "emerald" },
+          { label: "Pendientes", value: stats.pendientes, icon: AlertCircle, color: "amber" },
         ]}
       />
 
       <Card>
-
-        {/* 🔎 FILTROS CON PERIODO */}
         <FiltrosReporte
-          search={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Buscar beneficiario..."
-          filtros={[
-            {
-              key: "periodo",
-              value: periodo,
-              onChange: setPeriodo,
-              options: [
-                { value: "", label: "Todos los periodos" },
-                { value: "1", label: "2024 - 2025" },
-              ],
+          searchValue={search}
+          onSearchChange={actions.setSearch}
+          filters={[
+            { key: "periodo", label: "Periodo", value: periodo, onChange: actions.setPeriodo, options: periodosOptions },
+            { 
+              key: "tipo", label: "Tipo", value: tipoObligacion, onChange: actions.setTipoObligacion, 
+              options: [{ value: "", label: "Todos" }, { value: "servicioSocial", label: "Servicio Social" }, { value: "carta", label: "Carta" }] 
             },
-            {
-              key: "tipo",
-              value: tipo,
-              onChange: setTipo,
-              options: [
-                { value: "", label: "Todas las obligaciones" },
-                { value: "carta", label: "Carta Donante" },
-                { value: "servicio", label: "Servicio Social" },
-              ],
-            },
-            {
-              key: "estatus",
-              value: estatus,
-              onChange: setEstatus,
-              options: [
-                { value: "", label: "Todos los estatus" },
-                { value: "Pendiente", label: "Pendiente" },
-                { value: "Entregado", label: "Entregado" },
-                { value: "Cancelado", label: "Cancelado" },
-              ],
-            },
+            { 
+              key: "estatus", label: "Estatus", value: estatus, onChange: actions.setEstatus, 
+              options: [{ value: "", label: "Todos" }, { value: "Cumplio", label: "Cumplió" }, { value: "Pendiente", label: "Pendiente" }] 
+            }
           ]}
-          acciones={[
-            {
-              component: Boton,
-              variant: "secondary",
-              icon: FileSpreadsheet,
-              label: "Exportar Excel",
-              onClick: descargarExcel,
-            },
-          ]}
+          extraAction={
+            <div className="flex gap-2">
+              <Boton variant="secondary" onClick={actions.descargarExcel}><FileSpreadsheet className="h-4 w-4" /> Excel</Boton>
+              <Boton onClick={actions.descargarPDF}><FileText className="h-4 w-4" /> PDF</Boton>
+            </div>
+          }
         />
 
-        {/* 📋 TABLA */}
-        <DatosTabla
-          columns={[
-            { key: "beneficiario", label: "Beneficiario" },
-            { key: "obligacion", label: "Obligación" },
-            { key: "estatus", label: "Estatus" },
-            { key: "fecha", label: "Fecha" },
-          ]}
-          data={dataFiltrada}
-          rowKey="id_obligacion"
-        />
+        <DatosTabla columns={COLUMNS} data={dataPaginada} renderCell={renderCell} />
 
-        <PaginacionTabla
-          currentPage={1}
-          totalPages={1}
-          totalItems={dataFiltrada.length}
-          pageSize={10}
-          onPageChange={() => {}}
+        <PaginacionTabla 
+          currentPage={currentPage} totalPages={totalPages} totalItems={dataFiltrada.length}
+          onPageChange={setCurrentPage} onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
         />
       </Card>
     </div>

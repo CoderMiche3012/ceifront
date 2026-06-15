@@ -5,6 +5,7 @@ import ModalConfirmacion from '../../../../components/shared/ModalConfirmacion';
 import ModalResultado from '../../../../components/shared/ModalResultado';
 import Field from '../../../../components/ui/Field';
 import { actualizarExpediente } from '../../services/expedientesService';
+import { useActualizarExpediente } from '../../../expedientes/hooks/useExpedientes';
 
 export default function EditarNotaFamilia({ isOpen, onClose, data }) {
     const queryClient = useQueryClient();

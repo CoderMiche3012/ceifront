@@ -1,5 +1,11 @@
-import { HandCoins } from "lucide-react";
 import { useState, useMemo } from "react";
+
+import Field from "../../../../../../components/ui/Field";
+import Input from "../../../../../../components/ui/InputG";
+import { ui } from "../../../../../../styles/ui/index";
+import { HandCoins } from "lucide-react";
+import { HiOutlineX } from "react-icons/hi";
+import BotonPrincipal from "../../../../../../components/ui/Boton";
 
 // 1. Importación de tus hooks personalizados
 import {
@@ -15,9 +21,7 @@ import Boton from "../../../../../../components/ui/BotonInterno";
 import Alerta from "../../../../../../components/ui/AlertaError";
 import ModalConfirmacion from "../../../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../../../components/shared/ModalResultado";
-import { subirDocumento } from "../../../../../expedientes/services/documentosService";
 import { useSubirDocumento, useActualizarDocumento } from "../../../../../expedientes/hooks/useDocumentos";
-
 
 export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
   const actualizarDocumentoMutation = useActualizarDocumento();
@@ -426,167 +430,161 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
         />
       </div>
       {/* MODAL CREAR / EDITAR */}
+
       {modalCrear && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-            <div className="mb-5">
-              <h3 className="text-lg font-bold text-slate-800">
-                {modoEdicion
-                  ? "Editar reembolso económico"
-                  : "Agregar reembolso económico"}
-              </h3>
+        <div className={ui.modal.formOverlay}>
+          <div className="w-full max-w-2xl">
+            <div className={ui.modal.formContainer}>
 
-              <p className="text-sm text-slate-500 mt-1">
-                {modoEdicion
-                  ? "Modifica la información del reembolso."
-                  : "Completa la información del reembolso."}
-              </p>
-            </div>
+              {/* HEADER */}
+              <div className={ui.modal.formHeader}>
+                <div className={`${ui.modal.iconWrapper} bg-teal-600/10 text-teal-600`}>
+                  <HandCoins className="w-5 h-5" />
+                </div>
 
-            <div className="space-y-4">
-              {/* CONCEPTO */}
-              <div>
-                <label className="text-sm font-medium text-slate-700">
-                  Concepto
-                </label>
-
-                <input
-                  type="text"
-                  value={formData.concepto}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      concepto: e.target.value,
-                    })
-                  }
-                  className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-teal-500"
-                  placeholder="Ej. Uniforme escolar"
-                />
-              </div>
-
-              {/* MONTO */}
-              <div>
-                <label className="text-sm font-medium text-slate-700">
-                  Monto
-                </label>
-
-                <input
-                  type="number"
-                  value={formData.monto}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      monto: e.target.value,
-                    })
-                  }
-                  className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-teal-500"
-                  placeholder="0.00"
-                />
-              </div>
-
-              {/* COMPROBANTE */}
-              <div>
-                <label className="text-sm font-medium text-slate-700">
-                  Comprobante (opcional)
-                </label>
-
-                {modoEdicion && (() => {
-                  const documentoExistente = documentos?.find(
-                    (doc) =>
-                      doc.tipo_documento === "Apoyo" &&
-                      doc.nombre_documento ===
-                      `ComprobanteApoyo${apoyoSeleccionado.id_apoyo}`
-                        .replace(/[^a-zA-Z0-9-]/g, "")
-                  );
-
-                  return documentoExistente ? (
-                    <div className="mt-2 mb-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
-                      <p className="text-xs text-slate-600 mb-1">
-                        Comprobante actual:
-                      </p>
-
-                      <a
-                        href={`http://localhost:8000${documentoExistente.archivo}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 font-medium underline"
-                      >
-                        Ver comprobante actual
-                      </a>
-
-                      <p className="mt-2 text-xs text-slate-500">
-                        Si seleccionas un nuevo archivo, reemplazará al actual.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="mt-2 mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                      <p className="text-xs text-amber-700">
-                        Este apoyo aún no tiene comprobante registrado.
-                      </p>
-                    </div>
-                  );
-                })()}
-
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={(e) =>
-                    setArchivoComprobante(
-                      e.target.files?.[0] || null
-                    )
-                  }
-                  className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm"
-                />
-
-                {archivoComprobante && (
-                  <p className="mt-2 text-xs text-green-600">
-                    Archivo seleccionado: {archivoComprobante.name}
+                <div className="flex-1">
+                  <h2 className={ui.modal.title}>
+                    {modoEdicion ? "Editar reembolso económico" : "Agregar reembolso económico"}
+                  </h2>
+                  <p className={ui.modal.description}>
+                    {modoEdicion
+                      ? "Modifica la información del reembolso"
+                      : "Completa la información del reembolso"}
                   </p>
-                )}
+                </div>
+
+                <button
+                  onClick={() => {
+                    setModalCrear(false);
+                    setArchivoComprobante(null);
+                    setAlerta({ open: false, mensaje: "", tipo: "error" });
+                  }}
+                  className="p-2 rounded-xl hover:bg-slate-100 transition"
+                >
+                  <HiOutlineX size={20} />
+                </button>
               </div>
-            </div>
 
-            <div className="mt-4">
-              <Alerta
-                open={alerta.open}
-                mensaje={alerta.mensaje}
-                tipo={alerta.tipo}
-                onClose={() =>
-                  setAlerta({
-                    ...alerta,
-                    open: false,
-                  })
-                }
-              />
-            </div>
+              {/* BODY */}
+              <div className={ui.modal.formBody}>
 
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setAlerta({
-                    open: false,
-                    mensaje: "",
-                    tipo: "error",
-                  });
+                {/* ALERTA */}
+                {alerta?.open && (
+                  <Alerta
+                    mensaje={alerta.mensaje}
+                    tipo={alerta.tipo}
+                    onClose={() =>
+                      setAlerta({ ...alerta, open: false })
+                    }
+                  />
+                )}
 
-                  setArchivoComprobante(null);
-                  setModalCrear(false);
-                }}
-                className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-              >
-                Cancelar
-              </button>
+                <div className={ui.modal.formScroll}>
 
-              <button
-                type="button"
-                onClick={handleGuardarApoyo}
-                className="rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-700"
-              >
-                {modoEdicion
-                  ? "Guardar cambios"
-                  : "Continuar"}
-              </button>
+                  <div className="grid grid-cols-1 gap-6">
+
+                    {/* CONCEPTO */}
+                    <Field label="Concepto" required>
+                      <Input
+                        value={formData.concepto}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            concepto: e.target.value,
+                          })
+                        }
+                        placeholder="Ej. Uniforme escolar"
+                      />
+                    </Field>
+
+                    {/* MONTO */}
+                    <Field label="Monto" required>
+                      <Input
+                        type="number"
+                        value={formData.monto}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            monto: e.target.value,
+                          })
+                        }
+                        placeholder="0.00"
+                      />
+                    </Field>
+
+                    {/* COMPROBANTE */}
+                    <Field label="Comprobante (opcional)">
+                      {modoEdicion && (() => {
+                        const documentoExistente = documentos?.find(
+                          (doc) =>
+                            doc.tipo_documento === "Apoyo" &&
+                            doc.nombre_documento ===
+                            `ComprobanteApoyo${apoyoSeleccionado.id_apoyo}`
+                              .replace(/[^a-zA-Z0-9-]/g, "")
+                        );
+
+                        return documentoExistente ? (
+                          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm">
+                            <p className="text-xs text-slate-600 mb-1">
+                              Comprobante actual:
+                            </p>
+
+                            <a
+                              href={`http://localhost:8000${documentoExistente.archivo}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 underline font-medium"
+                            >
+                              Ver comprobante actual
+                            </a>
+
+                            <p className="mt-2 text-xs text-slate-500">
+                              Si subes uno nuevo, reemplazará el anterior.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+                            Este apoyo aún no tiene comprobante registrado.
+                          </div>
+                        );
+                      })()}
+
+                      <Input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) =>
+                          setArchivoComprobante(e.target.files?.[0] || null)
+                        }
+                      />
+
+                      {archivoComprobante && (
+                        <p className="text-xs text-green-600 mt-2">
+                          Archivo seleccionado: {archivoComprobante.name}
+                        </p>
+                      )}
+                    </Field>
+
+                  </div>
+                </div>
+
+                {/* FOOTER */}
+                <div className={ui.modal.formActions}>
+                  <BotonPrincipal
+                    variant="secondary"
+                    onClick={() => {
+                      setModalCrear(false);
+                      setArchivoComprobante(null);
+                    }}
+                  >
+                    Cancelar
+                  </BotonPrincipal>
+
+                  <BotonPrincipal onClick={handleGuardarApoyo}>
+                    {modoEdicion ? "Guardar cambios" : "Continuar"}
+                  </BotonPrincipal>
+                </div>
+
+              </div>
             </div>
           </div>
         </div>

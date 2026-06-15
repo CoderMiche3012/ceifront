@@ -2,173 +2,349 @@ import ExcelJS from "exceljs";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { aplicarEstilosExcelGlobal } from "../../reporteUtils";
-import logoCei from "../../../../assets/imagenes/logo.png";
 
-// =========================
-// LOGO BASE64
-// =========================
-const obtenerBase64 = async (url) => {
-  const response = await fetch(url);
-  const blob = await response.blob();
+const COLUMNAS_BENEFICIARIOS = [
+  { key: "nombre", width: 30 },
+  { key: "periodo", width: 15 },
+  { key: "estatus", width: 20 },
+  { key: "escuela", width: 40 },
+  { key: "escolaridad", width: 30 },
+  { key: "gradoEscolar", width: 25 },
+  { key: "promedio", width: 25 },
+  { key: "rendimiento", width: 25 },
+];
 
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      resolve(reader.result.split(",")[1]);
-    };
-    reader.readAsDataURL(blob);
+const HEADERS_BENEFICIARIOS = [
+  "Nombre Completo",
+  "Periodo",
+  "Estatus",
+  "Escuela",
+  "Nivel Escolar",
+  "Grado Escolar",
+  "Promedio",
+  "Rendimiento"
+];
+
+//Procesamiento de datos 
+const procesarMetricas = (datos) => {
+  return datos.reduce((acc, b) => {
+    // Estatus
+    const estatus = b.estatus?.toLowerCase() || "";
+    if (estatus === "activo") acc.activos++;
+    else if (["graduado", "finalizado"].includes(estatus)) acc.graduados++;
+    else if (estatus === "inactivo") acc.inactivos++;
+    // Niveles
+    const esc = b.escolaridad?.toLowerCase() || "";
+    const nivel = esc.includes("preescolar") ? "Preescolar" :
+      esc.includes("primaria") ? "Primaria" :
+        esc.includes("secundaria") ? "Secundaria" :
+          (esc.includes("preparatoria") || esc.includes("bachillerato")) ? "Media Superior" :
+            (esc.includes("universidad") || esc.includes("licenciatura")) ? "Superior" : "Sin Registro";
+    acc.niveles[nivel] = (acc.niveles[nivel] || 0) + 1;
+
+    // Edades
+    const edad = Number(b.edad);
+    if (!isNaN(edad)) {
+      if (edad <= 5) acc.edades["0-5"]++;
+      else if (edad <= 10) acc.edades["6-10"]++;
+      else if (edad <= 15) acc.edades["11-15"]++;
+      else if (edad <= 18) acc.edades["16-18"]++;
+      else acc.edades["19+"]++;
+    }
+    // Municipios
+    const muni = b.municipio || "Sin Registro";
+    acc.municipios[muni] = (acc.municipios[muni] || 0) + 1;
+    return acc;
+  }, {
+    activos: 0,
+    graduados: 0,
+    inactivos: 0,
+    niveles: {},
+    edades: { "0-5": 0, "6-10": 0, "11-15": 0, "16-18": 0, "19+": 0 },
+    municipios: {}
   });
 };
 
-const LOGO_CEI_BASE64 = await obtenerBase64(logoCei);
+// para el excel
+export const generarExcelEstrategia = async (datos, logoBase64, meta = {}) => {
+  const periodoRaw = (meta.periodoLabel || meta.periodo || "General").toString().trim();
+  const titulo = `REPORTE DE BENEFICIARIOS - ${periodoRaw}`;
+  const colorTitulo = "0D6F6B";
+  const m = procesarMetricas(datos);
 
-// ==========================================
-// EXCEL - ACADÉMICO
-// ==========================================
-export const generarExcelEstrategia = async (datos) => {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "Centro de Esperanza Infantil";
-  workbook.created = new Date();
+  const worksheet = workbook.addWorksheet("Beneficiarios");
 
-  const worksheet = workbook.addWorksheet("academico");
+  worksheet.columns = COLUMNAS_BENEFICIARIOS;
+  worksheet.getRow(5).values = HEADERS_BENEFICIARIOS;
+  worksheet.autoFilter = {
+    from: { row: 5, column: 1 },
+    to: {
+      row: 5,
+      column: HEADERS_BENEFICIARIOS.length
+    }
+  };
 
-  worksheet.columns = [
-    { key: "beneficiario", width: 35 },
-    { key: "escuela", width: 35 },
-    { key: "grado", width: 12 },
-    { key: "promedio", width: 12 },
-    { key: "estatus", width: 22 },
-  ];
-
-  const headers = [
-    "Beneficiario",
-    "Escuela",
-    "Grado",
-    "Promedio",
-    "Estatus Académico",
-    "Periodo",
-  ];
-
-  worksheet.getRow(5).values = headers;
-
-  datos.forEach((d) => {
+  datos.forEach((p) => {
     worksheet.addRow([
-      d.beneficiario || "",
-      d.escuela || "",
-      d.grado || "",
-      d.promedio || 0,
-      d.estatusAcademico || "",
+      p.nombre_completo,
+      p.periodo_columna || periodoRaw,
+      p.estatus,
+      p.escuela,
+      p.nivel,
+      p.grado,
+      p.promedio,
+      p.rendimiento,
     ]);
   });
-
-  worksheet.autoFilter = "A5:F5";
-
-  // =========================
-  // LOGO
-  // =========================
-  if (LOGO_CEI_BASE64) {
-    const cleanBase64 = LOGO_CEI_BASE64.includes("base64,")
-      ? LOGO_CEI_BASE64.split("base64,")[1]
-      : LOGO_CEI_BASE64;
-
-    const imageId = workbook.addImage({
-      base64: cleanBase64,
-      extension: "png",
-    });
-
-    worksheet.addImage(imageId, {
-      tl: { col: 0, row: 0 },
-      ext: { width: 100, height: 70 },
-      editAs: "oneCell",
-    });
-  }
-
   await aplicarEstilosExcelGlobal(
     worksheet,
-    "REPORTE ACADÉMICO",
+    titulo,
     workbook,
-    LOGO_CEI_BASE64
+    logoBase64,
+    {
+      alineacionHeaders: "left"
+    }
+  );
+  // hoja de resumen
+  const resumen = workbook.addWorksheet("Resumen");
+  await aplicarEstilosExcelGlobal(
+    resumen,
+    `RESUMEN DE BENEFICIARIOS - ${periodoRaw}`,
+    workbook,
+    logoBase64,
+    { usarHeader: true, usarTabla: false }
   );
 
-  const buffer = await workbook.xlsx.writeBuffer();
-  return buffer instanceof ArrayBuffer
-    ? buffer
-    : new Uint8Array(buffer).buffer;
-};
+  resumen.columns = [
+    { width: 5 },
+    { width: 5 },
+    { width: 28 },
+    { width: 18 },
+    { width: 5 },
+    { width: 28 },
+    { width: 18 },
+    { width: 5 },
+    { width: 28 },
+    { width: 18 }
+  ];
 
-// ==========================================
-// PDF - ACADÉMICO
-// ==========================================
-export const generarPdfEstrategia = async (datos) => {
-  const doc = new jsPDF({
-    orientation: "landscape",
-    format: "a3",
+  // Títulos
+  resumen.getCell("C7").value = "DATOS GENERALES"; resumen.mergeCells("C7:D7");
+  resumen.getCell("F7").value = "NIVEL EDUCATIVO"; resumen.mergeCells("F7:G7");
+  resumen.getCell("I7").value = "RANGOS DE EDAD"; resumen.mergeCells("I7:J7");
+
+  ["C7", "F7", "I7"].forEach((c) => {
+    resumen.getCell(c).font = { bold: true, color: { argb: "FFFFFF" } };
+    resumen.getCell(c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: colorTitulo } };
+    resumen.getCell(c).alignment = { horizontal: "center", vertical: "middle" };
   });
 
-  if (LOGO_CEI_BASE64) {
-    doc.addImage(
-      `data:image/png;base64,${LOGO_CEI_BASE64}`,
-      "PNG",
-      14,
-      10,
-      32,
-      24
-    );
+  // subtitulos
+  resumen.getCell("C8").value = "Concepto"; resumen.getCell("D8").value = "Cantidad";
+  resumen.getCell("F8").value = "Nivel"; resumen.getCell("G8").value = "Beneficiarios";
+  resumen.getCell("I8").value = "Rango"; resumen.getCell("J8").value = "Beneficiarios";
+
+  // Datos
+  resumen.getCell("C9").value = "Periodo"; resumen.getCell("D9").value = periodoRaw;
+  resumen.getCell("C10").value = "Total"; resumen.getCell("D10").value = datos.length;
+  resumen.getCell("C11").value = "Activos"; resumen.getCell("D11").value = m.activos;
+  resumen.getCell("C12").value = "Graduados"; resumen.getCell("D12").value = m.graduados;
+  resumen.getCell("C13").value = "Inactivos"; resumen.getCell("D13").value = m.inactivos;
+
+  let fN = 9; Object.entries(m.niveles).forEach(([n, c]) => {
+    resumen.getCell(`F${fN}`).value = n;
+    resumen.getCell(`G${fN}`).value = c; fN++;
+  });
+  let fE = 9; Object.entries(m.edades).forEach(([r, c]) => {
+    resumen.getCell(`I${fE}`).value = r;
+    resumen.getCell(`J${fE}`).value = c; fE++;
+  });
+
+  //para municipios
+  const hojaMunicipios = workbook.addWorksheet("Municipios");
+  await aplicarEstilosExcelGlobal(hojaMunicipios, titulo, workbook, logoBase64);
+  hojaMunicipios.columns = [
+    { width: 15 },
+    { width: 15 },
+    { width: 15 },
+    { width: 15 },
+    { width: 15 },
+    { width: 40 },
+    { width: 25 }
+  ];
+
+  hojaMunicipios.mergeCells("F7:G7");
+  hojaMunicipios.getCell("F7").value = "Distribución de Beneficiarios por Municipio";
+  hojaMunicipios.getCell("F7").alignment = { horizontal: "center", vertical: "middle" };
+  hojaMunicipios.getCell("F7").font = { bold: true, size: 14 };
+
+  hojaMunicipios.getCell("F9").value = "Municipio";
+  hojaMunicipios.getCell("G9").value = "Cantidad Beneficiarios";
+  hojaMunicipios.autoFilter = { from: { row: 9, column: 6 }, to: { row: 9, column: 7 } };
+
+  ["F9", "G9"].forEach((c) => {
+    hojaMunicipios.getCell(c).font = { bold: true, color: { argb: "FFFFFF" } };
+    hojaMunicipios.getCell(c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: colorTitulo } };
+    hojaMunicipios.getCell(c).alignment = { horizontal: "center", vertical: "middle" };
+  });
+
+  let fM = 10;
+  Object.entries(m.municipios).sort((a, b) => b[1] - a[1]).forEach(([muni, cant]) => {
+    hojaMunicipios.getCell(`F${fM}`).value = muni;
+    hojaMunicipios.getCell(`G${fM}`).value = cant;
+    hojaMunicipios.getCell(`F${fM}`).alignment = { vertical: "middle" };
+    hojaMunicipios.getCell(`G${fM}`).alignment = { horizontal: "center", vertical: "middle" };
+    fM++;
+  });
+
+  return await workbook.xlsx.writeBuffer();
+};
+// general el pdf
+export const generarPdfEstrategia = async (datos, logoBase64, meta = {}) => {
+
+  const periodoRaw = (meta.periodoLabel || meta.periodo || "General").toString().trim();
+  const doc = new jsPDF({ orientation: "landscape", format: "a3" });
+  const pageWidth = doc.internal.pageSize.width;
+
+  if (logoBase64) {
+    doc.addImage(`data:image/png;base64,${logoBase64}`, "PNG", 14, 8, 25, 25);
   }
 
-  doc.setFont("Helvetica", "bold");
   doc.setFontSize(22);
   doc.setTextColor(13, 111, 107);
   doc.text(
-    "REPORTE ACADÉMICO",
-    LOGO_CEI_BASE64 ? 50 : 14,
+    `REPORTE DE BENEFICIARIOS - ${periodoRaw}`,
+    logoBase64 ? 45 : 14,
     20
   );
 
-  doc.setFont("Helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(107, 114, 128);
-  doc.text(
-    `Centro de Esperanza Infantil A.C. | Fecha: ${new Date().toLocaleDateString("es-MX")}`,
-    LOGO_CEI_BASE64 ? 50 : 14,
-    27
-  );
 
   autoTable(doc, {
-    startY: 38,
-    theme: "striped",
+    startY: 40,
+    theme: "grid",
     headStyles: {
       fillColor: [13, 111, 107],
-      textColor: [255, 255, 255],
-      fontSize: 9,
+      fontSize: 8,
       halign: "center",
     },
     styles: {
-      font: "Helvetica",
-      fontSize: 8.5,
-      cellPadding: 3,
-      textColor: [55, 65, 81],
-      lineColor: [229, 231, 235],
-      lineWidth: 0.2,
+      fontSize: 7,
+      cellPadding: 2,
     },
     head: [[
-      "Beneficiario",
+      "Nombre Completo",
+      "Periodo",
+      "Estatus",
       "Escuela",
-      "Grado",
+      "Nivel Escolar",
+      "Grado Escolar",
       "Promedio",
-      "Estatus Académico",
+      "Rendimiento"
     ]],
-    body: datos.map((d) => [
-      d.beneficiario || "",
-      d.escuela || "",
-      d.grado || "",
-      d.promedio || 0,
-      d.estatusAcademico || "",
+    body: datos.map((p) => [
+      p.nombre_completo,
+      p.periodo_columna || periodoRaw,
+      p.estatus,
+      p.escuela,
+      p.nivel,
+      p.grado,
+      p.promedio,
+      p.rendimiento,
     ]),
   });
 
-  const pdfBlob = doc.output("blob");
-  const buffer = await pdfBlob.arrayBuffer();
+  // graficas
+  if (meta.graficas?.length) {
+    meta.graficas.forEach((g) => {
+      doc.addPage();
 
-  return buffer;
+      // titulo
+      let titulo = (g.titulo || "Análisis general").toLowerCase();
+
+      if (titulo.includes("edad")) {
+        titulo = "Gráfico de barras de beneficiarios por edad";
+      }
+      else if (titulo.includes("escolaridad")) {
+        titulo = "Gráfico de distribución de beneficiarios por nivel educativo";
+      }
+      else if (titulo.includes("municipio")) {
+        titulo = "Top 10 municipios con mayor número de beneficiarios";
+      }
+      else {
+        titulo = g.titulo || "Análisis general";
+      }
+
+      doc.setFontSize(16);
+      doc.setTextColor(13, 111, 107);
+      const textWidth = doc.getTextWidth(titulo);
+      const xTitle = (pageWidth - textWidth) / 2;
+      doc.text(titulo, xTitle, 20);
+
+      // imagen
+      if (g.imagen) {
+        const imgWidth = 220;
+        const imgHeight = 140;
+        const xImg = (pageWidth - imgWidth) / 2;
+        doc.addImage(g.imagen, "PNG", xImg, 30, imgWidth, imgHeight);
+      }
+      // tabla
+      const cleanTable = (g.tabla || []).map(([label, value]) => [
+        String(label ?? "Sin dato"),
+        typeof value === "number" ? value : Number(value) || 0
+      ]);
+
+      let header = [["Concepto", "Total"]];
+
+      if (titulo.includes("nivel educativo") || titulo.includes("escolaridad")) {
+        header = [["Nivel educativo", "Cantidad de beneficiarios"]];
+      }
+      else if (titulo.includes("edad")) {
+        header = [["Rango de edad", "Cantidad de beneficiarios"]];
+      }
+      else if (titulo.includes("municipio")) {
+        header = [["Municipio", "Cantidad de beneficiarios"]];
+      }
+
+      autoTable(doc, {
+        startY: 180,
+        theme: "grid",
+        head: header,
+        body: cleanTable,
+
+        styles: {
+          fontSize: 10,
+          halign: "center",
+        },
+
+        headStyles: {
+          fillColor: [13, 111, 107],
+          halign: "center",
+        },
+
+        margin: {
+          left: (pageWidth - 200) / 2,
+        },
+
+        tableWidth: 200,
+      });
+    });
+  }
+
+  const paginas = doc.internal.getNumberOfPages();
+
+  for (let i = 1; i <= paginas; i++) {
+    doc.setPage(i);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+
+    doc.text(
+      `Centro de Esperanza Infantil A.C. | Página ${i} de ${paginas}`,
+      pageWidth - 95,
+      doc.internal.pageSize.height - 10
+    );
+  }
+
+  return await doc.output("arraybuffer");
 };
+

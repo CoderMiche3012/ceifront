@@ -1,5 +1,4 @@
-// src/features/postulantes/components/PostulanteReporteFiltros.jsx
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { SlidersHorizontal, FileSpreadsheet, FileText } from "lucide-react";
 import { ui } from "../../../styles/ui/index";
 import Boton from "../../../components/ui/Boton";
@@ -15,6 +14,24 @@ export default function PostulanteReporteFiltros({
   onDescargarPDF,
 }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const advancedRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        advancedRef.current &&
+        !advancedRef.current.contains(event.target)
+      ) {
+        setShowAdvanced(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const opcionesFiltros = [
     {
@@ -55,7 +72,18 @@ export default function PostulanteReporteFiltros({
         { value: "todos", label: "Todos los estudios" },
         { value: "completo", label: "Completo" },
         { value: "Pendiente", label: "Pendiente" },
-        { value: "en revisión", label: "En revisión" },
+      ],
+    },
+    {
+      key: "nivelEducativo",
+      label: "Nivel educativo",
+      options: [
+        { value: "todos", label: "Todos" },
+        { value: "preescolar", label: "Preescolar" },
+        { value: "primaria", label: "Primaria" },
+        { value: "secundaria", label: "Secundaria" },
+        { value: "media superior", label: "Media superior" },
+        { value: "superior", label: "Superior" },
       ],
     },
   ];
@@ -65,7 +93,7 @@ export default function PostulanteReporteFiltros({
   );
 
   const filtrosAvanzados = opcionesFiltros.filter((f) =>
-    ["visita", "estudio"].includes(f.key)
+    ["visita", "estudio", "nivelEducativo"].includes(f.key)
   );
 
   const mapFilters = (list) =>
@@ -83,12 +111,11 @@ export default function PostulanteReporteFiltros({
       onSearchChange={onSearchChange}
       searchPlaceholder="Buscar por nombre o tutor..."
       onClearFilters={onClearFilters}
-      showClearButton={false} // 🧹 Oculta el botón original de limpiar filtros
+      showClearButton={false}
       filters={mapFilters(filtrosBasicos)}
       extraAction={
-        <div className="flex items-center gap-2">
-          {/* BOTÓN MÁS FILTROS */}
-          <div className="relative">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative" ref={advancedRef}>
             <button
               type="button"
               onClick={() => setShowAdvanced((v) => !v)}
@@ -103,53 +130,64 @@ export default function PostulanteReporteFiltros({
             </button>
 
             {showAdvanced && (
-              <div className="absolute top-full right-0 mt-2 w-80 rounded-2xl border border-slate-200 bg-white shadow-xl p-4 z-50">
-                <h3 className="text-sm font-semibold text-slate-800">Filtros avanzados</h3>
-                <p className="mt-1 text-xs text-slate-500">Refina los criterios del reporte.</p>
+              <>
+                <div
+                  className="fixed inset-0 bg-black/30 z-40"
+                  onClick={() => setShowAdvanced(false)}
+                />
+                <div
+                  className="
+                   fixed left-4 right-4 top-1/2 -translate-y-1/2 sm:absolute sm:top-full sm:right-0 sm:left-auto sm:translate-y-0
+                   sm:w-80 rounded-2xl border border-slate-200 bg-white shadow-xl p-4 z-50"
+                >
+                  <h3 className="text-sm font-semibold text-slate-800">
+                    Filtros avanzados
+                  </h3>
 
-                <div className="mt-4 space-y-4">
-                  {mapFilters(filtrosAvanzados).map((filter) => (
-                    <div key={filter.key}>
-                      <label className="mb-1 block text-xs font-medium text-slate-600">
-                        {filter.label}
-                      </label>
-                      <select
-                        value={filter.value}
-                        onChange={(e) => filter.onChange(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500/20"
-                      >
-                        {filter.options.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  ))}
+                  <p className="mt-1 text-xs text-slate-500">
+                    Refina los criterios del reporte.
+                  </p>
+
+                  <div className="mt-4 space-y-4">
+                    {mapFilters(filtrosAvanzados).map((filter) => (
+                      <div key={filter.key}>
+                        <label className="mb-1 block text-xs font-medium text-slate-600">
+                          {filter.label}
+                        </label>
+
+                        <select
+                          value={filter.value}
+                          onChange={(e) => filter.onChange(e.target.value)}
+                          className=" w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm "
+                        >
+                          {filter.options.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
 
-          {/* BOTONES DE DESCARGA EN FILA */}
-          {/* 📄 Cambia los botones al final de tu archivo PostulanteReporteFiltros.jsx */}
+          <Boton
+            variant="secondary"
+            icon={<FileSpreadsheet className="h-4 w-4" />}
+            onClick={onDescargarExcel}
+          >
+            Excel
+          </Boton>
 
-{/* BOTÓN EXCEL */}
-<Boton
-  variant="secondary"
-  icon={<FileSpreadsheet className="h-4 w-4" />} // Añadí un tamaño estándar al icono
-  onClick={onDescargarExcel}
->
-  Excel
-</Boton>
-
-{/* BOTÓN PDF */}
-<Boton
-  icon={<FileText className="h-4 w-4" />} // Añadí un tamaño estándar al icono
-  onClick={onDescargarPDF}
->
-  PDF
-</Boton>
+          <Boton
+            icon={<FileText className="h-4 w-4" />}
+            onClick={onDescargarPDF}
+          >
+            PDF
+          </Boton>
         </div>
       }
     />

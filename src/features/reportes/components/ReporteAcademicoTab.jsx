@@ -1,332 +1,496 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-
+import { useState, useEffect, useRef } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Bar, Doughnut } from "react-chartjs-2";
+import { useReporteBeneficiariosAcademico } from "../hooks/useReporteBeneficiariosAcademico";
 import Card from "../../../components/ui/Card";
 import Boton from "../../../components/ui/Boton";
-
 import TarjetasEstadisticas from "../../../components/shared/TarjetasEstadisticas";
-import FiltrosReporte from "../../../components/tablas/FiltrosReporte";
+import FiltrosReporte from "../../../components/tablas/FiltrosAvanzados";
+import AvatarGeneral from "../../../components/shared/AvatarGeneral";
 import DatosTabla from "../../../components/tablas/DatosTabla";
 import PaginacionTabla from "../../../components/tablas/PaginacionTabla";
 
+import { ui } from "../../../styles/ui/index";
+
 import {
+  Users,
+  UserCheck,
+  UserX,
   GraduationCap,
-  Trophy,
-  BookOpen,
-  AlertTriangle,
-  FileSpreadsheet,
+  HeartHandshake,
+  Camera,
+  Folder,
   FileText,
+  Coins,
+  Utensils,
+  SlidersHorizontal,
+  FileSpreadsheet,
+  MoreVertical,
+  Eye
 } from "lucide-react";
 
-// 📊 GRAFICA
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-
-// services
-import { obtenerBeneficiarios } from "../../beneficiarios/services/beneficiariosService";
-import { obtenerPeriodos } from "../../periodos/services/periodoService";
-import { solicitarDescargaReporte } from "../services/reporteService";
-
-/**
- * 🔥 MAPEO POR PERIODO
- */
-const mapBeneficiariosAcademicos = (beneficiarios, periodo) => {
-  return beneficiarios.map((b) => {
-    const seguimiento =
-      b.historial_seguimientos?.find(
-        (s) => String(s.id_periodo) === String(periodo)
-      ) || b.historial_seguimientos?.[0];
-
-    const datos = seguimiento?.datos_escolares;
-    const boletas = datos?.boletas || [];
-
-    const promedio =
-      boletas.length > 0
-        ? boletas.reduce(
-          (acc, b) => acc + parseFloat(b.promedio_boleta || 0),
-          0
-        ) / boletas.length
-        : 0;
-
-    const escuela = datos?.id_institucion?.nombre || "Sin escuela";
-
-    const grado = datos?.id_escolaridad?.grado_escolar
-      ? `${datos.id_escolaridad.grado_escolar}°`
-      : "N/A";
-
-    let estatusAcademico = "Sin datos";
-
-    if (promedio >= 8) estatusAcademico = "Alto Rendimiento";
-    else if (promedio >= 6) estatusAcademico = "Rendimiento Medio";
-    else if (promedio > 0) estatusAcademico = "Bajo Rendimiento";
-
-    return {
-      id_beneficiario: b.id_beneficiario,
-      beneficiario: b.expediente_resumen?.nombre_completo || "Sin nombre",
-      escuela,
-      grado,
-      promedio: Number(promedio.toFixed(1)),
-      estatusAcademico,
-      seguimientos: b.historial_seguimientos || [],
-    };
-  });
-};
+// columnas
+const COLUMNS = [
+  { key: "beneficiarios", label: "Beneficiario" },
+  { key: "escuela", label: "Escuela" },
+  { key: "escolaridad", label: "Escolaridad" },
+  { key: "promedio", label: "Promedio" },
+  { key: "rendimiento", label: "Rendimiento" },
+];
 
 export default function ReporteAcademicoTab() {
-  const { data: beneficiarios = [] } = useQuery({
-    queryKey: ["beneficiarios"],
-    queryFn: obtenerBeneficiarios,
+
+  const navigate = useNavigate();
+
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const advancedRef = useRef(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const [menuData, setMenuData] = useState({
+    id: null,
+    top: 0,
+    right: 0,
+    haciaArriba: false
   });
 
-  const { data: periodos = [] } = useQuery({
-    queryKey: ["periodos"],
-    queryFn: obtenerPeriodos,
-  });
+  const { state, actions, loading } = useReporteBeneficiariosAcademico();
 
-  const [periodo, setPeriodo] = useState("");
-  const [search, setSearch] = useState("");
+  const {
+    search,
+    periodo,
+    estatus,
+    nivel,
+    rendimiento,
+    dataFiltrada,
+    stats,
+    periodosOptions,
+    graficaRendimiento,
+    graficaPromedioNivel,
+  } = state;
 
-  // =========================
-  // DATA BASE
-  // =========================
-  const dataBase = useMemo(() => {
-    return mapBeneficiariosAcademicos(beneficiarios, periodo);
-  }, [beneficiarios, periodo]);
 
-  // =========================
-  // FILTRO
-  // =========================
-  const dataFiltrada = useMemo(() => {
-    return dataBase.filter((b) => {
-      const matchPeriodo = periodo
-        ? b.seguimientos?.some(
-          (s) => String(s.id_periodo) === String(periodo)
-        )
-        : true;
-
-      const matchSearch = search
-        ? b.beneficiario.toLowerCase().includes(search.toLowerCase())
-        : true;
-
-      return matchPeriodo && matchSearch;
-    });
-  }, [dataBase, periodo, search]);
-
-  // =========================
-  // ESTADISTICAS
-  // =========================
-  const stats = useMemo(() => {
-    const data = dataFiltrada;
-
-    const alto = data.filter((d) => d.promedio >= 8).length;
-    const medio = data.filter((d) => d.promedio >= 6 && d.promedio < 8).length;
-    const bajo = data.filter((d) => d.promedio > 0 && d.promedio < 6).length;
-
-    const promedioGeneral =
-      data.reduce((acc, d) => acc + (d.promedio || 0), 0) /
-      (data.length || 1);
-
-    return {
-      alto,
-      medio,
-      bajo,
-      promedioGeneral: promedioGeneral.toFixed(1),
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, periodo, estatus, nivel, rendimiento]);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showAdvanced &&
+        advancedRef.current &&
+        !advancedRef.current.contains(event.target)
+      ) {
+        setShowAdvanced(false);
+      }
     };
-  }, [dataFiltrada]);
 
-  // =========================
-  // DATA GRAFICA
-  // =========================
-  const chartData = useMemo(() => {
-    return [
-      { name: "Alto", value: stats.alto },
-      { name: "Medio", value: stats.medio },
-      { name: "Bajo", value: stats.bajo },
-    ];
-  }, [stats]);
+    document.addEventListener("mousedown", handleClickOutside);
 
-  const ejecutarDescargaBlob = (buffer, nombreArchivo, mimeType) => {
-    if (!buffer) return;
-
-    const realBuffer =
-      buffer instanceof ArrayBuffer ? buffer : buffer.buffer;
-
-    const blob = new Blob([realBuffer], { type: mimeType });
-
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-
-    a.href = url;
-    a.download = nombreArchivo;
-    a.click();
-
-    window.URL.revokeObjectURL(url);
-  };
-
-  // EXCEL
-  const descargarExcel = async () => {
-    try {
-      const buffer = await solicitarDescargaReporte(
-        "academico",
-        "excel",
-        dataFiltrada // ✅ FIX
-      );
-
-      ejecutarDescargaBlob(
-        buffer,
-        `academico_${periodo || "todos"}.xlsx`,
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      );
-    } catch (error) {
-      console.error("Error Excel:", error);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showAdvanced]);
+  // para el menu
+  const handleToggleMenu = (e, id) => {
+    if (menuData.id === id) {
+      setMenuData({ id: null, top: 0, right: 0, haciaArriba: false });
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const alturaMenu = 380;
+      const espacioDisponibleAbajo = window.innerHeight - rect.bottom;
+      const abrirHaciaArriba = espacioDisponibleAbajo < alturaMenu;
+      setMenuData({
+        id: id,
+        top: abrirHaciaArriba ? rect.top + window.scrollY : rect.bottom + window.scrollY,
+        right: window.innerWidth - rect.right,
+        haciaArriba: abrirHaciaArriba
+      });
     }
   };
 
-  // PDF
-  const descargarPDF = async () => {
-    try {
-      const buffer = await solicitarDescargaReporte(
-        "academico",
-        "pdf",
-        dataFiltrada // ✅ FIX
-      );
+  const irASeccion = (idBeneficiario, tabName) => {
+    setMenuData({ id: null, top: 0, right: 0, haciaArriba: false });
+    navigate(`/App/beneficiarios/expediente/${idBeneficiario}?tab=${tabName}`);
+  };
 
-      ejecutarDescargaBlob(
-        buffer,
-        `academico_${periodo || "todos"}.pdf`,
-        "application/pdf"
-      );
-    } catch (error) {
-      console.error("Error PDF:", error);
+  const renderCell = (item, key) => {
+    switch (key) {
+      case "beneficiarios":
+        return (
+          <div className="flex items-center gap-3">
+            <AvatarGeneral nombre={item.nombre_completo} />
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-semibold text-slate-800 truncate">
+                {item.nombre_completo || "--"}
+              </span>
+              <span className="text-xs text-slate-500">
+                {item.edad ? `${item.edad} años` : "--"}
+              </span>
+            </div>
+          </div>
+        );
+
+      case "escolaridad":
+        return <span className="text-sm font-medium text-slate-600">{item.escolaridad || "—"}</span>;
+
+      case "escuela":
+        return (
+          <span className="text-sm font-medium text-slate-600">
+            {item.escuela || "Sin Registro"}
+          </span>
+        );
+
+      case "promedio":
+        return (
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-slate-600">
+              {item.promedio || "Sin Registro"}
+            </span>
+          </div>
+        );
+      case "rendimiento":
+        return (
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-slate-600">
+              {item.rendimiento || "Sin Registro"}
+            </span>
+          </div>
+        );
+
+      default:
+        return null;
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center text-sm font-semibold text-slate-500">
+        Cargando y estructurando reporte de beneficiarios...
+      </div>
+    );
+  }
+
+  const opcionesFiltros = [
+    { key: "periodo", label: "Periodo", value: periodo, onChange: actions.setPeriodo, options: periodosOptions },
+    {
+      key: "estatus",
+      label: "Estatus",
+      value: estatus,
+      onChange: actions.setEstatus,
+      options: [
+        { value: "", label: "Todos los estatus" },
+        { value: "Activo", label: "Activo" },
+        { value: "Inactivo", label: "Inactivo" },
+        { value: "Finalizado", label: "Graduado" },
+      ],
+    },
+    {
+      key: "nivel",
+      label: "Nivel Escolar",
+      value: nivel,
+      onChange: actions.setNivel,
+      options: [
+        { value: "", label: "Todos los niveles" },
+        { value: "preescolar", label: "Preescolar" },
+        { value: "primaria", label: "Primaria" },
+        { value: "secundaria", label: "Secundaria" },
+        { value: "Media Superior", label: "Media Superior" },
+        { value: "Superior", label: "Superior" },
+      ],
+    },
+    {
+      key: "rendimiento",
+      label: "Rendimiento",
+      value: rendimiento,
+      onChange: actions.setRendimiento,
+      options: [
+        { value: "", label: "Todos los rendimientos" },
+        { value: "bueno", label: "Bueno" },
+        { value: "bajo", label: "Bajo" },
+        { value: "regularizacion", label: "Regularización" },
+      ],
+    },
+  ];
+
+  const filtrosBasicos = opcionesFiltros.filter((f) => ["periodo", "estatus"].includes(f.key));
+  const filtrosAvanzados = opcionesFiltros.filter((f) => ["nivel", "rendimiento"].includes(f.key));
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(dataFiltrada.length / pageSize)
+  );
+
+  const dataPaginada = dataFiltrada.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handlePageSizeChange = (e) => {
+    setPageSize(Number(e.target.value));
+    setCurrentPage(1);
+  };
 
   return (
     <div className="space-y-6">
-
-      {/* =========================
-          TARJETAS
-      ========================= */}
       <TarjetasEstadisticas
         items={[
-          {
-            label: "Promedio General",
-            value: stats.promedioGeneral,
-            icon: GraduationCap,
-            color: "blue",
-          },
-          {
-            label: "Alto Rendimiento",
-            value: stats.alto,
-            icon: Trophy,
-            color: "emerald",
-          },
-          {
-            label: "Medio",
-            value: stats.medio,
-            icon: BookOpen,
-            color: "amber",
-          },
-          {
-            label: "Bajo",
-            value: stats.bajo,
-            icon: AlertTriangle,
-            color: "red",
-          },
+          { label: "Total", value: stats.total, icon: Users, color: "blue" },
+          { label: "Activos", value: stats.activos, icon: UserCheck, color: "emerald" },
+          { label: "Inactivos", value: stats.inactivos, icon: UserX, color: "red" },
+          { label: "Graduados", value: stats.graduados, icon: GraduationCap, color: "violet" },
         ]}
       />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <h3 className="text-sm font-semibold mb-4">
+            Distribución por Rendimiento Académico
+          </h3>
 
-      {/* =========================
-          GRAFICA
-      ========================= */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">
-          Distribución de Rendimiento
-        </h3>
+          <div className="h-72">
+            <Doughnut
+              data={graficaRendimiento}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: "bottom",
+                  },
+                },
+              }}
+            />
+          </div>
+        </Card>
 
-        <div style={{ width: "100%", height: 280 }}>
-          <ResponsiveContainer>
-            <BarChart data={chartData}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
+        <Card>
+          <h3 className="text-sm font-semibold mb-4">
+            Promedio por Nivel Educativo
+          </h3>
 
+          <div className="h-72">
+            <Bar
+              data={graficaPromedioNivel}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: false,
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    max: 10,
+                  },
+                },
+              }}
+            />
+          </div>
+        </Card>
+      </div>
       <Card>
-
-        {/* =========================
-            FILTROS
-        ========================= */}
         <FiltrosReporte
-          search={search}
-          onSearchChange={setSearch}
+          searchValue={search}
+          onSearchChange={actions.setSearch}
           searchPlaceholder="Buscar beneficiario..."
+          showClearButton={false}
+          filters={filtrosBasicos}
+          extraAction={
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative" ref={advancedRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowAdvanced((v) => !v)}
+                  className={`
+                     ${ui?.filters?.select ||
+                    "rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"}
+                    min-w-[140px]
+                    flex items-center justify-center gap-2
+                     `}
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  {showAdvanced ? "Menos filtros" : "Más filtros"}
+                </button>
 
-          filtros={[
-            {
-              key: "periodo",
-              value: periodo,
-              onChange: setPeriodo,
-              options: [
-                { value: "", label: "Todos los periodos" },
-                ...periodos.map((p) => ({
-                  value: p.id_periodo,
-                  label: p.ciclo_escolar,
-                })),
-              ],
-            },
-          ]}
+                {showAdvanced && (
+                  <>
+                    {/* Fondo oscuro */}
+                    <div
+                      className="fixed inset-0 bg-black/30 z-40"
+                      onClick={() => setShowAdvanced(false)}
+                    />
 
-          acciones={[
-            {
-              component: Boton,
-              variant: "secondary",
-              icon: FileSpreadsheet,
-              label: "Exportar Excel",
-              onClick: descargarExcel,
-            },
-            {
-              component: Boton,
-              icon: FileText,
-              label: "Descargar PDF",
-              onClick: descargarPDF,
-            },
-          ]}
+                    {/* Modal móvil / Dropdown desktop */}
+                    <div
+                      className="
+              fixed
+              left-1/2
+              top-1/2
+              -translate-x-1/2
+              -translate-y-1/2
+              w-[92vw]
+              max-w-md
+              max-h-[85vh]
+              overflow-y-auto
+
+              md:absolute
+              md:left-auto
+              md:right-0
+              md:top-full
+              md:w-80
+              md:max-w-none
+              md:translate-x-0
+              md:translate-y-0
+              md:mt-2
+
+              rounded-2xl
+              border
+              border-slate-200
+              bg-white
+              p-4
+              shadow-xl
+              z-50
+            "
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-sm font-semibold text-slate-800">
+                            Filtros avanzados
+                          </h3>
+
+                          <p className="mt-1 text-xs text-slate-500">
+                            Refina el rendimiento y nivel académico.
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setShowAdvanced(false)}
+                          className="rounded-lg p-1 hover:bg-slate-100"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      <div className="mt-4 space-y-4">
+                        {filtrosAvanzados.map((filter) => (
+                          <div key={filter.key}>
+                            <label className="mb-1 block text-xs font-medium text-slate-600">
+                              {filter.label}
+                            </label>
+
+                            <select
+                              value={filter.value}
+                              onChange={(e) => filter.onChange(e.target.value)}
+                              className="
+                      w-full
+                      rounded-xl
+                      border
+                      border-slate-200
+                      bg-white
+                      px-4
+                      py-2
+                      text-sm
+                      text-slate-700
+                      focus:border-slate-400
+                      focus:outline-none
+                    "
+                            >
+                              {filter.options.map((opt) => (
+                                <option
+                                  key={opt.value}
+                                  value={opt.value}
+                                >
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-5 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            actions.setNivel("");
+                            actions.setRendimiento("");
+                          }}
+                          className="
+                  flex-1
+                  rounded-xl
+                  border
+                  border-slate-200
+                  py-2
+                  text-sm
+                  font-medium
+                  hover:bg-slate-50
+                "
+                        >
+                          Limpiar
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setShowAdvanced(false)}
+                          className="
+                  flex-1
+                  rounded-xl
+                  bg-slate-900
+                  py-2
+                  text-sm
+                  font-medium
+                  text-white
+                  hover:bg-slate-800
+                "
+                        >
+                          Aplicar
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <Boton
+                variant="secondary"
+                icon={<FileSpreadsheet className="h-4 w-4" />}
+                onClick={actions.descargarExcel}
+              >
+                Excel
+              </Boton>
+
+              <Boton
+                icon={<FileText className="h-4 w-4" />}
+                onClick={actions.descargarPDF}
+              >
+                PDF
+              </Boton>
+            </div>
+          }
         />
 
-        {/* =========================
-            TABLA
-        ========================= */}
         <DatosTabla
-          columns={[
-            { key: "beneficiario", label: "Beneficiario" },
-            { key: "escuela", label: "Escuela" },
-            { key: "grado", label: "Grado" },
-            { key: "promedio", label: "Promedio" },
-            { key: "estatusAcademico", label: "Estatus Académico" },
-          ]}
-          data={dataFiltrada}
+          columns={COLUMNS}
+          data={dataPaginada}
+          renderCell={renderCell}
           rowKey="id_beneficiario"
         />
 
         <PaginacionTabla
-          currentPage={1}
-          totalPages={1}
+          currentPage={currentPage}
+          totalPages={totalPages}
           totalItems={dataFiltrada.length}
-          pageSize={10}
-          onPageChange={() => { }}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          }}
         />
+
       </Card>
     </div>
   );

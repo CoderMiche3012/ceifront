@@ -12,11 +12,10 @@ import ModalConfirmacion from "../components/shared/ModalConfirmacion";
 
 
 const AsistenciasPagina = () => {
+  const [pagina, setPagina] = useState(1);
+  const [registrosPorPagina, setRegistrosPorPagina] = useState(10);
   const { data: periodoActivo = null, isLoading: loadingActivo, error: errorActivo } = usePeriodoActivo();
-  console.log("PERIODO ACTIVO:", periodoActivo);
   const periodoId = periodoActivo?.id_periodo;
-  console.log("PERIODO ID:", periodoId);
-  console.log(periodoActivo)
   const [cambios, setCambios] = useState({});
   const [showConfirm, setShowConfirm] = useState(false);
   const [showResult, setShowResult] = useState(false);
@@ -56,12 +55,7 @@ const AsistenciasPagina = () => {
       },
     });
   };
-
-
-
   const [search, setSearch] = useState("");
-  const [pagina, setPagina] = useState(1);
-  const registrosPorPagina = 10;
 
   const [filters, setFilters] = useState({
     servicio: "comedor",
@@ -280,11 +274,13 @@ const AsistenciasPagina = () => {
             beneficiariosFiltrados.length /
             registrosPorPagina
           )}
-          totalItems={
-            beneficiariosFiltrados.length
-          }
+          totalItems={beneficiariosFiltrados.length}
           pageSize={registrosPorPagina}
           onPageChange={setPagina}
+          onPageSizeChange={(size) => {
+            setRegistrosPorPagina(size);
+            setPagina(1);
+          }}
         />
       </div>
       <ModalConfirmacion

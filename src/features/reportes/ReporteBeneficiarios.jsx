@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import EncabezadoPagina from "../../components/shared/EncabezadoPagina";
-
 import ReporteBeneficiariosTab from "./components/BeneficiariosGeneral";
 import ReporteAcademicoTab from "./components/ReporteAcademicoTab";
 import ReporteApoyosEconomicosTab from "./components/ReporteApoyosEconomicosTab";
@@ -36,7 +35,7 @@ export default function ReporteBeneficiarios() {
                                 : "border-transparent text-gray-500 hover:text-gray-700"
                             }`}
                     >
-                        Rendimiento Economico
+                        Rendimiento Académico
                     </button>
                     <button
                         onClick={() => setTabActiva("apoyos")}

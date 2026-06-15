@@ -14,13 +14,15 @@ import { solicitarDescargaReporte } from "../services/reporteService";
 
 export default function DonativosPorDonadorTab() {
   const [periodo, setPeriodo] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // obtener datos
   const { data: resumenGeneral = [] } = useResumenPeriodoTotalesGenerales();
   const { data: periodos = [] } = usePeriodos();
   const { data: resumenPeriodo = [] } = useResumenPeriodoTotales(periodo);
+  const [tipo, setTipo] = useState("");
 
-  // 🛠️ CORRECCIÓN 1: Forzamos la comparación a String para evitar fallos de tipo (Numero vs String)
   const periodoLabel = useMemo(() => {
     if (!periodo) return "General";
     const p = periodos.find((x) => String(x.id_periodo) === String(periodo));
@@ -31,21 +33,39 @@ export default function DonativosPorDonadorTab() {
 
   // tabla final
   const datosTabla = useMemo(() => {
-    return resumen.map((item, index) => ({
-      key: `${item.id_donador}-${index}`,
-      id_donador: item.id_donador,
-      donador: item.nombreCompleto,
-      tipo: item.tipo,
-      amount: item.cantidad_donativos, 
-      cantidad_donativos: item.cantidad_donativos,
-      ultima_fecha: item.ultimaFechaDonacion || item.ultimasFechaDonacion || "Sin donaciones registradas",
-      aportaciones:
-        Object.entries(item.totales || {})
-          .map(([moneda, monto]) => `${moneda}: $${monto}`)
-          .join(", ") || "Sin aportaciones registradas",
-    }));
-  }, [resumen]);
+    return resumen
+      .filter((item) => {
+        if (!tipo) return true;
 
+        return (
+          item.tipo?.toLowerCase() ===
+          tipo.toLowerCase()
+        );
+      })
+      .map((item, index) => ({
+        key: `${item.id_donador}-${index}`,
+        id_donador: item.id_donador,
+        donador: item.nombreCompleto,
+        tipo: item.tipo,
+        amount: item.cantidad_donativos,
+        cantidad_donativos: item.cantidad_donativos,
+        ultima_fecha:
+          item.ultimaFechaDonacion ||
+          item.ultimasFechaDonacion ||
+          "Sin donaciones registradas",
+        aportaciones:
+          Object.entries(item.totales || {})
+            .map(([moneda, monto]) => `${moneda}: $${monto}`)
+            .join(", ") || "Sin aportaciones registradas",
+      }));
+  }, [resumen, tipo]);
+  const totalPages = Math.ceil(datosTabla.length / pageSize) || 1;
+  const datosPaginados = useMemo(() => {
+    return datosTabla.slice(
+      (page - 1) * pageSize,
+      page * pageSize
+    );
+  }, [datosTabla, page, pageSize]);
   // totales
   const totalesPorMoneda = useMemo(() => {
     const acumulado = {};
@@ -72,12 +92,10 @@ export default function DonativosPorDonadorTab() {
   // excel
   const descargarExcel = async () => {
     try {
-      // 🕵️ MIRA LA CONSOLA: Aquí verificarás si el label realmente cambió antes de enviarse
-      console.log("Descargando Excel con Periodo ID:", periodo, "Label:", periodoLabel);
 
       const meta = {
         periodo: periodoLabel,
-        periodoLabel: periodoLabel 
+        periodoLabel: periodoLabel
       };
 
       const buffer = await solicitarDescargaReporte(
@@ -100,7 +118,6 @@ export default function DonativosPorDonadorTab() {
   // pdf
   const descargarPDF = async () => {
     try {
-      console.log("Descargando PDF con Periodo ID:", periodo, "Label:", periodoLabel);
 
       const meta = {
         periodo: periodoLabel,
@@ -152,13 +169,12 @@ export default function DonativosPorDonadorTab() {
       <Card>
         <FiltrosReporte
           search=""
-          onSearchChange={() => {}}
+          onSearchChange={() => { }}
           searchPlaceholder="Buscar donador..."
           filtros={[
             {
               key: "periodo",
               value: periodo || "",
-              // 🛠️ CORRECCIÓN 2: Tolerancia a si el componente regresa el evento o el valor puro
               onChange: (val) => {
                 const actualValue = val?.target ? val.target.value : val;
                 setPeriodo(actualValue);
@@ -171,19 +187,33 @@ export default function DonativosPorDonadorTab() {
                 })),
               ],
             },
+            {
+              key: "tipo",
+              value: tipo,
+              onChange: (val) => {
+                const actualValue = val?.target ? val.target.value : val;
+                setTipo(actualValue);
+              },
+              options: [
+                { value: "", label: "Todos los origenes" },
+                { value: "CEI", label: "CEI" },
+                { value: "OYE", label: "OYE" },
+                { value: "CANFRO", label: "CANFRO" },
+              ],
+            },
           ]}
           acciones={[
             {
               component: Boton,
               variant: "secondary",
               icon: FileSpreadsheet,
-              label: "Exportar Excel",
+              label: "Excel",
               onClick: descargarExcel,
             },
             {
               component: Boton,
               icon: FileText,
-              label: "Descargar PDF",
+              label: "PDF",
               onClick: descargarPDF,
             },
           ]}
@@ -192,21 +222,25 @@ export default function DonativosPorDonadorTab() {
         <DatosTabla
           columns={[
             { key: "donador", label: "Donador" },
-            { key: "tipo", label: "Tipo" },
+            { key: "tipo", label: "Origen" },
             { key: "cantidad_donativos", label: "Cantidad Donativos" },
             { key: "ultima_fecha", label: "Última Donación" },
             { key: "aportaciones", label: "Aportaciones" },
           ]}
-          data={datosTabla}
+          data={datosPaginados}
           rowKey="key"
         />
 
         <PaginacionTabla
-          currentPage={1}
-          totalPages={1}
+          currentPage={page}
+          totalPages={totalPages}
           totalItems={datosTabla.length}
-          pageSize={10}
-          onPageChange={() => {}}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(value) => {
+            setPageSize(Number(value));
+            setPage(1);
+          }}
         />
       </Card>
     </div>

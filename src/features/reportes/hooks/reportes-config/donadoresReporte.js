@@ -10,58 +10,47 @@ import { countries } from "../../../../utils/countries";
 
 const obtenerNombrePais = (paisCodigo) => {
   if (!paisCodigo) return "-";
-
   const pais = countries.find((c) => c.code.toUpperCase() === String(paisCodigo).toUpperCase());
   return pais?.name || paisCodigo;
 };
 
 // para excel
-
 export const generarExcelEstrategia = async (datos, logoBase64) => {
 
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Centro de Esperanza Infantil";
   workbook.created = new Date();
-
   const worksheet = workbook.addWorksheet("Directorio Donadores");
   const resumen = workbook.addWorksheet("Resumen");
-  resumen.getColumn(2).alignment = {
-    horizontal: "center",
-  };
+  resumen.getColumn(2).alignment = { horizontal: "center", };
   resumen.mergeCells("A1:B1");
-
   resumen.getCell("A1").value = "RESUMEN GENERAL";
   resumen.getCell("A1").font = {
-  bold: true,
-  size: 14,
-  color: { argb: "0D6F6B" },
-};
-
-  resumen.getCell("A1").alignment = {
-    horizontal: "center",
+    bold: true,
+    size: 14,
+    color: { argb: "0D6F6B" },
   };
 
+  resumen.getCell("A1").alignment = { horizontal: "center" };
   resumen.addRow([]);
   resumen.addRow(["Indicador", "Total"]);
 
-["A3", "B3"].forEach((cell) => {
-  resumen.getCell(cell).fill = {
-    type: "pattern",
-    pattern: "solid",
-    fgColor: { argb: "0D6F6B" },
-  };
+  ["A3", "B3"].forEach((cell) => {
+    resumen.getCell(cell).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "0D6F6B" },
+    };
 
-  resumen.getCell(cell).font = {
-    bold: true,
-    color: { argb: "FFFFFF" },
-  };
+    resumen.getCell(cell).font = {
+      bold: true,
+      color: { argb: "FFFFFF" },
+    };
 
-  resumen.getCell(cell).alignment = {
-    horizontal: "center",
-  };
-});
-
- 
+    resumen.getCell(cell).alignment = {
+      horizontal: "center",
+    };
+  });
 
   resumen.addRow([
     "Total Donadores",
@@ -93,7 +82,6 @@ export const generarExcelEstrategia = async (datos, logoBase64) => {
   resumen.getRow(1).font = {
     bold: true,
   };
-
 
   // llaves
   worksheet.columns = [
@@ -143,7 +131,6 @@ export const generarExcelEstrategia = async (datos, logoBase64) => {
     }
     return edad;
   };
-
   //obtener los datos
   datos.forEach((d) => {
     const calle = d.domicilio?.calle || "";
@@ -187,20 +174,16 @@ export const generarExcelEstrategia = async (datos, logoBase64) => {
     workbook,
     logoBase64
   );
-
   const buffer = await workbook.xlsx.writeBuffer();
   return buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer).buffer;
   return buffer instanceof ArrayBuffer ? buffer : new Uint8Array(buffer).buffer;
 };
-
 // pdf
 export const generarPdfEstrategia = async (datos, logoBase64) => {
   const doc = new jsPDF({
     orientation: "landscape",
     format: "a3",
   });
-
-
 
   if (logoBase64) {
     try {

@@ -91,17 +91,7 @@ export default function AsistenciasTabla({
       </div>
 
       {/* solo aparece si hay cambios pendientes por sincronizar */}
-      {hayCambios && (
-        <div className="fixed bottom-10 right-10 z-[60]">
-          <Boton
-            onClick={onGuardar}
-            disabled={guardando}
-            className="shadow-xl px-8 py-4 text-lg animate-in fade-in zoom-in duration-300"
-          >
-            {guardando ? "Guardando..." : "Guardar cambios"}
-          </Boton>
-        </div>
-      )}
+      
     </div>
   );
 }

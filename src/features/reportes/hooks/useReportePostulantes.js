@@ -6,17 +6,12 @@ export function useReportePostulantes() {
 
     const calcularEdad = (fechaNacimiento) => {
         if (!fechaNacimiento) return "--";
-
         const hoy = new Date();
         const nacimiento = new Date(fechaNacimiento);
-
         let edad = hoy.getFullYear() - nacimiento.getFullYear();
-
         const mes = hoy.getMonth() - nacimiento.getMonth();
 
-        if (
-            mes < 0 ||
-            (mes === 0 && hoy.getDate() < nacimiento.getDate())
+        if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())
         ) {
             edad--;
         }
@@ -29,20 +24,15 @@ export function useReportePostulantes() {
             const expediente = postulante?.expediente || {};
             const familia = expediente?.familia || [];
             const tutor = familia.find((f) => f.es_tutor_principal);
-
             const direccion = expediente?.direccion || {};
             const geografia = direccion?.geografia || {};
-
             const visita = postulante?.visita;
             const estudio = postulante?.estudio || {};
-
             return {
                 id_postulante: postulante.id_postulante,
-
                 nombre: expediente?.nombre || "",
                 apellido_p: expediente?.apellido_p || "",
                 apellido_m: expediente?.apellido_m || "",
-
                 nombreCompleto: [
                     expediente?.nombre,
                     expediente?.apellido_p,
@@ -53,29 +43,24 @@ export function useReportePostulantes() {
 
                 estatus: postulante?.estatus || "",
                 prioridad: estudio?.prioridad_servicio || "Pendiente",
-
                 edad: calcularEdad(expediente?.fecha_nacimiento),
                 fechaNacimiento: expediente?.fecha_nacimiento || "",
                 genero: expediente?.genero || "",
-
                 telefono: expediente?.telefono || "",
                 correo: expediente?.correo || "",
-
                 cp: geografia?.codigo_postal || "",
                 municipio: geografia?.municipio || "",
                 colonia: geografia?.colonia || "",
-
                 calle: direccion?.calle || "",
                 numero: direccion?.numero || "",
-
+                direccionCompleta: direccion?.calle
+                    ? `${direccion.calle}, Col. ${geografia?.colonia || ""} #${direccion.numero || ""}`.trim()
+                    : "Sin dirección",
                 tutor: tutor
                     ? `${tutor.nombre} ${tutor.apellido_p || ""} ${tutor.apellido_m || ""}`.trim()
                     : "--",
-
                 telefonoTutor: tutor?.telefono || "--",
-
                 familiares: familia.length,
-
                 fechaVisita: visita?.fecha_visita
                     ? new Date(visita.fecha_visita).toLocaleDateString("es-MX", {
                         day: "2-digit",

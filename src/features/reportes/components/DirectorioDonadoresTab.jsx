@@ -18,14 +18,14 @@ import {
   FileText,
 } from "lucide-react";
 
-const PAGE_SIZE = 10;
-
 export default function DirectorioDonadoresTab() {
   const { data: donadores = [], isLoading: loading } = useDonadores();
+  const [tipoDonador, setTipoDonador] = useState("");
 
   const [search, setSearch] = useState("");
   const [estatus, setEstatus] = useState("Activo");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Normalización del padrón de datos
   const donadoresProcesados = useMemo(() => {
@@ -73,19 +73,30 @@ export default function DirectorioDonadoresTab() {
   const filtrados = useMemo(() => {
     return donadoresProcesados.filter((d) => {
       const coincideBusqueda =
-        !search || d.nombreCompleto.toLowerCase().includes(search.toLowerCase());
-      const coincideEstatus =
-        !estatus || d.estatus?.toLowerCase() === estatus.toLowerCase();
+        !search ||
+        d.nombreCompleto.toLowerCase().includes(search.toLowerCase());
 
-      return coincideBusqueda && coincideEstatus;
+      const coincideEstatus =
+        !estatus ||
+        d.estatus?.toLowerCase() === estatus.toLowerCase();
+
+      const coincideTipo =
+        !tipoDonador ||
+        d.tipo_donador?.toLowerCase() === tipoDonador.toLowerCase();
+
+      return coincideBusqueda && coincideEstatus && coincideTipo;
     });
-  }, [donadoresProcesados, search, estatus]);
+  }, [donadoresProcesados, search, estatus, tipoDonador]);
 
   // Paginación local del set de datos filtrados
-  const totalPages = Math.ceil(filtrados.length / PAGE_SIZE) || 1;
+  const totalPages = Math.ceil(filtrados.length / pageSize) || 1;
+
   const datosPaginados = useMemo(() => {
-    return filtrados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  }, [filtrados, page]);
+    return filtrados.slice(
+      (page - 1) * pageSize,
+      page * pageSize
+    );
+  }, [filtrados, page, pageSize]);
 
   // Cálculos de KPI de Tarjetas
   const totalDonadores = donadores.length;
@@ -108,7 +119,7 @@ export default function DirectorioDonadoresTab() {
 
   const descargarExcel = async () => {
     try {
-      // Pasamos los registros filtrados actuales al Worker Maestro
+      // registros filtrados actuales al Worker Maestro
       const buffer = await exportarReporte("excel", filtrados);
       dispararDescargaCliente(
         buffer,
@@ -133,14 +144,55 @@ export default function DirectorioDonadoresTab() {
     return <div className="p-6 text-emerald-800 font-medium animate-pulse">Cargando reporte de donadores...</div>;
   }
 
+  const totalCEI = donadores.filter(
+    (d) => d.tipo_donador === "CEI"
+  ).length;
+
+  const totalOYE = donadores.filter(
+    (d) => d.tipo_donador === "OYE"
+  ).length;
+
+  const totalCANFRO = donadores.filter(
+    (d) => d.tipo_donador === "CANFRO"
+  ).length;
+  totalCEI.toLocaleString("en-US")
+
+  const formatoNumero = (valor) =>
+    Number(valor || 0).toLocaleString("en-US");
   return (
     <div className="space-y-6">
       <TarjetasEstadisticas
         items={[
-          { label: "Donadores Totales", value: totalDonadores, icon: Users, color: "blue" },
-          { label: "Activos", value: activos, icon: UserCheck, color: "emerald" },
-          { label: "Inactivos", value: inactivos, icon: UserX, color: "amber" },
-          { label: "Beneficiarios Apoyados", value: totalBeneficiarios, icon: HeartHandshake, color: "violet" },
+          {
+            label: "CEI",
+            value: formatoNumero(totalCEI),
+            icon: Users,
+            color: "blue",
+          },
+          {
+            label: "OYE",
+            value: formatoNumero(totalOYE),
+            icon: HeartHandshake,
+            color: "violet",
+          },
+          {
+            label: "CANFRO",
+            value: formatoNumero(totalCANFRO),
+            icon: Users,
+            color: "cyan",
+          },
+          {
+            label: "Activos",
+            value: formatoNumero(activos),
+            icon: UserCheck,
+            color: "emerald",
+          },
+          {
+            label: "Inactivos",
+            value: formatoNumero(inactivos),
+            icon: UserX,
+            color: "amber",
+          },
         ]}
       />
 
@@ -165,23 +217,37 @@ export default function DirectorioDonadoresTab() {
                 { value: "Inactivo", label: "Inactivos" },
               ],
             },
+            {
+              key: "tipo",
+              value: tipoDonador,
+              onChange: (value) => {
+                setTipoDonador(value);
+                setPage(1);
+              },
+              options: [
+                { value: "", label: "Todos los origenes" },
+                { value: "CEI", label: "CEI" },
+                { value: "OYE", label: "OYE" },
+                { value: "CANFRO", label: "CANFRO" },
+              ],
+            },
           ]}
           acciones={[
-            { component: Boton, variant: "secondary", icon: FileSpreadsheet, label: "Exportar Excel", onClick: descargarExcel },
-            { component: Boton, icon: FileText, label: "Descargar PDF", onClick: descargarPDF },
+            { component: Boton, variant: "secondary", icon: FileSpreadsheet, label: "Excel", onClick: descargarExcel },
+            { component: Boton, icon: FileText, label: "PDF", onClick: descargarPDF },
           ]}
         />
 
         <DatosTabla
           columns={[
             { key: "nombreCompleto", label: "Nombre" },
-            { key: "tipo_donador", label: "Tipo" },
+            { key: "tipo_donador", label: "Origen" },
             { key: "telefono", label: "Teléfono" },
             { key: "correo", label: "Correo" },
             { key: "estatus", label: "Estatus" },
             { key: "beneficiariosTexto", label: "Beneficiarios Apoyados" },
           ]}
-          data={datosPaginados} // Renderiza únicamente los 10 correspondientes
+          data={datosPaginados}
           rowKey="id_donador"
           loading={loading}
         />
@@ -190,8 +256,12 @@ export default function DirectorioDonadoresTab() {
           currentPage={page}
           totalPages={totalPages}
           totalItems={filtrados.length}
-          pageSize={PAGE_SIZE}
+          pageSize={pageSize}
           onPageChange={setPage}
+          onPageSizeChange={(value) => {
+            setPageSize(Number(value));
+            setPage(1);
+          }}
         />
       </Card>
     </div>

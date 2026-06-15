@@ -7,14 +7,7 @@ import FiltrosReporte from "../../../components/tablas/FiltrosReporte";
 import DatosTabla from "../../../components/tablas/DatosTabla";
 import PaginacionTabla from "../../../components/tablas/PaginacionTabla";
 
-import {
-  HandCoins,
-  Wallet,
-  DollarSign,
-  Euro,
-  FileSpreadsheet,
-  FileText,
-} from "lucide-react";
+import { HandCoins, Wallet, DollarSign, Euro, FileSpreadsheet, FileText } from "lucide-react";
 
 export default function HistorialDonativosTab() {
   return (
@@ -51,13 +44,13 @@ export default function HistorialDonativosTab() {
       <Card>
         <FiltrosReporte
           search=""
-          onSearchChange={() => {}}
+          onSearchChange={() => { }}
           searchPlaceholder="Buscar donador..."
           filtros={[
             {
               key: "periodo",
               value: "",
-              onChange: () => {},
+              onChange: () => { },
               options: [
                 {
                   value: "",
@@ -68,7 +61,7 @@ export default function HistorialDonativosTab() {
             {
               key: "moneda",
               value: "",
-              onChange: () => {},
+              onChange: () => { },
               options: [
                 {
                   value: "",
@@ -95,13 +88,13 @@ export default function HistorialDonativosTab() {
               variant: "secondary",
               icon: FileSpreadsheet,
               label: "Exportar Excel",
-              onClick: () => {},
+              onClick: () => { },
             },
             {
               component: Boton,
               icon: FileText,
               label: "Descargar PDF",
-              onClick: () => {},
+              onClick: () => { },
             },
           ]}
         />
@@ -142,7 +135,7 @@ export default function HistorialDonativosTab() {
           totalPages={1}
           totalItems={0}
           pageSize={10}
-          onPageChange={() => {}}
+          onPageChange={() => { }}
         />
       </Card>
     </div>

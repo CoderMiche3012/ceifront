@@ -1,22 +1,14 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 import PrivateRoute from "./PrivateRoute";
 import AdminRoute from "./AdminRoute";
-
 import PermissionRoute from "./PermissionRoute";
 import { PermissionsProvider } from "../context/PermissionsContext";
-
 import AppLayout from "../components/layout/AppLayout";
-
 import InicioSesion from "../pages/InicioSesion";
 import Inicio from "../pages/Inicio";
-
 import RolesPagina from "../pages/RolesPagina";
-
 import UsuariosPagina from "../pages/UsuariosPagina";
-
 import PeriodosPagina from "../pages/PeriodosPagina";
-
 import DonadoresPagina from "../pages/donadores/DonadoresPagina";
 import DonadoresDetalle from "../pages/donadores/DonadoresDetalle";
 import PostulantesPagina from "../pages/postulantes/PostulantesPagina";
@@ -26,25 +18,7 @@ import BeneficiariosPagina from "../pages/beneficiarios/BeneficiariosPagina";
 import ExpedientePaginaB from "../pages/beneficiarios/ExpedientePaginaB";
 import AsistenciasPagina from "../pages/AsistenciasPagina";
 import ReporteDonativos from "../features/reportes/ReporteDonativos";
-
 import ReporteBeneficiarios from "../features/reportes/ReporteBeneficiarios";
-
-
-
-
-
-{/*
-
-import PostulantesPagina from "../pages/postulantes/PostulantesPagina";
-import ExpedientePagina from "../pages/postulantes/ExpedientePagina";
-
-import BeneficiariosPagina from "../pages/beneficiarios/BeneficiariosPagina";
-import ExpedientePaginaB from "../pages/beneficiarios/ExpedientePaginaB";
-
-import ReportePostulantes from "../features/reportes/ReportePostulantes";
-import ReporteDonativos from "../features/reportes/ReporteDonativos";
-import ReporteBeneficiarios from "../features/reportes/ReporteBeneficiarios";
-*/}
 
 export default function AppRouter() {
 
@@ -162,7 +136,7 @@ export default function AppRouter() {
               path="reportes/ingresos"
               element={
                 <PermissionRoute
-                  modulo="usuarios"
+                  modulo="postulantes"
                   accion="ver"
                 >
                   <ReportePostulantes />
@@ -206,7 +180,7 @@ export default function AppRouter() {
               path="reportes/donadores"
               element={
                 <PermissionRoute
-                  modulo="usuarios"
+                  modulo="donadores"
                   accion="ver"
                 >
                   <ReporteDonativos />
@@ -215,67 +189,15 @@ export default function AppRouter() {
             />
             <Route
               path="reportes/beneficiarios"
-              element={
-                <PermissionRoute
-                  modulo="usuarios"
-                  accion="ver"
-                >
-                  <ReporteBeneficiarios />
-                </PermissionRoute>
-              }
-            />
-
-            {/* donadores 
-            
-            /* beneficiarios
-            
-
-            <Route
-              path="beneficiarios/expediente/:id"
               element={
                 <PermissionRoute
                   modulo="beneficiarios"
                   accion="ver"
                 >
-                  <ExpedientePaginaB />
-                </PermissionRoute>
-              }
-            />
-
-            <Route
-              path="reportes/postulantes"
-              element={
-                <PermissionRoute
-                  modulo="usuarios"
-                  accion="ver"
-                >
-                  <ReportePostulantes />
-                </PermissionRoute>
-              }
-            />
-            <Route
-              path="reportes/donadores"
-              element={
-                <PermissionRoute
-                  modulo="usuarios"
-                  accion="ver"
-                >
-                  <ReporteDonativos />
-                </PermissionRoute>
-              }
-            />
-            <Route
-              path="reportes/beneficiarios"
-              element={
-                <PermissionRoute
-                  modulo="usuarios"
-                  accion="ver"
-                >
                   <ReporteBeneficiarios />
                 </PermissionRoute>
               }
             />
-            */}
 
           </Route>
 

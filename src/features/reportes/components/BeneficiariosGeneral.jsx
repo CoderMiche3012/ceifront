@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useReporteBeneficiarios } from "./../hooks/useReporteBeneficiarios";
 import { Bar, Doughnut } from "react-chartjs-2";
-import Chart from "chart.js/auto";
+
+import { useReporteBeneficiarios } from "./../hooks/useReporteBeneficiarios";
 
 import Card from "../../../components/ui/Card";
 import Boton from "../../../components/ui/Boton";
-
 import TarjetasEstadisticas from "../../../components/shared/TarjetasEstadisticas";
 import FiltrosReporte from "../../../components/tablas/FiltrosAvanzados";
 import AvatarGeneral from "../../../components/shared/AvatarGeneral";
@@ -32,7 +31,7 @@ import {
   Eye
 } from "lucide-react";
 
-// 📋 COLUMNAS FIJAS: Ya no agregamos dinámicamente la columna Periodo horizontalmente
+// columnas
 const COLUMNS = [
   { key: "beneficiarios", label: "Beneficiario" },
   { key: "escolaridad", label: "Escolaridad" },
@@ -41,6 +40,7 @@ const COLUMNS = [
   { key: "estatus", label: "Estatus" },
   { key: "donador", label: "Donador" },
 ];
+
 export default function ReporteBeneficiariosTab() {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,7 +59,6 @@ export default function ReporteBeneficiariosTab() {
     graficaEscolaridad,
   } = state;
 
-
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [menuData, setMenuData] = useState({ id: null, top: 0, right: 0, haciaArriba: false });
 
@@ -67,7 +66,7 @@ export default function ReporteBeneficiariosTab() {
     setCurrentPage(1);
   }, [search, periodo, estatus, nivel, rendimiento]);
 
-  // Manejo del menú desplegable inteligente (Acciones)
+  // para el menu
   const handleToggleMenu = (e, id) => {
     if (menuData.id === id) {
       setMenuData({ id: null, top: 0, right: 0, haciaArriba: false });
@@ -76,7 +75,6 @@ export default function ReporteBeneficiariosTab() {
       const alturaMenu = 380;
       const espacioDisponibleAbajo = window.innerHeight - rect.bottom;
       const abrirHaciaArriba = espacioDisponibleAbajo < alturaMenu;
-
       setMenuData({
         id: id,
         top: abrirHaciaArriba ? rect.top + window.scrollY : rect.bottom + window.scrollY,
@@ -91,7 +89,6 @@ export default function ReporteBeneficiariosTab() {
     navigate(`/App/beneficiarios/expediente/${idBeneficiario}?tab=${tabName}`);
   };
 
-  // 🎨 RENDERIZADO DE CELDAS ACTUALIZADO
   const renderCell = (item, key) => {
     switch (key) {
       case "beneficiarios":
@@ -99,10 +96,10 @@ export default function ReporteBeneficiariosTab() {
           <div className="flex items-center gap-3">
             <AvatarGeneral nombre={item.nombre_completo} />
             <div className="flex flex-col min-w-0">
-              <span className="text-sm font-semibold text-slate-800 uppercase truncate">
+              <span className="text-sm font-semibold text-slate-800 truncate">
                 {item.nombre_completo || "--"}
               </span>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-500 ">
                 {item.edad ? `${item.edad} años` : "--"}
               </span>
             </div>
@@ -110,11 +107,11 @@ export default function ReporteBeneficiariosTab() {
         );
 
       case "escolaridad":
-        return <span className="text-sm font-medium text-slate-600 uppercase">{item.escolaridad || "—"}</span>;
+        return <span className="text-sm font-medium text-slate-600 ">{item.escolaridad || "—"}</span>;
 
       case "municipio":
         return (
-          <span className="text-sm text-slate-600">
+          <span className="text-sm text-slate-600 ">
             {item.municipio || "Sin Registro"}
           </span>
         );
@@ -122,7 +119,7 @@ export default function ReporteBeneficiariosTab() {
       case "tutor":
         return (
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-slate-700">
+            <span className="text-sm font-medium text-slate-600">
               {item.tutor || "Sin Registro"}
             </span>
 
@@ -144,10 +141,9 @@ export default function ReporteBeneficiariosTab() {
 
         return (
           <div className="flex flex-col gap-0.5">
-            <span className={`inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${estilo}`}>
+            <span className={`inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${estilo}`}>
               {item.estatus || "—"}
             </span>
-            {/* 🚀 Muestra el periodo abajo solo si no hay un periodo seleccionado en los filtros ("Todos") */}
             {periodo === "" && (
               <span className="text-[11px] text-slate-400 font-medium pl-1 truncate max-w-[120px]">
                 {item.periodo_nombre || "—"}
@@ -161,7 +157,7 @@ export default function ReporteBeneficiariosTab() {
         const tieneDonador = item.donador === "Con donador";
         const estilo = tieneDonador ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-amber-100 text-amber-700 border-amber-200";
         return (
-          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase truncate max-w-[120px] ${estilo}`}>
+          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold truncate max-w-[120px] ${estilo}`}>
             {item.donador}
           </span>
         );
@@ -203,8 +199,8 @@ export default function ReporteBeneficiariosTab() {
         { value: "preescolar", label: "Preescolar" },
         { value: "primaria", label: "Primaria" },
         { value: "secundaria", label: "Secundaria" },
-        { value: "preparatoria", label: "Preparatoria" },
-        { value: "universidad", label: "Universidad" },
+        { value: "Media Superior", label: "Media Superior" },
+        { value: "Superior", label: "Superior" },
       ],
     },
     {
@@ -221,8 +217,7 @@ export default function ReporteBeneficiariosTab() {
     },
   ];
 
-  const filtrosBasicos = opcionesFiltros.filter((f) => ["periodo", "estatus"].includes(f.key));
-  const filtrosAvanzados = opcionesFiltros.filter((f) => ["nivel", "rendimiento"].includes(f.key));
+  const filtrosBasicos = opcionesFiltros.filter((f) => ["periodo", "estatus", "nivel"].includes(f.key));
 
   const totalPages = Math.max(
     1,
@@ -299,50 +294,6 @@ export default function ReporteBeneficiariosTab() {
           filters={filtrosBasicos}
           extraAction={
             <div className="flex items-center gap-2">
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowAdvanced((v) => !v)}
-                  className={`
-                    ${ui?.filters?.select || "rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"}
-                    min-w-[140px]
-                    flex items-center justify-center gap-2
-                    transition-colors
-                  `}
-                >
-                  <SlidersHorizontal className="h-4 w-4 text-slate-500" />
-                  {showAdvanced ? "Menos filtros" : "Más filtros"}
-                </button>
-
-                {showAdvanced && (
-                  <div className="absolute top-full right-0 mt-2 w-80 rounded-2xl border border-slate-200 bg-white shadow-xl p-4 z-50">
-                    <h3 className="text-sm font-semibold text-slate-800">Filtros avanzados</h3>
-                    <p className="mt-1 text-xs text-slate-500">Refina el rendimiento y nivel académico.</p>
-
-                    <div className="mt-4 space-y-4">
-                      {filtrosAvanzados.map((filter) => (
-                        <div key={filter.key}>
-                          <label className="mb-1 block text-xs font-medium text-slate-600">
-                            {filter.label}
-                          </label>
-                          <select
-                            value={filter.value}
-                            onChange={(e) => filter.onChange(e.target.value)}
-                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm outline-none text-slate-700"
-                          >
-                            {filter.options.map((opt) => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
               <Boton
                 variant="secondary"
                 icon={<FileSpreadsheet className="h-4 w-4" />}

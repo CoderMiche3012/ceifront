@@ -25,6 +25,7 @@ export default function RolLista({
         {roles.map((role) => {
           const isSelected = selectedRole?.id_rol === role.id_rol;
           const isLocked = editMode && !isSelected;
+
           return (
             <button
               key={role.id_rol}
@@ -34,19 +35,15 @@ export default function RolLista({
                 isSelected
                   ? "border-teal-500 bg-teal-50/70 shadow-sm"
                   : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-              } ${editMode ? "cursor-not-allowed" : ""} ${ isLocked ? "opacity-60" : "" }`}
+              } ${editMode ? "cursor-not-allowed" : ""} ${
+                isLocked ? "opacity-60" : ""
+              }`}
             >
               <div className="space-y-2">
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-base font-semibold text-slate-800">
                     {role.nombre_rol}
                   </p>
-
-                  {Array.isArray(role.permisos) && (
-                    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-500">
-                      {role.permisos.length} permisos
-                    </span>
-                  )}
                 </div>
 
                 <p className="text-sm leading-5 text-slate-500">

@@ -2,186 +2,90 @@ import ExcelJS from "exceljs";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { aplicarEstilosExcelGlobal } from "../../reporteUtils";
-import logoCei from "../../../../assets/imagenes/logo.png";
 
-// ===============================
-// LOGO BASE64
-// ===============================
-const obtenerBase64 = async (url) => {
-  const response = await fetch(url);
-  const blob = await response.blob();
+const COLUMNAS_BENEFICIARIOS = [
+  { key: "nombre_completo", width: 30 },
+  { key: "periodo", width: 15 },
+  { key: "tipo", width: 20 },
+  { key: "estatus", width: 40 },
+  { key: "fecha", width: 30 },
+  { key: "observaciones", width: 25 },
+];
 
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      resolve(reader.result.split(",")[1]);
-    };
-    reader.readAsDataURL(blob);
-  });
+const HEADERS_BENEFICIARIOS = [
+  "Nombre Completo",
+  "Periodo",
+  "Tipo de Obligacion",
+  "Estatus",
+  "Fecha programada",
+  "Observaciones",
+];
+
+const TIPO_LABELS = {
+  servicioSocial: "Servicio Social",
+  practicaProfesional: "Práctica Profesional",
+  carta: "Carta",
 };
 
-const LOGO_CEI_BASE64 = await obtenerBase64(logoCei);
+// EXCEL
+export const generarExcelEstrategia = async (datos, logoBase64, meta = {}) => {
+  const periodoRaw = (meta.periodoLabel || meta.periodo || "General").toString().trim();
+  const titulo = `REPORTE DE OBLIGACIONES - ${periodoRaw}`;
 
-// ==========================================
-// EXCEL - OBLIGACIONES
-// ==========================================
-export const generarExcelEstrategia = async (datos) => {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "Centro de Esperanza Infantil";
-  workbook.created = new Date();
+  const worksheet = workbook.addWorksheet("Beneficiarios");
 
-  const worksheet = workbook.addWorksheet("Obligaciones");
+  worksheet.columns = COLUMNAS_BENEFICIARIOS;
+  worksheet.getRow(5).values = HEADERS_BENEFICIARIOS;
+  worksheet.autoFilter = {
+    from: "A5",
+    to: "F5",
+  };
 
-  worksheet.columns = [
-    { key: "beneficiario", width: 35 },
-    { key: "tipo", width: 20 },
-    { key: "estatus", width: 16 },
-    { key: "fecha", width: 18 },
-    { key: "observaciones", width: 40 },
-  ];
-
-  const headers = [
-    "Beneficiario",
-    "Tipo de obligación",
-    "Estatus",
-    "Fecha",
-    "Observaciones",
-  ];
-
-  worksheet.getRow(5).values = headers;
-
-  datos.forEach((o) => {
+  datos.forEach((p) => {
     worksheet.addRow([
-      o.beneficiario || "",
-      o.tipo || "",
-      o.estatus || "",
-      o.fecha || "",
-      o.observaciones || "",
+      p.nombre_completo,
+      p.periodo || periodoRaw,
+      TIPO_LABELS[p.tipo] || p.tipo,
+      p.estatus,
+      p.fecha,
+      p.observaciones,
     ]);
   });
 
-  worksheet.autoFilter = "A5:E5";
+  await aplicarEstilosExcelGlobal(worksheet, titulo, workbook, logoBase64, { alineacionHeaders: "left" });
 
-  // =========================
-  // LOGO
-  // =========================
-  if (LOGO_CEI_BASE64) {
-    try {
-      const cleanBase64 = LOGO_CEI_BASE64.includes("base64,")
-        ? LOGO_CEI_BASE64.split("base64,")[1]
-        : LOGO_CEI_BASE64;
-
-      const imageId = workbook.addImage({
-        base64: cleanBase64,
-        extension: "png",
-      });
-
-      worksheet.addImage(imageId, {
-        tl: { col: 0, row: 0 },
-        ext: { width: 100, height: 70 },
-        editAs: "oneCell",
-      });
-    } catch (e) {
-      console.error("Error cargando logo en Excel", e);
-    }
-  }
-
-  // =========================
-  // ESTILOS GLOBALES
-  // =========================
-  await aplicarEstilosExcelGlobal(
-    worksheet,
-    "REPORTE DE OBLIGACIONES",
-    workbook,
-    LOGO_CEI_BASE64
-  );
-
-  const buffer = await workbook.xlsx.writeBuffer();
-
-  return buffer instanceof ArrayBuffer
-    ? buffer
-    : new Uint8Array(buffer).buffer;
+  return await workbook.xlsx.writeBuffer();
 };
 
-// ==========================================
-// PDF - OBLIGACIONES
-// ==========================================
-export const generarPdfEstrategia = async (datos) => {
-  const doc = new jsPDF({
-    orientation: "landscape",
-    format: "a3",
-  });
+// PDF
+export const generarPdfEstrategia = async (datos, logoBase64, meta = {}) => {
+  const periodoRaw = (meta.periodoLabel || meta.periodo || "General").toString().trim();
+  const doc = new jsPDF({ orientation: "landscape", format: "a3" });
 
-  if (LOGO_CEI_BASE64) {
-    try {
-      doc.addImage(
-        `data:image/png;base64,${LOGO_CEI_BASE64}`,
-        "PNG",
-        14,
-        10,
-        32,
-        24
-      );
-    } catch (e) {
-      console.error("Error agregando el logo al PDF", e);
-    }
+  if (logoBase64) {
+    doc.addImage(`data:image/png;base64,${logoBase64}`, "PNG", 14, 8, 25, 25);
   }
 
-  doc.setFont("Helvetica", "bold");
   doc.setFontSize(22);
   doc.setTextColor(13, 111, 107);
-  doc.text(
-    "REPORTE DE OBLIGACIONES",
-    LOGO_CEI_BASE64 ? 50 : 14,
-    20
-  );
-
-  doc.setFont("Helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(107, 114, 128);
-  doc.text(
-    `Centro de Esperanza Infantil A.C.  |  Fecha: ${new Date().toLocaleDateString("es-MX")}`,
-    LOGO_CEI_BASE64 ? 50 : 14,
-    27
-  );
+  doc.text(`REPORTE DE OBLIGACIONES - ${periodoRaw}`, logoBase64 ? 45 : 14, 20);
 
   autoTable(doc, {
-    startY: 38,
-    theme: "striped",
-    headStyles: {
-      fillColor: [13, 111, 107],
-      textColor: [255, 255, 255],
-      fontSize: 9,
-      fontStyle: "bold",
-      halign: "center",
-      valign: "middle",
-    },
-    styles: {
-      font: "Helvetica",
-      fontSize: 8.5,
-      cellPadding: 3,
-      textColor: [55, 65, 81],
-      lineColor: [229, 231, 235],
-      lineWidth: 0.2,
-    },
-    head: [[
-      "Beneficiario",
-      "Tipo de obligación",
-      "Estatus",
-      "Fecha",
-      "Observaciones",
-    ]],
-    body: datos.map((o) => [
-      o.beneficiario || "",
-      o.tipo || "",
-      o.estatus || "",
-      o.fecha || "",
-      o.observaciones || "",
+    startY: 40,
+    theme: "grid",
+    headStyles: { fillColor: [13, 111, 107], fontSize: 8, halign: "center" },
+    styles: { fontSize: 7, cellPadding: 2 },
+    head: [HEADERS_BENEFICIARIOS],
+    body: datos.map((p) => [
+      p.nombre_completo,
+      p.periodo || periodoRaw,
+      TIPO_LABELS[p.tipo] || p.tipo,
+      p.estatus,
+      p.fecha,
+      p.observaciones,
     ]),
   });
 
-  const pdfBlob = doc.output("blob");
-  const buffer = await pdfBlob.arrayBuffer();
-
-  return buffer;
+  return await doc.output("arraybuffer");
 };

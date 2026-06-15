@@ -15,17 +15,53 @@ const calcularEdad = (fechaNacimiento) => {
   }
   return edad;
 };
+const normalizarNivel = (nivel = "") => {
+  const valor = nivel
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (
+    ["prepa", "preparatoria", "bachillerato"].includes(valor)
+  ) {
+    return "media superior";
+  }
+
+  if (
+    ["universidad", "licenciatura"].includes(valor)
+  ) {
+    return "superior";
+  }
+
+  return valor;
+};
+
+const formatearNivel = (nivel = "") => {
+  const valor = normalizarNivel(nivel);
+
+  const nombres = {
+    preescolar: "Preescolar",
+    primaria: "Primaria",
+    secundaria: "Secundaria",
+    "media superior": "Media Superior",
+    superior: "Superior",
+  };
+
+  return nombres[valor] || nivel;
+};
 const generarGraficaBase64 = (config) => {
   return new Promise((resolve) => {
     const canvas = document.createElement("canvas");
 
     if (config.type === "doughnut") {
-  canvas.width = 1200;
-  canvas.height = 1200;
-} else {
-  canvas.width = 1200;
-  canvas.height = 700;
-}
+      canvas.width = 1200;
+      canvas.height = 1200;
+    } else {
+      canvas.width = 1200;
+      canvas.height = 700;
+    }
 
     const chart = new Chart(canvas, {
       ...config,
@@ -95,10 +131,16 @@ export function useReporteBeneficiarios() {
       let escolaridad = "Sin Registro";
 
       if (datosEscolares?.id_escolaridad) {
-        nivelEscolarBase = datosEscolares.id_escolaridad.nivel_escolar || "";
+        nivelEscolarBase = formatearNivel(
+          datosEscolares.id_escolaridad.nivel_escolar || ""
+        );
+
         escolaridad = `${nivelEscolarBase} - ${datosEscolares.id_escolaridad.grado_escolar}°`;
       } else if (datosEscolares?.nivel && datosEscolares?.grado) {
-        nivelEscolarBase = datosEscolares.nivel || "";
+        nivelEscolarBase = formatearNivel(
+          datosEscolares.nivel || ""
+        );
+
         escolaridad = `${nivelEscolarBase} - ${datosEscolares.grado}°`;
       }
 
@@ -163,7 +205,7 @@ export function useReporteBeneficiarios() {
         periodo_columna: periodo === "" ? nombrePeriodo : null
       };
     });
-  }, [beneficiarios, mapaPeriodos, periodo]); // Se agregó "periodo" como dependencia
+  }, [beneficiarios, mapaPeriodos, periodo]);
 
   const dataFiltrada = useMemo(() => {
     const searchLower = search.toLowerCase();
@@ -171,7 +213,9 @@ export function useReporteBeneficiarios() {
       const estatusBusqueda = estatus === "Finalizado" ? "Graduado" : estatus;
       const matchEstatus = estatusBusqueda ? b.estatus === estatusBusqueda : true;
       const matchSearch = search ? b.nombre_completo.toLowerCase().includes(searchLower) : true;
-      const matchNivel = nivel ? b.nivelEscolarBase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === nivel.toLowerCase() : true;
+      const matchNivel = nivel
+        ? normalizarNivel(b.nivelEscolarBase) === normalizarNivel(nivel)
+        : true;
       const matchRendimiento = rendimiento ? b.rendimientoCalculado === rendimiento : true;
       return matchEstatus && matchSearch && matchNivel && matchRendimiento;
     });
@@ -203,36 +247,8 @@ export function useReporteBeneficiarios() {
 
   const descargarPDF = async () => {
     try {
-      // ==========================
-      // ESTATUS
-      // ==========================
-      // ==========================
-      // NIVEL ESCOLAR
-      // ==========================
-      const escolaridadData = dataFiltrada.reduce((acc, curr) => {
-        let nivel = "Sin Registro";
-
-        if (curr.escolaridad?.includes("Primaria")) {
-          nivel = "Primaria";
-        } else if (curr.escolaridad?.includes("Secundaria")) {
-          nivel = "Secundaria";
-        } else if (curr.escolaridad?.includes("Preparatoria")) {
-          nivel = "Preparatoria";
-        } else if (
-          curr.escolaridad?.includes("Universidad") ||
-          curr.escolaridad?.includes("Licenciatura")
-        ) {
-          nivel = "Universidad";
-        }
-
-        acc[nivel] = (acc[nivel] || 0) + 1;
-
-        return acc;
-      }, {});
-
-      // ==========================
-      // RANGOS DE EDAD
-      // ==========================
+      //estadisticas
+      const escolaridad = {};
       const edades = {
         "0-5": 0,
         "6-10": 0,
@@ -240,131 +256,126 @@ export function useReporteBeneficiarios() {
         "16-18": 0,
         "19+": 0,
       };
+      const municipios = {};
 
       dataFiltrada.forEach((b) => {
+        const esc = b.nivelEscolarBase || "Sin Registro";
+
+        escolaridad[esc] = (escolaridad[esc] || 0) + 1;
+
         const edad = Number(b.edad);
+        if (!isNaN(edad)) {
+          if (edad <= 5) edades["0-5"]++;
+          else if (edad <= 10) edades["6-10"]++;
+          else if (edad <= 15) edades["11-15"]++;
+          else if (edad <= 18) edades["16-18"]++;
+          else edades["19+"]++;
+        }
 
-        if (isNaN(edad)) return;
-
-        if (edad <= 5) edades["0-5"]++;
-        else if (edad <= 10) edades["6-10"]++;
-        else if (edad <= 15) edades["11-15"]++;
-        else if (edad <= 18) edades["16-18"]++;
-        else edades["19+"]++;
+        const muni = b.municipio || "Sin Registro";
+        municipios[muni] = (municipios[muni] || 0) + 1;
       });
 
-      // ==========================
-      // MUNICIPIOS
-      // ==========================
-      const municipios = dataFiltrada.reduce((acc, curr) => {
-        const municipio = curr.municipio || "Sin Registro";
-
-        acc[municipio] = (acc[municipio] || 0) + 1;
-
-        return acc;
-      }, {});
-      const municipiosArray = Object.entries(municipios)
+      const mArray = Object.entries(municipios)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10);
 
-      // ==========================
-      // GRAFICA ESTATUS
-      // ==========================
-      // ==========================
-      // GRAFICA NIVEL ESCOLAR
-      // ==========================
-      const graficaEscolaridad = await generarGraficaBase64({
-  type: "doughnut",
-  data: {
-    labels: Object.keys(escolaridadData),
-    datasets: [
-      {
-        data: Object.values(escolaridadData),
-      },
-    ],
-  },
-  options: {
-    responsive: false,
-    maintainAspectRatio: false,
-    cutout: "65%",
-    plugins: {
-      legend: {
-        position: "bottom",
-      },
-    },
-  },
-});
+      // datos compactos
+      const dataCompacta = dataFiltrada.map((b) => ({
+        nombre_completo: b.nombre_completo,
+        edad: b.edad,
+        estatus: b.estatus,
+        escolaridad: b.escolaridad,
+        municipio: b.municipio,
+        telefono: b.telefono,
+        tutor: b.tutor,
+        telTutor: b.telTutor,
+        escuela: b.escuela,
+        telefono_tutor: b.telefono_tutor,
+        municipio: b.municipio,
+        colonia: b.colonia,
+        cp: b.cp,
+        calle: b.calle,
+        numero: b.numero
 
-      // ==========================
-      // GRAFICA EDADES
-      // ==========================
-      const graficaEdades = await generarGraficaBase64({
-        type: "bar",
-        data: {
-          labels: Object.keys(edades),
-          datasets: [
-            {
-              label: "Beneficiarios",
-              data: Object.values(edades),
-              backgroundColor: "#0d6f6b",
-            },
-          ],
-        },
-      });
-      const graficaMunicipios = await generarGraficaBase64({
-        type: "bar",
-        data: {
-          labels: municipiosArray.map((m) => m[0]),
-          datasets: [
-            {
-              label: "Beneficiarios",
-              data: municipiosArray.map((m) => m[1]),
-              backgroundColor: "#0d6f6b",
-            },
-          ],
-        },
-      });
-      // ==========================
-      // META
-      // ==========================
-      const meta = {
-        periodo: periodoLabel,
-        periodoLabel,
+      }));
 
-        graficaEscolaridad,
-        graficaEdades,
-        graficaMunicipios,
+      // generar graficas
+      const [gEsc, gEd, gMun] = await Promise.all([
+        generarGraficaBase64({
+          type: "doughnut",
+          data: {
+            labels: Object.keys(escolaridad),
+            datasets: [{ data: Object.values(escolaridad) }],
+          },
+          options: { cutout: "65%" },
+        }),
 
-        municipiosTabla: Object.entries(municipios)
-          .sort((a, b) => b[1] - a[1]),
+        generarGraficaBase64({
+          type: "bar",
+          data: {
+            labels: Object.keys(edades),
+            datasets: [
+              {
+                label: "Beneficiarios",
+                data: Object.values(edades),
+                backgroundColor: "#0d6f6b",
+              },
+            ],
+          },
+        }),
 
-        resumen: {
-          total: dataFiltrada.length,
-          activos: dataFiltrada.filter((x) => x.estatus === "Activo").length,
-          graduados: dataFiltrada.filter((x) => x.estatus === "Graduado").length,
-          inactivos: dataFiltrada.filter((x) => x.estatus === "Inactivo").length,
-          pausa: dataFiltrada.filter(
-            (x) =>
-              x.estatus === "Pausa" ||
-              x.estatus === "En Pausa"
-          ).length,
-        },
-      };
+        generarGraficaBase64({
+          type: "bar",
+          data: {
+            labels: mArray.map((m) => m[0]),
+            datasets: [
+              {
+                label: "Beneficiarios",
+                data: mArray.map((m) => m[1]),
+                backgroundColor: "#0d6f6b",
+              },
+            ],
+          },
+        }),
+      ]);
 
+      // enviar al warker
       const buffer = await solicitarDescargaReporte(
         "beneficiarios",
         "pdf",
-        dataFiltrada,
-        meta
+        dataCompacta,
+        {
+          periodoLabel,
+          graficas: [
+            {
+              titulo: "Escolaridad",
+              imagen: gEsc,
+              tabla: Object.entries(escolaridad),
+            },
+            {
+              titulo: "Edades",
+              imagen: gEd,
+              tabla: Object.entries(edades),
+            },
+            {
+              titulo: "Municipios",
+              imagen: gMun,
+              tabla: mArray,
+            },
+          ],
+        }
       );
 
+      // descarga
       ejecutarDescargaBlob(
         buffer,
         `beneficiarios_${periodoLabel}.pdf`,
         "application/pdf"
       );
-    } catch (error) {
-      console.error("Error PDF:", error);
+
+    } catch (e) {
+      console.error("Error PDF:", e);
     }
   };
   const graficaEdades = useMemo(() => {
@@ -403,22 +414,7 @@ export function useReporteBeneficiarios() {
     const niveles = {};
 
     dataFiltrada.forEach((b) => {
-      let nivel = "Sin Registro";
-
-      if (b.escolaridad?.includes("Preescolar")) {
-        nivel = "Preescolar";
-      } else if (b.escolaridad?.includes("Primaria")) {
-        nivel = "Primaria";
-      } else if (b.escolaridad?.includes("Secundaria")) {
-        nivel = "Secundaria";
-      } else if (b.escolaridad?.includes("Preparatoria")) {
-        nivel = "Preparatoria";
-      } else if (
-        b.escolaridad?.includes("Universidad") ||
-        b.escolaridad?.includes("Licenciatura")
-      ) {
-        nivel = "Universidad";
-      }
+      const nivel = b.nivelEscolarBase || "Sin Registro";
 
       niveles[nivel] = (niveles[nivel] || 0) + 1;
     });
@@ -450,4 +446,5 @@ export function useReporteBeneficiarios() {
     loading: loadingB || loadingP
   };
 }
+
 
