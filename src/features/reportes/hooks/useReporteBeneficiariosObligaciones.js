@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useBeneficiarios } from "../../beneficiarios/hooks/useBeneficiarios";
 import { usePeriodos } from "../../periodos/hooks/usePeriodos";
 import { solicitarDescargaReporte } from "../services/reporteService";
@@ -24,12 +24,18 @@ export function useReporteObligaciones() {
 
   const { data: beneficiarios = [], isLoading: loadingB } = useBeneficiarios(periodo);
   const { data: periodos = [], isLoading: loadingP } = usePeriodos();
+useEffect(() => {
+  if (periodos.length > 0 && !periodo) {
+    const ultimoPeriodo = periodos[periodos.length - 1];
 
+    setPeriodo(String(ultimoPeriodo.id_periodo));
+  }
+}, [periodos, periodo]);
   const periodoLabel = useMemo(() => {
-    if (!periodo) return "General";
-    const p = periodos.find((x) => String(x.id_periodo) === String(periodo));
-    return p?.ciclo_escolar || "General";
-  }, [periodo, periodos]);
+  if (!periodo) return "General";
+  const p = periodos.find((x) => String(x.id_periodo) === String(periodo));
+  return p?.ciclo_escolar || "General";
+}, [periodo, periodos]);
 
   // Procesamiento de datos: Aplanamos para que cada obligación sea una fila
   const dataTabla = useMemo(() => {
@@ -61,10 +67,14 @@ export function useReporteObligaciones() {
     });
   }, [dataTabla, search, tipoObligacion, estatus]);
 
-  const periodosOptions = useMemo(() => [
-    { value: "", label: "Todos los periodos" },
-    ...periodos.map((p) => ({ value: p.id_periodo, label: p.ciclo_escolar })),
-  ], [periodos]);
+  const periodosOptions = useMemo(
+  () =>
+    periodos.map((p) => ({
+      value: String(p.id_periodo),
+      label: p.ciclo_escolar,
+    })),
+  [periodos]
+);
 
   const descargarExcel = async () => {
     try {
