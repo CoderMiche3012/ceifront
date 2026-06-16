@@ -15,7 +15,6 @@ import { useFamiliaTabla } from "../../hooks/useFamiliaTabla";
 
 import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
-import { usePermissions } from "../../../../context/PermissionsContext";
 
 export default function ComposicionFamiliar({
   familia = [],
@@ -23,15 +22,6 @@ export default function ComposicionFamiliar({
   postulanteId,
   puedeEditar = true,
 }) {
-
-  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
-  const canEdit = hasModulePermission("familia", "editar");
-  const canCreate = hasModulePermission("familia", "eliminar");
-  const canDelete = hasModulePermission("familia", "crear");
-
-  const puedeCrear = canCreate && puedeEditar;
-  const puedeModificar = canEdit && puedeEditar;
-  const puedeEliminar = canDelete && puedeEditar;
 
   const [confirmarEliminar, setConfirmarEliminar] =
     useState({
@@ -264,7 +254,7 @@ export default function ComposicionFamiliar({
   <AccionesTabla
     row={row}
     actions={[
-      ...(canEdit && puedeEditar
+      ...(puedeEditar
         ? [
             {
               label: "Editar",
@@ -275,21 +265,6 @@ export default function ComposicionFamiliar({
 
               className:
                 "p-2 rounded-lg bg-slate-100 hover:bg-teal-100 text-slate-500 hover:text-teal-600 transition",
-            },
-          ]
-        : []),
-
-      ...(!esTutor && canDelete && puedeEditar
-        ? [
-            {
-              label: "Eliminar",
-
-              icon: <Trash2 size={18} />,
-
-              onClick: preHandleEliminar,
-
-              className:
-                "p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-700 transition",
             },
           ]
         : []),
@@ -320,7 +295,7 @@ export default function ComposicionFamiliar({
 
           Composición Familiar
         </h3>
-        {puedeCrear && (
+        {puedeEditar && (
           <BotonInterno
             icon={<Plus size={18} />}
             onClick={abrirCrear}

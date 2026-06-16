@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useCrearPostulante } from "../hooks/usePostulantes";
 import { formatErrorAnidado } from "../../../utils/errorHandlers";
+import { normalizeName } from "../../../utils/normalizeName";
 
 export const usePostulanteCrearForm = (onSuccess, onClose) => {
 
@@ -250,9 +251,9 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
       const payload = {
 
         expediente: {
-          nombre: form.nombre,
-          apellido_p: form.apellido_p,
-          apellido_m: form.apellido_m,
+          nombre: normalizeName(form.nombre),
+          apellido_p: normalizeName(form.apellido_p),
+          apellido_m: normalizeName(form.apellido_m),
           fecha_nacimiento: form.fecha_nacimiento,
           telefono: form.telefono,
           genero: form.genero,

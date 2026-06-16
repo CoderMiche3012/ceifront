@@ -215,7 +215,7 @@ export default function EditarDatosGenerales({ open, onClose, onSuccess, donador
                         onChange={(e) => updateField("telefono", e.target.value)} error={!!fieldErrors.telefono} />
                     </Field>
 
-                    <Field label="Tipo Donador" required error={fieldErrors.tipo}>
+                    <Field label="Origen donador" required error={fieldErrors.tipo}>
                       <Select value={form.tipo}
                         onChange={(e) => updateField("tipo", e.target.value)} error={!!fieldErrors.tipo}>
                         <option value="">Selecciona</option>

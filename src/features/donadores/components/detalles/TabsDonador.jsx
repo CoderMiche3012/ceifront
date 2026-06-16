@@ -3,7 +3,6 @@ import { usePermissions } from "../../../../context/PermissionsContext";
 export default function TabsDonador({ tab, setTab }) {
 
   const { hasModulePermission } = usePermissions();
-
   const canViewDonativos = hasModulePermission("donativos", "ver");
 
   return (

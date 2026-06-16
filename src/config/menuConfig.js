@@ -103,7 +103,7 @@ export const configSubmenu = [
     path: "/app/roles",
 
     permission: {
-      module: "usuarios",
+      module: "roles",
       action: "ver",
     },
   },

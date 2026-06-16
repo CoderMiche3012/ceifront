@@ -11,14 +11,7 @@ import ModalConfirmacion from "../../../../../components/shared/ModalConfirmacio
 import ModalResultado from "../../../../../components/shared/ModalResultado";
 import { usePermissions } from "../../../../../context/PermissionsContext";
 
-export default function EstudioCard({ data, estudio }) {
-    const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
-
-  const canEdit = hasModulePermission("estudios", "editar");
-  const canCreate = hasModulePermission("estudios", "eliminar");
-  const canEditPostulante = hasModulePermission("postulantes", "editar");
-  const puedeEditar = canCreate && canEditPostulante && canEdit && !["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
-
+export default function EstudioCard({ data, estudio, puedeEditar=true }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [modo, setModo] = useState("subir");
   const [resultado, setResultado] = useState({

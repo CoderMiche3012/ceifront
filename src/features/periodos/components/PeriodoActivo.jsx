@@ -1,10 +1,9 @@
 import { Calendar, Edit3 } from "lucide-react";
 import { ui } from "../../../styles/ui/index";
-
 import Insignia from "../../../components/ui/Insignia";
-
 import { usePermissions } from "../../../context/PermissionsContext";
 
+// componente para mostrar el periodo activo que es editable 
 export default function PeriodoActivo({ periodoActivo, onEdit }) {
   const { hasModulePermission, loading: isPermsLoading } = usePermissions();
   const canEdit = hasModulePermission("periodos", "editar");

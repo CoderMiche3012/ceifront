@@ -19,7 +19,7 @@ export default function DatosGenerales({ data }) {
 
       <div className={ui.layout.twoColumnAside}>
         <ResumenCard data={data} canEdit={canEdit}/>
-        <BeneficiariosVinculadosCard data={data} />
+        <BeneficiariosVinculadosCard data={data} canEdit={canEdit} />
       </div>
     </div>
   );

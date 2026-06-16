@@ -8,7 +8,7 @@ export default function AdminRoute({ children }) {
     return <Navigate to="/" replace />;
   }
 
-  if (!(usuario?.esAdmin || usuario?.esSuperUser)) {
+  if (!(usuario?.esSuperUser)) {
     return <Navigate to="/app" replace />;
   }
 

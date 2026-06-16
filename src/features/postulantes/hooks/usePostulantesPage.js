@@ -7,6 +7,7 @@ export const usePostulantesPage = () => {
     estudio: "todos",
     decision: "todos",
     prioridad: "todos",
+    nivelEducativo: "todos",
   });
 
   const [search, setSearch] = useState("");
@@ -83,12 +84,18 @@ export const usePostulantesPage = () => {
         (p.prioridad_servicio || "").toLowerCase() ===
         filters.prioridad.toLowerCase();
 
+      const matchNivelEducativo =
+        filters.nivelEducativo === "todos" ||
+        (p.nivel_escolar_inicial || "").toLowerCase() ===
+        filters.nivelEducativo.toLowerCase();
+
       return (
         matchSearch &&
         matchVisita &&
         matchEstudio &&
         matchDecision &&
-        matchPrioridad
+        matchPrioridad &&
+        matchNivelEducativo
       );
     });
   }, [allData, search, filters]);
@@ -118,6 +125,8 @@ export const usePostulantesPage = () => {
       visita: "todos",
       estudio: "todos",
       decision: "todos",
+      prioridad: "todos",
+      nivelEducativo: "todos",
     });
 
     setCurrentPage(1);

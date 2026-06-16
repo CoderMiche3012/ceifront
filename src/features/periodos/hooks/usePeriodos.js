@@ -4,6 +4,13 @@ import { periodosKeys } from "../services/periodosKeys";
 import { beneficiariosKeys } from "../../beneficiarios/services/beneficiariosKeys";
 import { donadoresKeys } from "../../donadores/services/donadoresKeys";
 import { expedientesKeys } from "../../expedientes/services/expedientesKeys";
+import { seguimientosKeys } from "../../beneficiarios/services/seguimientosKeys";
+import { apoyoKeys } from "../../beneficiarios/services/apoyoKeys";
+import { boletasKeys } from "../../beneficiarios/services/boletasKeys";
+import { datosEscolaresKeys } from "../../beneficiarios/services/datosEscolaresKeys";
+import { obligacionesKeys } from "../../beneficiarios/services/obligacionesKeys";
+import { asistenciaKeys } from "../../asistencias/services/asistenciaKeys";
+
 
 // obtener todos los periodos
 export function usePeriodos() {
@@ -48,6 +55,30 @@ export function useCrearPeriodo() {
         queryKey:
           donadoresKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey:
+          seguimientosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          apoyoKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          boletasKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          datosEscolaresKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          obligacionesKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          asistenciaKeys.all,
+      });
     },
   });
 }
@@ -79,6 +110,30 @@ export function useActualizarPeriodo() {
       queryClient.invalidateQueries({
         queryKey:
           donadoresKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          seguimientosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          apoyoKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          boletasKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          datosEscolaresKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          obligacionesKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey:
+          asistenciaKeys.all,
       });
     },
   });

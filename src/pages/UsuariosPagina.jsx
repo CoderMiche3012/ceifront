@@ -13,6 +13,7 @@ import ModalConfirmacion from "../components/shared/ModalConfirmacion";
 import useUsersPage from "../features/usuarios/hooks/useUsersPage";
 import UsuarioModal from "../features/usuarios/components/modales/UsuarioModal";
 import { usePermissions } from "../context/PermissionsContext";
+import { obtenerUsuario } from "../storage/userStorage";
 
 export default function UsuariosPagina() {
   const {
@@ -53,6 +54,9 @@ export default function UsuariosPagina() {
     setResult,
     handleNoChanges
   } = useUsersPage();
+const usuarioActual = obtenerUsuario();
+
+  const puedeEditarTodo = usuarioActual?.esSuperUser === true;
   // permisos
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
   const canCreate = hasModulePermission( "usuarios", "crear" );
@@ -110,6 +114,7 @@ export default function UsuariosPagina() {
               onEdit={handleEdit}
               onDeactivate={ handleDeactivate }
               onActivate={ handleActivate }
+              puedeEditarTodo={puedeEditarTodo}
             />
           )}
 

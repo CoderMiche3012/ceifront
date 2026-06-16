@@ -3,13 +3,9 @@ import React, { useState } from "react";
 import EditarNotaFamilia from "./EditarNotaFamilia";
 import NotasCard from "../../../../components/ui/NotasCard";
 
-export default function NotasFamilaCard({ data }) {
+export default function NotasFamilaCard({ data, puedeEditar = true,}) {
   const [modalAbierto, setModalAbierto] = useState(false);
-  const canEdit=true;
-
   const nota = data?.nota_situacion_familiar?.trim();
-   console.log("data",data)
-  console.log("nota",nota)
   const hayNota = Boolean(nota);
 
   return (
@@ -17,7 +13,7 @@ export default function NotasFamilaCard({ data }) {
       <NotasCard
         icon={AlignLeft}
         title="Notas de Situación Familiar"
-        onEdit={canEdit ? () => setModalAbierto(true) : undefined}
+        onEdit={puedeEditar ? () => setModalAbierto(true) : undefined}
         editLabel="Editar nota"
       >
         <div className="rounded-xl bg-slate-50 border border-slate-200 p-5">

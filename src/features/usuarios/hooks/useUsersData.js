@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useUsuarios } from "../hooks/useUsuarios";
 import useRoles from "../sub-features/roles/hooks/useRoles";
 import { obtenerUsuario } from "../../../storage/userStorage";
-import {normalizeStatus, buildRoleOptions, filterAndSortUsers, } from "../../../utils/usuarios";
+import { normalizeStatus, buildRoleOptions, filterAndSortUsers, } from "../../../utils/usuarios";
 
 const PAGE_SIZE = 4;
 export default function useUsersData() {
@@ -23,7 +23,7 @@ export default function useUsersData() {
     return users
       .filter(
         (user) =>
-          user.id_usuario !== currentUser?.id_usuario &&
+          user.id_usuario !== currentUser?.id &&
           user.id_rol != null
       )
       .map((user) => ({
@@ -33,7 +33,7 @@ export default function useUsersData() {
   }, [users, currentUser]);
 
   // roles
-  const roleOptions = useMemo( () => buildRoleOptions(roles || []), [roles] );
+  const roleOptions = useMemo(() => buildRoleOptions(roles || []), [roles]);
 
   // filtros 
   const filters = useMemo(
@@ -73,7 +73,7 @@ export default function useUsersData() {
     });
   }, [normalizedUsers, search, statusFilter, roleFilter]);
 
-  const totalPages = Math.max( 1, Math.ceil(filteredUsers.length / PAGE_SIZE) );
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
   // paginación segura
   useEffect(() => {
     if (currentPage > totalPages) {

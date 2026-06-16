@@ -33,7 +33,7 @@ export default function PeriodosPagina() {
         titulo="Gestión de Periodos"
         descripcion="Monitorea y organiza los periodos escolares"
         accion={
-          !isPermsLoading && hasModulePermission("periodos", "create") && (
+          !isPermsLoading && canCreate && (
             <Boton
               size="md"
               onClick={handleOpenCreate}
@@ -46,8 +46,6 @@ export default function PeriodosPagina() {
       />
 
       <PeriodoActivo periodoActivo={periodoActivo} onEdit={handleOpenEdit} />
-
-      {/* Solo mostrar alerta si realmente hay un error de datos */}
      
       <div className={ui.card}>
 

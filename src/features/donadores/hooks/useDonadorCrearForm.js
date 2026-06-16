@@ -82,7 +82,7 @@ export const useDonadorCrearForm = (onSuccess, onClose) => {
     }
 
     if (!form.tipo.trim()) {
-      errors.tipo = "Selecciona un tipo";
+      errors.tipo = "Selecciona un Origen";
     }
 
     if (!form.fecha_ingreso.trim()) {
@@ -127,7 +127,7 @@ export const useDonadorCrearForm = (onSuccess, onClose) => {
         apellido_m: "Apellido materno",
         correo: "Correo",
         telefono: "Teléfono",
-        tipo: "Tipo de donador",
+        tipo: "Origen de donador",
         fecha_ingreso: "Fecha de ingreso",
         pais: "País",
         cp: "Código postal",
@@ -212,7 +212,7 @@ export const useDonadorCrearForm = (onSuccess, onClose) => {
             apellido_m: "Apellido materno",
             correo: "Correo",
             telefono: "Teléfono",
-            tipo: "Tipo de donador",
+            tipo: "Origen de donador",
             fecha_ingreso: "Fecha de ingreso",
             pais: "País",
             cp: "Código postal",

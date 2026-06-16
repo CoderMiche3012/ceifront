@@ -12,14 +12,8 @@ import ModalResultado from "../../../../../components/shared/ModalResultado";
 
 import { useEliminarFotografia } from "../../../../expedientes/hooks/useFotografias";
 import { useSubirFotografia } from "../../../hooks/useSubirFotografia";
-import { usePermissions } from "../../../../../context/PermissionsContext";
 
-
-export default function FotosCard({ data }) {
-  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
-  const canEditPostulante = hasModulePermission("postulantes", "editar");
-  const puedeEditar = canEditPostulante && !["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
-
+export default function FotosCard({ data, puedeEditar=true }) {
   const { mutateAsync: eliminarFoto } = useEliminarFotografia(data.id_expediente, data.id_postulante);
 
   const fotos = data?.fotografias || [];

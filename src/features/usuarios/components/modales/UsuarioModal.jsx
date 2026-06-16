@@ -8,6 +8,7 @@ import PasswordInput from "../../../../components/ui/PasswordInput";
 import Boton from "../../../../components/ui/Boton";
 import AlertaError from "../../../../components/ui/AlertaError";
 import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
+import { obtenerUsuario } from "../../../../storage/userStorage";
 
 import { useUsuarioForm } from "../../hooks/useUsuarioForm";
 
@@ -42,6 +43,14 @@ export default function UsuarioModal({
     onSuccess,
     onNoChanges,
   });
+
+  const usuarioActual = obtenerUsuario();
+  const puedeCrearTodo = usuarioActual?.esSuperUser === true;
+  const rolesDisponibles = puedeCrearTodo
+  ? roleOptions
+  : roleOptions.filter(
+      (rol) => rol.label !== "Administrador"
+    );
   //ocultar modal
   if (!open) return null;
   //Cierre al hacer clic fuera
@@ -174,7 +183,7 @@ export default function UsuarioModal({
                     Selecciona un rol
                   </option>
 
-                  {roleOptions.map((rol) => (
+                  {rolesDisponibles.map((rol) => (
                     <option
                       key={rol.value}
                       value={rol.value}

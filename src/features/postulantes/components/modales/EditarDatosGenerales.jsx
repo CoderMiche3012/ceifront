@@ -22,12 +22,19 @@ import ModalResultado from "../../../../components/shared/ModalResultado";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 import { obtenerDireccionPorCP } from "../../../donadores/services/donadoresService";
 import { usePostulanteEditarForm } from "../../hooks/usePostulanteEditarForm";
+import { obtenerUsuario } from "../../../../storage/userStorage";
+import { usePermissions } from "../../../../context/PermissionsContext";
 
 export default function PostulanteEditarModal({ open, postulante, onSuccess, onClose }) {
   const [step, setStep] = useState(1);
   const [colonias, setColonias] = useState([]);
   const [cpError, setCpError] = useState("");
   const [manualAddressMode, setManualAddressMode] = useState(false);
+  const usuarioActual = obtenerUsuario();
+  const puedeEditarNombre = usuarioActual?.esAdmin === true || usuarioActual?.esSuperUser === true;
+  const { hasModulePermission } = usePermissions();
+
+  const canCreate = hasModulePermission("direcciones", "crear");
 
   const estadoEditable = manualAddressMode;
 
@@ -50,7 +57,7 @@ export default function PostulanteEditarModal({ open, postulante, onSuccess, onC
     handleFinalClose
   } = usePostulanteEditarForm(open, postulante, onSuccess, onClose);
 
-  
+
   useEffect(() => {
     if (!open) {
       setStep(1);
@@ -61,15 +68,15 @@ export default function PostulanteEditarModal({ open, postulante, onSuccess, onC
     }
   }, [open, setCpEncontrado]);
   useEffect(() => {
-  if (
-    open &&
-    form.cp &&
-    form.colonia &&
-    colonias.length === 0
-  ) {
-    handleBuscarCP(form.cp);
-  }
-}, [open, form.cp]);
+    if (
+      open &&
+      form.cp &&
+      form.colonia &&
+      colonias.length === 0
+    ) {
+      handleBuscarCP(form.cp);
+    }
+  }, [open, form.cp]);
 
   if (!open) return null;
 
@@ -210,6 +217,7 @@ export default function PostulanteEditarModal({ open, postulante, onSuccess, onC
                     <div className={ui.modal.twoCols}>
                       <Field label="Nombre(s)" required error={fieldErrors.nombre}>
                         <InputG
+                          disabled={!puedeEditarNombre}
                           placeholder="Ej: Juan Antonio"
                           value={form.nombre}
                           onChange={(e) => updateField("nombre", e.target.value)}
@@ -219,6 +227,7 @@ export default function PostulanteEditarModal({ open, postulante, onSuccess, onC
 
                       <Field label="Apellido paterno" required error={fieldErrors.apellido_p}>
                         <InputG
+                          disabled={!puedeEditarNombre}
                           value={form.apellido_p}
                           onChange={(e) => updateField("apellido_p", e.target.value)}
                           error={!!fieldErrors.apellido_p}
@@ -227,6 +236,7 @@ export default function PostulanteEditarModal({ open, postulante, onSuccess, onC
 
                       <Field label="Apellido materno" error={fieldErrors.apellido_m}>
                         <InputG
+                          disabled={!puedeEditarNombre}
                           value={form.apellido_m}
                           onChange={(e) => updateField("apellido_m", e.target.value)}
                           error={!!fieldErrors.apellido_m}
@@ -264,6 +274,7 @@ export default function PostulanteEditarModal({ open, postulante, onSuccess, onC
 
                       <Field label="Fecha nacimiento" required error={fieldErrors.fecha_nacimiento}>
                         <InputG
+                          disabled={!puedeEditarNombre}
                           type="date"
                           value={form.fecha_nacimiento}
                           onChange={(e) => updateField("fecha_nacimiento", e.target.value)}
@@ -283,36 +294,37 @@ export default function PostulanteEditarModal({ open, postulante, onSuccess, onC
                       <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em]">
                         Dirección
                       </h3>
+                      {canCreate && (
+                        <button
+                          type="button"
+                          className="flex items-center gap-1 text-xs text-[#0E5F63] font-semibold hover:underline"
+                          onClick={() => {
+                            if (manualAddressMode) {
+                              setManualAddressMode(false);
+                              updateField("colonia", "");
+                              updateField("estado", "");
+                              updateField("municipio", "");
+                              updateField("id_geografia", null);
 
-                      <button
-                        type="button"
-                        className="flex items-center gap-1 text-xs text-[#0E5F63] font-semibold hover:underline"
-                        onClick={() => {
-                          if (manualAddressMode) {
-                            setManualAddressMode(false);
-                            updateField("colonia", "");
-                            updateField("estado", "");
-                            updateField("municipio", "");
-                            updateField("id_geografia", null);
-
-                            if (form.cp?.trim()) {
-                              handleBuscarCP(form.cp);
+                              if (form.cp?.trim()) {
+                                handleBuscarCP(form.cp);
+                              }
+                            } else {
+                              setManualAddressMode(true);
+                              setCpError("");
                             }
-                          } else {
-                            setManualAddressMode(true);
-                            setCpError("");
-                          }
-                        }}
-                      >
-                        {manualAddressMode ? (
-                          <>
-                            <HiOutlineArrowLeft size={14} />
-                            Volver a búsqueda por CP
-                          </>
-                        ) : (
-                          "Agregar dirección manual"
-                        )}
-                      </button>
+                          }}
+                        >
+                          {manualAddressMode ? (
+                            <>
+                              <HiOutlineArrowLeft size={14} />
+                              Volver a búsqueda por CP
+                            </>
+                          ) : (
+                            "Agregar dirección manual"
+                          )}
+                        </button>
+                      )}
                     </div>
 
                     <div className={ui.modal.twoCols}>
@@ -457,8 +469,8 @@ export default function PostulanteEditarModal({ open, postulante, onSuccess, onC
                           <option value="Preescolar">Preescolar</option>
                           <option value="Primaria">Primaria</option>
                           <option value="Secundaria">Secundaria</option>
-                          <option value="Media superior">Preparatoria</option>
-                          <option value="Universidad">Universidad</option>
+                          <option value="Media superior">Media superior</option>
+                          <option value="Superior">Superior</option>
                         </Select>
                       </Field>
 

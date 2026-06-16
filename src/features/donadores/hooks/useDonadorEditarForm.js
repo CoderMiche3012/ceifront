@@ -90,10 +90,7 @@ export function useDonadorEditarForm(open, donador, onSuccess, onClose) {
       errors.telefono = "El teléfono es obligatorio";
 
     if (!form.tipo.trim())
-      errors.tipo = "Selecciona un tipo";
-
-    if (!form.fecha_ingreso.trim())
-      errors.fecha_ingreso = "Selecciona una fecha";
+      errors.tipo = "Selecciona un Origen";
 
     if (!form.pais.trim())
       errors.pais = "Selecciona un país";
@@ -125,8 +122,7 @@ export function useDonadorEditarForm(open, donador, onSuccess, onClose) {
         apellido_m: "Apellido materno",
         correo: "Correo",
         telefono: "Teléfono",
-        tipo: "Tipo de donador",
-        fecha_ingreso: "Fecha de ingreso",
+        tipo: "Origen de donador",
         pais: "País",
         cp: "Código postal",
         estado: "Estado",
@@ -202,7 +198,7 @@ export function useDonadorEditarForm(open, donador, onSuccess, onClose) {
             apellido_m: "Apellido materno",
             correo: "Correo",
             telefono: "Teléfono",
-            tipo: "Tipo de donador",
+            tipo: "Origen de donador",
             pais: "País",
             cp: "Código postal",
             estado: "Estado",

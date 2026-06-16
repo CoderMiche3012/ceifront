@@ -1,39 +1,50 @@
-import { createContext, useContext, useMemo, useEffect, useState, } from "react";
-import { obtenerUsuario, } from "../storage/userStorage";
+import { createContext, useContext, useMemo, useEffect, useState } from "react";
+import { obtenerUsuario } from "../storage/userStorage";
 
 const PermissionsContext = createContext();
 
 export function PermissionsProvider({ children }) {
-  // para obtener los datos del usuario en uso
   const [usuario, setUsuario] = useState(obtenerUsuario());
 
   useEffect(() => {
-    // sincronizacion entre Pestañas
-    const syncUser = () => { setUsuario(obtenerUsuario()); };
+    const syncUser = () => setUsuario(obtenerUsuario());
+
     window.addEventListener("storage", syncUser);
     syncUser();
-    return () => { window.removeEventListener("storage", syncUser); };
+
+    return () => {
+      window.removeEventListener("storage", syncUser);
+    };
   }, []);
-  //lectura de Permisos
-  const isAdmin = usuario?.esAdmin === true || usuario?.esSuperUser === true;
+
   const permissions = Array.isArray(usuario?.permisos)
     ? usuario.permisos
     : [];
-  // validador de permisos de módulo si es admin o super usuario tiene todos los pemisos
+
+  const esAdmin = usuario?.esAdmin === true;
+  const esSuperUser = usuario?.esSuperUser === true;
+
   const hasModulePermission = useMemo(() => {
     return (modulo, accion) => {
-      if (isAdmin) return true;
-      return permissions.includes(
-        `${modulo}.${accion}`
-      );
+      // SuperAdmin: acceso total
+      if (esSuperUser) return true;
+
+      // Admin: todo menos gestión de permisos
+      if (esAdmin) {
+        return modulo !== "roles";
+      }
+
+      // Usuario normal
+      return permissions.includes(`${modulo}.${accion}`);
     };
-  }, [permissions, isAdmin]);
+  }, [permissions, esAdmin, esSuperUser]);
 
   return (
     <PermissionsContext.Provider
       value={{
         permissions,
-        isAdmin,
+        esAdmin,
+        esSuperUser,
         loading: false,
         hasModulePermission,
       }}
@@ -42,8 +53,7 @@ export function PermissionsProvider({ children }) {
     </PermissionsContext.Provider>
   );
 }
-//atajo
+
 export function usePermissions() {
   return useContext(PermissionsContext);
 }
-

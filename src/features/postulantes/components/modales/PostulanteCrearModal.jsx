@@ -29,10 +29,10 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
     handleChange,
     fieldErrors,
     loading,
-    loadingCP,// checar
-    cpEncontrado,// checar
-    setLoadingCP,// chercar
-    setCpEncontrado,//c
+    loadingCP,
+    cpEncontrado,
+    setLoadingCP,
+    setCpEncontrado,
     error,
     showConfirm,
     setShowConfirm,
@@ -497,8 +497,8 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
                           <option value="Preescolar">Preescolar</option>
                           <option value="Primaria">Primaria</option>
                           <option value="Secundaria">Secundaria</option>
-                          <option value="Media superior">Preparatoria</option>
-                          <option value="Universidad">Universidad</option>
+                          <option value="Media superior">Media superior</option>
+                          <option value="Superior">Superior</option>
                         </Select>
                       </Field>
 

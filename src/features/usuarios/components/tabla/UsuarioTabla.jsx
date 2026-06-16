@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import {Eye, Pencil, UserX, UserCheck, } from "lucide-react";
+import { Eye, Pencil, UserX, UserCheck, } from "lucide-react";
 
 import { ui } from "../../../../styles/ui/uiClasses";
 import Avatar from "../../../../components/shared/AvatarGeneral";
@@ -18,6 +18,7 @@ export default function UsuarioTabla({
   canView = false,
   canEdit = false,
   canStatus = false,
+  puedeEditarTodo = false,
 }) {
   const columns = useMemo(() => {
     const baseColumns = [
@@ -91,7 +92,15 @@ export default function UsuarioTabla({
       case "acciones": {
         const availableActions = [];
 
-        if (canEdit) {
+        const roleLabel = getRoleLabel(user, roles);
+
+        const esAdministrador =
+          roleLabel === "Administrador";
+
+        const puedeAdministrarUsuario =
+          puedeEditarTodo || !esAdministrador;
+
+        if (canEdit && puedeAdministrarUsuario) {
           availableActions.push({
             label: "Editar",
             icon: <Pencil className="h-4 w-4" />,
@@ -99,7 +108,7 @@ export default function UsuarioTabla({
           });
         }
 
-        if (canStatus) {
+        if (canStatus && puedeAdministrarUsuario) {
           const isInactive =
             user.estatus === "Inactivo";
 

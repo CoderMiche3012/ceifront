@@ -4,17 +4,9 @@ import { ui } from "../../../../../styles/ui/index";
 
 import Card from "../../../../../components/ui/Card";
 import AccionesPostulante from "../../tabla/ColumnaAcciones";
-import { usePermissions } from "../../../../../context/PermissionsContext";
 
-export default function VitasTab({ visitas = [], data}) {
+export default function VitasTab({ visitas = [], data, puedeEditar=true}) {
   const idPostulante = data?.id_postulante;
-  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
-  const canEdit = hasModulePermission("visitas", "editar");
-  const canCreate = hasModulePermission("visitas", "eliminar");
-  const canEditPostulante = hasModulePermission("postulantes", "editar");
-
-  const puedeEditar = canCreate && canEditPostulante && canEdit && !["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
-
   const formatearFecha = (fecha) => {
     if (!fecha) return "Sin fecha";
     return new Date(fecha).toLocaleDateString("es-MX", {

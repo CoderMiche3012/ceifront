@@ -272,7 +272,7 @@ export default function DonadorCrearModal({ open, onClose, onSuccess }) {
                       />
                     </Field>
 
-                    <Field label="Tipo donador" required error={fieldErrors.tipo}>
+                    <Field label="Origen donador" required error={fieldErrors.tipo}>
                       <Select
                         value={form.tipo}
                         onChange={(e) => updateField("tipo", e.target.value)}

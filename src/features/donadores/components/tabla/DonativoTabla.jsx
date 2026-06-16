@@ -8,7 +8,7 @@ import AccionesTabla from "../../../../components/tablas/AccionesTabla";
 
 import { formatMoney } from "../../../../utils/formatMoney";
 
-export default function DonativoTabla({ donativos = [], onEditar, canEdit }) {
+export default function DonativoTabla({ donativos = [], onEditar, canEdit,donadorInactivo }) {
   const columns = useMemo(() => {
     const baseColumns = [
       {
@@ -25,7 +25,7 @@ export default function DonativoTabla({ donativos = [], onEditar, canEdit }) {
       },
     ];
 
-    if (canEdit) {
+    if (canEdit && !donadorInactivo) {
       baseColumns.push({
         key: "acciones",
         label: "Acciones",

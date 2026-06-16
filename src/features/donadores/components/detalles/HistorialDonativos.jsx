@@ -16,7 +16,6 @@ import { usePermissions } from "../../../../context/PermissionsContext";
 
 
 export default function HistorialDonativos({ data }) {
-
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
   const canCreate = hasModulePermission("donativos", "crear");
   const canEdit = hasModulePermission("donativos", "editar");
@@ -191,6 +190,7 @@ export default function HistorialDonativos({ data }) {
                           donativos={dataPaginada}
                           onEditar={abrirModalEditar}
                           canEdit={canEdit}
+                          donadorInactivo={donadorInactivo}
                         />
                       </div>
 

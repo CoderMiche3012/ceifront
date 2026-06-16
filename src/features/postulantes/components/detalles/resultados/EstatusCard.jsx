@@ -5,19 +5,13 @@ import { ui } from "../../../../../styles/ui/index";
 
 import { useActualizarPostulanteDetalle, useAceptarPostulante, } from "../../../hooks/usePostulantes";
 import Card from "../../../../../components/ui/Card";
-import { usePermissions } from "../../../../../context/PermissionsContext";
 
 export default function EstatusCard({ data }) {
-  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
-  const canEdit = hasModulePermission("postulantes", "editar");
-
-  const aceptarPostulante = useAceptarPostulante();
-  const actualizarPostulanteMutation = useActualizarPostulanteDetalle(data.id_postulante);
 
   const estatusEstudio = data?.estatus_estudio?.toLowerCase()?.trim();
   const estudioCompleto = estatusEstudio === "completo";
   const tienePrioridad = !!data?.prioridad_servicio;
-  const mostrarAdvertenciaPrioridad = estudioCompleto && !tienePrioridad;
+  const mostrarAdvertenciaPrioridad = estudioCompleto && !tienePrioridad ;
 
   const puedeEditar =
     canEdit && tienePrioridad && !["aceptado", "rechazado"].includes(

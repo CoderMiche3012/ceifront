@@ -1,4 +1,4 @@
-import {Users,Plus,Search,X,UserPlus,Loader2,CheckCircle2,Trash2} from "lucide-react";
+import { Users, Plus, Search, X, UserPlus, Loader2, CheckCircle2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,8 +11,8 @@ import { ui } from "../../../../styles/ui/uiClasses";
 
 import { useBeneficiariosVinculados } from "../../hooks/useBeneficiariosVinculados";
 
-export default function BeneficiariosVinculadosCard({data}) {
-  
+export default function BeneficiariosVinculadosCard({ data, canEdit }) {
+
   const navigate = useNavigate();
 
   const [modalEliminar, setModalEliminar] = useState(false);
@@ -99,88 +99,90 @@ export default function BeneficiariosVinculadosCard({data}) {
               Beneficiarios asignados al donador
             </p>
           </div>
-
-          <button
-            onClick={() => {
-              if (!donadorActivo) {
-                setResultado({
-                  open: true,
-                  type: "warning",
-                  title: "Donador inactivo",
-                  message:
-                    "Solo se pueden asignar beneficiarios a donadores activos.",
-                });
-                return;
-              }
-              setOpenModal(true);
-            }}
-            className={`${ui.button.base} ${ui.button.sm} ${ui.button.primary} w-10 px-0`}
-          >
-            <Plus className="w-7 h-7" />
-          </button>
+          {canEdit && (
+            <button
+              onClick={() => {
+                if (!donadorActivo) {
+                  setResultado({
+                    open: true,
+                    type: "warning",
+                    title: "Donador inactivo",
+                    message:
+                      "Solo se pueden asignar beneficiarios a donadores activos.",
+                  });
+                  return;
+                }
+                setOpenModal(true);
+              }}
+              className={`${ui.button.base} ${ui.button.sm} ${ui.button.primary} w-10 px-0`}
+            >
+              <Plus className="w-7 h-7" />
+            </button>
+          )}
         </div>
         {/* lista */}
         <div className="space-y-3">
           <div className="space-y-3 max-h-[180px] overflow-y-auto pr-2 custom-scroll">
-          {data?.beneficiarios_apoyados?.length > 0 ? (
-            data.beneficiarios_apoyados.map((item) => (
-              <div
-                key={item.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => irExpediente(item.id)}
-                className="
+            {data?.beneficiarios_apoyados?.length > 0 ? (
+              data.beneficiarios_apoyados.map((item) => (
+                <div
+                  key={item.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => irExpediente(item.id)}
+                  className="
                   group flex items-center gap-4
                   rounded-2xl border border-slate-100
                   p-4 transition-all hover:bg-slate-50
                   cursor-pointer
                 "
-              >
-                <AvatarGeneral
-                  nombre={item.nombre}
-                  className="h-12 w-12 text-sm"
-                />
+                >
+                  <AvatarGeneral
+                    nombre={item.nombre}
+                    className="h-12 w-12 text-sm"
+                  />
 
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-800 truncate">
-                    {item.nombre} {item.apellido_p}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-800 truncate">
+                      {item.nombre} {item.apellido_p}
+                    </p>
 
-                  <p className="text-sm text-slate-500">
-                    {calcularEdad(item.fecha_nacimiento)} años 
-                  </p>
-                </div>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIdEliminar(item.id);
-                    setModalEliminar(true);
-                  }}
-                  className={`
+                    <p className="text-sm text-slate-500">
+                      {calcularEdad(item.fecha_nacimiento)} años
+                    </p>
+                  </div>
+                  {canEdit && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIdEliminar(item.id);
+                        setModalEliminar(true);
+                      }}
+                      className={`
                   ${ui.button.base}
                     h-10 w-10 rounded-xl
                     bg-red-50 text-red-500
                     hover:bg-red-100 hover:text-red-700
                     opacity-0 group-hover:opacity-100
                    `}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))
-          ) : (
-            <div className=" rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-10 text-center ">
-              <Users className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-              <p className="font-semibold text-slate-600">
-                Aún no tiene beneficiarios asignados
-              </p>
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className=" rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-10 text-center ">
+                <Users className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                <p className="font-semibold text-slate-600">
+                  Aún no tiene beneficiarios asignados
+                </p>
 
-              <p className="text-sm text-slate-400 mt-1">
-                Presiona + para agregar uno.
-              </p>
-            </div>
-          )}
+                <p className="text-sm text-slate-400 mt-1">
+                  Presiona + para agregar uno.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </Card>
@@ -249,7 +251,7 @@ export default function BeneficiariosVinculadosCard({data}) {
                             {item.expediente_resumen?.nombre_completo}
                           </p>
                           <p className="text-sm text-slate-500">
-                            {calcularEdad( item.expediente_resumen?.fecha_nacimiento )}{" "}
+                            {calcularEdad(item.expediente_resumen?.fecha_nacimiento)}{" "}
                             años
                           </p>
                         </div>

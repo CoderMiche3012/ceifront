@@ -53,6 +53,18 @@ export default function PostulanteFiltros({
         { value: "baja", label: "Baja" },
       ],
     },
+    {
+      key: "nivelEducativo",
+      label: "Nivel Educativo",
+      options: [
+        { value: "todos", label: "Todos los niveles" },
+        { value: "Preescolar", label: "Preescolar" },
+        { value: "Primaria", label: "Primaria" },
+        { value: "Secundaria", label: "Secundaria" },
+        { value: "Media Superior", label: "Media Superior" },
+        { value: "Superior", label: "Superior" },
+      ],
+    },
   ];
 
   // PRINCIPALES
@@ -62,7 +74,7 @@ export default function PostulanteFiltros({
 
   // DROPDOWN
   const filtrosAvanzados = opcionesFiltros.filter((f) =>
-    ["visita", "estudio"].includes(f.key)
+    ["visita", "estudio","nivelEducativo"].includes(f.key)
   );
 
   const mapFilters = (list) =>

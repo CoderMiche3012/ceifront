@@ -1,10 +1,12 @@
 import ComposicionFamiliar from "../../../../expedientes/components/familia/ComposicionFamiliar";
 import NotasFamilaCard from "../../../../expedientes/components/familia/NotasFamilaCard";
+import { usePermissions } from "../../../../../context/PermissionsContext";
 
 export default function FamiliaCard({ data, canEdit }) {
 
-  const puedeEditar = canEdit && !["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
-console.log(data)
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canEditPostulante = hasModulePermission("postulantes", "editar");
+  const puedeEditar = canEditPostulante && !["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
   return (
     <div className="space-y-6">
       
@@ -15,7 +17,7 @@ console.log(data)
         postulanteId={data?.id_postulante}
         puedeEditar={puedeEditar}
       />
-      <NotasFamilaCard data={data} />
+      <NotasFamilaCard data={data} puedeEditar={puedeEditar}/>
     </div>
   );
 }
