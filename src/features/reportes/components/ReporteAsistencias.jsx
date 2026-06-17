@@ -26,13 +26,19 @@ const [pagina, setPagina] = useState(1);
 
   //filtrado
   const dataFiltrada = useMemo(() => {
-    if (!search) return asistencias;
-    return asistencias.filter((item) =>
-      item.expediente_resumen?.nombre_completo
-        ?.toLowerCase()
-        .includes(search.toLowerCase())
-    );
-  }, [asistencias, search]);
+  // 1. Filtrar primero para dejar solo los registros que asistieron (true)
+  const soloAsistidos = asistencias.filter((item) => item.asistencia === true);
+
+  // 2. Si el buscador está vacío, regresar solo los que asistieron
+  if (!search) return soloAsistidos;
+
+  // 3. Si escriben en el buscador, filtrar por nombre sobre los que sí asistieron
+  return soloAsistidos.filter((item) =>
+    item.expediente_resumen?.nombre_completo
+      ?.toLowerCase()
+      .includes(search.toLowerCase())
+  );
+}, [asistencias, search]);
   useEffect(() => {
     setPagina(1);
   }, [search, mes, anio, tipo]);

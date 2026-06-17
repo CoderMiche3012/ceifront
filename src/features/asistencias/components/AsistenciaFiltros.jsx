@@ -15,10 +15,12 @@ export default function AsistenciasFiltros({
     {
       key: "servicio",
       label: "Servicio",
+      hideEmpty: true,
       options: [
         { value: "comedor", label: "Comedor" },
         { value: "psicologia", label: "Psicología" },
       ],
+      defaultValue: "comedor",
     },
   ];
 

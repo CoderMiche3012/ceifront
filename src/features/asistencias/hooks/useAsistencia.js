@@ -62,9 +62,9 @@ export const useCrearAsistenciasMasivo = () => {
     mutationFn: crearAsistencias,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: asistenciaKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: beneficiariosKeys.all() });
-      queryClient.invalidateQueries({ queryKey: seguimientosKeys.all() });
-      queryClient.invalidateQueries({ queryKey: expedientesKeys.all() });
+      queryClient.invalidateQueries({ queryKey: beneficiariosKeys.all });
+      queryClient.invalidateQueries({ queryKey: seguimientosKeys.all });
+      queryClient.invalidateQueries({ queryKey: expedientesKeys.all });
     },
   });
 };
@@ -76,9 +76,9 @@ export const useEliminarAsistencia = () => {
     mutationFn: eliminarAsistencia,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: asistenciaKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: beneficiariosKeys.all() });
-      queryClient.invalidateQueries({ queryKey: seguimientosKeys.all() });
-      queryClient.invalidateQueries({ queryKey: expedientesKeys.all() });
+      queryClient.invalidateQueries({ queryKey: beneficiariosKeys.all });
+      queryClient.invalidateQueries({ queryKey: seguimientosKeys.all });
+      queryClient.invalidateQueries({ queryKey: expedientesKeys.all });
     },
   });
 };
@@ -95,9 +95,9 @@ export const useActualizarAsistencia = () => {
       queryClient.invalidateQueries({
         queryKey: asistenciaKeys.detail(variables.id),
       });
-      queryClient.invalidateQueries({ queryKey: beneficiariosKeys.all() });
-      queryClient.invalidateQueries({ queryKey: seguimientosKeys.all() });
-      queryClient.invalidateQueries({ queryKey: expedientesKeys.all() });
+      queryClient.invalidateQueries({ queryKey: beneficiariosKeys.all });
+      queryClient.invalidateQueries({ queryKey: seguimientosKeys.all });
+      queryClient.invalidateQueries({ queryKey: expedientesKeys.all });
     },
   });
 };
@@ -109,9 +109,9 @@ export const useActualizarAsistenciasMasivo = () => {
     mutationFn: actualizarAsistenciasMasivo,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: asistenciaKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: beneficiariosKeys.all() });
-      queryClient.invalidateQueries({ queryKey: seguimientosKeys.all() });
-      queryClient.invalidateQueries({ queryKey: expedientesKeys.all() });
+      queryClient.invalidateQueries({ queryKey: beneficiariosKeys.all });
+      queryClient.invalidateQueries({ queryKey: seguimientosKeys.all });
+      queryClient.invalidateQueries({ queryKey: expedientesKeys.all });
     },
   });
 };

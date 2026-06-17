@@ -36,9 +36,9 @@ export default function AsistenciasTabla({
       );
     }
     //celdas de asistencia (Días de la semana)
-    const seguimientoPadre = seguimientoMap[item.id];
+    const seguimientoPadre = seguimientoMap?.[item.id] ?? null;
     // en caso de existentes
-    const asistenciaExistente = seguimientoPadre?.historial?.find(
+    const asistenciaExistente = item.asistencias?.find(
       (h) =>
         h.fecha_realizacion === key &&
         h.tipo_servicio === filters.servicio
@@ -96,3 +96,4 @@ export default function AsistenciasTabla({
     </div>
   );
 }
+

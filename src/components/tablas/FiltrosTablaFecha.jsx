@@ -46,9 +46,11 @@ export default function FiltrosTabla({
                 }
                 className="h-11 min-w-[150px] rounded-xl border border-[#d9e1ea] bg-white px-4 text-sm text-slate-500 outline-none focus:border-[#94a3b8]"
               >
-                <option value="">
-                  {filter.placeholder || `Seleccionar ${filter.label || ""}`}
-                </option>
+                {filter.hideEmpty !== true && (
+  <option value="">
+    {filter.placeholder || `Seleccionar ${filter.label || ""}`}
+  </option>
+)}
 
                 {(filter.options || []).map((opt) => (
                   <option

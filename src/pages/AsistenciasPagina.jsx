@@ -38,24 +38,25 @@ const AsistenciasPagina = () => {
   const { data, isLoading, isError, mutation } =
     useAsistenciaData(periodoId);
     console.log("filtradospagina",data)
-  const confirmarGuardado = () => {
-    const listaCambios = Object.values(cambios);
+  // ✅ REEMPLAZA ESTA FUNCIÓN EN AsistenciasPagina.js
+const confirmarGuardado = async () => {
+  const listaCambios = Object.values(cambios);
 
-    if (!listaCambios.length) return;
+  if (!listaCambios.length) return;
 
-    setShowConfirm(false);
+  setShowConfirm(false);
 
-    mutation.mutate(listaCambios, {
-      onSuccess: () => {
-        setCambios({});
-        setShowResult(true);
-      },
-      onError: (err) => {
-        console.error("ERROR GUARDANDO:", err);
-
-      },
-    });
-  };
+  try {
+    // Como guardarAsistencias devuelve un Promise.all, esperamos a que termine con await
+    await mutation.guardarAsistencias(listaCambios);
+    
+    // Una vez guardado con éxito en el servidor:
+    setCambios({}); // 🔥 Esto quitará el botón de guardar inmediatamente
+    setShowResult(true);
+  } catch (err) {
+    console.error("ERROR GUARDANDO:", err);
+  }
+};
   const [search, setSearch] = useState("");
 
   const [filters, setFilters] = useState({
@@ -142,45 +143,53 @@ const AsistenciasPagina = () => {
       };
     });
   }, [semanaActiva]);
-
+console.log("DATA CHECK:", data);
+console.log("BENEFICIARIOS CHECK:", data?.beneficiarios);
   const beneficiariosFiltrados = useMemo(() => {
-    if (!data?.beneficiarios) return [];
+  const lista = Array.isArray(data) ? data : [];
 
-    return data.beneficiarios.filter((b) => {
-      const nombre = b.nombreCompleto?.toLowerCase() || "";
-      return nombre.includes(search.toLowerCase());
-    });
-  }, [data, search]);
+  const q = (search ?? "").trim().toLowerCase();
 
-  const beneficiariosPaginados = useMemo(() => {
-    const inicio =
-      (pagina - 1) * registrosPorPagina;
+  if (!q) return lista;
 
-    return beneficiariosFiltrados.slice(
-      inicio,
-      inicio + registrosPorPagina
-    );
-  }, [beneficiariosFiltrados, pagina]);
+  return lista.filter((b) =>
+    (b.nombreCompleto ?? "").toLowerCase().includes(q)
+  );
+}, [data, search]);
 
-  const handleLocalChange = (payload) => {
-    const key = `${payload.id_beneficiario}-${payload.fecha_realizacion}`;
+const beneficiariosPaginados = useMemo(() => {
+  const inicio = (pagina - 1) * registrosPorPagina;
 
+  return beneficiariosFiltrados.slice(
+    inicio,
+    inicio + registrosPorPagina
+  );
+}, [beneficiariosFiltrados, pagina, registrosPorPagina]);
+ const handleLocalChange = (payload) => {
+  const key = `${payload.id_beneficiario}-${payload.fecha_realizacion}`;
 
-    setCambios((prev) => {
-      const existente = prev[key] || {};
+  // 1. Buscamos el beneficiario en los datos procesados para extraer su id_seguimiento real
+  const beneficiarioOriginal = data?.find(b => b.id === payload.id_beneficiario);
+  const idSeguimientoReal = beneficiarioOriginal?.id_seguimiento;
 
-      return {
-        ...prev,
-        [key]: {
-          ...existente,
-          ...payload,
-          id_beneficiario: payload.id_beneficiario,
-          fecha_realizacion: payload.fecha_realizacion,
-          tipo_servicio: filters.servicio,
-        },
-      };
-    });
-  };
+  setCambios((prev) => {
+    const existente = prev[key] || {};
+
+    return {
+      ...prev,
+      [key]: {
+        ...existente,
+        ...payload,
+        id_beneficiario: payload.id_beneficiario,
+        fecha_realizacion: payload.fecha_realizacion,
+        tipo_servicio: filters.servicio,
+        
+        // 2. Nos aseguramos de que use el id del beneficiario si payload no lo trae
+        id_seguimiento: payload.id_seguimiento || idSeguimientoReal,
+      },
+    };
+  });
+};
 
   const onGuardar = () => {
     const listaCambios = Object.values(cambios);
@@ -202,6 +211,7 @@ const AsistenciasPagina = () => {
         <AlertCircle />
       </div>
     ); console.log("DIAS:", dias);
+    console.log("SEARCH RAW:", JSON.stringify(search));
 console.log("beneficiarios originales", data);
 console.log("beneficiarios filtrados", beneficiariosFiltrados);
 console.log("beneficiarios paginados", beneficiariosPaginados);
@@ -311,4 +321,3 @@ console.log("registros", registrosPorPagina);
 };
 
 export default AsistenciasPagina;
-
