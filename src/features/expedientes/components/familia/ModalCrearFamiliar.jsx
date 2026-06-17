@@ -138,7 +138,7 @@ export default function ModalCrearFamiliar({
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                    <Field label="Nombre(s) *" required error={fieldErrors.nombre} >
+                    <Field label="Nombre(s)" required error={fieldErrors.nombre} >
                       <InputG name="nombre"
                         value={formData.nombre}
                         onChange={(e) => updateField("nombre", e.target.value)}
@@ -148,7 +148,7 @@ export default function ModalCrearFamiliar({
                     </Field>
 
                     <Field
-                      label="Apellido Paterno *" required
+                      label="Apellido Paterno" required
                       error={fieldErrors.apellido_p}
                     >
                       <InputG
@@ -172,7 +172,7 @@ export default function ModalCrearFamiliar({
                     </Field>
 
                     <Field
-                      label="Parentesco *" required
+                      label="Parentesco" required
                       error={fieldErrors.parentesco}
                     >
                       <select
@@ -199,7 +199,7 @@ export default function ModalCrearFamiliar({
                     </Field>
 
                     <Field
-                      label="Fecha de nacimiento *" required
+                      label="Fecha de nacimiento" required
                       error={fieldErrors.fecha_nacimiento}
                     >
                       <InputG
@@ -212,7 +212,7 @@ export default function ModalCrearFamiliar({
                     </Field>
 
                     <Field
-                      label="Teléfono (10 dígitos) *" required
+                      label="Teléfono (10 dígitos)" required
                       error={fieldErrors.telefono}
                     >
                       <InputG
@@ -226,7 +226,7 @@ export default function ModalCrearFamiliar({
                     </Field>
 
                     <Field
-                      label="Ocupación / Grado Escolar *" required
+                      label="Ocupación / Grado Escolar" required
                       error={fieldErrors.actividad_principal}
                     >
                       <InputG
@@ -242,7 +242,7 @@ export default function ModalCrearFamiliar({
 
 
                     <Field
-                      label="Salario o Escuela *" required
+                      label="Salario o Escuela" required
                       error={fieldErrors.salario}
                     >
                       <InputG
@@ -255,7 +255,7 @@ export default function ModalCrearFamiliar({
                     </Field>
 
                     <Field
-                      label="¿Habita en el mismo domicilio? *" required
+                      label="¿Habita en el mismo domicilio?" required
                       error={
                         fieldErrors.vive_en_casa
                       }

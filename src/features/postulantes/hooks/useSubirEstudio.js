@@ -27,8 +27,6 @@ export function useSubirEstudio(data) {
 
       const tieneDocumento = data?.idDocumentoEstudio && data?.link_documento;
 
-      //ya existe documento
-
       const formDataRemplazar = new FormData();
 
       formDataRemplazar.append("archivo", archivo);
@@ -77,7 +75,14 @@ export function useSubirEstudio(data) {
       setMostrarSubida(false);
       setArchivo(null);
     } catch (error) {
-      console.log(error);
+      console.error(error);
+
+      const mensaje =
+        error?.errors?.archivo?.[0] ||
+        error?.message ||
+        "Error al subir documento";
+
+      throw new Error(mensaje);
     } finally {
       setLoading(false);
     }

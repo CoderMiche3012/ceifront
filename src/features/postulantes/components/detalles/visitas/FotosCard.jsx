@@ -13,6 +13,8 @@ import ModalResultado from "../../../../../components/shared/ModalResultado";
 import { useEliminarFotografia } from "../../../../expedientes/hooks/useFotografias";
 import { useSubirFotografia } from "../../../hooks/useSubirFotografia";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
 export default function FotosCard({ data, puedeEditar=true }) {
   const { mutateAsync: eliminarFoto } = useEliminarFotografia(data.id_expediente, data.id_postulante);
 
@@ -54,6 +56,7 @@ export default function FotosCard({ data, puedeEditar=true }) {
       });
 
     } catch (error) {
+      console.log(error)
       setResultado({
         open: true,
         type: "error",
@@ -129,7 +132,7 @@ export default function FotosCard({ data, puedeEditar=true }) {
           </div>
         ) : (
           <img
-            src={`http://localhost:8000${fotos[index].foto_archivo}`}
+            src={`${API_URL}${fotos[index].foto_archivo}`}
             className="w-full h-full object-cover"
           />
         )}
@@ -143,7 +146,7 @@ export default function FotosCard({ data, puedeEditar=true }) {
 
             <button
               onClick={async () => {
-                const imgUrl = `http://localhost:8000${fotos[index].foto_archivo}`;
+                const imgUrl = `${API_URL}${fotos[index].foto_archivo}`;
 
                 const response = await fetch(imgUrl);
                 const blob = await response.blob();
@@ -295,3 +298,4 @@ export default function FotosCard({ data, puedeEditar=true }) {
     </div >
   );
 }
+

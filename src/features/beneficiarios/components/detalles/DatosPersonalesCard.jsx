@@ -1,9 +1,12 @@
 import { User, PencilLine } from 'lucide-react';
 import React, { useState } from 'react';
 import EditarDatosGenerales from "./../modales/EditarDatosGenerales";
+import { usePermissions } from '../../../../context/PermissionsContext';
 
 export default function DatosPersonalesCard({ data }) {
   const [modalAbierto, setModalAbierto] = useState(false);
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canEdit = hasModulePermission("beneficiarios", "editar");
 
   return (
     <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
@@ -12,14 +15,15 @@ export default function DatosPersonalesCard({ data }) {
           <User className="w-4 h-4 text-teal-600" />
           Datos Personales
         </h3>
-
-        <button
-          onClick={() => setModalAbierto(true)}
-          className="flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors group"
-        >
-          <PencilLine className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-          Editar datos
-        </button>
+        {canEdit &&(
+          <button
+            onClick={() => setModalAbierto(true)}
+            className="flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors group"
+          >
+            <PencilLine className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+            Editar datos
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-8 text-sm">

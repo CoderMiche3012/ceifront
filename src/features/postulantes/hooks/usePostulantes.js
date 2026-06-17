@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { obtenerPostulantes, obtenerPostulantePorId, crearPostulante, actualizarPostulante, eliminarPostulante,aceptarPostulante } from "../services/postulantesService";
+import { obtenerPostulantes, obtenerPostulantePorId, crearPostulante, actualizarPostulante, eliminarPostulante, aceptarPostulante } from "../services/postulantesService";
 import { postulantesKeys } from "../services/postulantesKeys";
 import { actualizarEstudio } from "../services/estudiosService";
 import { estudiosKeys } from "../services/estudiosKeys";
+import { beneficiariosKeys } from "../../beneficiarios/services/beneficiariosKeys";
 
 export function useActualizarEstudioDetalle(id) {
   const queryClient =
@@ -24,6 +25,10 @@ export function useActualizarEstudioDetalle(id) {
 
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
       });
     }
   });
@@ -73,6 +78,9 @@ export function useActualizarPostulante() {
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
+      });
     },
   });
 }
@@ -95,6 +103,10 @@ export function useActualizarPostulanteDetalle(id) {
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
       });
+
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
+      });
     },
   });
 
@@ -109,6 +121,10 @@ export function useEliminarPostulante() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
       });
     },
   });
@@ -127,6 +143,10 @@ export function useAceptarPostulante() {
       });
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.detail,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
       });
     },
   });

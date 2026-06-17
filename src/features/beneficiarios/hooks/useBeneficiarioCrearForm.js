@@ -293,7 +293,7 @@ export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
       if (Object.keys(parsedErrors).length > 0) {
         setFieldErrors(parsedErrors);
         setError(null);
-        return; // <- aquí evita modal
+        return; 
       }
 
       setResultModal({

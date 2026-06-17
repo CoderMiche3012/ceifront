@@ -15,11 +15,35 @@ export const useBeneficiariosPage = (pageSize = 4) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [periodo, setPeriodo] = useState(null);
 
+  const obtenerNivelEducativo = (nivel) => {
+    if (!nivel) return "";
+
+    const valor = nivel.toLowerCase().trim();
+
+    if (
+      valor.includes("bachillerato") ||
+      valor.includes("preparatoria")
+    ) {
+      return "Media Superior";
+    }
+
+    if (
+      valor.includes("universidad") ||
+      valor.includes("licenciatura") ||
+      valor.includes("ingeniería") ||
+      valor.includes("ingenieria")
+    ) {
+      return "Superior";
+    }
+
+    return nivel;
+  };
+
   const PAGE_SIZE = pageSize;
 
   const { data: periodosRes = [] } = usePeriodos();
   // obtener los datos del beneficiario segun el periodo
-  const { data: beneficiariosData = [], isLoading, error,} = useBeneficiarios(periodo);
+  const { data: beneficiariosData = [], isLoading, error, } = useBeneficiarios(periodo);
   // para unificar tanto el general como el de por periodo
   const data = useMemo(() => {
     const beneficiarios = beneficiariosData?.results || beneficiariosData || [];
@@ -42,14 +66,18 @@ export const useBeneficiariosPage = (pageSize = 4) => {
       }
       // para el nivel y grado
       let nivelGradoFinal = "Sin datos";
+      let nivelEducativo = "";
+
       if (datosEscolares) {
         if (datosEscolares.id_escolaridad?.nivel_escolar) {
-          nivelGradoFinal = `${datosEscolares.id_escolaridad.nivel_escolar} ${datosEscolares.id_escolaridad.grado_escolar || ""}`;
+          nivelEducativo = obtenerNivelEducativo(datosEscolares.id_escolaridad.nivel_escolar);
+          nivelGradoFinal = `${nivelEducativo} ${datosEscolares.id_escolaridad.grado_escolar || ""
+            }`;
         } else if (datosEscolares.nivel) {
-          nivelGradoFinal = `${datosEscolares.nivel} ${datosEscolares.grado || ""}`;
+          nivelEducativo = obtenerNivelEducativo(datosEscolares.nivel);
+          nivelGradoFinal = `${nivelEducativo} ${datosEscolares.grado || ""}`;
         }
       }
-
       // obtener el ciclo escolar al que pertenece
       let cicloEscolarFinal = "--";
       if (seguimiento) {
@@ -73,6 +101,7 @@ export const useBeneficiariosPage = (pageSize = 4) => {
         },
         seguimientoActivo: seguimiento,
         estatusSeguimiento: seguimiento?.estatus ?? "Sin seguimiento",
+        nivelEducativo,
         nivelGrado: nivelGradoFinal.trim(),
         promedio: promedioFinal,
         cicloEscolar: cicloEscolarFinal,
@@ -85,7 +114,6 @@ export const useBeneficiariosPage = (pageSize = 4) => {
   const filtered = useMemo(() => {
     const searchLower = search.trim().toLowerCase();
     return data.filter((item) => {
-
       // si el usuario seleccionó un periodo específico y el alumno no pertenece a ese periodo (seguimiento null o inexistente).
       if (periodo !== null) {
         if (!item.seguimientoActivo || item.estatusSeguimiento === "Sin seguimiento") {
@@ -95,19 +123,16 @@ export const useBeneficiariosPage = (pageSize = 4) => {
       const nombre = item.expediente?.nombre_completo?.toLowerCase() || "";
       const matchSearch = !searchLower || nombre.includes(searchLower);
       const matchStatus = filters.estatus === "todos" || item.estatusSeguimiento?.toLowerCase() === filters.estatus.toLowerCase();
-
-      const matchNivel = filters.nivel === "todos" || item.nivelGrado?.toLowerCase().includes(filters.nivel.toLowerCase());
+      const matchNivel = filters.nivel === "todos" || item.nivelEducativo?.toLowerCase() === filters.nivel.toLowerCase();
       let rendimiento = "sin_datos";
-
       const promedio = Number(item.promedio);
-
       if (!isNaN(promedio) && item.promedio !== null) {
         if (promedio < 7.5) rendimiento = "regularizacion";
         else if (promedio < 8) rendimiento = "bajo";
         else rendimiento = "bueno";
       }
       const matchRendimiento = filters.rendimiento === "todos" || rendimiento === filters.rendimiento;
-      const matchDonador = filters.donador === "todos" || (filters.donador === "con" && item.tieneDonador) ||(filters.donador === "sin" && !item.tieneDonador);
+      const matchDonador = filters.donador === "todos" || (filters.donador === "con" && item.tieneDonador) || (filters.donador === "sin" && !item.tieneDonador);
 
       return (
         matchSearch &&
@@ -117,13 +142,10 @@ export const useBeneficiariosPage = (pageSize = 4) => {
         matchDonador
       );
     });
-  }, [data, search, filters, periodo]); 
+  }, [data, search, filters, periodo]);
 
   // paginacion
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filtered.length / PAGE_SIZE)
-  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
   const paginated = useMemo(() => {
     const start = (safePage - 1) * PAGE_SIZE;

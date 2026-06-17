@@ -119,7 +119,7 @@ export default function EditarNotaFamilia({ isOpen, onClose, data }) {
             <ModalConfirmacion
                 open={showConfirm}
                 title="¿Confirmar cambios?"
-                description="Se actualizará la nota en el expediente del beneficiario."
+                description="Se actualizará la nota familiar."
                 onConfirm={handleFinalConfirm}
                 onClose={() => setShowConfirm(false)}
                 loading={mutation.isLoading}

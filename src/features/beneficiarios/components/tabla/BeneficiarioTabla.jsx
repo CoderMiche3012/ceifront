@@ -1,35 +1,25 @@
+import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { Eye, MoreVertical, User, GraduationCap, HeartHandshake, Camera, Folder, FileText, Coins, Utensils, Users } from "lucide-react";
+
 import DatosTabla from "../../../../components/tablas/DatosTabla";
 import AvatarGeneral from "../../../../components/shared/AvatarGeneral";
-import { 
-    Eye, 
-    MoreVertical, 
-    User, 
-    GraduationCap, 
-    HeartHandshake, 
-    Camera, 
-    Folder, 
-    FileText, 
-    Coins, 
-    Utensils, 
-    Users 
-} from "lucide-react"; 
-import { useState } from "react";
+import { usePermissions } from "../../../../context/PermissionsContext";
 
 const COLUMNS = [
     { key: "beneficiarios", label: "beneficiarios" },
     { key: "estatus", label: "Estatus" },
     { key: "promedio", label: "Promedio" },
     { key: "donador", label: "Donador" },
-    { key: "escuela", label: "Escuela/grado" },
+    { key: "escuela", label: "Escolaridad" },
     { key: "acciones", label: "Acciones" },
 ];
 
 export default function BeneficiarioTabla({ beneficiarios = [], periodo }) {
     const navigate = useNavigate();
-    
-    // 🔴 Añadimos la bandera 'haciaArriba' para controlar la dirección
     const [menuData, setMenuData] = useState({ id: null, top: 0, right: 0, haciaArriba: false });
+    const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+    const canViewFamilia = hasModulePermission("familia", "ver");
 
     const calcularEdad = (fechaNacimiento) => {
         if (!fechaNacimiento) return "--";
@@ -42,22 +32,17 @@ export default function BeneficiarioTabla({ beneficiarios = [], periodo }) {
         }
         return edad;
     };
-
-    // 🔴 Detecta el espacio disponible abajo antes de pintar el menú
     const handleToggleMenu = (e, id) => {
         if (menuData.id === id) {
             setMenuData({ id: null, top: 0, right: 0, haciaArriba: false });
         } else {
             const rect = e.currentTarget.getBoundingClientRect();
-            const alturaMenu = 380; // La propiedad max-h-[380px] de tu menú
-            
-            // Calculamos el espacio que queda desde la base del botón hasta el final de la ventana visible
+            const alturaMenu = 380;
             const espacioDisponibleAbajo = window.innerHeight - rect.bottom;
             const abrirHaciaArriba = espacioDisponibleAbajo < alturaMenu;
 
             setMenuData({
                 id: id,
-                // Si va hacia arriba, se alinea con el 'top' del botón, si va hacia abajo con el 'bottom'
                 top: abrirHaciaArriba ? rect.top + window.scrollY : rect.bottom + window.scrollY,
                 right: window.innerWidth - rect.right,
                 haciaArriba: abrirHaciaArriba
@@ -79,7 +64,7 @@ export default function BeneficiarioTabla({ beneficiarios = [], periodo }) {
                     <div className="flex items-center gap-3">
                         <AvatarGeneral nombre={expediente.nombre_completo} />
                         <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-semibold text-slate-800 uppercase truncate">
+                            <span className="text-sm font-semibold text-slate-800 truncate">
                                 {expediente.nombre_completo || "--"}
                             </span>
                             <span className="text-xs text-slate-500">
@@ -101,7 +86,7 @@ export default function BeneficiarioTabla({ beneficiarios = [], periodo }) {
 
                 return (
                     <div className="flex flex-col gap-0.5">
-                        <span className={`inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${estilo}`}>
+                        <span className={`inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${estilo}`}>
                             {item.estatusSeguimiento}
                         </span>
                         <span className="text-[11px] text-slate-400 font-medium pl-1">
@@ -126,14 +111,14 @@ export default function BeneficiarioTabla({ beneficiarios = [], periodo }) {
                 const tieneDonador = item.tieneDonador;
                 const estilo = tieneDonador ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-amber-100 text-amber-700 border-amber-200";
                 return (
-                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase ${estilo}`}>
+                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${estilo}`}>
                         {tieneDonador ? "Con donador" : "Sin donador"}
                     </span>
                 );
             }
 
             case "escuela":
-                return <span className="text-sm font-medium text-slate-700 uppercase">{item.nivelGrado}</span>;
+                return <span className="text-sm font-medium text-slate-700 ">{item.nivelGrado}</span>;
 
             case "acciones":
                 return (
@@ -167,12 +152,12 @@ export default function BeneficiarioTabla({ beneficiarios = [], periodo }) {
                                 <>
                                     {/* Backdrop para cerrar con un clic fuera */}
                                     <div className="fixed inset-0 z-[90]" onClick={() => setMenuData({ id: null, top: 0, right: 0, haciaArriba: false })} />
-                                    
+
                                     {/* Usamos transform translate-y para empujar el menú hacia arriba si no cabe abajo */}
-                                    <div 
-                                        style={{ 
+                                    <div
+                                        style={{
                                             position: 'fixed',
-                                            top: `${menuData.top}px`, 
+                                            top: `${menuData.top}px`,
                                             right: `${menuData.right}px`,
                                             transform: menuData.haciaArriba ? 'translateY(-100%) translateY(-4px)' : 'translateY(4px)'
                                         }}
@@ -182,14 +167,15 @@ export default function BeneficiarioTabla({ beneficiarios = [], periodo }) {
                                         <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                             Información Base
                                         </div>
-                                       
-                                        <button
-                                            onClick={() => irASeccion(item.id_beneficiario, "familia")}
-                                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                                        >
-                                            <Users size={14} className="text-teal-600" />
-                                            Familia
-                                        </button>
+                                        {canViewFamilia &&(
+                                            <button
+                                                onClick={() => irASeccion(item.id_beneficiario, "familia")}
+                                                className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                                            >
+                                                <Users size={14} className="text-teal-600" />
+                                                Familia
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => irASeccion(item.id_beneficiario, "estudio")}
                                             className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
@@ -233,7 +219,7 @@ export default function BeneficiarioTabla({ beneficiarios = [], periodo }) {
                                             Documentos
                                         </button>
 
-                                        
+
                                         <button
                                             onClick={() => irASeccion(item.id_beneficiario, "apoyos")}
                                             className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"

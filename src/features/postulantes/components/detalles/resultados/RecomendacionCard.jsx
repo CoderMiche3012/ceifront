@@ -5,7 +5,6 @@ import { useActualizarEstudioDetalle } from "../../../hooks/usePostulantes";
 import Card from "../../../../../components/ui/Card";
 import { usePermissions } from "../../../../../context/PermissionsContext";
 
-
 export default function RecomendacionCard({ data }) {
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
 

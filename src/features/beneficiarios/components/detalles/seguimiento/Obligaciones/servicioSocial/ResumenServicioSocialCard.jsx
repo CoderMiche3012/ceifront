@@ -6,9 +6,9 @@ import ModalFormularioServicioSocial from "./ModalFormularioServicioSocial";
 import useServicioSocialCard from "./useServicioSocialCard";
 
 export default function ResumenServicioSocialCard({
-  seguimiento,
+  seguimiento, editable, canCreateObligaciones
 }) {
-  const vm =useServicioSocialCard( seguimiento );
+  const vm = useServicioSocialCard(seguimiento);
 
   if (!seguimiento) {
     return (
@@ -31,34 +31,36 @@ export default function ResumenServicioSocialCard({
               Registro de actividades
             </p>
           </div>
-
-          <button
-            onClick={
-              vm.abrirNuevo
-            }
-            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl flex items-center gap-2"
-          >
-            <Plus size={18} />
-            Agregar
-          </button>
+          {canCreateObligaciones &&(
+            <button
+              onClick={
+                vm.abrirNuevo
+              }
+              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Agregar
+            </button>
+          )}
         </div>
 
         <div className="max-h-[350px] overflow-y-auto custom-scroll pr-2 space-y-4">
 
-  {vm.servicios.length === 0 ? (
-    <div className="text-center py-8 text-slate-500">
-      Sin servicios registrados
-    </div>
-  ) : (
-    vm.servicios.map((item) => (
-      <ServicioSocialItemCard
-        key={item.id_servicio_social}
-        item={item}
-        onEditar={vm.editar}
-      />
-    ))
-  )}
-</div>
+          {vm.servicios.length === 0 ? (
+            <div className="text-center py-8 text-slate-500">
+              Sin servicios registrados
+            </div>
+          ) : (
+            vm.servicios.map((item) => (
+              <ServicioSocialItemCard
+                key={item.id_servicio_social}
+                item={item}
+                onEditar={vm.editar}
+                editable={editable}
+              />
+            ))
+          )}
+        </div>
       </div>
 
       <ModalFormularioServicioSocial

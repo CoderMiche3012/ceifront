@@ -62,6 +62,23 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
   const crearPostulanteMutation = useCrearPostulante();
   const loading = crearPostulanteMutation.isPending;
 
+  const calcularEdad = (fechaNacimiento) => {
+    const hoy = new Date();
+    const fecha = new Date(fechaNacimiento);
+
+    let edad = hoy.getFullYear() - fecha.getFullYear();
+
+    const mes = hoy.getMonth() - fecha.getMonth();
+
+    if (
+      mes < 0 ||
+      (mes === 0 && hoy.getDate() < fecha.getDate())
+    ) {
+      edad--;
+    }
+
+    return edad;
+  };
 
   const validarFormulario = () => {
     const errors = {};
@@ -71,7 +88,16 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
     if (!form.correo.trim()) errors.correo = "Correo obligatorio";
     if (!form.telefono.trim()) errors.telefono = "Teléfono obligatorio";
     if (!form.genero.trim()) errors.genero = "Selecciona género";
-    if (!form.fecha_nacimiento) errors.fecha_nacimiento = "Selecciona fecha";
+    if (!form.fecha_nacimiento) {
+      errors.fecha_nacimiento = "Selecciona fecha";
+    } else {
+      const edad = calcularEdad(form.fecha_nacimiento);
+
+      if (edad < 1 || edad > 100) {
+        errors.fecha_nacimiento =
+          "La edad debe estar entre 1 y 100 años";
+      }
+    }
 
     if (!form.cp.trim()) errors.cp = "CP obligatorio";
     if (!form.municipio.trim()) errors.municipio = "Municipio obligatorio";
@@ -106,8 +132,25 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
       if (!fam.parentesco?.trim())
         errors[`familia.${idx}.parentesco`] = "Parentesco obligatorio";
 
-      if (!fam.fecha_nacimiento)
+      if (!fam.fecha_nacimiento) {
         errors[`familia.${idx}.fecha_nacimiento`] = "Fecha obligatoria";
+      } else {
+        const edad = calcularEdad(fam.fecha_nacimiento);
+
+        if (idx === 0) {
+          // Tutor principal
+          if (edad < 18 || edad > 100) {
+            errors[`familia.${idx}.fecha_nacimiento`] =
+              "El tutor principal debe tener entre 18 y 100 años";
+          }
+        } else {
+          // Resto de familiares
+          if (edad > 100) {
+            errors[`familia.${idx}.fecha_nacimiento`] =
+              "La edad no puede ser mayor a 100 años";
+          }
+        }
+      }
 
       if (!fam.salario)
         errors[`familia.${idx}.salario`] = "Salario o escuela Obligatorio";
@@ -115,6 +158,14 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
       if (!fam.actividad_principal?.trim())
         errors[`familia.${idx}.actividad_principal`] =
           "Actividad obligatoria";
+      if (fam.telefono) {
+        const telefono = fam.telefono.replace(/\D/g, "");
+
+        if (!/^\d{10}$/.test(telefono)) {
+          errors[`familia.${idx}.telefono`] =
+            "El teléfono debe contener exactamente 10 dígitos";
+        }
+      }
     });
 
     return errors;
@@ -138,29 +189,29 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
     if (campos.length > 0) {
 
       const etiquetas = {
-  nombre: "Nombre",
-  apellido_p: "Apellido paterno",
-  apellido_m: "Apellido materno",
-  correo: "Correo",
-  telefono: "Teléfono",
-  genero: "Género",
-  fecha_nacimiento: "Fecha de nacimiento",
+        nombre: "Nombre",
+        apellido_p: "Apellido paterno",
+        apellido_m: "Apellido materno",
+        correo: "Correo",
+        telefono: "Teléfono",
+        genero: "Género",
+        fecha_nacimiento: "Fecha de nacimiento",
 
-  cp: "Código postal",
-  municipio: "Municipio",
-  colonia: "Colonia",
-  calle: "Calle",
-  numero: "Número",
+        cp: "Código postal",
+        municipio: "Municipio",
+        colonia: "Colonia",
+        calle: "Calle",
+        numero: "Número",
 
-  nivel_escolar_inicial: "Nivel escolar inicial",
-  grado_escolar_inicial: "Grado escolar inicial",
+        nivel_escolar_inicial: "Nivel escolar inicial",
+        grado_escolar_inicial: "Grado escolar inicial",
 
-  referencia_ingreso: "Referencia de ingreso",
-  referencia_casa: "Referencia de domicilio",
+        referencia_ingreso: "Referencia de ingreso",
+        referencia_casa: "Referencia de domicilio",
 
-  gasto_alimentacion: "Gasto de alimentacion",
-  gasto_transporte: "Gasto de transporte",
-};
+        gasto_alimentacion: "Gasto de alimentacion",
+        gasto_transporte: "Gasto de transporte",
+      };
 
       const etiquetasFamilia = {
         nombre: "Nombre",
@@ -300,7 +351,7 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
         open: true,
         type: "success",
         title: "¡Éxito!",
-        message: "Registro completado correctamente.",
+        message: "Registro completo correctamente.",
       });
     } catch (err) {
 
@@ -312,37 +363,37 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
       const parsedErrors = {};
 
       const flattenErrors = (obj, prefix = "") => {
-  Object.entries(obj).forEach(([key, value]) => {
-    let newKey = prefix
-      ? `${prefix}.${key}`
-      : key;
+        Object.entries(obj).forEach(([key, value]) => {
+          let newKey = prefix
+            ? `${prefix}.${key}`
+            : key;
 
-    newKey = newKey
-      .replace(/^id_expediente\./, "")
-      .replace(/^id_expediente\.id_direccion\./, "")
-      .replace(/^id_direccion\./, "")
-      .replace(/^expediente\./, "")
-      .replace(/^estudio\./, "");
+          newKey = newKey
+            .replace(/^id_expediente\./, "")
+            .replace(/^id_expediente\.id_direccion\./, "")
+            .replace(/^id_direccion\./, "")
+            .replace(/^expediente\./, "")
+            .replace(/^estudio\./, "");
 
-    if (
-      Array.isArray(value) &&
-      typeof value[0] === "string"
-    ) {
-      parsedErrors[newKey] = value[0];
-    } else if (Array.isArray(value)) {
-      value.forEach((item, index) => {
-        if (typeof item === "object") {
-          flattenErrors(item, `${newKey}.${index}`);
-        }
-      });
-    } else if (
-      typeof value === "object" &&
-      value !== null
-    ) {
-      flattenErrors(value, newKey);
-    }
-  });
-};
+          if (
+            Array.isArray(value) &&
+            typeof value[0] === "string"
+          ) {
+            parsedErrors[newKey] = value[0];
+          } else if (Array.isArray(value)) {
+            value.forEach((item, index) => {
+              if (typeof item === "object") {
+                flattenErrors(item, `${newKey}.${index}`);
+              }
+            });
+          } else if (
+            typeof value === "object" &&
+            value !== null
+          ) {
+            flattenErrors(value, newKey);
+          }
+        });
+      };
 
       flattenErrors(backendErrors);
 
@@ -351,7 +402,7 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
       if (Object.keys(parsedErrors).length > 0) {
         setFieldErrors(parsedErrors);
         setError(null);
-        return; // <- aquí evita modal
+        return;
       }
 
       setResultModal({
@@ -382,11 +433,8 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
       setFieldErrors({});
       setError(null);
       setShowConfirm(false);
-      onSuccess?.(); // Notifica la actualización de la lista en segundo plano
+      onSuccess?.();
     }
-
-    // Sacamos esto de la condicional para asegurar que ante cualquier 
-    // cierre del ModalResultado, la ventana de creación también se destruya.
     onClose?.();
   };
 
@@ -397,10 +445,10 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
     fieldErrors,
     error,
     loading,
-    loadingCP,// checar
-    cpEncontrado,// checar
-    setLoadingCP,// chercar
-    setCpEncontrado,//c
+    loadingCP,
+    cpEncontrado,
+    setLoadingCP,
+    setCpEncontrado,
     showConfirm,
     setShowConfirm,
     resultModal,

@@ -2,10 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { obtenerEstudios, obtenerEstudioPorId, crearEstudio, actualizarEstudio, eliminarEstudio, } from "../services/estudiosService";
 import { estudiosKeys } from "../services/estudiosKeys";
 import { postulantesKeys } from "../services/postulantesKeys";
+import { beneficiariosKeys } from "../../beneficiarios/services/beneficiariosKeys";
+
 
 
 // lista
-export function useEstudios() {  return useQuery({
+export function useEstudios() {
+  return useQuery({
     queryKey: estudiosKeys.all,
     queryFn: obtenerEstudios,
   });
@@ -31,6 +34,12 @@ export function useCrearEstudio() {
       queryClient.invalidateQueries({
         queryKey: estudiosKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: postulantesKeys.all,
+      });
     },
   });
 }
@@ -44,16 +53,16 @@ export function useActualizarEstudio() {
       actualizarEstudio(id, data),
 
     onSuccess: () => {
-  queryClient.invalidateQueries({
-    queryKey: estudiosKeys.all,
-  });
+      queryClient.invalidateQueries({
+        queryKey: estudiosKeys.all,
+      });
 
-  queryClient.invalidateQueries({
-    queryKey: postulantesKeys.all,
-  });
+      queryClient.invalidateQueries({
+        queryKey: postulantesKeys.all,
+      });
 
- 
-}
+
+    }
   });
 }
 
@@ -67,6 +76,12 @@ export function useEliminarEstudio() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: estudiosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: postulantesKeys.all,
       });
     },
   });

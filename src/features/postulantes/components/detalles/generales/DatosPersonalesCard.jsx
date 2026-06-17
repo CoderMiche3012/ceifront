@@ -8,23 +8,32 @@ import EditarDatosGenerales from "../../modales/EditarDatosGenerales";
 
 import { ui } from "../../../../../styles/ui/index";
 
-export default function DatosPersonalesCard({ data,canEdit }) {
+export default function DatosPersonalesCard({ data, canEdit }) {
   const [modalAbierto, setModalAbierto] = useState(false);
-  console.log(data)
-  const gastoAlimentacion =
-  data?.gastos?.find((g) => g.nombre === "Alimentacion")?.monto;
 
-const gastoTransporte =
-  data?.gastos?.find((g) => g.nombre === "Transporte")?.monto;
-  console.log("t",gastoTransporte,gastoAlimentacion)
+  const gastoAlimentacion = data?.gastos?.find((g) => g.nombre === "Alimentacion")?.monto;
+  const gastoTransporte = data?.gastos?.find((g) => g.nombre === "Transporte")?.monto;
+  const puedeEditar = canEdit && !["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
 
-    const puedeEditar = canEdit && !["aceptado", "rechazado"].includes( data?.estatus_postulante?.toLowerCase() );
+  const formatearTelefono = (telefono) => {
+    if (!telefono) return "--";
 
+    const numeros = telefono.toString().replace(/\D/g, "");
 
+    if (numeros.length === 10) {
+      return numeros.replace(/(\d{3})(\d{3})(\d{2})(\d{2})/, "$1-$2-$3-$4");
+    }
+
+    return telefono;
+  };
+  const formatearMonto = (monto) => {
+    if (monto === null || monto === undefined || monto === "") return "--";
+
+    return Number(monto).toLocaleString("en-US");
+  };
   return (
     <Card>
 
-      {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
 
         <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800">
@@ -43,7 +52,6 @@ const gastoTransporte =
 
       </div>
 
-      {/* GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
 
         <div>
@@ -63,7 +71,7 @@ const gastoTransporte =
         <div>
           <p className={ui.text.label}>Teléfono</p>
           <p className="text-slate-700 font-medium">
-            {data.telefono || "--"}
+            {formatearTelefono(data.telefono)}
           </p>
         </div>
 
@@ -84,7 +92,11 @@ const gastoTransporte =
         <div>
           <p className={ui.text.label}>Escolaridad</p>
           <p className="text-slate-700 font-medium">
-            {data.nivel_escolar_inicial || "--"} | {data.grado_escolar_inicial || "--"}
+            {data.nivel_escolar_inicial && data.grado_escolar_inicial
+              ? `${data.nivel_escolar_inicial} • ${data.grado_escolar_inicial}`
+              : data.nivel_escolar_inicial ||
+              data.grado_escolar_inicial ||
+              "--"}
           </p>
         </div>
 
@@ -103,30 +115,16 @@ const gastoTransporte =
         </div>
 
         <div>
-          <p className={ui.text.label}>Nivel escolar inicial</p>
-          <p className="text-slate-700 font-medium">
-            {data.nivel_escolar_inicial || "--"}
-          </p>
-        </div>
-
-        <div>
-          <p className={ui.text.label}>Grado escolar inicial</p>
-          <p className="text-slate-700 font-medium">
-            {data.grado_escolar_inicial || "--"}
-          </p>
-        </div>
-
-        <div>
           <p className={ui.text.label}>Gasto de alimentación mensual</p>
           <p className="text-slate-700 font-medium">
-            {gastoAlimentacion ?? "--"}
+            ${formatearMonto(gastoAlimentacion)}
           </p>
         </div>
 
         <div>
           <p className={ui.text.label}>Gasto de transporte mensual</p>
           <p className="text-slate-700 font-medium">
-            {gastoTransporte ?? "--"}
+            ${formatearMonto(gastoTransporte)}
           </p>
         </div>
 
@@ -140,7 +138,7 @@ const gastoTransporte =
       </div>
 
 
-      {/* DIRECCIÓN */}
+      {/* direccion */}
       <div className="mt-6 pt-4 border-t border-slate-100">
 
         <p className={ui.text.label}>Dirección</p>
@@ -150,8 +148,6 @@ const gastoTransporte =
           {data.municipio}, C.P {data.cp}
         </p>
       </div>
-
-      {/* MODAL */}
 
       <EditarDatosGenerales
         open={modalAbierto}

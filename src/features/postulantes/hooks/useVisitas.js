@@ -32,7 +32,6 @@ export function useCrearVisita() {
         queryKey: visitasKeys.all,
       });
 
-      // 👇 ESTO ES LO QUE TE FALTA
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
       });
@@ -56,7 +55,6 @@ export function useActualizarVisita() {
         queryKey: visitasKeys.detail(variables.id),
       });
 
-      // 👇 CLAVE
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
       });

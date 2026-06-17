@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import FiltrosTabla from "../../../../components/tablas/FiltrosAvanzados";
 import { ui } from "../../../../styles/ui/index";
@@ -11,6 +11,24 @@ export default function PostulanteFiltros({
   onClearFilters,
 }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const advancedRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        advancedRef.current &&
+        !advancedRef.current.contains(event.target)
+      ) {
+        setShowAdvanced(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const opcionesFiltros = [
     {
@@ -20,6 +38,7 @@ export default function PostulanteFiltros({
         { value: "todos", label: "Todas las visitas" },
         { value: "No agendada", label: "No agendada" },
         { value: "Programada", label: "Programada" },
+        { value: "No realizada", label: "No realizada" },
         { value: "Realizada", label: "Realizada" },
       ],
     },
@@ -74,7 +93,7 @@ export default function PostulanteFiltros({
 
   // DROPDOWN
   const filtrosAvanzados = opcionesFiltros.filter((f) =>
-    ["visita", "estudio","nivelEducativo"].includes(f.key)
+    ["visita", "estudio", "nivelEducativo"].includes(f.key)
   );
 
   const mapFilters = (list) =>
@@ -94,7 +113,7 @@ export default function PostulanteFiltros({
       onClearFilters={onClearFilters}
       filters={mapFilters(filtrosBasicos)}
       extraAction={
-        <div className="relative">
+        <div className="relative" ref={advancedRef}>
           <button
             type="button"
             onClick={() => setShowAdvanced((v) => !v)}
@@ -112,66 +131,63 @@ export default function PostulanteFiltros({
           </button>
 
           {showAdvanced && (
-            <div
-              className="
-                absolute
-                top-full
-                right-0
-                mt-2
-                w-80
-                rounded-2xl
+            <>
+              <div
+                className="fixed inset-0 bg-black/30 z-40"
+                onClick={() => setShowAdvanced(false)}
+              />
+
+              <div
+                className="
+        fixed left-4 right-4 top-1/2 -translate-y-1/2
+        sm:absolute sm:top-full sm:right-0 sm:left-auto sm:translate-y-0
+        sm:w-80
+        rounded-2xl
+        border border-slate-200
+        bg-white
+        shadow-xl
+        p-4
+        z-50
+      "
+              >
+                <h3 className="text-sm font-semibold text-slate-800">
+                  Filtros avanzados
+                </h3>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Refina la búsqueda con criterios adicionales.
+                </p>
+
+                <div className="mt-4 space-y-4">
+                  {mapFilters(filtrosAvanzados).map((filter) => (
+                    <div key={filter.key}>
+                      <label className="mb-1 block text-xs font-medium text-slate-600">
+                        {filter.label}
+                      </label>
+
+                      <select
+                        value={filter.value}
+                        onChange={(e) => filter.onChange(e.target.value)}
+                        className="
+                w-full
+                rounded-xl
                 border border-slate-200
                 bg-white
-                shadow-xl
-                p-4
-                z-50
+                px-4 py-2
+                text-sm
               "
-            >
-              <h3 className="text-sm font-semibold text-slate-800">
-                Filtros avanzados
-              </h3>
-
-              <p className="mt-1 text-xs text-slate-500">
-                Refina la búsqueda con criterios adicionales.
-              </p>
-
-              <div className="mt-4 space-y-4">
-                {mapFilters(filtrosAvanzados).map((filter) => (
-                  <div key={filter.key}>
-                    <label className="mb-1 block text-xs font-medium text-slate-600">
-                      {filter.label}
-                    </label>
-
-                    <select
-                      value={filter.value}
-                      onChange={(e) =>
-                        filter.onChange(e.target.value)
-                      }
-                      className="
-                        w-full
-                        rounded-xl
-                        border border-slate-200
-                        bg-white
-                        px-4 py-2
-                        text-sm
-                        outline-none
-                        focus:ring-2
-                        focus:ring-teal-500/20
-                      "
-                    >
-                      {filter.options.map((opt) => (
-                        <option
-                          key={opt.value}
-                          value={opt.value}
-                        >
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
+                      >
+                        {filter.options.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       }

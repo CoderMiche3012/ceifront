@@ -152,7 +152,7 @@ export function usePerfilForm({ user, open, onUserUpdated, setResultado, }) {
         type: "success",
         title: "¡Perfil actualizado!",
         message: "Los cambios se guardaron correctamente",
-        logoutAction: false, // <-- Guardamos la bandera aquí
+        logoutAction: false,
       });
       onUserUpdated?.(data);
       resetPasswordFields();

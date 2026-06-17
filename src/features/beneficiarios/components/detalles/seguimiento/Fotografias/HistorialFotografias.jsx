@@ -18,8 +18,17 @@ import {
 import { useSubirFotografia, useEliminarFotografia } from "../../../../../expedientes/hooks/useFotografias";
 import ModalConfirmacion from "../../../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../../../components/shared/ModalResultado";
+import { usePermissions } from "../../../../../../context/PermissionsContext";
+import { ui } from "../../../../../../styles/ui/uiClasses";
 
 export default function HistorialFotografias({ data }) {
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  //falta
+  const canEditFotografias = hasModulePermission("beneficiarios", "editar");
+  const canCreateFotografias = hasModulePermission("beneficiarios", "crear")
+
+  const [showModal, setShowModal] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const id_beneficiario = data?.id_beneficiario;
   const id_expediente = data?.id_expediente;
 
@@ -95,15 +104,10 @@ export default function HistorialFotografias({ data }) {
     return b.id_periodo - a.id_periodo;
   });
 
-  const seleccionarArchivo =
-    (seguimiento) => {
-
-      setSeguimientoActivo(
-        seguimiento
-      );
-
-      inputRef.current?.click();
-    };
+  const seleccionarArchivo = (seguimiento) => {
+    setSeguimientoActivo(seguimiento);
+    setShowModal(true);
+  };
 
   const handleFile = (e) => {
 
@@ -116,18 +120,13 @@ export default function HistorialFotografias({ data }) {
   };
 
   const cancelar = () => {
-
     setPreview(null);
-
     setDescripcion("");
-
-    setSeguimientoActivo(
-      null
-    );
+    setSeguimientoActivo(null);
+    setShowModal(false);
 
     if (inputRef.current) {
-      inputRef.current.value =
-        null;
+      inputRef.current.value = null;
     }
   };
 
@@ -226,18 +225,20 @@ export default function HistorialFotografias({ data }) {
 
       if (!preview) return;
 
-      if (
-        !descripcion.trim()
-      ) {
+      if (!descripcion.trim()) {
+        setResultado({
+          open: true,
+          type: "error",
+          title: "Descripción requerida",
+          message: "Debes escribir una descripción para la fotografía.",
+        });
 
-        alert(
-          "Escribe una descripción"
-        );
-
+        setShowConfirm(false);
         return;
       }
 
       try {
+        setShowConfirm(false);
 
         setSaving(true);
 
@@ -274,17 +275,27 @@ export default function HistorialFotografias({ data }) {
           formData
         );
 
-
+        setResultado({
+          open: true,
+          type: "success",
+          title: "Fotografía agregada",
+          message: "La fotografía se guardó correctamente.",
+        });
 
         cancelar();
 
       } catch (error) {
+        setShowConfirm(false);
 
-        console.error(error);
-
-        alert(
-          "Error subiendo fotografía"
-        );
+        setResultado({
+          open: true,
+          type: "error",
+          title: "Error",
+          message:
+            error?.response?.data?.detail ||
+            error?.response?.data?.message ||
+            "Error al subir la fotografía.",
+        });
 
       } finally {
 
@@ -292,35 +303,46 @@ export default function HistorialFotografias({ data }) {
       }
     };
   const eliminarFotografiaActual = async () => {
-    try {
-      const foto = modalFoto?.fotos?.[modalFoto?.index];
+  try {
+    const foto = modalFoto?.fotos?.[modalFoto?.index];
 
-      if (!foto) return;
+    if (!foto) return;
 
-      await eliminarFoto(foto.id_foto);
+    await eliminarFoto(foto.id_foto);
 
-      setShowDeleteConfirm(false);
+    const nuevasFotos = modalFoto.fotos.filter(
+      (f) => f.id_foto !== foto.id_foto
+    );
+
+    if (nuevasFotos.length === 0) {
       setModalFoto(null);
-
-      setResultado({
-        open: true,
-        type: "success",
-        title: "Fotografía eliminada",
-        message: "La fotografía se eliminó correctamente.",
-      });
-
-    } catch (error) {
-      console.error(error);
-
-      setShowDeleteConfirm(false);
-
-      setResultado({
-        open: true,
-        type: "error",
-        title: "Error",
-        message: "No fue posible eliminar la fotografía.",
+    } else {
+      setModalFoto({
+        fotos: nuevasFotos,
+        index: Math.min(
+          modalFoto.index,
+          nuevasFotos.length - 1
+        ),
       });
     }
+
+    setShowDeleteConfirm(false);
+
+    setResultado({
+      open: true,
+      type: "success",
+      title: "Fotografía eliminada",
+      message: "La fotografía se eliminó correctamente.",
+    });
+
+  } catch (error) {
+    console.error(error);
+  }
+};
+  const handleSelectFile = () => {
+    console.log(inputRef.current);
+
+    inputRef.current?.click();
   };
   return (
     <>
@@ -418,17 +440,18 @@ export default function HistorialFotografias({ data }) {
                         Etapa de seguimiento
                       </p>
                     </div>
-
-                    <button
-                      onClick={() =>
-                        seleccionarArchivo(
-                          seguimiento
-                        )
-                      }
-                      className="h-9 w-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center hover:scale-105 transition"
-                    >
-                      <Plus size={16} />
-                    </button>
+                    {canCreateFotografias && (
+                      <button
+                        onClick={() =>
+                          seleccionarArchivo(
+                            seguimiento
+                          )
+                        }
+                        className="h-9 w-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center hover:scale-105 transition"
+                      >
+                        <Plus size={16} />
+                      </button>
+                    )}
                   </div>
 
                   {/* FOTO */}
@@ -591,82 +614,7 @@ export default function HistorialFotografias({ data }) {
                     </div>
 
                     {/* FORM */}
-                    {abierto &&
-                      preview && (
-                        <div className="space-y-3 pt-2 border-t border-slate-100">
 
-                          <div className="flex items-center justify-between">
-
-                            <p className="text-sm font-medium text-slate-700">
-                              Nueva fotografía
-                            </p>
-
-                            <button
-                              onClick={
-                                cancelar
-                              }
-                              className="text-slate-400 hover:text-slate-600"
-                            >
-                              <X
-                                size={
-                                  16
-                                }
-                              />
-                            </button>
-                          </div>
-
-                          <input
-                            type="text"
-                            placeholder="Descripción..."
-                            value={
-                              descripcion
-                            }
-                            onChange={(
-                              e
-                            ) =>
-                              setDescripcion(
-                                e.target
-                                  .value
-                              )
-                            }
-                            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
-                          />
-
-                          <div className="flex gap-2">
-
-                            <button
-                              onClick={
-                                confirmarSubida
-                              }
-                              disabled={
-                                saving
-                              }
-                              className="flex-1 h-10 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 transition disabled:opacity-50"
-                            >
-
-                              {saving ? (
-                                <Loader2
-                                  size={
-                                    16
-                                  }
-                                  className="animate-spin mx-auto"
-                                />
-                              ) : (
-                                "Subir foto"
-                              )}
-                            </button>
-
-                            <button
-                              onClick={
-                                cancelar
-                              }
-                              className="px-4 h-10 rounded-xl bg-slate-100 text-sm font-medium hover:bg-slate-200 transition"
-                            >
-                              Cancelar
-                            </button>
-                          </div>
-                        </div>
-                      )}
                   </div>
                 </div>
               );
@@ -720,12 +668,14 @@ export default function HistorialFotografias({ data }) {
               size={18}
             />
           </button>
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="absolute top-5 right-35 h-11 w-11 rounded-full bg-red-500/80 text-white hover:bg-red-600 flex items-center justify-center"
-          >
-            <Trash2 size={18} />
-          </button>
+          {canEditFotografias && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="absolute top-5 right-35 h-11 w-11 rounded-full bg-red-500/80 text-white hover:bg-red-600 flex items-center justify-center"
+            >
+              <Trash2 size={18} />
+            </button>
+          )}
 
           {/* IZQUIERDA */}
           {modalFoto.fotos
@@ -842,21 +792,114 @@ export default function HistorialFotografias({ data }) {
             onConfirm={eliminarFotografiaActual}
           />
 
-          <ModalResultado
-            open={resultado.open}
-            type={resultado.type}
-            title={resultado.title}
-            message={resultado.message}
-            onClose={() =>
-              setResultado((prev) => ({
-                ...prev,
-                open: false,
-              }))
-            }
-          />
         </div>
       )}
+      {showModal && (
+        <div className={ui.modal.formOverlay}>
+          <div className="w-full max-w-2xl">
+            <div className={ui.modal.formContainer}>
+
+              <div className={ui.modal.formHeader}>
+                <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}>
+                  <Camera size={24} />
+                </div>
+
+                <div className="flex-1">
+                  <h2 className={ui.modal.title}>
+                    Agregar Fotografía
+                  </h2>
+
+                  <p className={ui.modal.description}>
+                    Adjunta una fotografía al seguimiento
+                  </p>
+                </div>
+
+                <button
+                  onClick={cancelar}
+                  className="p-2 rounded-xl hover:bg-slate-100"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className={ui.modal.formBody}>
+                <div className={ui.modal.formScroll}>
+                  <div className="space-y-6">
+
+                    {!preview ? (
+                      <button
+                        onClick={handleSelectFile}
+                        className="w-full border-2 border-dashed border-slate-300 rounded-2xl p-12 text-slate-500 hover:border-teal-500 hover:text-teal-600 transition"
+                      >
+                        Seleccionar fotografía
+                      </button>
+                    ) : (
+                      <img
+                        src={URL.createObjectURL(preview)}
+                        alt="Preview"
+                        className="w-full h-72 object-cover rounded-2xl border"
+                      />
+                    )}
+
+                    <input
+                      type="text"
+                      value={descripcion}
+                      onChange={(e) => setDescripcion(e.target.value)}
+                      placeholder="Describe la fotografía"
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2"
+                    />
+                  </div>
+                </div>
+
+                <div className={ui.modal.formActions}>
+                  <button
+                    onClick={cancelar}
+                    className="px-4 py-2 rounded-xl bg-slate-100"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    onClick={() => setShowConfirm(true)}
+                    disabled={!preview}
+                    className="px-4 py-2 rounded-xl bg-teal-600 text-white"
+                  >
+                    Guardar Fotografía
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+      <ModalConfirmacion
+        open={showConfirm}
+        title="Guardar fotografía"
+        description="¿Deseas guardar esta fotografía?"
+        confirmText="Guardar"
+        cancelText="Cancelar"
+        color="teal"
+        onClose={() => setShowConfirm(false)}
+        onConfirm={confirmarSubida}
+      />
+
+
+
+      <ModalResultado
+        open={resultado.open}
+        type={resultado.type}
+        title={resultado.title}
+        message={resultado.message}
+        onClose={() =>
+          setResultado((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+      />
     </>
   );
 }
 
+alert

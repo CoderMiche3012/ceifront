@@ -1,7 +1,7 @@
 import { Pencil, CalendarDays, FileText } from "lucide-react";
 import { formatearFecha, obtenerBadge } from "./carta.helpers";
 
-export default function CartaInfoCard({ carta, onEditar, loading }) {
+export default function CartaInfoCard({ carta, onEditar, loading, editable, canCreateObligaciones}) {
   return (
     <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all">
       <div className="flex items-start justify-between mb-6">
@@ -14,7 +14,7 @@ export default function CartaInfoCard({ carta, onEditar, loading }) {
           <span className={`px-4 py-1.5 rounded-full text-xs font-semibold ${obtenerBadge(carta?.estatus)}`}>
             {carta?.estatus || "Pendiente"}
           </span>
-
+        {editable && (
           <button
             aria-label="Editar carta"
             onClick={onEditar}
@@ -23,6 +23,7 @@ export default function CartaInfoCard({ carta, onEditar, loading }) {
           >
             <Pencil size={15} /> Editar
           </button>
+          )}
         </div>
       </div>
 

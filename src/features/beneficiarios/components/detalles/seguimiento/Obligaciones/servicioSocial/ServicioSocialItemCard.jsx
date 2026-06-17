@@ -1,8 +1,9 @@
-import {Pencil,CalendarDays,FileText,Briefcase,} from "lucide-react";
-import { formatearFecha, obtenerBadge,} from "./servicioSocial.helpers";
+import { Pencil, CalendarDays, FileText, Briefcase, } from "lucide-react";
+import { formatearFecha, obtenerBadge, } from "./servicioSocial.helpers";
 export default function ServicioSocialItemCard({
   item,
   onEditar,
+  editable
 }) {
   return (
     <div className="border border-slate-200 rounded-2xl p-5 hover:shadow-md transition">
@@ -26,16 +27,17 @@ export default function ServicioSocialItemCard({
             </span>
           </div>
         </div>
-
-        <button
-          aria-label="Editar servicio"
-          onClick={() =>
-            onEditar(item)
-          }
-          className="text-slate-600 hover:text-teal-600"
-        >
-          <Pencil size={18} />
-        </button>
+        {editable && (
+          <button
+            aria-label="Editar servicio"
+            onClick={() =>
+              onEditar(item)
+            }
+            className="text-slate-600 hover:text-teal-600"
+          >
+            <Pencil size={18} />
+          </button>
+        )}
       </div>
 
       <div className="mt-5 grid md:grid-cols-2 gap-4">

@@ -102,7 +102,6 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                 {/* Encabezado */}
                 <div className="flex items-center mb-4">
 
-                    {/* Logo SIN contorno */}
                     <div className="flex items-center justify-center w-1/3">
                         <img
                             src={logoCei}

@@ -11,26 +11,29 @@ export default function EstatusCard({ data }) {
   const estatusEstudio = data?.estatus_estudio?.toLowerCase()?.trim();
   const estudioCompleto = estatusEstudio === "completo";
   const tienePrioridad = !!data?.prioridad_servicio;
-  const mostrarAdvertenciaPrioridad = estudioCompleto && !tienePrioridad ;
+  const mostrarAdvertenciaPrioridad = estudioCompleto && !tienePrioridad;
 
   const puedeEditar =
-    canEdit && tienePrioridad && !["aceptado", "rechazado"].includes(
+    tienePrioridad && !["aceptado", "rechazado"].includes(
       data?.estatus_postulante?.toLowerCase()
     );
 
   const obtenerEstatusInicial = () => {
-
     const valor = data?.estatus_postulante?.toLowerCase()?.trim();
 
-    if (["aceptado", "rechazado", "espera", "en revisión"].includes(valor)) {
+    if (["aceptado", "rechazado"].includes(valor)) {
       return valor;
     }
 
-    return "en revisión";
+    return "seleccion";
   };
 
   const [decision, setDecision] = useState(obtenerEstatusInicial());
   const [loading, setLoading] = useState(false);
+  const aceptarPostulanteMutation = useAceptarPostulante();
+
+  const actualizarPostulanteMutation =
+    useActualizarPostulanteDetalle(data?.id_postulante);
 
   useEffect(() => {
     setDecision(obtenerEstatusInicial());
@@ -40,34 +43,34 @@ export default function EstatusCard({ data }) {
     setLoading(true);
 
     try {
-      // si es aceptado
       if (value === "aceptado") {
-        await aceptarPostulante.mutateAsync(data.id_postulante);
-      }
-      // si se rechaza
-      else if (value === "rechazado") {
+        await aceptarPostulanteMutation.mutateAsync(
+          data.id_postulante
+        );
+      } else {
         await actualizarPostulanteMutation.mutateAsync({
-          estatus: "inactivo",
+          estatus: "Rechazado",
         });
       }
-      // otros
-      else {
-        await actualizarPostulanteMutation.mutateAsync({
-          estatus: value,
-        });
-      }
+
       setDecision(value);
-
     } catch (error) {
-
+      console.log(error);
       alert("Error al guardar");
-
     } finally {
       setLoading(false);
     }
   };
 
   const statusConfig = {
+    seleccion: {
+      color: "text-indigo-600",
+      bg: "bg-indigo-50",
+      border: "border-indigo-200",
+      icon: Clock,
+      label: "Pendiente",
+    },
+
     aceptado: {
       color: "text-emerald-600",
       bg: "bg-emerald-50",
@@ -75,6 +78,7 @@ export default function EstatusCard({ data }) {
       icon: CheckCircle,
       label: "Aceptado",
     },
+
     rechazado: {
       color: "text-rose-600",
       bg: "bg-rose-50",
@@ -82,23 +86,9 @@ export default function EstatusCard({ data }) {
       icon: AlertCircle,
       label: "Rechazado",
     },
-    espera: {
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      border: "border-amber-200",
-      icon: Clock,
-      label: "En espera",
-    },
-    "en revisión": {
-      color: "text-indigo-600",
-      bg: "bg-indigo-50",
-      border: "border-indigo-200",
-      icon: Clock,
-      label: "En revisión",
-    },
   };
 
-  const current = statusConfig[decision] || statusConfig["en revisión"];
+  const current = statusConfig[decision] || statusConfig.seleccion;
   const Icon = current.icon;
 
   return (
@@ -158,7 +148,7 @@ export default function EstatusCard({ data }) {
           </div>
         </div>
       )
-        : decision === "en revisión" || decision === "seleccion" ? (
+        : decision === "seleccion" ? (
           <>
             {/* PROGRESO */}
             <div className="p-6">
@@ -232,28 +222,7 @@ export default function EstatusCard({ data }) {
                   </div>
                 </button>
 
-                <button
-                  onClick={() => handleChange("espera")}
-                  className=" w-full p-4 rounded-2xl border border-amber-200 bg-amber-50 hover:bg-amber-100 transition"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="text-left">
-                      <p className="font-semibold text-amber-700">
-                        Mantener en espera
-                      </p>
 
-                      <p className="text-xs text-amber-600 mt-1">
-                        Requiere seguimiento
-                      </p>
-                    </div>
-
-                    <Clock
-                      size={24}
-                      className="text-amber-600"
-                    />
-
-                  </div>
-                </button>
 
                 <button
                   onClick={() => handleChange("rechazado")}

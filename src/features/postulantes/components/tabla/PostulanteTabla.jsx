@@ -4,6 +4,7 @@ import AvatarGeneral from "../../../../components/shared/AvatarGeneral";
 import AccionesPostulante from "./ColumnaAcciones";
 import { Calendar, Clock, Eye, Printer, Check, X, Lock } from "lucide-react";
 import { ui } from "../../../../styles/ui/index";
+import { usePermissions } from "../../../../context/PermissionsContext";
 
 const COLUMNS = [
   { key: "postulante", label: "Nombre" },
@@ -17,6 +18,10 @@ const COLUMNS = [
 ];
 
 export default function PostulanteTabla({ postulantes = [], onPrint }) {
+
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canEditPostulante = hasModulePermission("postulantes", "editar");
+
   const formatFechaVisita = (fecha) => {
     const date = new Date(fecha);
 
@@ -53,7 +58,22 @@ export default function PostulanteTabla({ postulantes = [], onPrint }) {
   const renderCell = (item, key) => {
     const expediente = item.expediente || {};
 
+    const obtenerEstadoVisual = (item) => {
+      if (item.estado_visita !== "Programada") {
+        return item.estado_visita;
+      }
 
+      if (!item.fecha_visita) {
+        return item.estado_visita;
+      }
+
+      const fechaVisita = new Date(item.fecha_visita);
+      fechaVisita.setHours(23, 59, 59, 999);
+
+      return fechaVisita < new Date()
+        ? "No realizada"
+        : "Programada";
+    };
     switch (key) {
       case "postulante":
         return (
@@ -64,8 +84,8 @@ export default function PostulanteTabla({ postulantes = [], onPrint }) {
             />
 
             <div className={ui.table.cellStack}>
-              <span className={`text-sm font-semibold ${ui.text.primary} uppercase`}>
-                {`${expediente.nombre || ""} ${expediente.apellido_p || ""}`}
+              <span className={`text-sm font-semibold ${ui.text.primary} `}>
+                {`${expediente.nombre || ""} ${expediente.apellido_p || ""} ${expediente.apellido_m || ""}`}
               </span>
             </div>
           </div>
@@ -91,7 +111,8 @@ export default function PostulanteTabla({ postulantes = [], onPrint }) {
         );
 
       case "visita": {
-        const estado = item.estado_visita?.toLowerCase();
+        const estadoVisual = obtenerEstadoVisual(item);
+        const estado = estadoVisual?.toLowerCase();
 
         const color = ui.visit?.[estado] || ui.text.muted;
 
@@ -111,8 +132,8 @@ export default function PostulanteTabla({ postulantes = [], onPrint }) {
 
         return (
           <div className="flex flex-col gap-1">
-            <span className={`text-sm font-semibold uppercase ${color}`}>
-              {item.estado_visita}
+            <span className={`text-sm font-semibold ${color}`}>
+              {estadoVisual}
             </span>
 
             <div className="flex items-center gap-1 text-xs text-slate-600">
@@ -150,7 +171,7 @@ export default function PostulanteTabla({ postulantes = [], onPrint }) {
           return (
             <div className={`${ui.badge.base} ${ui.status.muted} gap-1`}>
               <Lock size={12} className={ui.icon.muted} />
-              <span className="text-[10px] font-semibold uppercase leading-none">
+              <span className="text-[10px] font-semibold leading-none">
                 Bloqueado
               </span>
             </div>
@@ -200,7 +221,17 @@ export default function PostulanteTabla({ postulantes = [], onPrint }) {
         );
       }
 
-      case "acciones":
+      case "acciones": {
+        const puedeEditar =
+          canEditPostulante &&
+          !["aceptado", "rechazado"].includes(
+            item?.estatus?.toLowerCase()
+          );
+        console.log({
+          estatus: item.estatus,
+          estatus_postulante: item.estatus_postulante,
+          canEditPostulante,
+        })
         return (
           <div className="flex items-center gap-1">
             <NavLink
@@ -223,11 +254,12 @@ export default function PostulanteTabla({ postulantes = [], onPrint }) {
               <Printer size={18} />
             </button>
 
-            <AccionesPostulante
-              item={item}
-            />
+            {puedeEditar && (
+              <AccionesPostulante item={item} />
+            )}
           </div>
         );
+      }
 
       default:
         return null;

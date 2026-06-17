@@ -23,8 +23,8 @@ import {
 
 import EstudioCard from "../detalles/visitas/EstudioCard";
 
-export default function AccionesPostulante({ item,idPostulante = null}) {
-   
+export default function AccionesPostulante({ item, idPostulante = null }) {
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const menuRef = useRef(null);
@@ -38,14 +38,10 @@ export default function AccionesPostulante({ item,idPostulante = null}) {
     result,
     setResult,
     ejecutarAccion,
-  } = useAccionesVisita(item,idPostulante);
+  } = useAccionesVisita(item, idPostulante);
 
   const estatus = item?.estado_visita?.toLowerCase() || "no agendada";
 
-
-  // =========================
-  // CLOSE OUTSIDE CLICK
-  // =========================
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (
@@ -79,9 +75,6 @@ export default function AccionesPostulante({ item,idPostulante = null}) {
   const btnClass =
     "flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors";
 
-  // =========================
-  // MENU OPTIONS
-  // =========================
   const renderOpciones = () => {
     switch (estatus) {
       case "no agendada":
@@ -147,10 +140,6 @@ export default function AccionesPostulante({ item,idPostulante = null}) {
         );
     }
   };
-
-  // =========================
-  // MODAL RENDER (UI TIPO RESUMEN)
-  // =========================
 
   const renderModal = () => {
     if (!modalMode) return null;
@@ -289,14 +278,12 @@ export default function AccionesPostulante({ item,idPostulante = null}) {
 
   return (
     <div className="relative" ref={menuRef}>
-      {/* BOTÓN */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}
-        className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
-          menuOpen
+        className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${menuOpen
             ? "bg-slate-200 text-slate-700"
             : "text-slate-500 hover:bg-slate-100"
-        }`}
+          }`}
       >
         <MoreVertical size={18} />
       </button>
@@ -319,71 +306,66 @@ export default function AccionesPostulante({ item,idPostulante = null}) {
         </div>
       )}
 
-      {/* MODAL */}
       {renderModal()}
       {confirmOpen && (
-  <div className={ui.modal.formOverlay}>
-    <div className="w-full max-w-md">
-      <div className={ui.modal.formContainer}>
+        <div className={ui.modal.formOverlay}>
+          <div className="w-full max-w-md">
+            <div className={ui.modal.formContainer}>
 
-        {/* HEADER */}
-        <div className={ui.modal.formHeader}>
-          <div className={`${ui.modal.iconWrapper} bg-amber-100 text-amber-600`}>
-            ⚠️
+              <div className={ui.modal.formHeader}>
+                <div className={`${ui.modal.iconWrapper} bg-amber-100 text-amber-600`}>
+                  ⚠️
+                </div>
+
+                <div className="flex-1">
+                  <h2 className={ui.modal.title}>
+                    Confirmar acción
+                  </h2>
+                  <p className={ui.modal.description}>
+                    ¿Seguro que deseas continuar?
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setConfirmOpen(false)}
+                  className="p-2 hover:bg-slate-100 rounded-xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className={ui.modal.formBody}>
+                <div className="text-sm text-slate-600">
+                  Esta acción se aplicará al registro actual.
+                </div>
+
+                <div className={ui.modal.formActions}>
+                  <button
+                    onClick={() => setConfirmOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-slate-100"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      setConfirmOpen(false);
+                      await ejecutarAccion();
+                    }}
+                    disabled={loading}
+                    className="px-4 py-2 rounded-xl bg-[#0E5F63] text-white"
+                  >
+                    {loading ? "Procesando..." : "Confirmar"}
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
           </div>
-
-          <div className="flex-1">
-            <h2 className={ui.modal.title}>
-              Confirmar acción
-            </h2>
-            <p className={ui.modal.description}>
-              ¿Seguro que deseas continuar?
-            </p>
-          </div>
-
-          <button
-            onClick={() => setConfirmOpen(false)}
-            className="p-2 hover:bg-slate-100 rounded-xl"
-          >
-            ✕
-          </button>
         </div>
+      )}
 
-        {/* BODY */}
-        <div className={ui.modal.formBody}>
-          <div className="text-sm text-slate-600">
-            Esta acción se aplicará al registro actual.
-          </div>
-
-          {/* ACTIONS */}
-          <div className={ui.modal.formActions}>
-            <button
-              onClick={() => setConfirmOpen(false)}
-              className="px-4 py-2 rounded-xl bg-slate-100"
-            >
-              Cancelar
-            </button>
-
-            <button
-              onClick={async () => {
-                setConfirmOpen(false);
-                await ejecutarAccion();
-              }}
-              disabled={loading}
-              className="px-4 py-2 rounded-xl bg-[#0E5F63] text-white"
-            >
-              {loading ? "Procesando..." : "Confirmar"}
-            </button>
-          </div>
-
-        </div>
-
-      </div>
-    </div>
-  </div>
-)}
-
-      {/* RESULTADO */}
       <ModalResultado
         {...result}
         onClose={() =>

@@ -1,8 +1,12 @@
 import HistorialBase from "../Historial";
 import ResumenServicioSocialCard from "./servicioSocial/ResumenServicioSocialCard";
 import CartaCard from "./carta/CartaCard";
+import { usePermissions } from "../../../../../../context/PermissionsContext";
 
 export default function HistorialObligacionesCard({ data }) {
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canEditObligaciones = hasModulePermission("obligaciones", "editar");
+  const canCreateObligaciones = hasModulePermission("obligaciones", "crear")
   const obtenerEstado = (obligaciones = []) => {
     if (!obligaciones.length) {
       return {
@@ -73,19 +77,27 @@ export default function HistorialObligacionesCard({ data }) {
         );
       }}
 
-      renderDetalle={(item) => (
-        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <ResumenServicioSocialCard
-              seguimiento={item}
-            />
+      renderDetalle={(item) => {
+        const esEditable = item.estatus === "Activo";
 
-            <CartaCard
-              seguimiento={item}
-            />
+        return (
+          <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <ResumenServicioSocialCard
+                seguimiento={item}
+                editable={esEditable && canEditObligaciones}
+                canCreateObligaciones={esEditable && canCreateObligaciones}
+              />
+
+              <CartaCard
+                seguimiento={item}
+                editable={esEditable && canEditObligaciones}
+                canCreateObligaciones={esEditable && canCreateObligaciones}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        );
+      }}
     />
   );
 }

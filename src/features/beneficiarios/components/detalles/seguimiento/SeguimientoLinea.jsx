@@ -16,9 +16,13 @@ import { useCrearSeguimientoForm } from "../../../hooks/seguimiento/useCrearSegu
 import { useEditarSeguimientoForm } from "../../../hooks/seguimiento/useEditarSeguimientoForm";
 
 import { ui } from "../../../../../styles/ui/uiClasses";
+import { usePermissions } from "../../../../../context/PermissionsContext";
 
 export default function SeguimientoLinea({ data }) {
   const id_beneficiario = data.id_beneficiario;
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canEditSeguimientos = hasModulePermission("seguimientos", "editar");
+  const canCreateSeguimientos = hasModulePermission("seguimientos", "crear");
 
   const {
     listaOrdenada,
@@ -47,7 +51,7 @@ export default function SeguimientoLinea({ data }) {
       </div>
 
       {/* LISTA */}
-      <div className="max-h-[420px] overflow-y-auto pr-2 space-y-6">
+      <div className="max-h-[420px] overflow-y-auto pr-2 space-y-6 custom-scroll">
 
         {!listaOrdenada?.length && (
           <p className="text-sm text-slate-500 text-center py-6">
@@ -74,19 +78,20 @@ export default function SeguimientoLinea({ data }) {
                   <p className="text-sm font-semibold text-slate-700">
                     {periodosMap[item.id_periodo]}
                   </p>
-
-                  <button
-                    onClick={() => editarFlow.abrirEditar(item)}
-                    className="flex items-center gap-1.5 text-xs font-medium text-teal-600 hover:text-teal-700"
-                  >
-                    <PencilLine className="w-4 h-4" />
-                    Editar
-                  </button>
+                  {canEditSeguimientos &&(
+                    <button
+                      onClick={() => editarFlow.abrirEditar(item)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-teal-600 hover:text-teal-700"
+                    >
+                      <PencilLine className="w-4 h-4" />
+                      Editar
+                    </button>
+                  )}
                 </div>
 
                 <span className={`inline-block text-xs font-semibold px-2 py-1 rounded-full mb-2 ${esReciente
-                    ? "bg-teal-100 text-teal-700"
-                    : "bg-slate-100 text-slate-600"
+                  ? "bg-teal-100 text-teal-700"
+                  : "bg-slate-100 text-slate-600"
                   }`}>
                   {item.estatus}
                 </span>
@@ -103,10 +108,12 @@ export default function SeguimientoLinea({ data }) {
 
       {/* BOTÓN AGREGAR */}
       <div className="pt-6 mt-6 border-t border-slate-100 flex justify-center">
-        <BotonInterno onClick={() => crearFlow.setMostrarSelector(true)}>
-          <Plus className="w-4 h-4" />
-          Agregar seguimiento
-        </BotonInterno>
+        {canCreateSeguimientos && (
+          <BotonInterno onClick={() => crearFlow.setMostrarSelector(true)}>
+            <Plus className="w-4 h-4" />
+            Agregar seguimiento
+          </BotonInterno>
+        )}
       </div>
 
       {/* =========================
@@ -290,3 +297,4 @@ export default function SeguimientoLinea({ data }) {
     </div>
   );
 }
+

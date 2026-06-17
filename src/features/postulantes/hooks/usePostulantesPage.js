@@ -52,7 +52,7 @@ export const usePostulantesPage = () => {
 
   const filteredPostulantes = useMemo(() => {
     const searchLower = search.toLowerCase();
-
+    const hoy = new Date();
     return allData.filter((p) => {
       const nombrePostulante =
         `${p.expediente?.nombre || ""} ${p.expediente?.apellido_p || ""
@@ -64,9 +64,18 @@ export const usePostulantesPage = () => {
           .toLowerCase()
           .includes(searchLower);
 
+      const visitaVencida =
+        p.estado_visita === "Programada" &&
+        p.fecha_visita &&
+        new Date(p.fecha_visita) < hoy;
+
+      const estadoVisualVisita = visitaVencida
+        ? "No realizada"
+        : p.estado_visita;
+
       const matchVisita =
         filters.visita === "todos" ||
-        p.estado_visita?.toLowerCase() ===
+        estadoVisualVisita.toLowerCase() ===
         filters.visita.toLowerCase();
 
       const matchEstudio =

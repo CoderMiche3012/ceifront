@@ -51,7 +51,7 @@ export default function ModalEditarFamiliar({
       setConfirmOpen(true);
     }
   };
-const handleBackdropClick = (e) => {
+  const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
       setStep(1);
       onClose();
@@ -109,7 +109,8 @@ const handleBackdropClick = (e) => {
               >
 
                 <Field
-                  label="Nombre *"
+                  required
+                  label="Nombre "
                   error={fieldErrors.nombre}
                 >
                   <InputG
@@ -124,7 +125,8 @@ const handleBackdropClick = (e) => {
                 </Field>
 
                 <Field
-                  label="Apellido Paterno *"
+                  required
+                  label="Apellido Paterno"
                   error={fieldErrors.apellido_p}
                 >
                   <InputG
@@ -136,6 +138,7 @@ const handleBackdropClick = (e) => {
                 </Field>
 
                 <Field
+                  required
                   label="Apellido Materno"
                   error={fieldErrors.apellido_m}
                 >
@@ -148,7 +151,8 @@ const handleBackdropClick = (e) => {
                 </Field>
 
                 <Field
-                  label="Parentesco *"
+                  required
+                  label="Parentesco"
                   error={fieldErrors.parentesco}
                 >
                   <select
@@ -190,7 +194,8 @@ const handleBackdropClick = (e) => {
                 </Field>
 
                 <Field
-                  label="Fecha de nacimiento *"
+                  required
+                  label="Fecha de nacimiento"
                   error={fieldErrors.fecha_nacimiento}
                 >
                   <InputG
@@ -207,7 +212,8 @@ const handleBackdropClick = (e) => {
                 </Field>
 
                 <Field
-                  label="Teléfono *"
+                  required
+                  label="Teléfono"
                   error={fieldErrors.telefono}
                 >
                   <InputG
@@ -219,10 +225,12 @@ const handleBackdropClick = (e) => {
                 </Field>
 
                 <Field
-                  label="Ocupación *"
+                  required
+                  label="Ocupación o grado escolar"
                   error={fieldErrors.actividad_principal}
                 >
                   <InputG
+                    required
                     name="actividad_principal"
                     value={
                       editando.actividad_principal ||
@@ -236,10 +244,12 @@ const handleBackdropClick = (e) => {
                 </Field>
 
                 <Field
-                  label="Salario / Beca *"
+                  required
+                  label="Salario / Escuela"
                   error={fieldErrors.salario}
                 >
                   <InputG
+                    required
                     name="salario"
                     value={editando.salario || ""}
                     onChange={handleChange}
@@ -248,6 +258,7 @@ const handleBackdropClick = (e) => {
                 </Field>
 
                 <Field
+                  required
                   label="¿Vive en casa? *"
                   error={fieldErrors.vive_en_casa}
                 >

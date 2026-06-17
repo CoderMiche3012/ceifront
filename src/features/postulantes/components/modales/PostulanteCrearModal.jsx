@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { HiOutlineUser, HiUserGroup, HiPlus,HiTrash, HiOutlineArrowLeft, HiOutlineSearch} from "react-icons/hi";
+import { HiOutlineUser, HiUserGroup, HiPlus, HiTrash, HiOutlineArrowLeft, HiOutlineSearch } from "react-icons/hi";
 import { ui } from "../../../../styles/ui/index";
 import Select from "../../../../components/ui/Select";
 
@@ -282,9 +282,17 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
 
                       <Field label="Fecha nacimiento" required error={fieldErrors.fecha_nacimiento}>
                         <InputG
-
                           type="date"
-                          max={new Date().toISOString().split("T")[0]}
+                          min={new Date(
+                            new Date().getFullYear() - 100,
+                            new Date().getMonth(),
+                            new Date().getDate()
+                          ).toISOString().split("T")[0]}
+                          max={new Date(
+                            new Date().getFullYear() - 1,
+                            new Date().getMonth(),
+                            new Date().getDate()
+                          ).toISOString().split("T")[0]}
                           value={form.fecha_nacimiento}
                           onChange={(e) => updateField("fecha_nacimiento", e.target.value)}
                           error={!!fieldErrors.fecha_nacimiento}
@@ -575,9 +583,7 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
               )}
               {step === 4 && (
                 <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                  {/* Sección: Educación */}
 
-                  {/* Sección: Familia */}
                   <div className="pt-2">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em]">Estructura Familiar</h3>
@@ -647,7 +653,22 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
                             >
                               <InputG
                                 type="date"
-                                max={new Date().toISOString().split("T")[0]}
+                                min={new Date(
+                                  new Date().getFullYear() - 100,
+                                  new Date().getMonth(),
+                                  new Date().getDate()
+                                ).toISOString().split("T")[0]}
+                                max={
+                                  idx === 0
+                                    ? new Date(
+                                      new Date().getFullYear() - 18,
+                                      new Date().getMonth(),
+                                      new Date().getDate()
+                                    )
+                                      .toISOString()
+                                      .split("T")[0]
+                                    : new Date().toISOString().split("T")[0]
+                                }
                                 value={fam.fecha_nacimiento || ""}
                                 error={!!fieldErrors[`familia.${idx}.fecha_nacimiento`]}
                                 onChange={(e) =>
@@ -655,7 +676,21 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
                                 }
                               />
                             </Field>
-                            <Field label="Teléfono" error={fieldErrors[`familia.${idx}.telefono`]}><InputG placeholder="10 dígitos" value={fam.telefono} error={!!fieldErrors[`familia.${idx}.telefono`]} onChange={(e) => updateFamiliar(idx, "telefono", e.target.value)} /></Field>
+                            <Field label="Teléfono" error={fieldErrors[`familia.${idx}.telefono`]}>
+                              <InputG
+                                placeholder="10 dígitos"
+                                maxLength={10}
+                                value={fam.telefono}
+                                error={!!fieldErrors[`familia.${idx}.telefono`]}
+                                onChange={(e) =>
+                                  updateFamiliar(
+                                    idx,
+                                    "telefono",
+                                    e.target.value.replace(/\D/g, "")
+                                  )
+                                }
+                              />
+                            </Field>
                             <Field label="Ocupación o grado escolar" required error={fieldErrors[`familia.${idx}.actividad_principal`]} ><InputG placeholder="Ej: Empleado" value={fam.actividad_principal} error={!!fieldErrors[`familia.${idx}.actividad_principal`]} onChange={(e) => updateFamiliar(idx, "actividad_principal", e.target.value)} /></Field>
                             <Field label="Salario o Escuela" required error={fieldErrors[`familia.${idx}.salario`]}><InputG value={fam.salario} onChange={(e) => updateFamiliar(idx, "salario", e.target.value)} /></Field>
                             <Field label="¿Vive en casa?" required error={fieldErrors[`familia.${idx}.vive_en_casa`]}>
@@ -673,12 +708,9 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
               )}
             </div>
 
-
-            {/* Footer */}
-            {/* Footer */}
             <div className={ui.modal.formActions}>
               <Boton
-                type="button" // Evita comportamientos extraños
+                type="button" 
                 variant="secondary"
                 onClick={() => {
                   if (step === 1) onClose();
@@ -689,12 +721,12 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
               </Boton>
 
               <Boton
-                type="button" // Cambiado de submit implícito a botón controlado
+                type="button" 
                 onClick={() => {
                   if (step < 4) {
                     setStep(step + 1);
                   } else {
-                    handlePreSubmit(); // Controla la confirmación manualmente
+                    handlePreSubmit(); 
                   }
                 }}
                 disabled={loading}
@@ -715,8 +747,24 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
         onClose={() => setShowConfirm(false)}
         onConfirm={handleConfirmSave}
         title="¿Confirmar Registro?"
-        message="Se creará el expediente del postulante y su estudio correspondiente."
+        description="¿Estás seguro de que deseas crear a este postulante?"
       />
+      {loading && (
+        <div className="fixed inset-0 z-[9999] bg-black/30 flex items-center justify-center">
+          <div className="bg-white rounded-2xl px-8 py-6 shadow-xl flex flex-col items-center gap-4">
+            <div className="h-10 w-10 border-4 border-[#0E5F63] border-t-transparent rounded-full animate-spin" />
+
+            <div className="text-center">
+              <h3 className="font-semibold text-slate-800">
+                Registrando postulante...
+              </h3>
+              <p className="text-sm text-slate-500">
+                Esto puede tardar unos segundos.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ModalResultado
         open={resultModal.open}
@@ -728,7 +776,7 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
             setStep(1); // Regresa al paso 1 para la próxima vez
           }
           handleFinalClose(); // Ejecuta la limpieza del formulario y llama a onSuccess / onClose
-          onClose(); // <-- Sincronización manual: Garantiza que el padre entere el cierre
+          onClose(); 
         }}
       />
     </>
@@ -738,4 +786,3 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
 
 
 
- 

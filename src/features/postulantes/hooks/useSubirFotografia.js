@@ -72,15 +72,27 @@ export const useSubirFotografia = (idExpediente) => {
 
             limpiar();
         } catch (error) {
+            console.error("Error completo:", error);
+
+            console.error(
+                "Respuesta backend:",
+                error?.original?.response?.data ||
+                error?.response?.data
+            );
+
+            const mensaje =
+                error?.errors?.foto_archivo?.[0] ||
+                error?.original?.response?.data?.foto_archivo?.[0] ||
+                error?.message ||
+                "Error al subir fotografía";
+
             setShowConfirm(false);
 
             setResultado({
                 open: true,
                 type: "error",
-                title: "Error",
-                message:
-                    error?.message ||
-                    "No fue posible guardar la fotografía.",
+                title: "Error al subir fotografía",
+                message: mensaje,
             });
         }
     };

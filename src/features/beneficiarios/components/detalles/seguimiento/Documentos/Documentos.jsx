@@ -13,7 +13,7 @@ import {
   Plus,
 } from "lucide-react";
 
-
+import { ui } from "../../../../../../styles/ui/uiClasses";
 import DatosTabla from "../../../../../../components/tablas/DatosTabla";
 import FiltrosTabla from "../../../../../../components/tablas/FiltrosTabla";
 import PaginacionTabla from "../../../../../../components/tablas/PaginacionTabla";
@@ -21,9 +21,10 @@ import AccionesTabla from "../../../../../../components/tablas/AccionesTabla";
 import Boton from "../../../../../../components/ui/BotonInterno";
 import ModalConfirmacion from "../../../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../../../components/shared/ModalResultado";
-const API_URL =  "http://localhost:8000";
+import { usePermissions } from "../../../../../../context/PermissionsContext";
+const API_URL = "http://localhost:8000";
 
-  
+
 
 import { useSubirDocumento, useEliminarDocumento } from "../../../../../expedientes/hooks/useDocumentos";
 
@@ -32,16 +33,22 @@ const PAGE_SIZE = 10;
 export default function ExpedienteDigital({
   data,
 }) {
- const [confirmOpen, setConfirmOpen] = useState(false);
-const [resultado, setResultado] = useState({
-  open: false,
-  type: "success",
-  title: "",
-  message: ""
-});
-const [confirmAction, setConfirmAction] = useState(null);
-const [pendingDelete, setPendingDelete] = useState(null);
-const [pendingFile, setPendingFile] = useState(null);
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  //falta
+  const canDeleteDocumentos = hasModulePermission("beneficiarios", "editar");
+  const canCreateDocumentos = hasModulePermission("beneficiarios", "crear")
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [resultado, setResultado] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: ""
+  });
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [pendingFile, setPendingFile] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const inputRef =
     useRef(null);
@@ -68,7 +75,7 @@ const [pendingFile, setPendingFile] = useState(null);
   // SUBIR
   // =========================
 
-const uploadMutation = useSubirDocumento();
+  const uploadMutation = useSubirDocumento();
   // =========================
   // ELIMINAR
   // =========================
@@ -78,85 +85,107 @@ const uploadMutation = useSubirDocumento();
   // =========================
   // SUBIR ARCHIVO
   // =========================
-const limpiarNombreDocumento =
-  (nombre) => {
+  const limpiarNombreDocumento =
+    (nombre) => {
 
-    return nombre
-      // quitar extensión
-      .replace(
-        /\.[^/.]+$/,
-        ""
-      )
+      return nombre
+        // quitar extensión
+        .replace(
+          /\.[^/.]+$/,
+          ""
+        )
 
-      // quitar acentos
-      .normalize("NFD")
-      .replace(
-        /[\u0300-\u036f]/g,
-        ""
-      )
+        // quitar acentos
+        .normalize("NFD")
+        .replace(
+          /[\u0300-\u036f]/g,
+          ""
+        )
 
-      // SOLO letras y números
-      .replace(
-        /[^a-zA-Z0-9]/g,
-        ""
-      );
-  };
+        // SOLO letras y números
+        .replace(
+          /[^a-zA-Z0-9]/g,
+          ""
+        );
+    };
 
   const confirmarSubida = async () => {
-  if (!pendingFile) return;
+    if (!pendingFile) return;
 
-  try {
-    const formData = new FormData();
+    try {
+      const formData = new FormData();
 
-    formData.append("archivo", pendingFile);
+      formData.append("archivo", pendingFile);
 
-    const nombreLimpio = limpiarNombreDocumento(pendingFile.name);
+      const nombreLimpio = limpiarNombreDocumento(pendingFile.name);
 
-    formData.append("nombre_documento", nombreLimpio);
-    formData.append("tipo_documento", "General");
-    formData.append("id_expediente", id_expediente);
+      formData.append("nombre_documento", nombreLimpio);
+      formData.append("tipo_documento", "General");
+      formData.append("id_expediente", id_expediente);
 
-    await uploadMutation.mutateAsync(formData);
+      await uploadMutation.mutateAsync(formData);
 
-    setResultado({
-      open: true,
-      type: "success",
-      title: "Documento subido",
-      message: "El archivo se cargó correctamente.",
-    });
+      setResultado({
+        open: true,
+        type: "success",
+        title: "Documento subido",
+        message: "El archivo se cargó correctamente.",
+      });
 
-  } catch (error) {
-    setResultado({
-      open: true,
-      type: "error",
-      title: "Error",
-      message: "No se pudo subir el documento.",
-    });
-  } finally {
-    setConfirmOpen(false);
-    setPendingFile(null);
+    } catch (error) {
+      const mensaje =
+        error?.errors?.archivo?.[0] ||
+        error?.message ||
+        "Error al subir documento";
+      setResultado({
+        open: true,
+        type: "error",
+        title: "Error",
+        message: mensaje || "No se pudo subir el documento.",
+      });
+    } finally {
+      setConfirmOpen(false);
+      setPendingFile(null);
+      setSelectedFile(null);
+      setShowUploadModal(false);
 
-    if (inputRef.current) inputRef.current.value = "";
-  }
-};
- const handleFile = (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+    }
+  };
+  const handleFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  setPendingFile(file);
-  setConfirmAction("upload");
-  setConfirmOpen(true);
-};
-const handleConfirm = async () => {
-  if (!confirmAction) return;
-  if (confirmAction === "delete" && pendingDelete) {
-    await confirmarDelete();
-  }
+    setSelectedFile(file);
+    setShowUploadModal(true);
+  };
+  const cancelarUpload = () => {
+    setSelectedFile(null);
+    setShowUploadModal(false);
 
-  if (confirmAction === "upload" && pendingFile) {
-    await confirmarSubida();
-  }
-};
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+  };
+  const guardarDocumento = () => {
+    if (!selectedFile) return;
+
+    setPendingFile(selectedFile);
+    setConfirmAction("upload");
+    setConfirmOpen(true);
+  };
+  const handleConfirm = async () => {
+    if (!confirmAction) return;
+    if (confirmAction === "delete" && pendingDelete) {
+      await confirmarDelete();
+    }
+
+    if (confirmAction === "upload" && pendingFile) {
+      await confirmarSubida();
+    }
+  };
 
   const descargarArchivo =
     async (url, nombre) => {
@@ -208,51 +237,51 @@ const handleConfirm = async () => {
   // =========================
   // ELIMINAR
   // =========================
-const confirmarDelete = async () => {
-  try {
-    await deleteMutation.mutateAsync(pendingDelete.id_documento);
+  const confirmarDelete = async () => {
+    try {
+      await deleteMutation.mutateAsync(pendingDelete.id_documento);
 
-    setResultado({
-      open: true,
-      type: "success",
-      title: "Eliminado",
-      message: "Documento eliminado correctamente.",
-    });
+      setResultado({
+        open: true,
+        type: "success",
+        title: "Eliminado",
+        message: "Documento eliminado correctamente.",
+      });
 
-  } catch (error) {
-    setResultado({
-      open: true,
-      type: "error",
-      title: "Error",
-      message: "No se pudo eliminar el documento.",
-    });
-  } finally {
-    setConfirmOpen(false);
-    setPendingDelete(null);
-  }
-};
+    } catch (error) {
+      setResultado({
+        open: true,
+        type: "error",
+        title: "Error",
+        message: "No se pudo eliminar el documento.",
+      });
+    } finally {
+      setConfirmOpen(false);
+      setPendingDelete(null);
+    }
+  };
 
   // =========================
   // FILTRADO
   // =========================
-const filtrados = useMemo(() => {
-  return documentos.filter((doc) => {
-    const tipo =
-      doc.tipo_documento?.toLowerCase();
+  const filtrados = useMemo(() => {
+    return documentos.filter((doc) => {
+      const tipo =
+        doc.tipo_documento?.toLowerCase();
 
-    // ocultar boletas y estudios
-    if (
-      tipo === "boleta" ||
-      tipo === "estudio" || tipo === "Apoyo"
-    ) {
-      return false;
-    }
+      // ocultar boletas y estudios
+      if (
+        tipo === "boleta" ||
+        tipo === "estudio" || tipo === "Apoyo"
+      ) {
+        return false;
+      }
 
-    return doc.nombre_documento
-      ?.toLowerCase()
-      .includes(search.toLowerCase());
-  });
-}, [documentos, search]);
+      return doc.nombre_documento
+        ?.toLowerCase()
+        .includes(search.toLowerCase());
+    });
+  }, [documentos, search]);
   // =========================
   // PAGINACIÓN
   // =========================
@@ -424,7 +453,7 @@ const filtrados = useMemo(() => {
                 onClick:
                   (row) =>
                     window.open(
-                        `${API_URL}${row.archivo}`,
+                      `${API_URL}${row.archivo}`,
                       "_blank"
                     ),
               },
@@ -459,10 +488,10 @@ const filtrados = useMemo(() => {
                   "hover:text-red-600",
 
                 onClick: (row) => {
-  setPendingDelete(row);
-  setConfirmAction("delete");
-  setConfirmOpen(true);
-}
+                  setPendingDelete(row);
+                  setConfirmAction("delete");
+                  setConfirmOpen(true);
+                }
               },
             ]}
           />
@@ -556,48 +585,116 @@ const filtrados = useMemo(() => {
         className="hidden"
         onChange={handleFile}
       />
-     <ModalConfirmacion
-  open={confirmOpen}
-  onClose={() => {
-    setConfirmOpen(false);
-    setPendingDelete(null);
-    setPendingFile(null);
-    setConfirmAction(null);
-  }}
-  onConfirm={handleConfirm}
-  title={
-    confirmAction === "delete"
-      ? "Eliminar documento"
-      : "Subir documento"
-  }
-  description={
-    confirmAction === "delete"
-      ? "¿Seguro que deseas eliminar este documento?"
-      : "¿Deseas subir este documento?"
-  }
-/>
-<ModalResultado
-  open={resultado.open}
-  type={resultado.type}
-  title={resultado.title}
-  message={resultado.message}
-  onClose={() =>
-    setResultado((prev) => ({
-      ...prev,
-      open: false,
-    }))
-  }
-/>
+      <ModalConfirmacion
+        open={confirmOpen}
+        onClose={() => {
+          setConfirmOpen(false);
+          setPendingDelete(null);
+          setPendingFile(null);
+          setConfirmAction(null);
+        }}
+        onConfirm={handleConfirm}
+        title={
+          confirmAction === "delete"
+            ? "Eliminar documento"
+            : "Subir documento"
+        }
+        description={
+          confirmAction === "delete"
+            ? "¿Seguro que deseas eliminar este documento?"
+            : "¿Deseas subir este documento?"
+        }
+      />
+      <ModalResultado
+        open={resultado.open}
+        type={resultado.type}
+        title={resultado.title}
+        message={resultado.message}
+        onClose={() =>
+          setResultado((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+
+
+      />
+      {showUploadModal && (
+        <div className={ui.modal.formOverlay}>
+          <div className="w-full max-w-xl">
+            <div className={ui.modal.formContainer}>
+
+              <div className={ui.modal.formHeader}>
+                <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}>
+                  <FileText size={24} />
+                </div>
+
+                <div className="flex-1">
+                  <h2 className={ui.modal.title}>
+                    Agregar Documento
+                  </h2>
+
+                  <p className={ui.modal.description}>
+                    Selecciona el documento que deseas subir
+                  </p>
+                </div>
+              </div>
+
+              <div className={ui.modal.formBody}>
+                <div className="space-y-4">
+
+                  {!selectedFile ? (
+                    <button
+                      onClick={() => inputRef.current?.click()}
+                      className="w-full border-2 border-dashed border-slate-300 rounded-2xl p-10 text-slate-500 hover:border-teal-500 hover:text-teal-600 transition"
+                    >
+                      Seleccionar documento
+                    </button>
+                  ) : (
+                    <div className="border rounded-xl p-4 bg-slate-50">
+                      <p className="font-medium text-slate-700">
+                        {selectedFile.name}
+                      </p>
+
+                      <p className="text-sm text-slate-500">
+                        {(selectedFile.size / 1024).toFixed(2)} KB
+                      </p>
+                    </div>
+                  )}
+
+                </div>
+
+                <div className={ui.modal.formActions}>
+                  <button
+                    onClick={cancelarUpload}
+                    className="px-4 py-2 rounded-xl bg-slate-100"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    onClick={guardarDocumento}
+                    disabled={!selectedFile}
+                    className="px-4 py-2 rounded-xl bg-teal-600 text-white"
+                  >
+                    Guardar Documento
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
-    
+
   );
-  
+
 
 }
 
 
-onClick: (row) => {
-  setPendingDelete(row);
-  setConfirmAction("delete");
-  setConfirmOpen(true);
-}
+
+
+

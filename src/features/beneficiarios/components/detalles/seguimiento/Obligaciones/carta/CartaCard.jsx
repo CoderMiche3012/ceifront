@@ -4,13 +4,19 @@ import useCartaCard from "./useCartaCard";
 import ModalConfirmacion from "../../../../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../../../../components/shared/ModalResultado";
 
-export default function CartaCard({ seguimiento }) {
+export default function CartaCard({ seguimiento, editable, canCreateObligaciones }) {
 
   const vm = useCartaCard(seguimiento);
   if (!seguimiento) return <div className="p-6 text-slate-500">Cargando...</div>;
   return (
     <>
-      <CartaInfoCard carta={vm.carta} onEditar={vm.handleEditar} loading={vm.loading} />
+      <CartaInfoCard 
+      carta={vm.carta} 
+      onEditar={vm.handleEditar} 
+      loading={vm.loading} 
+      editable={editable} 
+      canCreateObligaciones = {canCreateObligaciones}
+      />
 
       <ModalFormularioCarta
         open={vm.modalForm}

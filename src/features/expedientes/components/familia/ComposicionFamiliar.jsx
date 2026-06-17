@@ -21,6 +21,8 @@ export default function ComposicionFamiliar({
   expedienteId,
   postulanteId,
   puedeEditar = true,
+  canCreate = true,
+  beneficiario = false
 }) {
 
   const [confirmarEliminar, setConfirmarEliminar] =
@@ -251,26 +253,26 @@ export default function ComposicionFamiliar({
           row.es_tutor_principal;
 
         return (
-  <AccionesTabla
-    row={row}
-    actions={[
-      ...(puedeEditar
-        ? [
-            {
-              label: "Editar",
+          <AccionesTabla
+            row={row}
+            actions={[
+              ...(puedeEditar
+                ? [
+                  {
+                    label: "Editar",
 
-              icon: <Pencil size={18} />,
+                    icon: <Pencil size={18} />,
 
-              onClick: abrirEditar,
+                    onClick: abrirEditar,
 
-              className:
-                "p-2 rounded-lg bg-slate-100 hover:bg-teal-100 text-slate-500 hover:text-teal-600 transition",
-            },
-          ]
-        : []),
-    ]}
-  />
-);
+                    className:
+                      "p-2 rounded-lg bg-slate-100 hover:bg-teal-100 text-slate-500 hover:text-teal-600 transition",
+                  },
+                ]
+                : []),
+            ]}
+          />
+        );
       }
 
       default:
@@ -295,14 +297,15 @@ export default function ComposicionFamiliar({
 
           Composición Familiar
         </h3>
-        {puedeEditar && (
-          <BotonInterno
-            icon={<Plus size={18} />}
-            onClick={abrirCrear}
-          >
-            Agregar Miembro
-          </BotonInterno>
-        )}
+        {((beneficiario && canCreate) ||
+          (!beneficiario && puedeEditar)) && (
+            <BotonInterno
+              icon={<Plus size={18} />}
+              onClick={abrirCrear}
+            >
+              Agregar Miembro
+            </BotonInterno>
+          )}
       </div>
 
       {/* filtros */}

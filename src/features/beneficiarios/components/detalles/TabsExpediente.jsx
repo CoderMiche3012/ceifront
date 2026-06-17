@@ -1,18 +1,30 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { usePermissions } from "../../../../context/PermissionsContext";
 
 export default function TabsExpediente({ tab, setTab }) {
   const [openBeneficios, setOpenBeneficios] = useState(false);
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canViewFamilia = hasModulePermission("familia", "ver");
+  const canViewObligaciones = hasModulePermission("obligaciones", "ver");
 
   const tabs = [
-    { id: "generales", label: "Datos generales" },
-    { id: "familia", label: "Familia" },
-    { id: "escuela", label: "Escuela" },
-    { id: "obligaciones", label: "Obligaciones" },
-    { id: "fotografias", label: "Fotografias" },
-    { id: "documentos", label: "Documentos" },
-    { id: "estudio", label: "Estudio Socioeconomico" },
-  ];
+  { id: "generales", label: "Datos generales" },
+
+  ...(canViewFamilia
+    ? [{ id: "familia", label: "Familia" }]
+    : []),
+
+  { id: "escuela", label: "Escuela" },
+
+  ...(canViewObligaciones
+    ? [{ id: "obligaciones", label: "Obligaciones" }]
+    : []),
+
+  { id: "fotografias", label: "Fotografias" },
+  { id: "documentos", label: "Documentos" },
+  { id: "estudio", label: "Estudio Socioeconomico" },
+];
 
   const beneficiosTabs = [
     { id: "apoyos", label: "Reembolsos" },
@@ -23,7 +35,7 @@ export default function TabsExpediente({ tab, setTab }) {
 
   return (
     <div role="tablist" className="flex gap-8 items-center relative">
-      
+
       {tabs.map((t) => {
         const active = tab === t.id;
 
@@ -33,11 +45,10 @@ export default function TabsExpediente({ tab, setTab }) {
             role="tab"
             aria-selected={active}
             onClick={() => setTab(t.id)}
-            className={`relative pb-3 text-sm font-semibold transition-all duration-200 ${
-              active
+            className={`relative pb-3 text-sm font-semibold transition-all duration-200 ${active
                 ? "text-teal-600"
                 : "text-slate-500 hover:text-slate-700"
-            }`}
+              }`}
           >
             {t.label}
 
@@ -52,19 +63,17 @@ export default function TabsExpediente({ tab, setTab }) {
       <div className="relative">
         <button
           onClick={() => setOpenBeneficios(!openBeneficios)}
-          className={`relative pb-3 flex items-center gap-1 text-sm font-semibold transition-all duration-200 ${
-            beneficiosActivo
+          className={`relative pb-3 flex items-center gap-1 text-sm font-semibold transition-all duration-200 ${beneficiosActivo
               ? "text-teal-600"
               : "text-slate-500 hover:text-slate-700"
-          }`}
+            }`}
         >
           Beneficios
 
           <ChevronDown
             size={16}
-            className={`transition-transform duration-200 ${
-              openBeneficios ? "rotate-180" : ""
-            }`}
+            className={`transition-transform duration-200 ${openBeneficios ? "rotate-180" : ""
+              }`}
           />
 
           {beneficiosActivo && (
@@ -84,11 +93,10 @@ export default function TabsExpediente({ tab, setTab }) {
                     setTab(item.id);
                     setOpenBeneficios(false);
                   }}
-                  className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
-                    active
+                  className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${active
                       ? "bg-teal-50 text-teal-700"
                       : "text-slate-600 hover:bg-slate-50"
-                  }`}
+                    }`}
                 >
                   {item.label}
                 </button>

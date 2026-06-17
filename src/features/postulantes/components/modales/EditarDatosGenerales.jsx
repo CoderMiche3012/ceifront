@@ -583,9 +583,24 @@ export default function PostulanteEditarModal({ open, postulante, onSuccess, onC
         onClose={() => setShowConfirm(false)}
         onConfirm={handleConfirmSave}
         title="Confirmar cambios"
-        message="Se actualizará la información del postulante."
+        description="¿Estás seguro de que deseas actualizar este postulante?"
       />
+      {loading && (
+        <div className="fixed inset-0 z-[9999] bg-black/30 flex items-center justify-center">
+          <div className="bg-white rounded-2xl px-8 py-6 shadow-xl flex flex-col items-center gap-4">
+            <div className="h-10 w-10 border-4 border-[#0E5F63] border-t-transparent rounded-full animate-spin" />
 
+            <div className="text-center">
+              <h3 className="font-semibold text-slate-800">
+                Actualizando postulante...
+              </h3>
+              <p className="text-sm text-slate-500">
+                Esto puede tardar unos segundos.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <ModalResultado
         open={resultModal.open}
         type={resultModal.type}
