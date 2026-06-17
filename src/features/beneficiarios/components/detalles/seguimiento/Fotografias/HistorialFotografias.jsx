@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 
 import {
@@ -23,48 +22,24 @@ import { ui } from "../../../../../../styles/ui/uiClasses";
 
 export default function HistorialFotografias({ data }) {
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
-  //falta
-  const canEditFotografias = hasModulePermission("beneficiarios", "editar");
-  const canCreateFotografias = hasModulePermission("beneficiarios", "crear")
-
+  const canEditFotografias = hasModulePermission("fotografias", "eliminar");
+  const canCreateFotografias = hasModulePermission("fotografias", "crear")
   const [showModal, setShowModal] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const id_beneficiario = data?.id_beneficiario;
   const id_expediente = data?.id_expediente;
-
   const periodoActivo = data?.periodoActivo
-
   const seguimientos = data?.historial_seguimientos ?? []
   const periodos = data?.periodos ?? []
-
   const { mutateAsync: subirFoto } = useSubirFotografia(id_expediente);
   const { mutateAsync: eliminarFoto } = useEliminarFotografia(id_expediente);
-  const [preview, setPreview] =
-    useState(null);
-
-  const [descripcion,
-    setDescripcion] =
-    useState("");
-
-  const [seguimientoActivo,
-    setSeguimientoActivo] =
-    useState(null);
-
-  const [saving, setSaving] =
-    useState(false);
-
-  // 🔥 CARRUSEL
-  const [fotoActiva,
-    setFotoActiva] =
-    useState({});
-
-  // 🔥 MODAL FOTO
-  const [modalFoto,
-    setModalFoto] =
-    useState(null);
-
-  const inputRef =
-    useRef(null);
+  const [preview, setPreview] = useState(null);
+  const [descripcion, setDescripcion] = useState("");
+  const [seguimientoActivo, setSeguimientoActivo] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [fotoActiva, setFotoActiva] = useState({});
+  const [modalFoto, setModalFoto] = useState(null);
+  const inputRef = useRef(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [resultado, setResultado] = useState({
@@ -96,11 +71,9 @@ export default function HistorialFotografias({ data }) {
     const aEsActivo = a.id_periodo === periodoActivo?.id_periodo;
     const bEsActivo = b.id_periodo === periodoActivo?.id_periodo;
 
-    // 1. periodo activo siempre primero
+    // periodo activo siempre primero
     if (aEsActivo && !bEsActivo) return -1;
     if (!aEsActivo && bEsActivo) return 1;
-
-    // 2. si ninguno es activo, ordena por periodo (nuevo → viejo)
     return b.id_periodo - a.id_periodo;
   });
 
@@ -130,7 +103,6 @@ export default function HistorialFotografias({ data }) {
     }
   };
 
-  // 🔥 SIGUIENTE FOTO
   const siguienteFoto = (
     seguimientoId,
     total
@@ -150,7 +122,6 @@ export default function HistorialFotografias({ data }) {
     }));
   };
 
-  // 🔥 FOTO ANTERIOR
   const anteriorFoto = (
     seguimientoId,
     total
@@ -172,7 +143,6 @@ export default function HistorialFotografias({ data }) {
     }));
   };
 
-  // 🔥 DESCARGAR FOTO
   const descargarFoto =
     async (
       url,
@@ -182,11 +152,8 @@ export default function HistorialFotografias({ data }) {
 
       try {
 
-        const response =
-          await fetch(url);
-
-        const blob =
-          await response.blob();
+        const response = await fetch(url);
+        const blob = await response.blob();
 
         const blobUrl =
           window.URL.createObjectURL(
@@ -303,42 +270,39 @@ export default function HistorialFotografias({ data }) {
       }
     };
   const eliminarFotografiaActual = async () => {
-  try {
-    const foto = modalFoto?.fotos?.[modalFoto?.index];
+    try {
+      const foto = modalFoto?.fotos?.[modalFoto?.index];
 
-    if (!foto) return;
+      if (!foto) return;
 
-    await eliminarFoto(foto.id_foto);
+      await eliminarFoto(foto.id_foto);
 
-    const nuevasFotos = modalFoto.fotos.filter(
-      (f) => f.id_foto !== foto.id_foto
-    );
+      const nuevasFotos = modalFoto.fotos.filter(
+        (f) => f.id_foto !== foto.id_foto
+      );
 
-    if (nuevasFotos.length === 0) {
-      setModalFoto(null);
-    } else {
-      setModalFoto({
-        fotos: nuevasFotos,
-        index: Math.min(
-          modalFoto.index,
-          nuevasFotos.length - 1
-        ),
+      if (nuevasFotos.length === 0) {
+        setModalFoto(null);
+      } else {
+        setModalFoto({
+          fotos: nuevasFotos,
+          index: Math.min(
+            modalFoto.index,
+            nuevasFotos.length - 1
+          ),
+        });
+      }
+      setShowDeleteConfirm(false);
+      setResultado({
+        open: true,
+        type: "success",
+        title: "Fotografía eliminada",
+        message: "La fotografía se eliminó correctamente.",
       });
+    } catch (error) {
+      console.error(error);
     }
-
-    setShowDeleteConfirm(false);
-
-    setResultado({
-      open: true,
-      type: "success",
-      title: "Fotografía eliminada",
-      message: "La fotografía se eliminó correctamente.",
-    });
-
-  } catch (error) {
-    console.error(error);
-  }
-};
+  };
   const handleSelectFile = () => {
     console.log(inputRef.current);
 
@@ -348,7 +312,6 @@ export default function HistorialFotografias({ data }) {
     <>
       <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-200">
 
-        {/* HEADER */}
         <div className="mb-6">
 
           <h3 className="text-lg font-bold text-slate-800">
@@ -361,7 +324,6 @@ export default function HistorialFotografias({ data }) {
           </p>
         </div>
 
-        {/* GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
 
           {listaOrdenada.map(
@@ -376,7 +338,6 @@ export default function HistorialFotografias({ data }) {
                   .id_periodo
                 ];
 
-              // 🔥 FILTRAR
               const fotos =
                 (
                   data?.fotografias ||
@@ -387,25 +348,21 @@ export default function HistorialFotografias({ data }) {
                     periodo?.ciclo_escolar
                 );
 
-              // 🔥 INDEX
               const currentIndex =
                 fotoActiva[
                 seguimiento.id_seguimiento
                 ] || 0;
 
-              // 🔥 FOTO ACTUAL
               const fotoActual =
                 fotos[
                 currentIndex
                 ];
 
-              const actual =
-                index === 0;
+              const actual = index === 0;
 
-              const abierto =
-                seguimientoActivo
-                  ?.id_seguimiento ===
-                seguimiento.id_seguimiento;
+              const seguimientoActivoEstatus = seguimiento.estatus === "Activo";
+
+              const abierto = seguimientoActivo?.id_seguimiento === seguimiento.id_seguimiento;
 
               return (
                 <div
@@ -415,7 +372,6 @@ export default function HistorialFotografias({ data }) {
                   className="group overflow-hidden rounded-3xl border border-slate-200 bg-white hover:shadow-xl transition-all duration-300"
                 >
 
-                  {/* TOP */}
                   <div className="flex items-center justify-between p-4 pb-3">
 
                     <div>
@@ -440,21 +396,21 @@ export default function HistorialFotografias({ data }) {
                         Etapa de seguimiento
                       </p>
                     </div>
-                    {canCreateFotografias && (
-                      <button
-                        onClick={() =>
-                          seleccionarArchivo(
-                            seguimiento
-                          )
-                        }
-                        className="h-9 w-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center hover:scale-105 transition"
-                      >
-                        <Plus size={16} />
-                      </button>
-                    )}
+                    {canCreateFotografias &&
+                      seguimientoActivoEstatus && (
+                        <button
+                          onClick={() =>
+                            seleccionarArchivo(
+                              seguimiento
+                            )
+                          }
+                          className="h-9 w-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center hover:scale-105 transition"
+                        >
+                          <Plus size={16} />
+                        </button>
+                      )}
                   </div>
 
-                  {/* FOTO */}
                   <div className="relative h-64 bg-slate-100 overflow-hidden">
 
                     {!fotoActual ? (
@@ -487,8 +443,8 @@ export default function HistorialFotografias({ data }) {
                           onClick={() =>
                             setModalFoto({
                               fotos,
-                              index:
-                                currentIndex,
+                              index: currentIndex,
+                              seguimiento,
                             })
                           }
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-500 cursor-pointer"
@@ -622,7 +578,6 @@ export default function HistorialFotografias({ data }) {
           )}
         </div>
 
-        {/* INPUT */}
         <input
           ref={inputRef}
           type="file"
@@ -632,7 +587,6 @@ export default function HistorialFotografias({ data }) {
         />
       </div>
 
-      {/* 🔥 MODAL FOTO */}
       {modalFoto && (
 
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-6">
@@ -668,16 +622,16 @@ export default function HistorialFotografias({ data }) {
               size={18}
             />
           </button>
-          {canEditFotografias && (
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="absolute top-5 right-35 h-11 w-11 rounded-full bg-red-500/80 text-white hover:bg-red-600 flex items-center justify-center"
-            >
-              <Trash2 size={18} />
-            </button>
-          )}
+          {canEditFotografias &&
+            modalFoto?.seguimiento?.estatus === "Activo" && (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="absolute top-5 right-35 h-11 w-11 rounded-full bg-red-500/80 text-white hover:bg-red-600 flex items-center justify-center"
+              >
+                <Trash2 size={18} />
+              </button>
+            )}
 
-          {/* IZQUIERDA */}
           {modalFoto.fotos
             .length > 1 && (
 
@@ -709,7 +663,6 @@ export default function HistorialFotografias({ data }) {
               </button>
             )}
 
-          {/* IMAGEN */}
           <img
             src={
               modalFoto.fotos[
@@ -721,7 +674,6 @@ export default function HistorialFotografias({ data }) {
             className="max-h-[90vh] max-w-[90vw] rounded-2xl shadow-2xl object-contain"
           />
 
-          {/* DERECHA */}
           {modalFoto.fotos
             .length > 1 && (
 
@@ -751,7 +703,6 @@ export default function HistorialFotografias({ data }) {
               </button>
             )}
 
-          {/* FOOTER */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur rounded-2xl px-5 py-3 text-white text-sm flex items-center gap-3">
 
             <Calendar
@@ -902,4 +853,3 @@ export default function HistorialFotografias({ data }) {
   );
 }
 
-alert

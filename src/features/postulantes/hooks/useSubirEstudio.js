@@ -3,7 +3,6 @@ import { useState } from "react";
 import { subirDocumentoEstudio } from "../../expedientes/services/documentosService";
 import { useActualizarPostulante } from "./usePostulantes";
 import { useActualizarDocumento } from "../../expedientes/hooks/useDocumentos";
-import { useActualizarEstudioDetalle } from "./usePostulantes";
 import { useActualizarEstudio } from "./useEstudios";
 
 export function useSubirEstudio(data) {
@@ -11,7 +10,6 @@ export function useSubirEstudio(data) {
   const [archivo, setArchivo] = useState(null);
   const [loading, setLoading] = useState(false);
   const actualizarEstudioMutation = useActualizarEstudio();
-  console.log("id", data.id_estudio)
 
   const actualizarPostulanteMutation = useActualizarPostulante();
   const actualizarDocumentoMutation = useActualizarDocumento();
@@ -52,7 +50,7 @@ export function useSubirEstudio(data) {
       const formData = new FormData();
       formData.append("archivo", archivo);
       formData.append("id_expediente", data.id_expediente);
-      formData.append("nombre_documento", "nuevo");
+      formData.append("nombre_documento", "EstudioSocioeconomico");
       formData.append("tipo_documento", "Estudio");
 
       const documento = await subirDocumentoEstudio(formData);

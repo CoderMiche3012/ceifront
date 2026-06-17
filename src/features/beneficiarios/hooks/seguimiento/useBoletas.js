@@ -1,11 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import {
-  obtenerBoletas,
-  obtenerBoleta,
-  crearBoleta,
-  actualizarBoleta,
-} from "../../services/boletasService";
+import {obtenerBoletas,obtenerBoleta,crearBoleta,actualizarBoleta} from "../../services/boletasService";
 
 import { boletasKeys } from "../../services/boletasKeys";
 import { expedientesKeys } from "../../../expedientes/services/expedientesKeys";
@@ -19,7 +14,7 @@ export function useBoletas() {
     queryFn: obtenerBoletas,
   });
 }
-//OBTENER BOLETA POR ID
+//obtener por id
 export function useBoleta(id) {
   return useQuery({
     queryKey: boletasKeys.detail(id),
@@ -93,7 +88,6 @@ export function useActualizarBoleta() {
         queryKey: seguimientosKeys.all,
       });
 
-      // Refrescar seguimiento (CRÍTICO)
       const idSeguimiento =
         variables?.payload?.id_datos_escolares;
 

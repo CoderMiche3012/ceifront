@@ -7,12 +7,7 @@ import { HandCoins } from "lucide-react";
 import { HiOutlineX } from "react-icons/hi";
 import BotonPrincipal from "../../../../../../components/ui/Boton";
 
-// 1. Importación de tus hooks personalizados
-import {
-  useCrearApoyo,
-  useActualizarApoyo,
-  useEliminarApoyo
-} from "./../../../../hooks/useApoyos"; // Ajusta esta ruta a donde guardes los hooks
+import { useCrearApoyo, useActualizarApoyo, useEliminarApoyo} from "./../../../../hooks/useApoyos";
 
 import ApoyoTabla from "./tabla/ApoyoTabla";
 import ApoyoFiltros from "./tabla/ApoyoFiltros";
@@ -23,17 +18,14 @@ import ModalConfirmacion from "../../../../../../components/shared/ModalConfirma
 import ModalResultado from "../../../../../../components/shared/ModalResultado";
 import { useSubirDocumento, useActualizarDocumento } from "../../../../../expedientes/hooks/useDocumentos";
 
-export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
+export default function DetalleSeguimientoEconomico({ seguimiento, dataT, editable, canCreateApoyos }) {
   const actualizarDocumentoMutation = useActualizarDocumento();
   const idSeguimiento = seguimiento?.id_seguimiento;
   const data = seguimiento;
   const documentos = dataT?.documentos
-
-  // 2. Uso de tus hooks personalizados de TanStack Query
   const crearApoyoMutation = useCrearApoyo();
   const actualizarApoyoMutation = useActualizarApoyo();
   const eliminarApoyoMutation = useEliminarApoyo();
-  // Se usa la misma mutación de actualización para la acción de "entregar"
   const entregarApoyoMutation = useActualizarApoyo();
   const subirDocumentoMutation = useSubirDocumento();
 
@@ -59,7 +51,6 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
   const PAGE_SIZE = 4;
   const apoyos = data?.apoyos_economicos || [];
 
-  // FILTROS Y ORDENAMIENTO
   const apoyosFiltrados = useMemo(() => {
     return apoyos
       .filter((apoyo) =>
@@ -72,7 +63,6 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
       });
   }, [apoyos, search]);
 
-  // PAGINACIÓN
   const totalPages = Math.ceil(apoyosFiltrados.length / PAGE_SIZE);
 
   const apoyosPaginados = useMemo(() => {
@@ -86,7 +76,6 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
     setCurrentPage(1);
   };
 
-  // VALIDAR COMPONENTES ANTES DE CONFIRMAR
   const handleGuardarApoyo = () => {
     if (!formData.concepto || !formData.monto) {
       setAlerta({
@@ -115,10 +104,8 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
     setModalResultado({ open: true, type, title, message });
   };
 
-  // CONFIRMAR ACCIONES EJECUTANDO LOS `.mutate` DE TUS HOOKS
   const confirmarAccion = () => {
     const fechaHoy = new Date().toISOString().split("T")[0];
-
     // CREAR
     if (accionPendiente === "crear") {
       crearApoyoMutation.mutate(
@@ -138,7 +125,7 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
 
                 documentoData.append(
                   "nombre_documento",
-                  `ComprobanteApoyo${apoyoSeleccionado.id_apoyo}`
+                  `ComprobanteApoyo${apoyoCreado.id_apoyo}`
                     .replace(/[^a-zA-Z0-9-]/g, "")
                 );
 
@@ -183,11 +170,17 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
                 "Apoyo registrado",
                 "El apoyo económico fue agregado correctamente."
               );
-            } catch {
+            } catch (error) {
+              setModalConfirmacion(false);
+              const mensaje =
+                error?.errors?.archivo?.[0] ||
+                error?.message ||
+                "Error al subir documento";
+
               lanzarModalResultado(
                 "error",
                 "Error",
-                "El apoyo se creó pero no se pudo subir el comprobante."
+                `El apoyo se creó pero no se pudo subir el comprobante.\n\nDetalle: ${mensaje}`
               );
             }
           },
@@ -198,8 +191,6 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
         }
       );
     }
-
-    // EDITAR
     // EDITAR
     if (accionPendiente === "editar") {
       actualizarApoyoMutation.mutate(
@@ -280,12 +271,18 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
                 "Apoyo actualizado",
                 "El apoyo económico fue actualizado correctamente."
               );
-            } catch (err) {
-              console.log(err)
+            } catch (error) {
+
+              setModalConfirmacion(false);
+              const mensaje =
+                error?.errors?.archivo?.[0] ||
+                error?.message ||
+                "Error al subir documento";
+
               lanzarModalResultado(
                 "error",
                 "Error",
-                "El apoyo fue actualizado pero ocurrió un problema con el comprobante."
+                `El apoyo fue actualizado pero ocurrió un problema con el comprobante.\n\nDetalle: ${mensaje}`
               );
             }
           },
@@ -321,7 +318,7 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
       entregarApoyoMutation.mutate(
         {
           id: apoyoSeleccionado.id_apoyo,
-          payload: { // Ajustado a 'payload' para coincidir con tu hook
+          payload: {
             estatus: "Entregado",
             fecha_entrega: fechaHoy,
           },
@@ -352,17 +349,18 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
               </h3>
               <p className="text-xs text-slate-500 mt-1">Historial de apoyos entregados</p>
             </div>
-
-            <Boton
-              onClick={() => {
-                setModoEdicion(false);
-                setFormData({ concepto: "", monto: "" });
-                setAlerta({ open: false, mensaje: "", tipo: "error" });
-                setModalCrear(true);
-              }}
-            >
-              Agregar Reembolso
-            </Boton>
+            {canCreateApoyos && (
+              <Boton
+                onClick={() => {
+                  setModoEdicion(false);
+                  setFormData({ concepto: "", monto: "" });
+                  setAlerta({ open: false, mensaje: "", tipo: "error" });
+                  setModalCrear(true);
+                }}
+              >
+                Agregar Reembolso
+              </Boton>
+            )}
           </div>
 
           <ApoyoFiltros
@@ -419,6 +417,7 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
             setAccionPendiente("entregar");
             setModalConfirmacion(true);
           }}
+          editable={editable}
         />
 
         <PaginacionTabla
@@ -513,7 +512,7 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
                     </Field>
 
                     {/* COMPROBANTE */}
-                    <Field label="Comprobante (opcional)">
+                    <Field >
                       {modoEdicion && (() => {
                         const documentoExistente = documentos?.find(
                           (doc) =>
@@ -549,13 +548,66 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT }) {
                         );
                       })()}
 
-                      <Input
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) =>
-                          setArchivoComprobante(e.target.files?.[0] || null)
-                        }
-                      />
+                      <Field label="Comprobante (opcional)">
+                        <label className="block cursor-pointer">
+                          <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-teal-500 hover:bg-teal-50 transition-all">
+
+                            <div className="flex flex-col items-center gap-2">
+                              <svg
+                                className="w-8 h-8 text-slate-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={1.8}
+                                  d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+                                />
+                              </svg>
+
+                              <p className="text-sm font-medium text-slate-700">
+                                Selecciona un comprobante
+                              </p>
+
+                              <p className="text-xs text-slate-500">
+                                PDF, JPG o PNG
+                              </p>
+                            </div>
+
+                            <input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              className="hidden"
+                              onChange={(e) =>
+                                setArchivoComprobante(e.target.files?.[0] || null)
+                              }
+                            />
+                          </div>
+                        </label>
+
+                        {archivoComprobante && (
+                          <div className="mt-3 rounded-xl border border-green-200 bg-green-50 p-3 flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-green-800">
+                                Archivo seleccionado
+                              </p>
+                              <p className="text-xs text-green-700">
+                                {archivoComprobante.name}
+                              </p>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setArchivoComprobante(null)}
+                              className="text-red-500 hover:text-red-700 text-sm"
+                            >
+                              Quitar
+                            </button>
+                          </div>
+                        )}
+                      </Field>
 
                       {archivoComprobante && (
                         <p className="text-xs text-green-600 mt-2">

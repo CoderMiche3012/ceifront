@@ -1,7 +1,12 @@
 import HistorialBase from "../Historial";
 import DetalleSeguimientoEconomico from "./DetalleSeguimientoEconomico";
+import { usePermissions } from "../../../../../../context/PermissionsContext";
+
 
 export default function HistorialEconomicoCard({ data }) {
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canEditApoyos = hasModulePermission("apoyos", "editar");
+  const canCreateApoyos = hasModulePermission("apoyos", "crear")
   const calcularTotalPeriodo = (apoyos = []) => {
     return apoyos.reduce(
       (acc, apoyo) => acc + Number(apoyo.monto || 0),
@@ -15,7 +20,7 @@ export default function HistorialEconomicoCard({ data }) {
       items={data?.historial_seguimientos ?? []}
       periodos={data?.periodos ?? []}
       periodoActivo={data?.periodoActivo}
-      
+
       /* TÍTULO */
       renderTitulo={(item, periodo) => (
         <p className="text-sm font-semibold text-slate-800">
@@ -41,17 +46,24 @@ export default function HistorialEconomicoCard({ data }) {
             $
             {calcularTotalPeriodo(
               item.apoyos_economicos
-            ).toLocaleString()}
+            ).toLocaleString("es-MX")}
           </p>
         </div>
       )}
 
       /* DETALLE */
-      renderDetalle={(item) => (
-        <DetalleSeguimientoEconomico
-          seguimiento={item} dataT={data}
-        />
-      )}
+      renderDetalle={(item) => {
+        const esEditable = item.estatus === "Activo";
+
+        return (
+          <DetalleSeguimientoEconomico
+            seguimiento={item}
+            dataT={data}
+            editable={esEditable && canEditApoyos}
+            canCreateApoyos={esEditable && canCreateApoyos}
+          />
+        );
+      }}
     />
   );
 }

@@ -24,13 +24,10 @@ export default function ModalDatosEscolares({
 
   return (
     <>
-      {/* Fondo con desenfoque elegante */}
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-        
-        {/* Contenedor Ejecutivo del Modal */}
+
         <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-200 flex flex-col max-h-[90vh]">
-          
-          {/* HEADER: Limpio y balanceado */}
+
           <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-white shrink-0">
             <div className="flex items-center gap-3.5">
               <div className="p-2.5 bg-slate-50 text-slate-700 rounded-xl border border-slate-100">
@@ -56,7 +53,7 @@ export default function ModalDatosEscolares({
 
           {/* BODY: Con scroll interno controlado */}
           <div className="p-6 overflow-y-auto space-y-6 bg-white flex-1">
-            
+
             <Alerta mensaje={datos.error} />
 
             {/* SECCIÓN 1: INSTITUCIÓN */}
@@ -89,6 +86,9 @@ export default function ModalDatosEscolares({
                 <Field label="Nivel educativo" required>
                   <select
                     name="nivel_educativo"
+                    disabled={
+                      datos.tieneBoletas
+                    }
                     value={datos.form.nivel_educativo}
                     onChange={(e) =>
                       datos.setForm((prev) => ({
@@ -112,7 +112,6 @@ export default function ModalDatosEscolares({
               </div>
             </section>
 
-            {/* SECCIÓN 3: DETALLES COMPLEMENTARIOS */}
             <section className="bg-slate-50/50 border border-slate-100 rounded-xl p-4 space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                 <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
@@ -149,14 +148,14 @@ export default function ModalDatosEscolares({
                   </select>
                 </Field>
 
-                {/* PERIODO ACADÉMICO */}
                 <Field label="Periodo académico" required>
                   <select
                     name="modalidad_educativa"
                     value={datos.form.modalidad_educativa || ""}
                     onChange={datos.handleChange}
                     disabled={
-                      datos.form.nivel_educativo === "BASICA" || datos.tieneBoletas
+                      datos.form.nivel_educativo !== "SUPERIOR" ||
+                      datos.tieneBoletas
                     }
                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 font-medium focus:border-teal-600 focus:ring-1 focus:ring-teal-600/20 outline-none transition disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
                   >
@@ -190,7 +189,6 @@ export default function ModalDatosEscolares({
             </section>
           </div>
 
-          {/* FOOTER: Botones limpios y alineados */}
           <div className="flex justify-end gap-3 p-4 border-t border-slate-100 bg-slate-50 shrink-0">
             <button
               onClick={onClose}
@@ -241,3 +239,6 @@ export default function ModalDatosEscolares({
     </>
   );
 }
+
+
+

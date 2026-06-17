@@ -1,16 +1,6 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, } from "@tanstack/react-query";
 
-import {
-  obtenerObligaciones,
-  obtenerObligacion,
-  crearObligacion,
-  actualizarObligacion,
-  eliminarObligacion,
-} from "../../services/obligacionesService";
+import { obtenerObligaciones, obtenerObligacion, crearObligacion, actualizarObligacion, eliminarObligacion } from "../../services/obligacionesService";
 
 import { obligacionesKeys } from "../../services/obligacionesKeys";
 import { expedientesKeys } from "../../../expedientes/services/expedientesKeys";

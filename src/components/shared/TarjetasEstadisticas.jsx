@@ -11,22 +11,21 @@ export default function TarjetasEstadisticas({ items = [] }) {
   };
   return (
     <div
-      className={`grid grid-cols-1 sm:grid-cols-2 gap-4 w-full ${
-        cols[items.length] || "xl:grid-cols-4"
-      }`}
+      className={`grid grid-cols-1 sm:grid-cols-2 gap-4 w-full ${cols[items.length] || "xl:grid-cols-4"
+        }`}
     >
       {items.map(
-        ( { label, value, icon: Icon, color, }, index ) => (
+        ({ label, value, icon: Icon, color, }, index) => (
           <div
             key={index}
             className={ui.statCard}
           >
             <div>
-              <p className={ ui.statLabel }>
+              <p className={ui.statLabel}>
                 {label}
               </p>
-              <h3 className={`text-3xl font-bold text-${color}-600`} >
-                {value}
+              <h3 className={`text-3xl font-bold text-${color}-600`}>
+                {Number(value || 0).toLocaleString("es-MX")}
               </h3>
             </div>
             <div className={`bg-${color}-100 text-${color}-600 p-3 rounded-2xl`} >

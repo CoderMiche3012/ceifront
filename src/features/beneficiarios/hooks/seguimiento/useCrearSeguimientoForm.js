@@ -28,7 +28,6 @@ export function useCrearSeguimientoForm(id_beneficiario) {
       {
         onSuccess: () => {
 
-          // 🔥 REGLA IMPORTANTE
           if (confirmar === idPeriodoActivo) {
             mutationBeneficiario.mutate({
               id: id_beneficiario,

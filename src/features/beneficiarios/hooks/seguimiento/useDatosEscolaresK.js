@@ -1,10 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-import {
-  obtenerDatosEscolares,
-  crearDatosEscolaresInd,
-  actualizarDatosEscolaresInd,
-} from "./../../services/escuelaService";
+import {obtenerDatosEscolares,crearDatosEscolaresInd,actualizarDatosEscolaresInd,} from "./../../services/escuelaService";
 
 import { datosEscolaresKeys } from "./../../services/datosEscolaresKeys";
 import { expedientesKeys } from "../../../expedientes/services/expedientesKeys";

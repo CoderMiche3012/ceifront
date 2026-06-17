@@ -2,19 +2,13 @@ import { useState, useEffect } from "react";
 import { HiOutlineAcademicCap, HiOutlineX, HiOutlineUpload, HiOutlineDocumentText } from "react-icons/hi";
 import { ui } from "../../../../../../styles/ui/index";
 
-// Importación de componentes UI reutilizables del sistema de diseño
 import Field from "../../../../../../components/ui/Field";
 import Input from "../../../../../../components/ui/InputG";
 import Boton from "../../../../../../components/ui/Boton";
 
-// Hooks de negocio existentes
-import {
-  useCrearBoleta,
-  useActualizarBoleta,
-} from "../../../../hooks/seguimiento/useBoletas";
+import {useCrearBoleta, useActualizarBoleta,} from "../../../../hooks/seguimiento/useBoletas";
 import { useSubirDocumento } from "../../../../../expedientes/hooks/useDocumentos";
 
-// Modales compartidos de estado
 import ModalConfirmacion from "../../../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../../../components/shared/ModalResultado";
 
@@ -42,7 +36,6 @@ export default function ModalBoleta({
     message: "",
   });
 
-  // Determinar estados de carga combinados para deshabilitar botones
   const estaCargando = crearBoleta.isPending || actualizarBoleta.isPending || subirDocumento.isPending;
 
   useEffect(() => {
@@ -62,9 +55,6 @@ export default function ModalBoleta({
       .replace(/[^a-zA-Z0-9]/g, "");
   };
 
-  // =========================
-  // VALIDACIÓN
-  // =========================
   const handleGuardar = () => {
     const promedio = Number(form.promedio_boleta);
 
@@ -91,18 +81,12 @@ export default function ModalBoleta({
     setOpenConfirm(true);
   };
 
-  // =========================
-  // GUARDAR (usa hooks)
-  // =========================
   const handleConfirm = async () => {
     try {
       setOpenConfirm(false);
 
       let linkDocumento = boleta?.link || null;
 
-      // =====================
-      // SUBIR ARCHIVO (hook)
-      // =====================
       if (form.archivo) {
         const documentoData = new FormData();
         const nombreLimpio = limpiarNombreDocumento(form.archivo.name);
@@ -116,9 +100,6 @@ export default function ModalBoleta({
         linkDocumento = documento?.archivo || documento?.link || null;
       }
 
-      // =====================
-      // DATA BOLETA
-      // =====================
       const data = {
         tipo_boleta: "Boleta",
         periodo_boleta: boleta?.periodo_boleta,
@@ -132,9 +113,6 @@ export default function ModalBoleta({
         link: linkDocumento,
       };
 
-      // =====================
-      // CREAR / ACTUALIZAR
-      // =====================
       if (boleta?.id_boleta) {
         await actualizarBoleta.mutateAsync({
           id: boleta.id_boleta,
@@ -152,11 +130,14 @@ export default function ModalBoleta({
 
       setOpenResult(true);
     } catch (error) {
-      console.error(error);
+      const mensaje =
+        error?.errors?.archivo?.[0] ||
+        error?.message ||
+        "Error al subir documento";
       setResultado({
         type: "error",
         title: "Error al guardar",
-        message: error.message || "Ocurrió un problema, verifica los datos e intenta nuevamente.",
+        message: mensaje|| "Ocurrió un problema, verifica los datos e intenta nuevamente.",
       });
       setOpenResult(true);
     }
@@ -177,7 +158,6 @@ export default function ModalBoleta({
         <div className="w-full max-w-2xl">
           <div className={ui.modal.formContainer}>
             
-            {/* HEADER ESTILIZADO */}
             <div className={ui.modal.formHeader}>
               <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}>
                 <HiOutlineAcademicCap size={24} />
@@ -200,12 +180,10 @@ export default function ModalBoleta({
               </button>
             </div>
 
-            {/* CUERPO DEL FORMULARIO CON DISEÑO LIMPIO */}
             <div className={ui.modal.formBody}>
               <div className={ui.modal.formScroll}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                   
-                  {/* PROMEDIO GENERAL USANDO COMPONENTE FIELD E INPUT */}
                   <Field label="Promedio General" required>
                     <Input
                       type="number"
@@ -223,7 +201,6 @@ export default function ModalBoleta({
                     />
                   </Field>
 
-                  {/* CONTROL DE ARCHIVO ADJUNTO DROPZONE-LIKE */}
                   <div className="space-y-2">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                       Documento Digital
@@ -259,7 +236,6 @@ export default function ModalBoleta({
                       </label>
                     </div>
 
-                    {/* Feedback visual del archivo cargado localmente */}
                     {form.archivo && (
                       <div className="flex items-center gap-2 px-3 py-2 bg-teal-50 border border-teal-100 rounded-xl text-teal-700 text-xs font-medium">
                         <HiOutlineDocumentText size={16} className="shrink-0 text-teal-600" />
@@ -267,7 +243,6 @@ export default function ModalBoleta({
                       </div>
                     )}
 
-                    {/* Documento previo registrado en base de datos si no se ha cambiado */}
                     {!form.archivo && boleta?.link && (
                       <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-slate-600 text-xs font-medium">
                         <HiOutlineDocumentText size={16} className="shrink-0 text-slate-400" />
@@ -287,7 +262,6 @@ export default function ModalBoleta({
                 </div>
               </div>
 
-              {/* ACCIONES DEL FORMULARIO USANDO TU COMPONENTE BOTON */}
               <div className={ui.modal.formActions}>
                 <Boton 
                   variant="secondary" 
@@ -310,7 +284,6 @@ export default function ModalBoleta({
         </div>
       </div>
 
-      {/* CONFIRMACIÓN INTERMEDIA INTERNA */}
       <ModalConfirmacion
         open={openConfirm}
         onClose={() => setOpenConfirm(false)}
@@ -321,7 +294,6 @@ export default function ModalBoleta({
         description={`¿Estás seguro de que deseas guardar la información y los archivos asignados para el ${boleta?.periodo_boleta || "periodo"}?`}
       />
 
-      {/* RESULTADO FINAL */}
       <ModalResultado
         open={openResult}
         onClose={handleCloseResultado}

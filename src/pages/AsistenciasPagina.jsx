@@ -37,6 +37,7 @@ const AsistenciasPagina = () => {
   const onGuardarClick = () => setShowConfirm(true);
   const { data, isLoading, isError, mutation } =
     useAsistenciaData(periodoId);
+    console.log("filtradospagina",data)
   const confirmarGuardado = () => {
     const listaCambios = Object.values(cambios);
 
@@ -201,7 +202,12 @@ const AsistenciasPagina = () => {
         <AlertCircle />
       </div>
     ); console.log("DIAS:", dias);
-
+console.log("beneficiarios originales", data);
+console.log("beneficiarios filtrados", beneficiariosFiltrados);
+console.log("beneficiarios paginados", beneficiariosPaginados);
+console.log("search", `"${search}"`);
+console.log("pagina", pagina);
+console.log("registros", registrosPorPagina);
   return (
     <section className="space-y-6">
 

@@ -125,7 +125,7 @@ API.interceptors.response.use(
     // Formateador de errores normales
     return Promise.reject({
       status,
-      message: data?.detail || data?.message || data?.error ||"Error del servidor",
+      message: data?.detail || data?.message || data?.error ||"A ocurrido un error inesperado",
       errors: data || null,
       original: error,
     });

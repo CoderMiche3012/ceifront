@@ -1,27 +1,25 @@
 import { useMemo } from "react";
-import { Utensils, Brain, ChevronRight, Users, } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import {
+  Utensils,
+  Brain,
+  ChevronRight,
+  Users,
+} from "lucide-react";
 
-import { obtenerSeguimiento } from "../../../../services/seguimientoService";
-
-export default function ResumenServiciosCard({ idSeguimiento }) {
-  const { data, isLoading } = useQuery({
-    queryKey: ["seguimiento-servicios", idSeguimiento],
-    queryFn: () => obtenerSeguimiento(idSeguimiento),
-    enabled: !!idSeguimiento,
-    staleTime: 0,
-    refetchOnMount: true,
-  });
-
+export default function ResumenServiciosCard({ seguimiento }) {
   const resumen = useMemo(() => {
-    const servicios = data?.usos_servicios || [];
+    const servicios = seguimiento?.usos_servicios || [];
 
     const comedor = servicios.filter(
-      (s) => s.tipo_servicio === "comedor" && s.asistencia
+      (s) =>
+        s.tipo_servicio === "comedor" &&
+        s.asistencia
     );
 
     const psicologia = servicios.filter(
-      (s) => s.tipo_servicio === "psicologia" && s.asistencia
+      (s) =>
+        s.tipo_servicio === "psicologia" &&
+        s.asistencia
     );
 
     const totalAcompanantes = servicios.reduce(
@@ -35,20 +33,7 @@ export default function ResumenServiciosCard({ idSeguimiento }) {
       psicologia: psicologia.length,
       acompanantes: totalAcompanantes,
     };
-  }, [data]);
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="h-24 rounded-2xl border border-slate-200 bg-white animate-pulse"
-          />
-        ))}
-      </div>
-    );
-  }
+  }, [seguimiento]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

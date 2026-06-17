@@ -48,14 +48,19 @@ export default function DonativosPorDonadorTab() {
         donador: item.nombreCompleto,
         tipo: item.tipo,
         amount: item.cantidad_donativos,
-        cantidad_donativos: item.cantidad_donativos,
+        cantidad_donativos: Number(
+          item.cantidad_donativos || 0
+        ).toLocaleString("es-MX"),
         ultima_fecha:
           item.ultimaFechaDonacion ||
           item.ultimasFechaDonacion ||
           "Sin donaciones registradas",
         aportaciones:
           Object.entries(item.totales || {})
-            .map(([moneda, monto]) => `${moneda}: $${monto}`)
+            .map(
+              ([moneda, monto]) =>
+                `${moneda}: $${Number(monto || 0).toLocaleString("es-MX")}`
+            )
             .join(", ") || "Sin aportaciones registradas",
       }));
   }, [resumen, tipo]);

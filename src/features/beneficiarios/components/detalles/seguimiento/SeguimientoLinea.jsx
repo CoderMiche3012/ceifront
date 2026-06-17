@@ -42,7 +42,6 @@ export default function SeguimientoLinea({ data }) {
   return (
     <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
 
-      {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800">
           <Clock className="w-4 h-4 text-teal-600" />
@@ -50,7 +49,6 @@ export default function SeguimientoLinea({ data }) {
         </h3>
       </div>
 
-      {/* LISTA */}
       <div className="max-h-[420px] overflow-y-auto pr-2 space-y-6 custom-scroll">
 
         {!listaOrdenada?.length && (
@@ -78,7 +76,7 @@ export default function SeguimientoLinea({ data }) {
                   <p className="text-sm font-semibold text-slate-700">
                     {periodosMap[item.id_periodo]}
                   </p>
-                  {canEditSeguimientos &&(
+                  {canEditSeguimientos && (
                     <button
                       onClick={() => editarFlow.abrirEditar(item)}
                       className="flex items-center gap-1.5 text-xs font-medium text-teal-600 hover:text-teal-700"
@@ -115,10 +113,6 @@ export default function SeguimientoLinea({ data }) {
           </BotonInterno>
         )}
       </div>
-
-      {/* =========================
-          MODAL CREAR
-      ========================= */}
       {crearFlow.mostrarSelector && (
         <div className={ui.modal.formOverlay}>
           <div className="w-full max-w-lg">
@@ -168,8 +162,6 @@ export default function SeguimientoLinea({ data }) {
 
                 </div>
 
-
-                {/* FOOTER (IGUAL QUE TU OTRO MODAL) */}
                 <div className={ui.modal.formActions}>
                   <Boton
                     variant="secondary"
@@ -184,9 +176,6 @@ export default function SeguimientoLinea({ data }) {
         </div>
       )}
 
-      {/* =========================
-          MODAL EDITAR
-      ========================= */}
       {editarFlow.editando && (
         <div className={ui.modal.formOverlay}>
           <div className="w-full max-w-md">
@@ -212,8 +201,6 @@ export default function SeguimientoLinea({ data }) {
                   <X />
                 </button>
               </div>
-
-              {/* BODY */}
 
               <div className={ui.modal.formBody}>
                 <div className={ui.modal.formScroll}>
@@ -241,8 +228,6 @@ export default function SeguimientoLinea({ data }) {
                   </Field>
                 </div>
 
-
-                {/* FOOTER (MISMO PATRÓN QUE TU OTRO MODAL) */}
                 <div className={ui.modal.formActions}>
 
                   <Boton
@@ -261,7 +246,7 @@ export default function SeguimientoLinea({ data }) {
           </div>
         </div>
       )}
-      {/* MODALES EXISTENTES */}
+
       <ModalConfirmacion
         open={!!crearFlow.confirmar}
         title="Asignar periodo"

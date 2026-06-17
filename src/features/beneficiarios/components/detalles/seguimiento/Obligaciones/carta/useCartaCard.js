@@ -12,34 +12,16 @@ import {
 
 export default function useCartaCard(seguimiento) {
   const idSeguimiento = seguimiento?.id_seguimiento
+  const crearObligacionMutation = useCrearObligacion();
+  const actualizarObligacionMutation = useActualizarObligacion();
+  const [modalForm, setModalForm] = useState(false);
+  const [modalConfirm, setModalConfirm] = useState(false);
+  const [modalResultado, setModalResultado] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [alerta, setAlerta] = useState("");
+  const [payload, setPayload] = useState(initialPayload(idSeguimiento));
 
-  const crearObligacionMutation =
-    useCrearObligacion();
-
-  const actualizarObligacionMutation =
-    useActualizarObligacion();
-
-  const [modalForm, setModalForm] =
-    useState(false);
-
-  const [modalConfirm, setModalConfirm] =
-    useState(false);
-
-  const [modalResultado, setModalResultado] =
-    useState(false);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [alerta, setAlerta] =
-    useState("");
-
-  const [payload, setPayload] =
-    useState(
-      initialPayload(idSeguimiento)
-    );
-
-   const data = seguimiento
+  const data = seguimiento
 
   const carta = useMemo(() => {
     return (
@@ -52,23 +34,13 @@ export default function useCartaCard(seguimiento) {
   const handleEditar =
     useCallback(() => {
       setPayload({
-        id_servicio_social:
-          carta?.id_servicio_social ||
-          null,
-        id_seguimiento:
-          idSeguimiento,
+        id_servicio_social: carta?.id_servicio_social || null,
+        id_seguimiento: idSeguimiento,
         tipo: "carta",
-        estatus:
-          carta?.estatus ||
-          "Pendiente",
-        fecha: normalizarFecha(
-          carta?.fecha
-        ),
-        observaciones:
-          carta?.observaciones ||
-          "",
+        estatus: carta?.estatus || "Pendiente",
+        fecha: normalizarFecha(carta?.fecha),
+        observaciones: carta?.observaciones || "",
       });
-
       setAlerta("");
       setModalForm(true);
     }, [carta, idSeguimiento]);
@@ -81,46 +53,45 @@ export default function useCartaCard(seguimiento) {
         );
         return;
       }
-
       setAlerta("");
       setModalConfirm(true);
     };
 
   const confirmarAccion = async () => {
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const body = {
-      id_seguimiento: idSeguimiento,
-      tipo: "carta",
-      estatus: payload.estatus,
-      fecha: payload.fecha,
-      observaciones: payload.observaciones,
-    };
+    try {
+      const body = {
+        id_seguimiento: idSeguimiento,
+        tipo: "carta",
+        estatus: payload.estatus,
+        fecha: payload.fecha,
+        observaciones: payload.observaciones,
+      };
 
-    if (payload.id_servicio_social) {
-      await actualizarObligacionMutation.mutateAsync({
-        id: payload.id_servicio_social,
-        payload: body,
-      });
-    } else {
-      await crearObligacionMutation.mutateAsync(body);
+      if (payload.id_servicio_social) {
+        await actualizarObligacionMutation.mutateAsync({
+          id: payload.id_servicio_social,
+          payload: body,
+        });
+      } else {
+        await crearObligacionMutation.mutateAsync(body);
+      }
+
+      setModalConfirm(false);
+      setModalForm(false);
+      setModalResultado(true);
+
+    } catch (error) {
+      setModalConfirm(false);
+      setAlerta(
+        error?.message ||
+        "Error al guardar"
+      );
+    } finally {
+      setLoading(false);
     }
-
-    setModalConfirm(false);
-    setModalForm(false);
-    setModalResultado(true);
-
-  } catch (error) {
-    setModalConfirm(false);
-    setAlerta(
-      error?.message ||
-      "Error al guardar"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+  };
   return {
     carta,
     loading,
@@ -135,14 +106,8 @@ export default function useCartaCard(seguimiento) {
     handleEditar,
     abrirConfirmacion,
     confirmarAccion,
-
-    cerrarFormulario: () =>
-      setModalForm(false),
-
-    cerrarConfirmacion: () =>
-      setModalConfirm(false),
-
-    cerrarResultado: () =>
-      setModalResultado(false),
+    cerrarFormulario: () => setModalForm(false),
+    cerrarConfirmacion: () => setModalConfirm(false),
+    cerrarResultado: () => setModalResultado(false),
   };
 }

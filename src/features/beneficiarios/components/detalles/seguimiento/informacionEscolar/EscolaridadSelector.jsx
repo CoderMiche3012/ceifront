@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import Input from "../../../../../../components/ui/Input";
 
-export default function EscolaridadSelector({gradosMock,setForm,form,}) {
+export default function EscolaridadSelector({ gradosMock, setForm, form, }) {
   const [busqueda, setBusqueda] =
     useState("");
 
@@ -55,13 +55,10 @@ export default function EscolaridadSelector({gradosMock,setForm,form,}) {
     }
   }, [form?.id_escolaridad]);
 
-  const filtrados = gradosMock.filter(
-    (g) =>
-      `${g.nivel} ${g.grado}`
-        .toLowerCase()
-        .includes(
-          busqueda.toLowerCase()
-        )
+  const filtrados = gradosMock.filter((g) =>
+    `${g.nivel} - ${g.grado}`
+      .toLowerCase()
+      .includes(busqueda.toLowerCase())
   );
   return (
     <div

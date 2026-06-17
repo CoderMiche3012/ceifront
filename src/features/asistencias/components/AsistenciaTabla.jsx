@@ -49,7 +49,7 @@ export default function AsistenciasTabla({
     const datoVisual = cambios[registroKey] || asistenciaExistente || {
       asistencia: false,
       numero_acompanantes: 0,
-      id_servicio: null, 
+      id_servicio: null,
       id_asistencia_servicio: null
     };
     const currentId = datoVisual.id_servicio || datoVisual.id_asistencia_servicio;
@@ -78,7 +78,8 @@ export default function AsistenciasTabla({
       </div>
     );
   };
-
+  console.log("TABLA", beneficiarios);
+  console.log("COLUMNAS", columns);
   return (
     <div className="relative">
       <div className="overflow-x-auto">
@@ -91,7 +92,7 @@ export default function AsistenciasTabla({
       </div>
 
       {/* solo aparece si hay cambios pendientes por sincronizar */}
-      
+
     </div>
   );
 }

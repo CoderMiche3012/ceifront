@@ -1,11 +1,4 @@
-import {
-  ClipboardList,
-  CalendarDays,
-  AlertCircle,
-  FileText,
-  ShieldAlert,
-  NotebookPen,
-} from "lucide-react";
+import { ClipboardList, CalendarDays, AlertCircle, FileText, ShieldAlert, NotebookPen } from "lucide-react";
 
 export default function CardVisitaSocial({
   data

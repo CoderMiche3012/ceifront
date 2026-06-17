@@ -1,17 +1,5 @@
-import {
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-
-import {
-  Eye,
-  Download,
-  Trash2,
-  FileText,
-  Image as ImageIcon,
-  Plus,
-} from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Eye, Download, Trash2, FileText, Image as ImageIcon, Plus, } from "lucide-react";
 
 import { ui } from "../../../../../../styles/ui/uiClasses";
 import DatosTabla from "../../../../../../components/tablas/DatosTabla";
@@ -24,19 +12,14 @@ import ModalResultado from "../../../../../../components/shared/ModalResultado";
 import { usePermissions } from "../../../../../../context/PermissionsContext";
 const API_URL = "http://localhost:8000";
 
-
-
 import { useSubirDocumento, useEliminarDocumento } from "../../../../../expedientes/hooks/useDocumentos";
 
 const PAGE_SIZE = 10;
 
-export default function ExpedienteDigital({
-  data,
-}) {
+export default function ExpedienteDigital({ data }) {
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
-  //falta
-  const canDeleteDocumentos = hasModulePermission("beneficiarios", "editar");
-  const canCreateDocumentos = hasModulePermission("beneficiarios", "crear")
+  const canDeleteDocumentos = hasModulePermission("documentos", "eliminar");
+  const canCreateDocumentos = hasModulePermission("documentos", "crear")
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [resultado, setResultado] = useState({
     open: false,
@@ -50,63 +33,22 @@ export default function ExpedienteDigital({
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const inputRef =
-    useRef(null);
+  const inputRef = useRef(null);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
-  const [search,
-    setSearch] =
-    useState("");
-
-  const [page,
-    setPage] =
-    useState(1);
-
-  // 🔥 SOLO TOMAMOS EL ID
-  const id_expediente =
-    data?.id_expediente;
-
-  // =========================
-  // QUERY
-  // =========================
-
+  const id_expediente = data?.id_expediente;
   const documentos = data?.documentos ?? [];
-
-  // =========================
-  // SUBIR
-  // =========================
-
   const uploadMutation = useSubirDocumento();
-  // =========================
-  // ELIMINAR
-  // =========================
-
   const deleteMutation = useEliminarDocumento();
-
-  // =========================
-  // SUBIR ARCHIVO
-  // =========================
   const limpiarNombreDocumento =
     (nombre) => {
 
       return nombre
-        // quitar extensión
-        .replace(
-          /\.[^/.]+$/,
-          ""
-        )
-
-        // quitar acentos
+        .replace(/\.[^/.]+$/, "")
         .normalize("NFD")
-        .replace(
-          /[\u0300-\u036f]/g,
-          ""
-        )
-
-        // SOLO letras y números
-        .replace(
-          /[^a-zA-Z0-9]/g,
-          ""
-        );
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9]/g, "");
     };
 
   const confirmarSubida = async () => {
@@ -234,9 +176,6 @@ export default function ExpedienteDigital({
       }
     };
 
-  // =========================
-  // ELIMINAR
-  // =========================
   const confirmarDelete = async () => {
     try {
       await deleteMutation.mutateAsync(pendingDelete.id_documento);
@@ -261,9 +200,6 @@ export default function ExpedienteDigital({
     }
   };
 
-  // =========================
-  // FILTRADO
-  // =========================
   const filtrados = useMemo(() => {
     return documentos.filter((doc) => {
       const tipo =
@@ -282,9 +218,6 @@ export default function ExpedienteDigital({
         .includes(search.toLowerCase());
     });
   }, [documentos, search]);
-  // =========================
-  // PAGINACIÓN
-  // =========================
 
   const totalPages =
     Math.ceil(
@@ -298,10 +231,6 @@ export default function ExpedienteDigital({
       PAGE_SIZE,
       page * PAGE_SIZE
     );
-
-  // =========================
-  // COLUMNAS
-  // =========================
 
   const columns = [
     {
@@ -327,9 +256,6 @@ export default function ExpedienteDigital({
     },
   ];
 
-  // =========================
-  // TIPO ARCHIVO
-  // =========================
 
   const obtenerFormato =
     (archivo) => {
@@ -348,9 +274,6 @@ export default function ExpedienteDigital({
       );
     };
 
-  // =========================
-  // RENDER CELL
-  // =========================
 
   const renderCell = (
     row,
@@ -358,10 +281,6 @@ export default function ExpedienteDigital({
   ) => {
 
     switch (key) {
-
-      // =====================
-      // NOMBRE
-      // =====================
 
       case "nombre":
 
@@ -404,10 +323,6 @@ export default function ExpedienteDigital({
           </div>
         );
 
-      // =====================
-      // FORMATO
-      // =====================
-
       case "tipo":
 
         return (
@@ -418,10 +333,6 @@ export default function ExpedienteDigital({
           </span>
         );
 
-      // =====================
-      // FECHA
-      // =====================
-
       case "fecha":
 
         return (
@@ -431,10 +342,6 @@ export default function ExpedienteDigital({
             }
           </span>
         );
-
-      // =====================
-      // ACCIONES
-      // =====================
 
       case "acciones":
 
@@ -502,19 +409,8 @@ export default function ExpedienteDigital({
     }
   };
 
-  // =========================
-  // LOADING
-  // =========================
-
-
-  // =========================
-  // RENDER
-  // =========================
-
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-
-      {/* HEADER */}
 
       <div className="flex items-center justify-between mb-6">
 
@@ -540,8 +436,6 @@ export default function ExpedienteDigital({
         </Boton>
       </div>
 
-      {/* FILTROS */}
-
       <FiltrosTabla
         searchValue={search}
         onSearchChange={
@@ -556,16 +450,12 @@ export default function ExpedienteDigital({
         }}
       />
 
-      {/* TABLA */}
-
       <DatosTabla
         columns={columns}
         data={paginados}
         renderCell={renderCell}
         rowKey="id_documento"
       />
-
-      {/* PAGINACIÓN */}
 
       <PaginacionTabla
         currentPage={page}
@@ -576,8 +466,6 @@ export default function ExpedienteDigital({
         pageSize={PAGE_SIZE}
         onPageChange={setPage}
       />
-
-      {/* INPUT */}
 
       <input
         ref={inputRef}

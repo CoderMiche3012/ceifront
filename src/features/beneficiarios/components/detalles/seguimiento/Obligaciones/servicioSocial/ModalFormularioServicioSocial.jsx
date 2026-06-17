@@ -43,7 +43,6 @@ export default function ModalFormularioServicioSocial({
               <HiOutlineX size={20} />
             </button>
           </div>
-          {/* BODY: Implementando tus componentes UI globales en contenedor limpio */}
           <div className={ui.modal.formBody}>
             {alerta && (
               <Alerta
@@ -85,7 +84,6 @@ export default function ModalFormularioServicioSocial({
                   />
                 </Field>
                 <div className="md:col-span-2">
-                  {/* Observaciones (Usando textarea nativo pero con clases unificadas de InputG) */}
                   <Field label="Observaciones">
                     <textarea
                       rows={4}
@@ -104,8 +102,6 @@ export default function ModalFormularioServicioSocial({
               </div>
             </div>
 
-
-            {/* FOOTER: Botones reutilizables <Boton /> */}
             <div className={ui.modal.formActions}>
               <Boton
                 variant="secondary"

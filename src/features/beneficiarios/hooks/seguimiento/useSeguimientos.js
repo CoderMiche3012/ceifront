@@ -1,18 +1,8 @@
+import {useQuery,useMutation,  useQueryClient} from "@tanstack/react-query";
 
 import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-
-import {
-  obtenerSeguimientos,
-  obtenerSeguimiento,
-  obtenerSeguimientosPorBeneficiario,
-  obtenerSeguimientoPorPeriodo,
-  crearSeguimiento,
-  actualizarSeguimiento,
-  eliminarSeguimiento,
+  obtenerSeguimientos,obtenerSeguimiento, obtenerSeguimientosPorBeneficiario, obtenerSeguimientoPorPeriodo,
+  crearSeguimiento, actualizarSeguimiento, eliminarSeguimiento,
 } from "./../../services/seguimientoService";
 
 import { seguimientosKeys } from "./../../services/seguimientosKeys";
@@ -20,9 +10,6 @@ import { beneficiariosKeys } from "../../services/beneficiariosKeys";
 import { expedientesKeys } from "../../../expedientes/services/expedientesKeys";
 import { donadoresKeys } from "../../../donadores/services/donadoresKeys";
 
-// ==============================
-// obtener todos
-// ==============================
 export function useSeguimientos() {
   return useQuery({
     queryKey:
@@ -33,9 +20,6 @@ export function useSeguimientos() {
   });
 }
 
-// ==============================
-// obtener uno por id
-// ==============================
 export function useSeguimiento(
   id
 ) {
@@ -53,10 +37,7 @@ export function useSeguimiento(
     enabled: !!id,
   });
 }
-
-// ==============================
 // obtener por beneficiario
-// ==============================
 export function useSeguimientosPorBeneficiario(
   id_beneficiario
 ) {
@@ -75,10 +56,7 @@ export function useSeguimientosPorBeneficiario(
       !!id_beneficiario,
   });
 }
-
-// ==============================
 // obtener por beneficiario + periodo
-// ==============================
 export function useSeguimientoPorPeriodo({
   id_beneficiario,
   id_periodo,
@@ -101,10 +79,7 @@ export function useSeguimientoPorPeriodo({
       !!id_periodo,
   });
 }
-
-// ==============================
 // crear
-// ==============================
 export function useCrearSeguimiento() {
   const queryClient =
     useQueryClient();
@@ -133,10 +108,7 @@ export function useCrearSeguimiento() {
     },
   });
 }
-
-// ==============================
 // actualizar
-// ==============================
 export function useActualizarSeguimiento() {
   const queryClient =
     useQueryClient();
@@ -181,10 +153,7 @@ export function useActualizarSeguimiento() {
     },
   });
 }
-
-// ==============================
 // eliminar
-// ==============================
 export function useEliminarSeguimiento() {
   const queryClient =
     useQueryClient();

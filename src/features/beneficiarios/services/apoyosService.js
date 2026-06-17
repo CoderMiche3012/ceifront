@@ -8,7 +8,6 @@ export const obtenerApoyos = async () => {
     const res = await API.get(`${BASE_URL}`);
     return res.data;
   } catch (error) {
-    console.log(error)
     const errorData = error.response?.data || error;
     if (errorData) {
       throw new Error(formatError(errorData));
@@ -30,7 +29,7 @@ export const obtenerApoyo = async (id) => {
     throw new Error(formatError(error.message));
   }
 };
-//crear periodos
+
 export const crearApoyo = async (payload) => {
   try {
     const res = await API.post(`${BASE_URL}/`, payload);
@@ -45,7 +44,6 @@ export const crearApoyo = async (payload) => {
   }
 };
 
-//editar o desactivar periodo
 export const actualizarApoyo = async (id, payload) => {
   try {
     const res = await API.patch(`${BASE_URL}/${id}/`, payload);
@@ -62,6 +60,7 @@ export const actualizarApoyo = async (id, payload) => {
     throw new Error(formatError(error.message));
   }
 };
+
 export const eliminarApoyo = async (id) => {
   try {
     const res = await API.delete(`${BASE_URL}/${id}/`);

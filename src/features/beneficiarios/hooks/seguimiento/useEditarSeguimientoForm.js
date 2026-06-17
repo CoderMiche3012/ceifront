@@ -35,19 +35,17 @@ export function useEditarSeguimientoForm() {
   };
 
   const confirmarActualizacion = async () => {
-  // 🟢 El try/catch ahora sí capturará los errores de red o del servidor
   try {
-    // ⚠️ CAMBIO CLAVE: Usamos mutateAsync con await para esperar la respuesta
     await mutationEditar.mutateAsync({
       id: editando.id_seguimiento,
       data: { estatus, nota_seguimiento: nota },
     });
 
-    // 🚀 Todo este bloque se ejecuta SOLO si la edición del seguimiento fue exitosa
+    //  si la edición del seguimiento fue exitosa
     const esPeriodoActivo = editando?.id_periodo === idPeriodoActivo;
 
     if (esPeriodoActivo) {
-      // 🔴 Si se pasa a Inactivo
+      // Si se pasa a Inactivo
       if (estatus === "Inactivo" || estatus === "Finalizado") {
         await mutationBeneficiario.mutateAsync({
           id: editando.id_beneficiario,
@@ -55,7 +53,7 @@ export function useEditarSeguimientoForm() {
         });
       }
 
-      // 🟢 Si se pasa a Activo o Graduado (Corregido con paréntesis para respetar la lógica)
+      // Si se pasa a Activo o Graduado 
       if (estatus === "Activo" ) {
         await mutationBeneficiario.mutateAsync({
           id: editando.id_beneficiario,
@@ -63,18 +61,12 @@ export function useEditarSeguimientoForm() {
         });
       }
     }
-
-    // 🎉 Si todo salió bien, cerramos modales y mostramos éxito
     setExitoEdicion(true);
     setEditando(null);
     setConfirmarEdicion(false);
 
   } catch (error) {
-    // 🔴 Si cualquiera de las peticiones de arriba falla, cae aquí automáticamente
     console.error("Error en el proceso de actualización:", error);
-    
-    // Aquí puedes setear un estado de error para avisarle al usuario en la UI
-    // Ej: registrarErrorVisual(error.message);
   }
 };
 

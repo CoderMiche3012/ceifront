@@ -44,7 +44,6 @@ export default function ModalFormularioCarta({
             </button>
           </div>
 
-          {/* BODY: Implementando los componentes UI globales */}
           <div className={ui.modal.formBody}>
             {alerta && (
               <Alerta
@@ -87,7 +86,6 @@ export default function ModalFormularioCarta({
                 </Field>
 
                 <div className="md:col-span-2">
-                  {/* Observaciones (Mismo textarea con clases unificadas) */}
                   <Field label="Observaciones">
                     <textarea
                       rows={4}
@@ -106,7 +104,6 @@ export default function ModalFormularioCarta({
               </div>
             </div>
 
-            {/* FOOTER: Botones reutilizables <Boton /> */}
             <div className={ui.modal.formActions}>
               <Boton
                 variant="secondary"

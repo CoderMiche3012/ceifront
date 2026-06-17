@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   Camera,
   Plus,
@@ -11,13 +11,30 @@ import {
   Trash2,
 } from "lucide-react";
 
-import {
-  useSubirFotografia,
-  useEliminarFotografia,
-} from "../../../expedientes/hooks/useFotografias";
+import { useSubirFotografia, useEliminarFotografia } from "../../../expedientes/hooks/useFotografias";
+import { ui } from "../../../../styles/ui/uiClasses";
+import Input from "../../../../components/ui/Input";
+import Field from "../../../../components/ui/Field";
+import Boton from "../../../../components/ui/Boton";
+import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
+import ModalResultado from "../../../../components/shared/ModalResultado";
+import { usePermissions } from "../../../../context/PermissionsContext";
 
 export default function FotosCard({ data }) {
+
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canEditPostulante = hasModulePermission("postulantes", "editar");
+  const [showModal, setShowModal] = useState(false);
   const id_expediente = data?.id_expediente;
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const [resultado, setResultado] = useState({
+    open: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
 
   const { mutateAsync: subirFoto } = useSubirFotografia(id_expediente);
   const { mutateAsync: eliminarFoto } = useEliminarFotografia(id_expediente);
@@ -30,9 +47,16 @@ export default function FotosCard({ data }) {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 🔥 MODAL
   const [modal, setModal] = useState(null);
+  useEffect(() => {
+    if (index >= fotos.length && fotos.length > 0) {
+      setIndex(fotos.length - 1);
+    }
 
+    if (fotos.length === 0) {
+      setIndex(0);
+    }
+  }, [fotos.length, index]);
   const seleccionar = () => inputRef.current?.click();
 
   const onFile = (e) => {
@@ -40,16 +64,34 @@ export default function FotosCard({ data }) {
     if (!file) return;
     setPreview(file);
   };
-
+  const cerrarResultado = () => {
+    setResultado((prev) => ({
+      ...prev,
+      open: false,
+    }));
+  };
   const cancelar = () => {
     setPreview(null);
     setDescripcion("");
-    inputRef.current.value = null;
+    setShowModal(false);
+
+    if (inputRef.current) {
+      inputRef.current.value = null;
+    }
   };
 
   const confirmarSubida = async () => {
     if (!preview) return;
-    if (!descripcion.trim()) return alert("Escribe una descripción");
+
+    if (!descripcion.trim()) {
+      setResultado({
+        open: true,
+        type: "error",
+        title: "Descripción requerida",
+        message: "Debes capturar una descripción para la fotografía.",
+      });
+      return;
+    }
 
     try {
       setLoading(true);
@@ -63,8 +105,26 @@ export default function FotosCard({ data }) {
       await subirFoto(formData);
 
       cancelar();
+
+      setResultado({
+        open: true,
+        type: "success",
+        title: "Fotografía guardada",
+        message: "La fotografía se guardó correctamente.",
+      });
     } catch (error) {
-      console.error(error);
+      const mensaje =
+        error?.errors?.foto_archivo?.[0] ||
+        error?.original?.response?.data?.foto_archivo?.[0] ||
+        error?.message ||
+        "Error al subir fotografía";
+
+      setResultado({
+        open: true,
+        type: "error",
+        title: "Error",
+        message: mensaje,
+      });
     } finally {
       setLoading(false);
     }
@@ -74,13 +134,29 @@ export default function FotosCard({ data }) {
   const eliminar = async () => {
     try {
       const foto = modal?.fotos?.[modal?.index];
+
       if (!foto) return;
 
       await eliminarFoto(foto.id_foto);
 
+      setShowDeleteConfirm(false);
       setModal(null);
+
+      setResultado({
+        open: true,
+        type: "success",
+        title: "Fotografía eliminada",
+        message: "La fotografía se eliminó correctamente.",
+      });
     } catch (e) {
-      console.error(e);
+      setShowDeleteConfirm(false);
+
+      setResultado({
+        open: true,
+        type: "error",
+        title: "Error",
+        message: "No fue posible eliminar la fotografía.",
+      });
     }
   };
 
@@ -103,13 +179,14 @@ export default function FotosCard({ data }) {
           <Camera size={18} />
           Fotos del expediente
         </h3>
-
-        <button
-          onClick={seleccionar}
-          className="h-9 w-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center"
-        >
-          <Plus size={16} />
-        </button>
+        {canEditPostulante && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="h-9 w-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center"
+          >
+            <Plus size={16} />
+          </button>
+        )}
       </div>
 
       {/* VIEWER */}
@@ -158,49 +235,100 @@ export default function FotosCard({ data }) {
         )}
       </div>
 
-      {/* FORM */}
-      {preview && (
-        <div className="space-y-3 pt-2 border-t border-slate-100">
+      {showModal && (
+        <div className={ui.modal.formOverlay}>
+          <div className="w-full max-w-2xl">
+            <div className={ui.modal.formContainer}>
 
-          <input
-            type="text"
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
-            placeholder="Descripción..."
-            className="w-full border rounded-xl px-3 py-2 text-sm"
-          />
+              <div className={ui.modal.formHeader}>
+                <div
+                  className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}
+                >
+                  <Camera size={24} />
+                </div>
 
-          <div className="flex gap-2">
-            <button
-              onClick={confirmarSubida}
-              disabled={loading}
-              className="flex-1 bg-teal-600 text-white rounded-xl h-10"
-            >
-              {loading ? (
-                <Loader2 className="animate-spin mx-auto" size={16} />
-              ) : (
-                "Subir foto"
-              )}
-            </button>
+                <div className="flex-1">
+                  <h2 className={ui.modal.title}>
+                    Agregar Fotografía
+                  </h2>
 
-            <button
-              onClick={cancelar}
-              className="bg-slate-100 px-4 rounded-xl"
-            >
-              Cancelar
-            </button>
+                  <p className={ui.modal.description}>
+                    Adjunta una fotografía al expediente
+                  </p>
+                </div>
+
+                <button
+                  onClick={cancelar}
+                  className="p-2 rounded-xl hover:bg-slate-100"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className={ui.modal.formBody}>
+                <div className={ui.modal.formScroll}>
+                  <div className="space-y-6">
+
+                    {!preview ? (
+                      <button
+                        onClick={seleccionar}
+                        className="
+                            w-full border-2 border-dashed border-slate-300 rounded-2xl p-12 text-slate-500
+                            hover:border-teal-500 hover:text-teal-600 transition
+                          "
+                      >
+                        Seleccionar fotografía
+                      </button>
+                    ) : (
+                      <img
+                        src={URL.createObjectURL(preview)}
+                        alt=""
+                        className="w-full h-72 object-cover rounded-2xl border"
+                      />
+                    )}
+                    <Field label="Descripción">
+
+                      <Input
+                        value={descripcion}
+                        onChange={(e) => setDescripcion(e.target.value)}
+                        placeholder="Descripción"
+                      />
+                    </Field>
+                  </div>
+                </div>
+
+                <div className={ui.modal.formActions}>
+                  <Boton
+                    variant="secondary"
+                    onClick={cancelar}
+                  >
+                    Cancelar
+                  </Boton>
+
+                  <Boton
+                    onClick={() => setShowConfirm(true)}
+
+                    disabled={!preview || loading}
+                  >
+                    {loading ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      "Guardar Fotografía"
+                    )}
+                  </Boton>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
       )}
 
-      {/* INPUT */}
       <input ref={inputRef} type="file" hidden onChange={onFile} />
 
-      {/* MODAL */}
       {modal && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center">
 
-          {/* cerrar */}
           <button
             onClick={() => setModal(null)}
             className="absolute top-4 right-4 text-white"
@@ -208,21 +336,20 @@ export default function FotosCard({ data }) {
             <X />
           </button>
 
-          {/* eliminar */}
-          <button
-            onClick={eliminar}
-            className="absolute top-4 right-16 text-red-400"
-          >
-            <Trash2 />
-          </button>
+          {canEditPostulante && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="absolute top-4 right-16 text-red-400"
+            >
+              <Trash2 />
 
-          {/* imagen */}
+            </button>
+          )}
           <img
-            src={modal.fotos[modal.index].foto_archivo}
+            src={modal?.fotos?.[modal?.index]?.foto_archivo}
             className="max-h-[90vh] max-w-[90vw] object-contain rounded-xl"
           />
 
-          {/* nav modal */}
           {modal.fotos.length > 1 && (
             <>
               <button
@@ -253,6 +380,37 @@ export default function FotosCard({ data }) {
           )}
         </div>
       )}
+      <ModalConfirmacion
+        open={showConfirm}
+        title="Guardar fotografía"
+        description="¿Deseas guardar esta fotografía?"
+        confirmText="Guardar"
+        cancelText="Cancelar"
+        color="teal"
+        onClose={() => setShowConfirm(false)}
+        onConfirm={async () => {
+          setShowConfirm(false);
+          await confirmarSubida();
+        }}
+      />
+      <ModalConfirmacion
+        open={showDeleteConfirm}
+        title="Eliminar fotografía"
+        description="¿Deseas eliminar esta fotografía?"
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        color="red"
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={eliminar}
+      />
+      <ModalResultado
+        open={resultado.open}
+        type={resultado.type}
+        title={resultado.title}
+        message={resultado.message}
+        onClose={cerrarResultado}
+      />
     </div>
   );
 }
+

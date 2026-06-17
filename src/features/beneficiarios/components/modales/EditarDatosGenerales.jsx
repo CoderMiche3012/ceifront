@@ -23,14 +23,17 @@ import ModalResultado from "../../../../components/shared/ModalResultado";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 import { obtenerDireccionPorCP } from "../../../donadores/services/donadoresService";
 import { useBeneficiarioEditarForm } from "../../hooks/useBeneficiarioEditarForm";
+import { obtenerUsuario } from "../../../../storage/userStorage";
 
 export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose }) {
   const [step, setStep] = useState(1);
   const [colonias, setColonias] = useState([]);
   const [cpError, setCpError] = useState("");
   const [manualAddressMode, setManualAddressMode] = useState(false);
-
   const estadoEditable = manualAddressMode;
+
+  const usuarioActual = obtenerUsuario();
+  const puedeEditarNombre = usuarioActual?.esAdmin === true || usuarioActual?.esSuperUser === true;
 
   const {
     form,
@@ -51,7 +54,7 @@ export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose
     handleFinalClose
   } = useBeneficiarioEditarForm(open, data, onSuccess, onClose);
 
-  
+
   useEffect(() => {
     if (!open) {
       setStep(1);
@@ -62,15 +65,15 @@ export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose
     }
   }, [open, setCpEncontrado]);
   useEffect(() => {
-  if (
-    open &&
-    form.cp &&
-    form.colonia &&
-    colonias.length === 0
-  ) {
-    handleBuscarCP(form.cp);
-  }
-}, [open, form.cp]);
+    if (
+      open &&
+      form.cp &&
+      form.colonia &&
+      colonias.length === 0
+    ) {
+      handleBuscarCP(form.cp);
+    }
+  }, [open, form.cp]);
 
   if (!open) return null;
 
@@ -210,6 +213,7 @@ export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose
                     <div className={ui.modal.twoCols}>
                       <Field label="Nombre(s)" required error={fieldErrors.nombre}>
                         <InputG
+                          disabled={!puedeEditarNombre}
                           placeholder="Ej: Juan Antonio"
                           value={form.nombre}
                           onChange={(e) => updateField("nombre", e.target.value)}
@@ -219,6 +223,7 @@ export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose
 
                       <Field label="Apellido paterno" required error={fieldErrors.apellido_p}>
                         <InputG
+                          disabled={!puedeEditarNombre}
                           value={form.apellido_p}
                           onChange={(e) => updateField("apellido_p", e.target.value)}
                           error={!!fieldErrors.apellido_p}
@@ -227,6 +232,7 @@ export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose
 
                       <Field label="Apellido materno" error={fieldErrors.apellido_m}>
                         <InputG
+                          disabled={!puedeEditarNombre}
                           value={form.apellido_m}
                           onChange={(e) => updateField("apellido_m", e.target.value)}
                           error={!!fieldErrors.apellido_m}
@@ -264,6 +270,7 @@ export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose
 
                       <Field label="Fecha nacimiento" required error={fieldErrors.fecha_nacimiento}>
                         <InputG
+                          disabled={!puedeEditarNombre}
                           type="date"
                           value={form.fecha_nacimiento}
                           onChange={(e) => updateField("fecha_nacimiento", e.target.value)}
@@ -429,11 +436,9 @@ export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose
               )}
 
               {/* ================= STEP 3 ================= */}
-              
 
             </div>
 
-            {/* FOOTER */}
             <div className={ui.modal.formActions}>
 
               <Boton
@@ -462,7 +467,6 @@ export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose
         </div>
       </div>
 
-      {/* MODALES */}
       <ModalConfirmacion
         open={showConfirm}
         onClose={() => setShowConfirm(false)}
@@ -470,7 +474,22 @@ export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose
         title="Confirmar cambios"
         description="¿Deseas actualizar al beneficiario?"
       />
+      {loading && (
+        <div className="fixed inset-0 z-[9999] bg-black/30 flex items-center justify-center">
+          <div className="bg-white rounded-2xl px-8 py-6 shadow-xl flex flex-col items-center gap-4">
+            <div className="h-10 w-10 border-4 border-[#0E5F63] border-t-transparent rounded-full animate-spin" />
 
+            <div className="text-center">
+              <h3 className="font-semibold text-slate-800">
+                Editando beneficiario...
+              </h3>
+              <p className="text-sm text-slate-500">
+                Esto puede tardar unos segundos.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <ModalResultado
         open={resultModal.open}
         type={resultModal.type}

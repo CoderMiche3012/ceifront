@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { formatErrorAnidado } from "../../../utils/errorHandlers";
-import {useCrearBeneficiario} from "../hooks/useBeneficiarios";
+import { useCrearBeneficiario } from "../hooks/useBeneficiarios";
+import { normalizeName } from "../../../utils/normalizeName";
 
 export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
 
@@ -215,9 +216,9 @@ export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
         fecha_ingreso: form.fecha_ingreso,
         notas: "",
         expediente: {
-          nombre: form.nombre,
-          apellido_p: form.apellido_p,
-          apellido_m: form.apellido_m,
+          nombre: normalizeName(form.nombre),
+          apellido_p: normalizeName(form.apellido_p),
+          apellido_m: normalizeName(form.apellido_m),
           fecha_nacimiento: form.fecha_nacimiento,
           telefono: form.telefono,
           genero: form.genero,
@@ -293,7 +294,7 @@ export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
       if (Object.keys(parsedErrors).length > 0) {
         setFieldErrors(parsedErrors);
         setError(null);
-        return; 
+        return;
       }
 
       setResultModal({
@@ -324,11 +325,8 @@ export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
       setFieldErrors({});
       setError(null);
       setShowConfirm(false);
-      onSuccess?.(); // Notifica la actualización de la lista en segundo plano
+      onSuccess?.(); 
     }
-
-    // Sacamos esto de la condicional para asegurar que ante cualquier 
-    // cierre del ModalResultado, la ventana de creación también se destruya.
     onClose?.();
   };
 
@@ -339,10 +337,10 @@ export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
     fieldErrors,
     error,
     loading,
-    loadingCP,// checar
-    cpEncontrado,// checar
-    setLoadingCP,// chercar
-    setCpEncontrado,//c
+    loadingCP,
+    cpEncontrado,
+    setLoadingCP,
+    setCpEncontrado,
     showConfirm,
     setShowConfirm,
     resultModal,

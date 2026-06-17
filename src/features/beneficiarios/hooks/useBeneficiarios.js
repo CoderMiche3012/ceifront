@@ -15,7 +15,6 @@ import {
 import { beneficiariosKeys } from "../services/beneficiariosKeys";
 import { expedientesKeys } from "../../expedientes/services/expedientesKeys";
 
-
 // obtener beneficiarios
 export function useBeneficiarios(periodo) {
   return useQuery({

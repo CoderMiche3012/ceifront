@@ -7,29 +7,51 @@ export default function TabsExpediente({ tab, setTab }) {
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
   const canViewFamilia = hasModulePermission("familia", "ver");
   const canViewObligaciones = hasModulePermission("obligaciones", "ver");
+  const canViewFotografias = hasModulePermission("fotografias", "ver");
+  const canViewDocumentos = hasModulePermission("documentos", "ver");
+  const canViewEstudio = hasModulePermission("postulantes", "ver");
+  const canViewApoyos = hasModulePermission("apoyos", "ver");
+  const canViewServicios = hasModulePermission("servicios", "ver");
+  const canViewEscuela= hasModulePermission("datos_escolares", "ver");
 
   const tabs = [
-  { id: "generales", label: "Datos generales" },
+    { id: "generales", label: "Datos generales" },
 
-  ...(canViewFamilia
-    ? [{ id: "familia", label: "Familia" }]
-    : []),
+    ...(canViewFamilia
+      ? [{ id: "familia", label: "Familia" }]
+      : []),
 
-  { id: "escuela", label: "Escuela" },
+    ...(canViewEscuela
+      ? [{ id: "escuela", label: "Escuela" }]
+      : []),
 
-  ...(canViewObligaciones
-    ? [{ id: "obligaciones", label: "Obligaciones" }]
-    : []),
+    ...(canViewObligaciones
+      ? [{ id: "obligaciones", label: "Obligaciones" }]
+      : []),
 
-  { id: "fotografias", label: "Fotografias" },
-  { id: "documentos", label: "Documentos" },
-  { id: "estudio", label: "Estudio Socioeconomico" },
-];
+    ...(canViewFotografias
+      ? [{ id: "fotografias", label: "Fotografías" }]
+      : []),
+
+    ...(canViewDocumentos
+      ? [{ id: "documentos", label: "Documentos" }]
+      : []),
+
+    ...(canViewEstudio
+      ? [{ id: "estudio", label: "Estudio Socioeconómico" }]
+      : []),
+  ];
 
   const beneficiosTabs = [
-    { id: "apoyos", label: "Reembolsos" },
-    { id: "asistencias", label: "Comedor y psicología" },
+    ...(canViewApoyos
+      ? [{ id: "apoyos", label: "Reembolsos" }]
+      : []),
+
+    ...(canViewServicios
+      ? [{ id: "asistencias", label: "Comedor y psicología" }]
+      : []),
   ];
+const canViewBeneficios = beneficiosTabs.length > 0;
 
   const beneficiosActivo = beneficiosTabs.some((b) => b.id === tab);
 
@@ -46,8 +68,8 @@ export default function TabsExpediente({ tab, setTab }) {
             aria-selected={active}
             onClick={() => setTab(t.id)}
             className={`relative pb-3 text-sm font-semibold transition-all duration-200 ${active
-                ? "text-teal-600"
-                : "text-slate-500 hover:text-slate-700"
+              ? "text-teal-600"
+              : "text-slate-500 hover:text-slate-700"
               }`}
           >
             {t.label}
@@ -60,12 +82,13 @@ export default function TabsExpediente({ tab, setTab }) {
       })}
 
       {/* Beneficios con submenu */}
+      {canViewBeneficios && (
       <div className="relative">
         <button
           onClick={() => setOpenBeneficios(!openBeneficios)}
           className={`relative pb-3 flex items-center gap-1 text-sm font-semibold transition-all duration-200 ${beneficiosActivo
-              ? "text-teal-600"
-              : "text-slate-500 hover:text-slate-700"
+            ? "text-teal-600"
+            : "text-slate-500 hover:text-slate-700"
             }`}
         >
           Beneficios
@@ -94,8 +117,8 @@ export default function TabsExpediente({ tab, setTab }) {
                     setOpenBeneficios(false);
                   }}
                   className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${active
-                      ? "bg-teal-50 text-teal-700"
-                      : "text-slate-600 hover:bg-slate-50"
+                    ? "bg-teal-50 text-teal-700"
+                    : "text-slate-600 hover:bg-slate-50"
                     }`}
                 >
                   {item.label}
@@ -105,6 +128,7 @@ export default function TabsExpediente({ tab, setTab }) {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

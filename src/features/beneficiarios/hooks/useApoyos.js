@@ -1,14 +1,12 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { eliminarApoyo , actualizarApoyo ,obtenerApoyos,obtenerApoyo,crearApoyo   } from "../services/apoyosService";
+import { eliminarApoyo, actualizarApoyo, obtenerApoyos, obtenerApoyo, crearApoyo } from "../services/apoyosService";
+
 import { apoyoKeys } from "./../services/apoyoKeys";
 import { beneficiariosKeys } from "./../services/beneficiariosKeys";
 import { expedientesKeys } from "./../../expedientes/services/expedientesKeys";
 import { seguimientosKeys } from "../services/seguimientosKeys";
+
 export const useApoyos = () => {
   return useQuery({
     queryKey: apoyoKeys.lists(),
@@ -16,6 +14,7 @@ export const useApoyos = () => {
     staleTime: 1000 * 60 * 5,
   });
 };
+
 export const useApoyo = (id) => {
   return useQuery({
     queryKey: apoyoKeys.detail(id),

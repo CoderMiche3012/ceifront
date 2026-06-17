@@ -20,6 +20,13 @@ export default function BeneficiarioTabla({ beneficiarios = [], periodo }) {
     const [menuData, setMenuData] = useState({ id: null, top: 0, right: 0, haciaArriba: false });
     const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
     const canViewFamilia = hasModulePermission("familia", "ver");
+    const canViewObligaciones = hasModulePermission("obligaciones", "ver");
+    const canViewFotografias = hasModulePermission("fotografias", "ver");
+    const canViewDocumentos = hasModulePermission("documentos", "ver");
+    const canViewEstudio = hasModulePermission("postulantes", "ver");
+    const canViewApoyos = hasModulePermission("apoyos", "ver");
+    const canViewServicios = hasModulePermission("servicios", "ver");
+    const canViewEscuela = hasModulePermission("datos_escolares", "ver");
 
     const calcularEdad = (fechaNacimiento) => {
         if (!fechaNacimiento) return "--";
@@ -167,7 +174,7 @@ export default function BeneficiarioTabla({ beneficiarios = [], periodo }) {
                                         <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                             Información Base
                                         </div>
-                                        {canViewFamilia &&(
+                                        {canViewFamilia && (
                                             <button
                                                 onClick={() => irASeccion(item.id_beneficiario, "familia")}
                                                 className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
@@ -176,64 +183,76 @@ export default function BeneficiarioTabla({ beneficiarios = [], periodo }) {
                                                 Familia
                                             </button>
                                         )}
-                                        <button
-                                            onClick={() => irASeccion(item.id_beneficiario, "estudio")}
-                                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                                        >
-                                            <FileText size={14} className="text-teal-600" />
-                                            Estudio Socioeconómico
-                                        </button>
-
+                                        {canViewEstudio && (
+                                            <button
+                                                onClick={() => irASeccion(item.id_beneficiario, "estudio")}
+                                                className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                                            >
+                                                <FileText size={14} className="text-teal-600" />
+                                                Estudio Socioeconómico
+                                            </button>
+                                        )}
                                         <hr className="my-1 border-slate-100" />
 
                                         {/* SECCIÓN 2: SEGUIMIENTO PERMANENTE */}
                                         <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                             Seguimiento
                                         </div>
-                                        <button
-                                            onClick={() => irASeccion(item.id_beneficiario, "escuela")}
-                                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                                        >
-                                            <GraduationCap size={14} className="text-teal-600" />
-                                            Escuela
-                                        </button>
-                                        <button
-                                            onClick={() => irASeccion(item.id_beneficiario, "obligaciones")}
-                                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                                        >
-                                            <HeartHandshake size={14} className="text-teal-600" />
-                                            Obligaciones
-                                        </button>
-                                        <button
-                                            onClick={() => irASeccion(item.id_beneficiario, "fotografias")}
-                                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                                        >
-                                            <Camera size={14} className="text-teal-600" />
-                                            Fotografías
-                                        </button>
-                                        <button
-                                            onClick={() => irASeccion(item.id_beneficiario, "documentos")}
-                                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                                        >
-                                            <Folder size={14} className="text-teal-600" />
-                                            Documentos
-                                        </button>
+                                        {canViewEscuela && (
+                                            <button
+                                                onClick={() => irASeccion(item.id_beneficiario, "escuela")}
+                                                className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                                            >
+                                                <GraduationCap size={14} className="text-teal-600" />
+                                                Escuela
+                                            </button>
+                                        )}
+                                        {canViewObligaciones && (
+                                            <button
+                                                onClick={() => irASeccion(item.id_beneficiario, "obligaciones")}
+                                                className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                                            >
+                                                <HeartHandshake size={14} className="text-teal-600" />
+                                                Obligaciones
+                                            </button>
+                                        )}
+                                        {canViewFotografias && (
+                                            <button
+                                                onClick={() => irASeccion(item.id_beneficiario, "fotografias")}
+                                                className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                                            >
+                                                <Camera size={14} className="text-teal-600" />
+                                                Fotografías
+                                            </button>
+                                        )}
+                                        {canViewDocumentos && (
+                                            <button
+                                                onClick={() => irASeccion(item.id_beneficiario, "documentos")}
+                                                className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                                            >
+                                                <Folder size={14} className="text-teal-600" />
+                                                Documentos
+                                            </button>
+                                        )}
+                                        {canViewApoyos && (
 
-
-                                        <button
-                                            onClick={() => irASeccion(item.id_beneficiario, "apoyos")}
-                                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                                        >
-                                            <Coins size={14} className="text-teal-600" />
-                                            Reembolsos
-                                        </button>
-                                        <button
-                                            onClick={() => irASeccion(item.id_beneficiario, "asistencias")}
-                                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                                        >
-                                            <Utensils size={14} className="text-teal-600" />
-                                            Comedor y psicología
-                                        </button>
+                                            <button
+                                                onClick={() => irASeccion(item.id_beneficiario, "apoyos")}
+                                                className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                                            >
+                                                <Coins size={14} className="text-teal-600" />
+                                                Reembolsos
+                                            </button>
+                                        )}
+                                        {canViewServicios && (
+                                            <button
+                                                onClick={() => irASeccion(item.id_beneficiario, "asistencias")}
+                                                className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                                            >
+                                                <Utensils size={14} className="text-teal-600" />
+                                                Comedor y psicología
+                                            </button>
+                                        )}
                                     </div>
                                 </>
                             )}

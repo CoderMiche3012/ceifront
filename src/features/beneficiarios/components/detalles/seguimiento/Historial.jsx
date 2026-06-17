@@ -6,10 +6,10 @@ export default function HistorialBase({
   items = [],
   periodos = [],
   periodoActivo,
-  renderTitulo,     // 👈 cambia texto principal
-  renderSubtitulo,  // 👈 cambia nivel/grado/etc
-  renderMeta,       // 👈 derecha (promedio, cantidad, etc)
-  renderDetalle,    // 👈 panel expandible
+  renderTitulo,     
+  renderSubtitulo,  
+  renderMeta,      
+  renderDetalle,   
 }) {
   const [abierto, setAbierto] = useState(null);
 
@@ -64,7 +64,6 @@ export default function HistorialBase({
                 onClick={() => toggle(item.id_seguimiento)}
                 className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 hover:bg-slate-50 transition cursor-pointer"
               >
-                {/* IZQUIERDA */}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-teal-100 text-teal-600">
                     <BookOpen size={18} />
@@ -83,7 +82,6 @@ export default function HistorialBase({
                   </div>
                 </div>
 
-                {/* DERECHA */}
                 <div className="flex items-center gap-3">
                   {renderMeta?.(item)}
 

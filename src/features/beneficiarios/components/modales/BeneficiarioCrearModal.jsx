@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { HiOutlineUser, HiUserGroup, HiPlus,HiTrash, HiOutlineArrowLeft, HiOutlineSearch} from "react-icons/hi";
+import { HiOutlineUser, HiUserGroup, HiPlus, HiTrash, HiOutlineArrowLeft, HiOutlineSearch } from "react-icons/hi";
 import { ui } from "../../../../styles/ui/index";
 import Select from "../../../../components/ui/Select";
 
@@ -29,10 +29,10 @@ export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
     handleChange,
     fieldErrors,
     loading,
-    loadingCP,// checar
-    cpEncontrado,// checar
-    setLoadingCP,// chercar
-    setCpEncontrado,//c
+    loadingCP,
+    cpEncontrado,
+    setLoadingCP,
+    setCpEncontrado,
     error,
     showConfirm,
     setShowConfirm,
@@ -42,7 +42,6 @@ export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
     handleFinalClose
   } = useBeneficiarioCrearForm(onSuccess, onClose);
 
-  // reestablece todos los estados a su punto original
   useEffect(() => {
     if (!open) {
       setStep(1);
@@ -56,6 +55,7 @@ export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
       setCpEncontrado(false);
     }
   }, [open, setCpEncontrado]);
+
   if (!open) return null;
 
   const handleBackdropClick = (e) => {
@@ -183,7 +183,7 @@ export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
                       <div
                         className={`h-1 w-5 rounded-full ${step === 3 ? "bg-[#0E5F63]" : "bg-slate-200"}`}
                       />
-                      
+
                     </div>
                   </div>
 
@@ -467,7 +467,7 @@ export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
                   </div>
                 </div>
               )}
-              
+
               {step === 3 && (
                 <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                   {/* Sección: Educación */}
@@ -567,13 +567,9 @@ export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
                 </div>
               )}
             </div>
-
-
-            {/* Footer */}
-            {/* Footer */}
             <div className={ui.modal.formActions}>
               <Boton
-                type="button" // Evita comportamientos extraños
+                type="button"
                 variant="secondary"
                 onClick={() => {
                   if (step === 1) onClose();
@@ -584,12 +580,12 @@ export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
               </Boton>
 
               <Boton
-                type="button" // Cambiado de submit implícito a botón controlado
+                type="button"
                 onClick={() => {
                   if (step < 3) {
                     setStep(step + 1);
                   } else {
-                    handlePreSubmit(); // Controla la confirmación manualmente
+                    handlePreSubmit();
                   }
                 }}
                 disabled={loading}
@@ -612,7 +608,22 @@ export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
         title="¿Confirmar Registro?"
         message="Se creará el beneficiario scorrespondiente."
       />
+      {loading && (
+        <div className="fixed inset-0 z-[9999] bg-black/30 flex items-center justify-center">
+          <div className="bg-white rounded-2xl px-8 py-6 shadow-xl flex flex-col items-center gap-4">
+            <div className="h-10 w-10 border-4 border-[#0E5F63] border-t-transparent rounded-full animate-spin" />
 
+            <div className="text-center">
+              <h3 className="font-semibold text-slate-800">
+                Registrando Beneficiario...
+              </h3>
+              <p className="text-sm text-slate-500">
+                Esto puede tardar unos segundos.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <ModalResultado
         open={resultModal.open}
         type={resultModal.type}
@@ -620,10 +631,10 @@ export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
         message={resultModal.message}
         onClose={() => {
           if (resultModal.type === "success") {
-            setStep(1); // Regresa al paso 1 para la próxima vez
+            setStep(1);
           }
-          handleFinalClose(); // Ejecuta la limpieza del formulario y llama a onSuccess / onClose
-          onClose(); // <-- Sincronización manual: Garantiza que el padre entere el cierre
+          handleFinalClose();
+          onClose();
         }}
       />
     </>
@@ -633,4 +644,3 @@ export default function BeneficiarioCrearModal({ open, onClose, onSuccess }) {
 
 
 
- 

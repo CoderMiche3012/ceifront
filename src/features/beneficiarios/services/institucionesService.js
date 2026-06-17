@@ -8,7 +8,6 @@ export const obtenerInstituciones = async () => {
     const res = await API.get(`${BASE_URL}`);
     return res.data;
   } catch (error) {
-    console.log(error)
     const errorData = error.response?.data || error;
     if (errorData) {
       throw new Error(formatError(errorData));
@@ -22,7 +21,6 @@ export const obtenerInstitucion = async (id) => {
     const res = await API.get(`${BASE_URL}/${id}/`);
     return res.data;
   } catch (error) {
-    console.log(error)
     const errorData = error.response?.data || error;
     if (errorData) {
       throw new Error(formatError(errorData));
@@ -30,13 +28,12 @@ export const obtenerInstitucion = async (id) => {
     throw new Error(formatError(error.message));
   }
 };
-//crear periodos
+
 export const crearInstitucion = async (payload) => {
   try {
     const res = await API.post(`${BASE_URL}/`, payload);
     return res.data;
   } catch (error) {
-    console.log(error)
     const errorData = error.response?.data || error;
     if (errorData) {
       throw new Error(formatError(errorData));
@@ -45,20 +42,15 @@ export const crearInstitucion = async (payload) => {
   }
 };
 
-//editar o desactivar periodo
 export const actualizarInstitucion = async (id, payload) => {
   try {
     const res = await API.put(`${BASE_URL}/${id}/`, payload);
     return res.data;
   } catch (error) {
-    console.log(error)
-    // Extraemos la data del error de Axios
     const errorData = error.response?.data || error;
-
     if (errorData) {
       throw new Error(formatError(errorData));
     }
-
     throw new Error(formatError(error.message));
   }
 };

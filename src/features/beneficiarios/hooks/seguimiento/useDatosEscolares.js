@@ -5,16 +5,13 @@ import { useCrearDatosEscolares, useActualizarDatosEscolares, } from "../../hook
 import { obtenerInstituciones, crearInstitucion, } from "../../services/institucionesService";
 import { obtenerMunicipios } from "../../services/municipiosService";
 
-export default function useDatosEscolares(
-  id_seguimiento,
-  datosIniciales
-) {
+export default function useDatosEscolares(id_seguimiento, datosIniciales) {
+
   const queryClient = useQueryClient();
   const crearDatosEscolares = useCrearDatosEscolares();
   const actualizarDatosEscolares = useActualizarDatosEscolares();
 
-  const esEdicion =
-    !!datosIniciales?.id_datos_escolares;
+  const esEdicion = !!datosIniciales?.id_datos_escolares;
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,25 +25,11 @@ export default function useDatosEscolares(
     nivel_educativo: "",
   });
 
-  const [institucionSeleccionada,
-    setInstitucionSeleccionada] =
-    useState(null);
-
+  const [institucionSeleccionada, setInstitucionSeleccionada] = useState(null);
   const [busqueda, setBusqueda] = useState("");
-
-  const [mostrarResultados,
-    setMostrarResultados] =
-    useState(false);
-
-  const [crearModo, setCrearModo] =
-    useState(false);
-
-  const [nuevaEscuela,
-    setNuevaEscuela] = useState({
-      nombre: "",
-      municipio_escuela: "",
-    });
-
+  const [mostrarResultados, setMostrarResultados] = useState(false);
+  const [crearModo, setCrearModo] = useState(false);
+  const [nuevaEscuela, setNuevaEscuela] = useState({ nombre: "", municipio_escuela: "", });
   const refEscuela = useRef();
 
   const { data: instituciones = [] } =
@@ -54,6 +37,7 @@ export default function useDatosEscolares(
       queryKey: ["instituciones"],
       queryFn: obtenerInstituciones,
     });
+
   const { data: municipios = [] } = useQuery({
     queryKey: ["municipios"],
     queryFn: obtenerMunicipios,
@@ -65,12 +49,8 @@ export default function useDatosEscolares(
     if (!b) return instituciones;
 
     return instituciones.filter((i) => {
-      const nombre =
-        i.nombre?.toLowerCase() || "";
-
-
-      const municipio =
-        i.municipio_escuela?.nombre?.toLowerCase() || "";
+      const nombre = i.nombre?.toLowerCase() || "";
+      const municipio = i.municipio_escuela?.nombre?.toLowerCase() || "";
 
       return (
         nombre.includes(b) ||
@@ -119,40 +99,28 @@ export default function useDatosEscolares(
         municipio_escuela: municipioId,
       };
       const nueva = await crearInstitucion(payload);
-
-      // ... resto del código (actualizar caché, etc)
       queryClient.setQueryData(["instituciones"], (old = []) => [nueva, ...old]);
-
       setInstitucionSeleccionada(nueva);
-
       const municipio = obtenerNombreMunicipio(nueva);
-
       setBusqueda(
         municipio
           ? `${nueva.nombre} - ${municipio}`
           : nueva.nombre
       );
+      setMostrarResultados(false);
       setCrearModo(false);
-      setNuevaEscuela({ nombre: "", municipio_escuela: "" }); // Resetear
-      setError(""); // Limpiar errores previos
+      setNuevaEscuela({ nombre: "", municipio_escuela: "" });
+      setError("");
 
     } catch (err) {
-      console.error("Error al crear:", err);
       setError(err.message || "Error al conectar con el servidor");
     }
   };
 
   useEffect(() => {
     if (datosIniciales) {
-
-      const escolaridadId =
-        datosIniciales.id_escolaridad?.id_escolaridad;
-
-      const escolaridad =
-        gradosMock.find(
-          (g) => g.id === escolaridadId
-        );
-
+      const escolaridadId = datosIniciales.id_escolaridad?.id_escolaridad;
+      const escolaridad = gradosMock.find((g) => g.id === escolaridadId);
       let nivelEducativo = "";
 
       if (
@@ -177,33 +145,19 @@ export default function useDatosEscolares(
       }
 
       setForm({
-        grupo:
-          datosIniciales.grupo || "",
-
-        turno:
-          datosIniciales.turno?.toUpperCase() || "",
-
-        modalidad_educativa:
-          datosIniciales.modalidad_educativa?.toUpperCase() || "",
-
-        especialidad:
-          datosIniciales.especialidad || "",
-
-        id_escolaridad:
-          escolaridadId || "",
-
-        nivel_educativo:
-          nivelEducativo,
+        grupo: datosIniciales.grupo || "",
+        turno: datosIniciales.turno?.toUpperCase() || "",
+        modalidad_educativa: datosIniciales.modalidad_educativa?.toUpperCase() || "",
+        especialidad: datosIniciales.especialidad || "",
+        id_escolaridad: escolaridadId || "",
+        nivel_educativo: nivelEducativo,
       });
 
       if (datosIniciales.id_institucion) {
         const inst = {
-          id_institucion:
-            datosIniciales.id_institucion.id_institucion,
-          nombre:
-            datosIniciales.id_institucion.nombre,
-          municipio_escuela:
-            datosIniciales.id_institucion.municipio_escuela,
+          id_institucion: datosIniciales.id_institucion.id_institucion,
+          nombre: datosIniciales.id_institucion.nombre,
+          municipio_escuela: datosIniciales.id_institucion.municipio_escuela,
         };
 
         setInstitucionSeleccionada(inst);
@@ -356,10 +310,7 @@ export default function useDatosEscolares(
     if (!form.nivel_educativo)
       return [];
 
-    const nivelesPermitidos =
-      nivelesEducativos[
-      form.nivel_educativo
-      ] || [];
+    const nivelesPermitidos = nivelesEducativos[form.nivel_educativo] || [];
 
     return gradosMock.filter((g) =>
       nivelesPermitidos.includes(
@@ -374,19 +325,13 @@ export default function useDatosEscolares(
         g.id === form.id_escolaridad
     )?.nivel;
 
-  const mostrarEspecialidad =
-    form.nivel_educativo ===
-    "MEDIA_SUPERIOR" ||
-    form.nivel_educativo ===
-    "SUPERIOR";
+  const mostrarEspecialidad = form.nivel_educativo === "MEDIA_SUPERIOR" ||  form.nivel_educativo === "SUPERIOR";
 
-  const tieneBoletas =
-    datosIniciales?.boletas?.length > 0;
+  const tieneBoletas = datosIniciales?.boletas?.length > 0;
 
   useEffect(() => {
     if (
-      form.nivel_educativo ===
-      "BASICA"
+      form.nivel_educativo === "BASICA"
     ) {
       setForm((prev) => ({
         ...prev,
@@ -396,13 +341,7 @@ export default function useDatosEscolares(
       }));
     }
 
-    if (
-      form.nivel_educativo ===
-      "MEDIA_SUPERIOR" ||
-
-      form.nivel_educativo ===
-      "SUPERIOR"
-    ) {
+    if (form.nivel_educativo === "MEDIA_SUPERIOR" || form.nivel_educativo ===  "SUPERIOR" ) {
       setForm((prev) => ({
         ...prev,
         modalidad_educativa:
@@ -425,11 +364,11 @@ export default function useDatosEscolares(
       setError("");
 
       if (!institucionSeleccionada) {
-        throw new Error("Selecciona una escuela");
+        throw new Error("Selecciona una escuela valida");
       }
 
       if (!form.id_escolaridad) {
-        throw new Error("Selecciona escolaridad");
+        throw new Error("Selecciona escolaridad valida");
       }
 
       if (mostrarEspecialidad && !form.especialidad) {
@@ -445,24 +384,17 @@ export default function useDatosEscolares(
       };
 
       let result;
-
-      // =========================
-      // EDITAR
-      // =========================
+      // editar
       if (esEdicion) {
         result = await actualizarDatosEscolares.mutateAsync({
           id: datosIniciales.id_datos_escolares,
           data: payload,
         });
       }
-
-      // =========================
-      // CREAR
-      // =========================
+      // crear
       else {
         result = await crearDatosEscolares.mutateAsync(payload);
       }
-
       return true;
     } catch (err) {
       console.log(err);
@@ -478,13 +410,10 @@ export default function useDatosEscolares(
     form,
     setForm,
     handleChange,
-
     // estados
     error,
     loading,
     tieneBoletas,
-
-
     // escuela
     busqueda,
     setBusqueda,
@@ -501,12 +430,13 @@ export default function useDatosEscolares(
     refEscuela,
     institucionSeleccionada,
     obtenerNombreMunicipio,
-    gradosMock:
-      gradosFiltrados,
+    gradosMock: gradosFiltrados,
     mostrarEspecialidad,
     handleSubmit,
     municipios,
 
   };
 }
+
+
 
