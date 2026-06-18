@@ -7,7 +7,6 @@ export const generarSemanasLaborales = (fechaInicio, fechaFin) => {
   const semanas = [];
   let actual = new Date(inicioPeriodo);
 
-  // NORMALIZACIÓN: Ir al lunes de la semana donde cae la fecha de inicio
   const diaSemana = actual.getDay(); // 0 es domingo, 1 lunes...
   const diffAlLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
   actual.setDate(actual.getDate() + diffAlLunes);

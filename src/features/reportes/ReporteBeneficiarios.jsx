@@ -44,7 +44,7 @@ export default function ReporteBeneficiarios() {
                                 : "border-transparent text-gray-500 hover:text-gray-700"
                             }`}
                     >
-                        Apoyos economicos
+                        Reembolsos
                     </button>
                     <button
                         onClick={() => setTabActiva("obligaciones")}

@@ -4,14 +4,15 @@ import { formatearFecha, obtenerBadge } from "./carta.helpers";
 export default function CartaInfoCard({ carta, onEditar, loading, editable, canCreateObligaciones}) {
   return (
     <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all">
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
           <h3 className="text-xl font-bold text-slate-800">Informacion de la carta</h3>
           <p className="text-sm text-slate-500 mt-1">Registro de cumplimiento</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className={`px-4 py-1.5 rounded-full text-xs font-semibold ${obtenerBadge(carta?.estatus)}`}>
+        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+          <span   className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${obtenerBadge(carta?.estatus)}`}
+>
             {carta?.estatus || "Pendiente"}
           </span>
         {editable && (
@@ -19,15 +20,21 @@ export default function CartaInfoCard({ carta, onEditar, loading, editable, canC
             aria-label="Editar carta"
             onClick={onEditar}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 transition disabled:opacity-50"
+            className="
+    flex items-center justify-center
+    w-10 h-10 sm:w-auto sm:h-auto
+    rounded-xl border border-slate-200
+    hover:bg-slate-50 text-slate-700
+    transition disabled:opacity-50
+  "
           >
-            <Pencil size={15} /> Editar
+            <Pencil size={15} /> 
           </button>
           )}
         </div>
       </div>
 
-      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center gap-3">
+      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4 flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center">
           <CalendarDays size={18} className="text-teal-700" />
         </div>
@@ -44,7 +51,7 @@ export default function CartaInfoCard({ carta, onEditar, loading, editable, canC
           </div>
           <div>
             <p className="text-xs uppercase text-slate-500 font-medium mb-1">Nota</p>
-            <p className="text-sm text-slate-700 leading-relaxed">
+            <p className="text-sm text-slate-700 leading-relaxed break-words">
               {carta?.observaciones?.trim() ? carta.observaciones : "Sin nota registrada"}
             </p>
           </div>

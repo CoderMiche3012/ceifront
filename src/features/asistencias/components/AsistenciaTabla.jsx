@@ -90,9 +90,6 @@ export default function AsistenciasTabla({
           rowKey="id"
         />
       </div>
-
-      {/* solo aparece si hay cambios pendientes por sincronizar */}
-
     </div>
   );
 }

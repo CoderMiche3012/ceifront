@@ -112,7 +112,7 @@ export function useReporteBeneficiarios() {
     return mapa;
   }, [periodos]);
 
-  // Lógica para obtener el label del periodo seleccionado
+  // para obtener el label del periodo seleccionado
   const periodoLabel = useMemo(() => {
     if (!periodo) return "General";
     const p = periodos.find((x) => String(x.id_periodo) === String(periodo));
@@ -168,7 +168,6 @@ export function useReporteBeneficiarios() {
         else rendimientoCalculado = "bueno";
       }
 
-      // --- NUEVA LÓGICA AGREGADA ---
       let tutorObj = b?.familia?.find((f) => f.es_tutor_principal);
       const nombreTutor = tutorObj
         ? `${tutorObj.nombre} ${tutorObj.apellido_p || ""} ${tutorObj.apellido_m || ""}`.trim()
@@ -177,7 +176,6 @@ export function useReporteBeneficiarios() {
 
       const idPeriodo = seg?.periodo?.id_periodo || seg?.id_periodo || "";
       const nombrePeriodo = mapaPeriodos[idPeriodo] || "N/A";
-      // -----------------------------
 
       return {
         id_beneficiario: b.id_beneficiario,
@@ -195,7 +193,6 @@ export function useReporteBeneficiarios() {
         cp: expResumen.codigo_postal || "Sin Registro",
         id_periodo: idPeriodo,
         periodo_nombre: nombrePeriodo,
-        // --- CAMPOS NUEVOS ---
         calle: expResumen.calle || "Sin Registro",
         numero: expResumen.numero || "Sin Registro",
         telefono: expResumen.telefono || "Sin Registro",
@@ -259,22 +256,24 @@ export function useReporteBeneficiarios() {
       const municipios = {};
 
       dataFiltrada.forEach((b) => {
-        const esc = b.nivelEscolarBase || "Sin Registro";
+  if (b.nivelEscolarBase) {
+    escolaridad[b.nivelEscolarBase] =
+      (escolaridad[b.nivelEscolarBase] || 0) + 1;
+  }
 
-        escolaridad[esc] = (escolaridad[esc] || 0) + 1;
+  const edad = Number(b.edad);
 
-        const edad = Number(b.edad);
-        if (!isNaN(edad)) {
-          if (edad <= 5) edades["0-5"]++;
-          else if (edad <= 10) edades["6-10"]++;
-          else if (edad <= 15) edades["11-15"]++;
-          else if (edad <= 18) edades["16-18"]++;
-          else edades["19+"]++;
-        }
+  if (!isNaN(edad)) {
+    if (edad <= 5) edades["0-5"]++;
+    else if (edad <= 10) edades["6-10"]++;
+    else if (edad <= 15) edades["11-15"]++;
+    else if (edad <= 18) edades["16-18"]++;
+    else edades["19+"]++;
+  }
 
-        const muni = b.municipio || "Sin Registro";
-        municipios[muni] = (municipios[muni] || 0) + 1;
-      });
+  const muni = b.municipio || "Sin Registro";
+  municipios[muni] = (municipios[muni] || 0) + 1;
+});
 
       const mArray = Object.entries(municipios)
         .sort((a, b) => b[1] - a[1])
@@ -414,9 +413,10 @@ export function useReporteBeneficiarios() {
     const niveles = {};
 
     dataFiltrada.forEach((b) => {
-      const nivel = b.nivelEscolarBase || "Sin Registro";
+      if (!b.nivelEscolarBase) return;
 
-      niveles[nivel] = (niveles[nivel] || 0) + 1;
+      niveles[b.nivelEscolarBase] =
+        (niveles[b.nivelEscolarBase] || 0) + 1;
     });
 
     return {

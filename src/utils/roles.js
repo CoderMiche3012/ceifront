@@ -11,43 +11,31 @@ import {
 // módulos del sistema
 export const modules = [
   {
-    key: "usuarios",
-    name: "Usuarios",
-    icon: User,
+    key: "seguridad",
+    name: "Seguridad",
+    icon: Shield,
+    children: [
+      {
+        key: "roles",
+        name: "Roles",
+      },
+      {
+        key: "usuarios",
+        name: "Usuarios",
+      },
+    ],
   },
-  {
-    key: "periodos",
-    name: "Periodos",
-    icon: CalendarPlus,
-    extraActions: ["migrar"],
-  },
+
   {
     key: "postulantes",
     name: "Postulantes",
     icon: ClipboardList,
-    children: [
-      {
-        key: "familia",
-        name: "Familia",
-      },
-      {
-        key: "expedientes",
-        name: "Expedientes",
-      },
-      {
-        key: "estudios",
-        name: "Estudios",
-      },
-      {
-        key: "visitas",
-        name: "Visitas",
-      },
-    ],
     extraActions: [
       "aceptar",
       "rechazar",
-    ],
+    ]
   },
+
   {
     key: "beneficiarios",
     name: "Beneficiarios",
@@ -73,11 +61,20 @@ export const modules = [
         key: "obligaciones",
         name: "Obligaciones",
       },
+      {
+        key: "fotografias",
+        name: "Fotografias",
+      },
+      {
+        key: "documentos",
+        name: "Documentos",
+      },
     ],
   },
+
   {
     key: "donadores",
-    name: "Donadores",
+    name: "Donaciones",
     icon: Heart,
     children: [
       {
@@ -86,6 +83,13 @@ export const modules = [
       },
     ],
   },
+
+  {
+    key: "periodos",
+    name: "Periodos",
+    icon: CalendarPlus,
+  },
+
   {
     key: "reportes",
     name: "Reportes",
@@ -113,27 +117,57 @@ export const extraActionsLabels = {
 // compatibilidad con componentes viejos
 export const actionsMap = {
   ...baseActions,
+  Eliminar: "eliminar",
   Migrar: "migrar",
   Aceptar: "aceptar",
   Rechazar: "rechazar",
   Exportar: "exportar",
 };
-
+const modulesWithDelete = [
+  "fotografias",
+  "documentos",
+];
 // obtiene todas las acciones de un módulo
 export function getModuleActions(module) {
-  return [
+  // Reportes solo exporta
+  if (module.key === "reportes") {
+    return (module.extraActions || []).map(
+      (action) => [
+        extraActionsLabels[action] ||
+          action,
+        action,
+      ]
+    );
+  }
+
+  const actions = [
     ["Ver", "ver"],
     ["Crear", "crear"],
     ["Editar", "editar"],
-    ["Eliminar", "eliminar"],
+  ];
+
+  if (
+    modulesWithDelete.includes(
+      module.key
+    )
+  ) {
+    actions.push([
+      "Eliminar",
+      "eliminar",
+    ]);
+  }
+
+  actions.push(
     ...(module.extraActions || []).map(
       (action) => [
         extraActionsLabels[action] ||
           action,
         action,
       ]
-    ),
-  ];
+    )
+  );
+
+  return actions;
 }
 
 // catálogo plano de módulos y submódulos
@@ -151,12 +185,29 @@ export function getEmptyPermissions() {
   const result = {};
 
   modules.forEach((module) => {
+    // Reportes
+    if (module.key === "reportes") {
+      result[module.key] = {
+        exportar: false,
+      };
+
+      return;
+    }
+
     result[module.key] = {
       ver: false,
       crear: false,
       editar: false,
-      eliminar: false,
     };
+
+    if (
+      modulesWithDelete.includes(
+        module.key
+      )
+    ) {
+      result[module.key].eliminar =
+        false;
+    }
 
     // permisos especiales
     module.extraActions?.forEach(
@@ -173,15 +224,22 @@ export function getEmptyPermissions() {
           ver: false,
           crear: false,
           editar: false,
-          eliminar: false,
         };
+
+        if (
+          modulesWithDelete.includes(
+            child.key
+          )
+        ) {
+          result[child.key].eliminar =
+            false;
+        }
       }
     );
   });
 
   return result;
 }
-
 // objeto vacío reutilizable de permisos
 export const emptyPermissions =
   Object.freeze(
@@ -278,7 +336,7 @@ export function permissionsObjectToIds(
 
     const isChecked =
       permissionsObject?.[
-        parsed.moduleKey
+      parsed.moduleKey
       ]?.[parsed.actionKey] ===
       true;
 
@@ -310,3 +368,4 @@ export function isProtectedRole(role) {
     "admin",
   ].includes(roleName);
 }
+

@@ -6,11 +6,21 @@ import { rolesKeys } from "./queryKeys";
 import { authKeys } from "../../../../auth/services/keys";
 
 import {
-  emptyPermissions, getEmptyPermissions, permissionsObjectToIds,
-  roleToPermissionsObject, isProtectedRole,
+  emptyPermissions,
+  getEmptyPermissions,
+  permissionsObjectToIds,
+  roleToPermissionsObject,
+  isProtectedRole,
+  modules,
 } from "../../../../../utils/roles";
 import { formatErrorAnidado } from "../../../../../utils/errorHandlers";
+const parentMap = modules.reduce((acc, module) => {
+  module.children?.forEach((child) => {
+    acc[child.key] = module.key;
+  });
 
+  return acc;
+}, {});
 
 export default function useRoles() {
 
@@ -167,28 +177,99 @@ export default function useRoles() {
     }));
   };
 
-  const handlePermissionChange = (
-    moduleKey,
-    action,
-    childKey = null
-  ) => {
-    setRoleForm((prev) => {
+  // En useRoles.js
+const handlePermissionChange = (moduleKey, action) => {
+  setRoleForm((prev) => {
+    const nuevosPermisos = structuredClone(prev.permisos);
 
-      const permisos = structuredClone(prev.permisos);
+    if (!nuevosPermisos[moduleKey]) {
+      return prev;
+    }
 
-      // Permiso de submódulo
-      if (childKey) {
-        permisos[moduleKey].children[childKey][action] = !permisos[moduleKey].children[childKey][action];
-      } else {
-        // Permiso de módulo principal
-        permisos[moduleKey][action] = !permisos[moduleKey][action];
-      }
-      return {
-        ...prev,
-        permisos,
-      };
-    });
-  };
+    const nuevoValor =
+      !nuevosPermisos[moduleKey][action];
+
+    nuevosPermisos[moduleKey][action] =
+      nuevoValor;
+
+    // -----------------------------------
+    // REGLA 1
+    // crear/editar/etc activa ver
+    // -----------------------------------
+
+    if (action !== "ver" && nuevoValor) {
+      nuevosPermisos[moduleKey].ver =
+        true;
+    }
+
+    // -----------------------------------
+    // REGLA 2
+    // si es hijo, activar ver del padre
+    // -----------------------------------
+
+    const parentKey =
+      parentMap[moduleKey];
+
+    if (
+      parentKey &&
+      action !== "ver" &&
+      nuevoValor
+    ) {
+      nuevosPermisos[parentKey].ver =
+        true;
+    }
+
+    // -----------------------------------
+    // REGLA 3
+    // quitar ver limpia el módulo
+    // -----------------------------------
+
+    if (
+      action === "ver" &&
+      !nuevoValor
+    ) {
+      Object.keys(
+        nuevosPermisos[moduleKey]
+      ).forEach((permiso) => {
+        nuevosPermisos[moduleKey][
+          permiso
+        ] = false;
+      });
+    }
+
+    // -----------------------------------
+    // REGLA 4
+    // quitar ver del padre limpia hijos
+    // -----------------------------------
+
+    if (
+      action === "ver" &&
+      !nuevoValor
+    ) {
+      const moduleDefinition =
+        modules.find(
+          (m) => m.key === moduleKey
+        );
+
+      moduleDefinition?.children?.forEach(
+        (child) => {
+          Object.keys(
+            nuevosPermisos[child.key]
+          ).forEach((permiso) => {
+            nuevosPermisos[child.key][
+              permiso
+            ] = false;
+          });
+        }
+      );
+    }
+
+    return {
+      ...prev,
+      permisos: nuevosPermisos,
+    };
+  });
+};
   //guardar
   const handleSaveRole = () => {
     const permisos = permissionsObjectToIds(roleForm.permisos, permissionsCatalog);
@@ -257,3 +338,5 @@ export default function useRoles() {
     handleDeleteRole,
   };
 }
+
+

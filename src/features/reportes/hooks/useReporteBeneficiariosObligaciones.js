@@ -3,7 +3,7 @@ import { useBeneficiarios } from "../../beneficiarios/hooks/useBeneficiarios";
 import { usePeriodos } from "../../periodos/hooks/usePeriodos";
 import { solicitarDescargaReporte } from "../services/reporteService";
 
-// Helper para descarga de archivos
+// para descarga de archivos
 const ejecutarDescargaBlob = (buffer, nombreArchivo, mimeType) => {
   if (!buffer) return;
   const realBuffer = buffer instanceof ArrayBuffer ? buffer : buffer.buffer;
@@ -37,7 +37,7 @@ useEffect(() => {
   return p?.ciclo_escolar || "General";
 }, [periodo, periodos]);
 
-  // Procesamiento de datos: Aplanamos para que cada obligación sea una fila
+  // aplanar datos
   const dataTabla = useMemo(() => {
     return beneficiarios.flatMap((b) => {
       const exp = b.expediente_resumen || {};

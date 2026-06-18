@@ -67,101 +67,52 @@ export function useReporteBeneficiariosEconomico() {
   } = usePeriodos();
 
   useEffect(() => {
-  if (periodos.length > 0 && !periodo) {
-    const ultimoPeriodo = periodos[periodos.length - 1];
+    if (periodos.length > 0 && !periodo) {
+      const ultimoPeriodo = periodos[periodos.length - 1];
 
-    setPeriodo(String(ultimoPeriodo.id_periodo));
-  }
-}, [periodos, periodo]);
+      setPeriodo(String(ultimoPeriodo.id_periodo));
+    }
+  }, [periodos, periodo]);
 
   const periodoLabel = useMemo(() => {
-  const p = periodos.find(
-    (x) => String(x.id_periodo) === String(periodo)
-  );
+    const p = periodos.find(
+      (x) => String(x.id_periodo) === String(periodo)
+    );
 
-  return p?.ciclo_escolar || "";
-}, [periodo, periodos]);
+    return p?.ciclo_escolar || "";
+  }, [periodo, periodos]);
 
   const dataTabla = useMemo(() => {
-    return beneficiarios.map((b) => {
-      const exp =
-        b.expediente_resumen || {};
+    return beneficiarios
+      .map((b) => {
+        const exp = b.expediente_resumen || {};
+        const seg = b.seguimiento || b.ultimo_seguimiento || {};
+        const apoyos = seg.apoyos_economicos || [];
 
-      const seg =
-        b.seguimiento ||
-        b.ultimo_seguimiento ||
-        {};
+        const totalRegistrados = apoyos.length;
 
-      const apoyos =
-        seg.apoyos_economicos || [];
-
-      const totalRegistrados =
-        apoyos.length;
-
-      const totalEntregados =
-        apoyos.filter(
-          (a) =>
-            a.estatus
-              ?.toLowerCase()
-              ?.trim() === "entregado"
+        const totalEntregados = apoyos.filter(
+          (a) => a.estatus?.toLowerCase()?.trim() === "entregado"
         ).length;
 
-      const totalPendientes =
-        totalRegistrados -
-        totalEntregados;
+        const totalPendientes = totalRegistrados - totalEntregados;
 
+        if (totalRegistrados === 0) {
+          return null; 
+        }
 
-// Filtramos primero para asegurarnos de que tenemos datos válidos
-const apoyosEntregados = apoyos.filter((a) => a?.fecha_entrega && a?.estatus === "Entregado");
-
-let fechaFormateada = "Sin Registro";
-
-if (apoyosEntregados.length > 0) {
-  // Obtenemos la fecha más reciente
-  const ultima = apoyosEntregados.reduce((max, a) => {
-    const fechaActual = new Date(a.fecha_entrega);
-    // Validamos que sea una fecha real
-    if (isNaN(fechaActual.getTime())) return max; 
-    return !max || fechaActual > max ? fechaActual : max;
-  }, null);
-
-  if (ultima instanceof Date && !isNaN(ultima.getTime())) {
-    fechaFormateada = ultima.toISOString().split("T")[0];
-  } else {
-    console.log("Error procesando fecha para beneficiario:", b.id_beneficiario, apoyosEntregados);
-  }
-}
-
-      return {
-        id_beneficiario:
-          b.id_beneficiario,
-
-        nombre_completo:
-          exp.nombre_completo ||
-          "Sin nombre",
-
-        edad:
-          calcularEdad(
-            exp.fecha_nacimiento
-          ) || "-",
-
-        total_registrados:
-          totalRegistrados,
-
-        total_entregados:
-          totalEntregados,
-
-        total_pendientes:
-          totalPendientes,
-
-        fecha_ultimo_apoyo: fechaFormateada,
-
-        estatus_apoyos:
-          totalPendientes > 0
-            ? "Pendiente"
-            : "Entregado",
-      };
-    });
+        return {
+          id_beneficiario: b.id_beneficiario,
+          nombre_completo: exp.nombre_completo || "Sin nombre",
+          edad: calcularEdad(exp.fecha_nacimiento) || "-",
+          total_registrados: totalRegistrados,
+          total_entregados: totalEntregados,
+          total_pendientes: totalPendientes,
+          fecha_ultimo_apoyo: "Sin Registro", 
+          estatus_apoyos: totalPendientes > 0 ? "Pendiente" : "Entregado",
+        };
+      })
+      .filter(Boolean); 
   }, [beneficiarios]);
 
   const dataFiltrada = useMemo(() => {
@@ -178,7 +129,7 @@ if (apoyosEntregados.length > 0) {
       const matchEstatus =
         !estatus ||
         b.estatus_apoyos ===
-          estatus;
+        estatus;
 
       return (
         matchSearch &&
@@ -192,13 +143,13 @@ if (apoyosEntregados.length > 0) {
   ]);
 
   const periodosOptions = useMemo(
-  () =>
-    periodos.map((p) => ({
-      value: String(p.id_periodo),
-      label: p.ciclo_escolar,
-    })),
-  [periodos]
-);
+    () =>
+      periodos.map((p) => ({
+        value: String(p.id_periodo),
+        label: p.ciclo_escolar,
+      })),
+    [periodos]
+  );
 
   const descargarExcel =
     async () => {

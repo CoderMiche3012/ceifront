@@ -1,4 +1,4 @@
-  import API from "../../../config/apiClient";
+import API from "../../../config/apiClient";
 
 const BASE_URL =
   "/api/beneficiarios/documentos-personales";
@@ -24,9 +24,6 @@ export const obtenerDocumentos = async () => {
   const { data } = await API.get(`${BASE_URL}/`);
   return data;
 };
-// =========================
-// OBTENER
-// =========================
 
 export const obtenerDocumentoPorId = async (id_documento) => {
   const { data } = await API.get(
@@ -35,10 +32,6 @@ export const obtenerDocumentoPorId = async (id_documento) => {
 
   return data;
 };
-
-// =========================
-// SUBIR
-// =========================
 
 export const subirDocumento =
   async (formData) => {
@@ -56,9 +49,6 @@ export const subirDocumento =
 
     return data;
   };
-// =========================
-// ELIMINAR
-// =========================
 
 export const eliminarDocumento =
   async (id_documento) => {

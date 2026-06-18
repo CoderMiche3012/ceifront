@@ -13,13 +13,11 @@ export default function EditarNotaFamilia({ isOpen, onClose, data }) {
     const [formDataCache, setFormDataCache] = useState(null);
     const [resultado, setResultado] = useState({ open: false, type: 'success', title: '', message: '' });
 
-    // Definimos la mutación
     const mutation = useMutation({
         mutationFn: async (payload) => {
             return await actualizarExpediente(data.id_expediente, payload);
         },
         onSuccess: () => {
-            // Invalidamos las queries relacionadas para que los datos se refresquen
             queryClient.invalidateQueries(['beneficiarios']);
             queryClient.invalidateQueries(['expediente', data.id_expediente]);
 

@@ -1,9 +1,7 @@
 
-
 export const buildCountriesList = (local = [], api = []) => {
   const map = new Map();
 
-  // usamos clave normalizada SOLO para comparar
   const getKey = (val) => (val || "").trim().toLowerCase();
 
   // LOCAL (NO tocar display)
@@ -14,13 +12,12 @@ export const buildCountriesList = (local = [], api = []) => {
 
     if (!map.has(key)) {
       map.set(key, {
-        code: c.code, // 👈 그대로 como viene
-        name: c.name, // 👈 그대로 como viene
+        code: c.code, 
+        name: c.name, 
       });
     }
   });
 
-  // API (NO tocar display)
   api.forEach((c) => {
     const code = typeof c === "string" ? c : c?.pais;
     if (!code) return;
@@ -29,8 +26,8 @@ export const buildCountriesList = (local = [], api = []) => {
 
     if (!map.has(key)) {
       map.set(key, {
-        code: code, // 👈 sin modificar
-        name: code, // 👈 sin modificar
+        code: code, 
+        name: code, 
       });
     }
   });

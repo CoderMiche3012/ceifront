@@ -106,7 +106,6 @@ export default function DirectorioDonadoresTab() {
     (acc, d) => acc + (d.beneficiarios_apoyados?.length || 0), 0
   );
 
-  // Helper nativo para bajar los bytes devueltos por el worker sin bloquear la UI
   const dispararDescargaCliente = (buffer, nombreArchivo, mimeType) => {
     const blob = new Blob([buffer], { type: mimeType });
     const url = window.URL.createObjectURL(blob);
@@ -117,7 +116,8 @@ export default function DirectorioDonadoresTab() {
     window.URL.revokeObjectURL(url);
   };
 
-  const descargarExcel = async () => {
+  const descargarExcel = async (e) => {
+    if (e) e.preventDefault();
     try {
       // registros filtrados actuales al Worker Maestro
       const buffer = await exportarReporte("excel", filtrados);
@@ -131,7 +131,8 @@ export default function DirectorioDonadoresTab() {
     }
   };
 
-  const descargarPDF = async () => {
+  const descargarPDF = async (e) => {
+    if (e) e.preventDefault();
     try {
       const buffer = await exportarReporte("pdf", filtrados);
       dispararDescargaCliente(buffer, "padrón_donadores_cei.pdf", "application/pdf");
@@ -233,8 +234,19 @@ export default function DirectorioDonadoresTab() {
             },
           ]}
           acciones={[
-            { component: Boton, variant: "secondary", icon: FileSpreadsheet, label: "Excel", onClick: descargarExcel },
-            { component: Boton, icon: FileText, label: "PDF", onClick: descargarPDF },
+            {
+              component: (props) => <Boton {...props} type="button" />,
+              variant: "secondary",
+              icon: FileSpreadsheet,
+              label: "Excel",
+              onClick: descargarExcel
+            },
+            {
+              component: (props) => <Boton {...props} type="button" />,
+              icon: FileText,
+              label: "PDF",
+              onClick: descargarPDF
+            },
           ]}
         />
 

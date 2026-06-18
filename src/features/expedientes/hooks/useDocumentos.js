@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
 import {
   obtenerDocumentos,
   obtenerDocumentoPorId,
@@ -12,10 +11,8 @@ import { documentosKeys } from "../services/documentosKeys";
 import { postulantesKeys } from "../../postulantes/services/postulantesKeys";
 import { expedientesKeys } from "../services/expedientesKeys";
 import { seguimientosKeys } from "../../beneficiarios/services/seguimientosKeys";
+import { beneficiariosKeys } from "../../beneficiarios/services/beneficiariosKeys";
 
-// =========================
-// LISTAR TODOS
-// =========================
 export function useDocumentos() {
   return useQuery({
     queryKey: documentosKeys.list(),
@@ -23,9 +20,6 @@ export function useDocumentos() {
   });
 }
 
-// =========================
-// DETALLE
-// =========================
 export function useDocumento(id_documento) {
   return useQuery({
     queryKey: documentosKeys.detail(id_documento),
@@ -34,9 +28,6 @@ export function useDocumento(id_documento) {
   });
 }
 
-// =========================
-// SUBIR
-// =========================
 export function useSubirDocumento() {
   const queryClient = useQueryClient();
 
@@ -56,13 +47,13 @@ export function useSubirDocumento() {
       queryClient.invalidateQueries({
         queryKey: postulantesKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
+      });
     },
   });
 }
 
-// =========================
-// ACTUALIZAR
-// =========================
 export function useActualizarDocumento() {
   const queryClient = useQueryClient();
 
@@ -83,14 +74,14 @@ export function useActualizarDocumento() {
       queryClient.invalidateQueries({
         queryKey: expedientesKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
+      });
       
     },
   });
 }
 
-// =========================
-// ELIMINAR
-// =========================
 export function useEliminarDocumento() {
   const queryClient = useQueryClient();
 
@@ -110,7 +101,9 @@ export function useEliminarDocumento() {
       queryClient.invalidateQueries({
         queryKey: expedientesKeys.all,
       });
-     
+     queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
+      });
     },
   });
 }

@@ -118,7 +118,6 @@ export const generarExcelEstrategia = async (datos, logoBase64, meta = {}) => {
       p.nota_seguimiento
     ]);
   });
-  await aplicarEstilosExcelGlobal(worksheet, titulo, workbook, logoBase64);
   await aplicarEstilosExcelGlobal(
   worksheet,
   titulo,

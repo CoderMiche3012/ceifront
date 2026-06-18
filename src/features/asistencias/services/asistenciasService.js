@@ -8,7 +8,6 @@ export const crearAsistencia = async (payload) => {
     const res = await API.post(`${BASE_URL}/`, payload);
     return res.data;
   } catch (error) {
-    console.log(error)
     const errorData = error.response?.data || error;
     if (errorData) {
       throw new Error(formatError(errorData));
@@ -22,7 +21,6 @@ export const crearAsistencias = async (payload) => {
     const res = await API.post(`${BASE_URL_MASIVO}/`, payload);
     return res.data;
   } catch (error) {
-    console.log(error)
     const errorData = error.response?.data || error;
     if (errorData) {
       throw new Error(formatError(errorData));
@@ -36,7 +34,6 @@ export const obtenerAsistencias = async () => {
     const res = await API.get(`${BASE_URL}/`);
     return res.data;
   } catch (error) {
-    console.log(error)
     const errorData = error.response?.data || error;
 
     if (errorData) {
@@ -51,7 +48,6 @@ export const obtenerAsistenciaIndividual = async (id) => {
     const res = await API.get(`${BASE_URL}/${id}/`);
     return res.data;
   } catch (error) {
-    console.log(error)
     const errorData = error.response?.data || error;
 
     if (errorData) {
@@ -66,7 +62,6 @@ export const eliminarAsistencia = async (id) => {
     const res = await API.delete(`${BASE_URL}/${id}/`);
     return res.data;
   } catch (error) {
-    console.log(error)
     const errorData = error.response?.data || error;
 
     if (errorData) {
@@ -81,7 +76,6 @@ export const actualizarAsistencia = async (id, payload) => {
     const res = await API.patch(`${BASE_URL}/${id}/`, payload);
     return res.data;
   } catch (error) {
-    console.log(error)
     const errorData = error.response?.data || error;
 
     if (errorData) {
@@ -96,7 +90,6 @@ export const actualizarAsistenciasMasivo = async (payload) => {
     const res = await API.put(`${BASE_URL_MASIVO_EDITAR}/`, payload);
     return res.data;
   } catch (error) {
-    console.log(error)
     const errorData = error.response?.data || error;
 
     if (errorData) {

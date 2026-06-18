@@ -175,6 +175,7 @@ export default function PostulanteReporteFiltros({
           </div>
 
           <Boton
+            type="button"
             variant="secondary"
             icon={<FileSpreadsheet className="h-4 w-4" />}
             onClick={onDescargarExcel}
@@ -183,6 +184,7 @@ export default function PostulanteReporteFiltros({
           </Boton>
 
           <Boton
+            type="button"
             icon={<FileText className="h-4 w-4" />}
             onClick={onDescargarPDF}
           >

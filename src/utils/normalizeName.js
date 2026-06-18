@@ -4,7 +4,7 @@ export const normalizeName = (str) => {
   return str
     .trim()
     .toLowerCase()
-    .split(/\s+/) // 👈 mejor que " "
+    .split(/\s+/) 
     .filter(Boolean)
     .map(word =>
       word.charAt(0).toUpperCase() + word.slice(1)

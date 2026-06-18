@@ -295,6 +295,7 @@ export default function ReporteBeneficiariosTab() {
           extraAction={
             <div className="flex items-center gap-2">
               <Boton
+                type="button"
                 variant="secondary"
                 icon={<FileSpreadsheet className="h-4 w-4" />}
                 onClick={actions.descargarExcel}
@@ -303,6 +304,7 @@ export default function ReporteBeneficiariosTab() {
               </Boton>
 
               <Boton
+                type="button"
                 icon={<FileText className="h-4 w-4" />}
                 onClick={actions.descargarPDF}
               >

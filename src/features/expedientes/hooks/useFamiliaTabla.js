@@ -29,10 +29,6 @@ export const useFamiliaTabla = (
   postulanteId
 ) => {
   const queryClient = useQueryClient();
-
-  // -------------------------
-  // UI STATE
-  // -------------------------
   const [modalCrearOpen, setModalCrearOpen] = useState(false);
   const [modalEditarOpen, setModalEditarOpen] = useState(false);
 
@@ -42,17 +38,9 @@ export const useFamiliaTabla = (
   const [currentPage, setCurrentPage] = useState(1);
 
   const pageSize = 5;
-
-  // -------------------------
-  // MUTATIONS
-  // -------------------------
   const crearMutation = useCrearFamilia(expedienteId);
   const actualizarMutation = useActualizarFamilia(expedienteId);
   const eliminarMutation = useEliminarFamilia(expedienteId);
-
-  // -------------------------
-  // MODALES
-  // -------------------------
   const abrirCrear = () => setModalCrearOpen(true);
 
   const abrirEditar = (familiar) => {
@@ -69,9 +57,6 @@ export const useFamiliaTabla = (
     setModalEditarOpen(true);
   };
 
-  // -------------------------
-  // CREATE
-  // -------------------------
   const handleCreated = async () => {
     setModalCrearOpen(false);
 
@@ -80,9 +65,6 @@ export const useFamiliaTabla = (
     });
   };
 
-  // -------------------------
-  // UPDATE
-  // -------------------------
   const handleSaveEditar = async (dataFinal) => {
     try {
       await actualizarMutation.mutateAsync({
@@ -97,10 +79,6 @@ export const useFamiliaTabla = (
       throw new Error(getErrorMessage(error));
     }
   };
-
-  // -------------------------
-  // DELETE
-  // -------------------------
   const handleEliminar = async (row) => {
     try {
       await eliminarMutation.mutateAsync(row.id_familia);
@@ -112,10 +90,6 @@ export const useFamiliaTabla = (
       throw new Error(getErrorMessage(error));
     }
   };
-
-  // -------------------------
-  // FILTER + SEARCH
-  // -------------------------
   const filteredData = familia.filter((f) =>
     `
       ${f.nombre}
@@ -128,19 +102,12 @@ export const useFamiliaTabla = (
       .includes(search.toLowerCase())
   );
 
-  // -------------------------
-  // PAGINATION
-  // -------------------------
   const totalPages = Math.ceil(filteredData.length / pageSize);
-
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  // -------------------------
-  // RETURN
-  // -------------------------
   return {
     modalCrearOpen,
     setModalCrearOpen,

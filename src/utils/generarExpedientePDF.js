@@ -9,7 +9,6 @@ export const generarExpedientePDF = (data, edad) => {
     format: "a4"
   });
 
-  // --- PALETA DE COLORES INSTITUCIONAL (VERDE) ---
   const verdeOscuro = [16, 94, 66];     // #105E42 - Verde Principal
   const grisTexto = [60, 60, 60];        // Gris oscuro para lectura
   const grisBorde = [210, 215, 212];     // Gris claro para líneas
@@ -20,20 +19,16 @@ export const generarExpedientePDF = (data, edad) => {
 
   const nombreCompleto = `${data.nombre} ${data.apellido_p} ${data.apellido_m || ""}`.trim().toUpperCase();
 
-  // --- PROCESAR LOGO Y GENERAR CONTENIDO ---
   const img = new Image();
   img.src = logo;
 
   img.onload = () => {
-    // 1. Renderizar el Logo proporcionalmente
     const anchoMaximo = 35; 
     const altoProporcional = (img.height * anchoMaximo) / img.width; 
     
-    // Posición base del logo en el eje Y
     const logoY = 12;
     doc.addImage(logo, "PNG", 196 - anchoMaximo, logoY, anchoMaximo, altoProporcional);
 
-    // 2. Textos del Encabezado (Alineados al lado izquierdo)
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(120, 120, 120);
@@ -43,23 +38,16 @@ export const generarExpedientePDF = (data, edad) => {
     doc.setTextColor(verdeOscuro[0], verdeOscuro[1], verdeOscuro[2]);
     doc.text("EXPEDIENTE DIGITAL", 14, 25);
 
-    // --- CÁLCULO DINÁMICO DEL PUNTO DE INICIO ---
-    // Evaluamos qué quedó más abajo: si los títulos (25mm + margen) o el logo proporcional.
-    // De esta forma la tabla nunca pisará al logo, sin importar qué tan alto sea.
     let inicioContenidoY = Math.max(32, logoY + altoProporcional + 6);
 
-    // 3. Banner Principal (Nombre del Beneficiario)
     doc.setFillColor(verdeOscuro[0], verdeOscuro[1], verdeOscuro[2]);
     doc.rect(14, inicioContenidoY, 182, 12, "F");
     
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(255, 255, 255);
-    // Centramos verticalmente el texto sumando 7.5mm al inicio del rectángulo
     doc.text(nombreCompleto, 18, inicioContenidoY + 7.5);
 
-    // 4. Primera Tabla: Datos Generales y Escolares
-    // Empieza exactamente 5mm abajo del banner verde
     autoTable(doc, {
       startY: inicioContenidoY + 16,
       theme: "plain",
@@ -80,7 +68,6 @@ export const generarExpedientePDF = (data, edad) => {
 
     let currentY = doc.lastAutoTable.finalY + 10;
 
-    // --- ESTILO BASE REUTILIZABLE PARA TABLAS ---
     const estructuraTablaElegante = {
       theme: "striped",
       headStyles: { fillColor: verdeOscuro, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9.5 },
@@ -106,7 +93,6 @@ export const generarExpedientePDF = (data, edad) => {
       doc.line(14, y + 2, 196, y + 2);
     };
 
-    // --- SECCIÓN 2: DOMICILIO ---
     crearTituloSeccion("Direccion de Residencia", currentY);
     
     autoTable(doc, {
@@ -123,7 +109,6 @@ export const generarExpedientePDF = (data, edad) => {
 
     currentY = doc.lastAutoTable.finalY + 9;
 
-    // --- SECCIÓN 3: TUTOR Y VISITA ---
     crearTituloSeccion("Contacto de Tutor y Verificacion", currentY);
 
     autoTable(doc, {
@@ -140,7 +125,6 @@ export const generarExpedientePDF = (data, edad) => {
 
     currentY = doc.lastAutoTable.finalY + 9;
 
-    // --- SECCIÓN 4: SEGUIMIENTO DEL PERIODO ---
     crearTituloSeccion("Resumen de Seguimiento Activo", currentY);
 
     autoTable(doc, {
@@ -158,7 +142,6 @@ export const generarExpedientePDF = (data, edad) => {
 
     currentY = doc.lastAutoTable.finalY + 9;
 
-    // --- SECCIÓN 5: DOCUMENTOS ---
     crearTituloSeccion("Expediente de Documentos Adjuntos", currentY);
 
     autoTable(doc, {
@@ -170,7 +153,6 @@ export const generarExpedientePDF = (data, edad) => {
         : [["No se registran documentos en el sistema", "-", "-"]],
     });
 
-    // --- PIE DE PÁGINA AUTOMÁTICO ---
     const totalPages = doc.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);

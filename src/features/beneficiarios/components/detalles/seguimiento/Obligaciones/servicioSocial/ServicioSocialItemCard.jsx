@@ -6,15 +6,15 @@ export default function ServicioSocialItemCard({
   editable
 }) {
   return (
-    <div className="border border-slate-200 rounded-2xl p-5 hover:shadow-md transition">
-      <div className="flex items-start justify-between">
-        <div className="flex gap-3">
+    <div className="border border-slate-200 rounded-2xl p-4 sm:p-5 hover:shadow-md transition">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="flex gap-3 min-w-0">
           <div className="w-11 h-11 rounded-xl bg-teal-100 flex items-center justify-center">
             <Briefcase className="text-teal-700" />
           </div>
 
           <div>
-            <h4 className="font-semibold text-slate-800">
+            <h4 className="font-semibold text-slate-800 line-clamp-2">
               {item.nombre}
             </h4>
 
@@ -30,18 +30,19 @@ export default function ServicioSocialItemCard({
         {editable && (
           <button
             aria-label="Editar servicio"
-            onClick={() =>
-              onEditar(item)
-            }
-            className="text-slate-600 hover:text-teal-600"
+            onClick={() => onEditar(item)}
+            className="
+      text-slate-600 hover:text-teal-600
+      self-end sm:self-auto
+    "
           >
             <Pencil size={18} />
           </button>
         )}
       </div>
 
-      <div className="mt-5 grid md:grid-cols-2 gap-4">
-        <div className="bg-slate-50 rounded-2xl p-4 flex items-center gap-3">
+      <div className="mt-4 sm:mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="bg-slate-50 rounded-xl p-3 sm:p-4 flex items-center gap-3">
           <CalendarDays
             size={18}
             className="text-teal-700"
@@ -71,7 +72,7 @@ export default function ServicioSocialItemCard({
               Nota
             </p>
 
-            <p className="text-sm text-slate-700">
+            <p className="text-sm text-slate-700 break-words">
               {item.observaciones?.trim()
                 ? item.observaciones
                 : "Sin nota registrada"}

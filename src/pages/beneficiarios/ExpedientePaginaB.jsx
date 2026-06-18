@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useSearchParams } from "react-router-dom"; // 👈 Importamos useSearchParams
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 import { Calendar, ArrowLeft, RefreshCw, AlertCircle, Download } from "lucide-react";
 import AvatarGeneral from "../../components/shared/AvatarGeneral";
@@ -19,7 +19,7 @@ import { generarExpedientePDF } from "../../utils/generarExpedientePDF";
 export default function ExpedientePagina() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams(); // 👈 Instanciamos searchParams
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const {
     data,
@@ -147,7 +147,7 @@ export default function ExpedientePagina() {
       </header>
 
       <nav className="border-b border-slate-200">
-        {/* 👈 Pasamos el nuevo manejador interceptor */}
+
         <TabsExpediente tab={tab} setTab={handleTabChange} /> 
       </nav>
 

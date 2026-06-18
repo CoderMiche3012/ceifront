@@ -1,10 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
+import { Doughnut, Bar } from "react-chartjs-2";
 import { useNavigate } from "react-router-dom";
 import { useBeneficiariosPage } from "../features/beneficiarios/hooks/useBeneficiariosPage";
 import { obtenerVisitas } from "../features/postulantes/services/visitasService";
 import { usePermissions } from "../context/PermissionsContext";
-
-
+import { usePeriodoActivo } from "../features/periodos/hooks/usePeriodos";
+import { useBeneficiarios } from "../features/beneficiarios/hooks/useBeneficiarios";
+import Card from "../components/ui/Card";
 import {
   Calendar,
   Sparkles,
@@ -21,8 +23,64 @@ import {
   ChevronRight
 } from "lucide-react";
 
+const calcularEdad = (fechaNacimiento) => {
+  if (!fechaNacimiento) return "";
+  const hoy = new Date();
+  const nacimiento = new Date(fechaNacimiento);
+  let edad = hoy.getFullYear() - nacimiento.getFullYear();
+  const mes = hoy.getMonth() - nacimiento.getMonth();
+  if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+    edad--;
+  }
+  return edad;
+};
+const normalizarNivel = (nivel = "") => {
+  const valor = nivel
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (
+    ["prepa", "preparatoria", "bachillerato"].includes(valor)
+  ) {
+    return "media superior";
+  }
+
+  if (
+    ["universidad", "licenciatura"].includes(valor)
+  ) {
+    return "superior";
+  }
+
+  return valor;
+};
+
+const formatearNivel = (nivel = "") => {
+  const valor = normalizarNivel(nivel);
+
+  const nombres = {
+    preescolar: "Preescolar",
+    primaria: "Primaria",
+    secundaria: "Secundaria",
+    "media superior": "Media Superior",
+    superior: "Superior",
+  };
+
+  return nombres[valor] || nivel;
+};
+
 export default function Inicio() {
   const navigate = useNavigate();
+
+
+  const { periodoActivo, loading: loadingPeriodo } = usePeriodoActivo();
+
+  const {
+    data: beneficiariosPeriodo = [],
+    isLoading: loadingBeneficiariosPeriodo,
+  } = useBeneficiarios(periodoActivo?.id_periodo);
 
   const {
     beneficiarios,
@@ -39,6 +97,11 @@ export default function Inicio() {
     () => hasModulePermission("postulantes", "crear"),
     [hasModulePermission]
   );
+  const canEditPostulantes = useMemo(
+    () => hasModulePermission("postulantes", "crear"),
+    [hasModulePermission]
+  );
+  const verVisitas = canCreatePostulantes && canEditPostulantes
   const canCreateDonadores = useMemo(
     () => hasModulePermission("donadores", "crear"),
     [hasModulePermission]
@@ -48,6 +111,102 @@ export default function Inicio() {
     () => hasModulePermission("beneficiarios", "crear"),
     [hasModulePermission]
   );
+  const canViewBeneficiarios = useMemo(
+    () => hasModulePermission("beneficiarios", "ver"),
+    [hasModulePermission]
+  );
+
+
+  const puedeVerGraficas = canViewBeneficiarios;
+
+  const tieneAccionesRapidas =
+    canCreateBeneficiarios ||
+    canCreateDonadores ||
+    canCreatePostulantes;
+
+  const tieneContenidoDashboard =
+    puedeVerGraficas ||
+    tieneAccionesRapidas ||
+    verVisitas;
+
+  const graficaEscolaridad = useMemo(() => {
+    const niveles = {};
+
+    beneficiariosPeriodo.forEach((b) => {
+      const seg = b?.ultimo_seguimiento || b?.seguimiento || {};
+      const datosEscolares = seg?.datos_escolares || {};
+
+      let nivel = "";
+
+      if (datosEscolares?.id_escolaridad) {
+        nivel = formatearNivel(
+          datosEscolares.id_escolaridad.nivel_escolar
+        );
+      } else if (datosEscolares?.nivel) {
+        nivel = formatearNivel(datosEscolares.nivel);
+      }
+
+      if (!nivel) return;
+
+      niveles[nivel] = (niveles[nivel] || 0) + 1;
+    });
+
+    return {
+      labels: Object.keys(niveles),
+      datasets: [
+        {
+          data: Object.values(niveles),
+          backgroundColor: [
+            "#99F6E4", // Teal pastel
+            "#BAE6FD", // Azul pastel
+            "#C4B5FD", // Violeta pastel
+            "#FBCFE8", // Rosa pastel
+            "#FDE68A", // Amarillo pastel
+            "#FED7AA", // Naranja pastel
+          ],
+          borderColor: "#FFFFFF",
+          borderWidth: 2,
+          hoverOffset: 8,
+        },
+      ],
+    };
+  }, [beneficiariosPeriodo]);
+
+  const graficaEdades = useMemo(() => {
+    const edades = {
+      "0-5": 0,
+      "6-10": 0,
+      "11-15": 0,
+      "16-18": 0,
+      "19+": 0,
+    };
+
+    beneficiariosPeriodo.forEach((b) => {
+      const edad = calcularEdad(
+        b?.expediente_resumen?.fecha_nacimiento
+      );
+
+      if (!edad) return;
+
+      if (edad <= 5) edades["0-5"]++;
+      else if (edad <= 10) edades["6-10"]++;
+      else if (edad <= 15) edades["11-15"]++;
+      else if (edad <= 18) edades["16-18"]++;
+      else edades["19+"]++;
+    });
+
+    return {
+      labels: Object.keys(edades),
+      datasets: [
+        {
+          label: "Beneficiarios",
+          data: Object.values(edades),
+          backgroundColor: "#0d6f6b",
+        },
+      ],
+    };
+  }, [beneficiariosPeriodo]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -191,7 +350,7 @@ export default function Inicio() {
     return { tipo: "vacio", totalHoy: 0, proximaVisita: null };
   }, [visitas]);
 
-  const Card = ({ title, value, icon: Icon, type = "default", loading = false }) => {
+  const CardInterno = ({ title, value, icon: Icon, type = "default", loading = false }) => {
     const styles = {
       default: { bg: "bg-blue-50", text: "text-blue-600", border: "border-slate-100" },
       danger: { bg: "bg-red-50", text: "text-red-600", border: "border-red-100" },
@@ -230,216 +389,275 @@ export default function Inicio() {
           <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Inicio</h2>
         </div>
       </div>
+      {!tieneContenidoDashboard ? (
+        <div className="rounded-3xl bg-white p-12 text-center shadow-sm border border-slate-200">
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-teal-50">
+            <LayoutGrid className="h-10 w-10 text-teal-600" />
+          </div>
 
-      {/* KPIs Grid */}
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
-        <Card
-          title="Beneficiarios Activos"
-          value={metrics.activos}
-          icon={Users}
-          type="default"
-          loading={loadingBeneficiarios}
-        />
-        <Card
-          title="Sin Donador"
-          value={metrics.sinDonador}
-          icon={UserX}
-          type="danger"
-          loading={loadingBeneficiarios}
-        />
-        <Card
-          title="Ingresos del Mes"
-          value={metrics.nuevosIngresos}
-          icon={UserPlus}
-          type="success"
-          loading={loadingBeneficiarios}
-        />
-        <Card
-          title="Casos de Baja"
-          value={metrics.bajas}
-          icon={UserMinus}
-          type="warning"
-          loading={loadingBeneficiarios}
-        />
-        <Card
-          title="Visitas Hoy"
-          value={totalVisitasHoy}
-          icon={CalendarDays}
-          type="info"
-          loading={loadingVisitas}
-        />
-      </div>
+          <h3 className="text-2xl font-bold text-slate-800">
+            Bienvenido al Sistema de Gestión
+          </h3>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <p className="mt-4 max-w-2xl mx-auto text-slate-600 leading-relaxed">
+            Este sistema ha sido diseñado para facilitar la administración y el
+            seguimiento de beneficiarios, postulantes, donadores, visitas y demás
+            procesos relacionados con la operación de la organización.
+          </p>
 
-        {/* Acciones Rápidas */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
-              <PlusCircle className="w-5 h-5 text-teal-600" />
-              <h3 className="text-lg font-bold text-slate-800">Acciones rápidas</h3>
-            </div>
+          <p className="mt-3 max-w-2xl mx-auto text-slate-500 leading-relaxed">
+            La información y herramientas disponibles en este panel se mostrarán de
+            acuerdo con los permisos asignados a tu usuario. Conforme se habiliten
+            módulos, podrás acceder a reportes, estadísticas, registros y funciones
+            específicas de tu área de trabajo.
+          </p>
 
-            <div className="mt-5 space-y-3">
-              {canCreateBeneficiarios && (
-                <button
-                  onClick={() => navigate("/app/beneficiarios", { state: { openModal: true } })}
-                  className="w-full flex items-center justify-between rounded-xl bg-teal-600 text-white px-4 py-2.5 font-medium hover:bg-teal-700 active:scale-[0.99] transition shadow-sm"
-                >
-                  <span>Registrar Beneficiario</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              )}
-              {canCreateDonadores && (
-                <button
-                  onClick={() => navigate("/app/donadores", { state: { openModal: true } })}
-                  className="w-full flex items-center justify-between rounded-xl border border-slate-200 text-slate-700 px-4 py-2.5 font-medium hover:bg-slate-50 active:scale-[0.99] transition"
-                >
-                  <span>Registrar Donador</span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                </button>
-              )}
-              {canCreatePostulantes && (
-                <button
-                  onClick={() => navigate("/app/ingresos", { state: { openModal: true } })}
-                  className="w-full flex items-center justify-between rounded-xl border border-slate-200 text-slate-700 px-4 py-2.5 font-medium hover:bg-slate-50 active:scale-[0.99] transition"
-                >
-                  <span>Registrar Postulante</span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                </button>
-              )}
-            </div>
+          <div className="mt-8 rounded-2xl bg-slate-50 border border-slate-200 p-4 max-w-xl mx-auto">
+            <p className="text-sm text-slate-600">
+              Tu panel se personaliza automáticamente según tu rol dentro del sistema.
+            </p>
           </div>
         </div>
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05),0_10px_20px_-12px_rgba(0,0,0,0.04)] transition-all duration-300">
-
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-amber-50 rounded-xl border border-amber-100">
-                <AlertTriangle className="w-4 h-4 text-amber-600" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-800 tracking-tight">Alertas del Sistema</h3>
-                <p className="text-xs text-slate-400 font-medium mt-0.5">Estado actual de prioridades y agenda</p>
-              </div>
-            </div>
-            <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border shadow-sm ${agendaVisitas.tipo === "hoy"
-              ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-              : agendaVisitas.tipo === "futuro"
-                ? "bg-indigo-50 text-indigo-700 border-indigo-100"
-                : "bg-slate-50 text-slate-500 border-slate-200"
-              }`}>
-              {agendaVisitas.tipo === "hoy" && "Acción requerida"}
-              {agendaVisitas.tipo === "futuro" && "Al día"}
-              {agendaVisitas.tipo === "vacio" && "Sin pendientes"}
-            </span>
+      ) : (
+        <>
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
+            <CardInterno
+              title="Beneficiarios Activos"
+              value={metrics.activos}
+              icon={Users}
+              type="default"
+              loading={loadingBeneficiarios}
+            />
+            <CardInterno
+              title="Sin Donador"
+              value={metrics.sinDonador}
+              icon={UserX}
+              type="danger"
+              loading={loadingBeneficiarios}
+            />
+            <CardInterno
+              title="Ingresos del Mes"
+              value={metrics.nuevosIngresos}
+              icon={UserPlus}
+              type="success"
+              loading={loadingBeneficiarios}
+            />
+            <CardInterno
+              title="Casos de Baja"
+              value={metrics.bajas}
+              icon={UserMinus}
+              type="warning"
+              loading={loadingBeneficiarios}
+            />
+            <CardInterno
+              title="Visitas Hoy"
+              value={totalVisitasHoy}
+              icon={CalendarDays}
+              type="info"
+              loading={loadingVisitas}
+            />
           </div>
+          {canViewBeneficiarios && (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card>
+                <h3 className="text-sm font-semibold mb-4">
+                  Distribución por edades
+                </h3>
 
-          {/* Contenido de las Alertas */}
-          <div className="mt-5 space-y-3">
-
-            {agendaVisitas.tipo === "hoy" && (
-              <div
-                onClick={() => navigate("/app/ingresos")}
-                className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-50/40 via-emerald-50/10 to-transparent border border-emerald-100 p-4 hover:border-emerald-200 hover:shadow-md hover:shadow-emerald-50/20 cursor-pointer transition-all duration-300 flex items-start justify-between gap-4"
-              >
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 rounded-l-xl" />
-
-                <div className="flex gap-3.5 pl-1">
-                  <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-200/60 shadow-sm shrink-0 mt-0.5 group-hover:scale-105 transition-transform duration-300">
-                    <Clock className="w-4 h-4 animate-pulse" />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
-                        Agenda de Hoy
-                      </p>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    </div>
-
-                    <p className="text-sm font-medium text-slate-700 leading-relaxed">
-                      Tienes <strong className="text-slate-900 font-bold">{agendaVisitas.totalHoy} {agendaVisitas.totalHoy === 1 ? 'visita programada' : 'visitas programadas'}</strong>.
-                      Inicia a las <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">{agendaVisitas.proximaVisita?.horaLimpia} hrs</span>.
-                    </p>
-                  </div>
+                <div className="h-72">
+                  <Bar
+                    data={graficaEdades}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                      },
+                    }}
+                  />
                 </div>
+              </Card>
 
-                <div className="flex items-center self-center shrink-0">
-                  <div className="p-1.5 rounded-lg bg-white border border-slate-100 text-slate-400 group-hover:text-emerald-600 group-hover:border-emerald-200 group-hover:bg-emerald-50/50 shadow-sm transition-all duration-300 transform group-hover:translate-x-0.5">
-                    <ChevronRight className="w-4 h-4" />
+
+              <Card>
+                <h3 className="text-sm font-semibold mb-4">
+                  Nivel educativo
+                </h3>
+
+                <div className="h-72">
+                  <Doughnut
+                    data={graficaEscolaridad}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: "bottom",
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </Card>
+            </div>
+          )}
+
+
+          <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
+            {tieneAccionesRapidas && (
+              < div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 pb-4 border-b border-slate-100">
+                    <PlusCircle className="w-5 h-5 text-teal-600" />
+                    <h3 className="text-lg font-bold text-slate-800">Acciones rápidas</h3>
+                  </div>
+
+                  <div className="mt-5 space-y-3">
+                    {canCreateBeneficiarios && (
+                      <button
+                        onClick={() => navigate("/app/beneficiarios", { state: { openModal: true } })}
+                        className="w-full flex items-center justify-between rounded-xl bg-teal-600 text-white px-4 py-2.5 font-medium hover:bg-teal-700 active:scale-[0.99] transition shadow-sm"
+                      >
+                        <span>Registrar Beneficiario</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    )}
+                    {canCreateDonadores && (
+                      <button
+                        onClick={() => navigate("/app/donadores", { state: { openModal: true } })}
+                        className="w-full flex items-center justify-between rounded-xl border border-slate-200 text-slate-700 px-4 py-2.5 font-medium hover:bg-slate-50 active:scale-[0.99] transition"
+                      >
+                        <span>Registrar Donador</span>
+                        <ChevronRight className="w-4 h-4 text-slate-400" />
+                      </button>
+                    )}
+                    {canCreatePostulantes && (
+                      <button
+                        onClick={() => navigate("/app/ingresos", { state: { openModal: true } })}
+                        className="w-full flex items-center justify-between rounded-xl border border-slate-200 text-slate-700 px-4 py-2.5 font-medium hover:bg-slate-50 active:scale-[0.99] transition"
+                      >
+                        <span>Registrar Postulante</span>
+                        <ChevronRight className="w-4 h-4 text-slate-400" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
             )}
-            {agendaVisitas.tipo === "futuro" && (
-              <div
-                onClick={() => navigate("/app/ingresos")}
-                className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-50/30 via-transparent to-transparent border border-slate-200 p-4 hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-50/10 cursor-pointer transition-all duration-300 flex items-start justify-between gap-4"
-              >
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-400 rounded-l-xl opacity-60 group-hover:opacity-100 transition-opacity" />
+            {verVisitas && (
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05),0_10px_20px_-12px_rgba(0,0,0,0.04)] transition-all duration-300">
 
-                <div className="flex gap-3.5 pl-1">
-                  <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100 shadow-sm shrink-0 mt-0.5 group-hover:scale-105 transition-transform duration-300">
-                    <Calendar className="w-4 h-4" />
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-amber-50 rounded-xl border border-amber-100">
+                      <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800 tracking-tight">Alertas del Sistema</h3>
+                      <p className="text-xs text-slate-400 font-medium mt-0.5">Estado actual de prioridades y agenda</p>
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">
-                        Próxima Cita en Agenda
-                      </p>
-                      <div className="flex items-center gap-0.5 text-[10px] bg-amber-50 text-amber-700 border border-amber-100 px-1.5 py-0.2 rounded-md font-medium">
-                        <Sparkles className="w-2.5 h-2.5" /> Hoy libre
+                  <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border shadow-sm ${agendaVisitas.tipo === "hoy"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                    : agendaVisitas.tipo === "futuro"
+                      ? "bg-indigo-50 text-indigo-700 border-indigo-100"
+                      : "bg-slate-50 text-slate-500 border-slate-200"
+                    }`}>
+                    {agendaVisitas.tipo === "hoy" && "Acción requerida"}
+                    {agendaVisitas.tipo === "futuro" && "Al día"}
+                    {agendaVisitas.tipo === "vacio" && "Sin pendientes"}
+                  </span>
+                </div>
+
+                {/* Contenido de las Alertas */}
+                <div className="mt-5 space-y-3">
+
+                  {agendaVisitas.tipo === "hoy" && (
+                    <div
+                      onClick={() => navigate("/app/ingresos")}
+                      className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-50/40 via-emerald-50/10 to-transparent border border-emerald-100 p-4 hover:border-emerald-200 hover:shadow-md hover:shadow-emerald-50/20 cursor-pointer transition-all duration-300 flex items-start justify-between gap-4"
+                    >
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 rounded-l-xl" />
+
+                      <div className="flex gap-3.5 pl-1">
+                        <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-200/60 shadow-sm shrink-0 mt-0.5 group-hover:scale-105 transition-transform duration-300">
+                          <Clock className="w-4 h-4 animate-pulse" />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                              Agenda de Hoy
+                            </p>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          </div>
+
+                          <p className="text-sm font-medium text-slate-700 leading-relaxed">
+                            Tienes <strong className="text-slate-900 font-bold">{agendaVisitas.totalHoy} {agendaVisitas.totalHoy === 1 ? 'visita programada' : 'visitas programadas'}</strong>.
+                            Inicia a las <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">{agendaVisitas.proximaVisita?.horaLimpia} hrs</span>.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center self-center shrink-0">
+                        <div className="p-1.5 rounded-lg bg-white border border-slate-100 text-slate-400 group-hover:text-emerald-600 group-hover:border-emerald-200 group-hover:bg-emerald-50/50 shadow-sm transition-all duration-300 transform group-hover:translate-x-0.5">
+                          <ChevronRight className="w-4 h-4" />
+                        </div>
                       </div>
                     </div>
-                    <p className="text-sm font-medium text-slate-600 leading-relaxed">
-                      Tu siguiente visita está programada para <span className="font-bold text-indigo-900 lowercase">{agendaVisitas.proximaVisita?.etiquetaFecha}</span> a las <span className="font-semibold text-slate-800">{agendaVisitas.proximaVisita?.horaLimpia} hrs</span>.
-                    </p>
+                  )}
+                  {agendaVisitas.tipo === "futuro" && (
+                    <div
+                      onClick={() => navigate("/app/ingresos")}
+                      className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-50/30 via-transparent to-transparent border border-slate-200 p-4 hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-50/10 cursor-pointer transition-all duration-300 flex items-start justify-between gap-4"
+                    >
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-400 rounded-l-xl opacity-60 group-hover:opacity-100 transition-opacity" />
 
-                  </div>
-                </div>
+                      <div className="flex gap-3.5 pl-1">
+                        <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100 shadow-sm shrink-0 mt-0.5 group-hover:scale-105 transition-transform duration-300">
+                          <Calendar className="w-4 h-4" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">
+                              Próxima Cita en Agenda
+                            </p>
+                            <div className="flex items-center gap-0.5 text-[10px] bg-amber-50 text-amber-700 border border-amber-100 px-1.5 py-0.2 rounded-md font-medium">
+                              <Sparkles className="w-2.5 h-2.5" /> Hoy libre
+                            </div>
+                          </div>
+                          <p className="text-sm font-medium text-slate-600 leading-relaxed">
+                            Tu siguiente visita está programada para <span className="font-bold text-indigo-900 lowercase">{agendaVisitas.proximaVisita?.etiquetaFecha}</span> a las <span className="font-semibold text-slate-800">{agendaVisitas.proximaVisita?.horaLimpia} hrs</span>.
+                          </p>
 
-                <div className="flex items-center self-center shrink-0">
-                  <div className="p-1.5 rounded-lg bg-white border border-slate-100 text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-200 group-hover:bg-indigo-50/50 shadow-sm transition-all duration-300 transform group-hover:translate-x-0.5">
-                    <ChevronRight className="w-4 h-4" />
-                  </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center self-center shrink-0">
+                        <div className="p-1.5 rounded-lg bg-white border border-slate-100 text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-200 group-hover:bg-indigo-50/50 shadow-sm transition-all duration-300 transform group-hover:translate-x-0.5">
+                          <ChevronRight className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {agendaVisitas.tipo === "vacio" && (
+                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-6 text-center transition-colors duration-300">
+                      <div className="mx-auto w-9 h-9 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center text-slate-400 mb-2.5 shadow-sm">
+                        <Inbox className="w-4 h-4" />
+                      </div>
+                      <p className="text-xs font-semibold text-slate-700">Agenda totalmente despejada</p>
+                      <p className="text-xs text-slate-400 mt-1 max-w-[240px] mx-auto">No hay visitas futuras pendientes de asignación en este ciclo.</p>
+                    </div>
+                  )}
+
                 </div>
               </div>
             )}
 
-            {agendaVisitas.tipo === "vacio" && (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-6 text-center transition-colors duration-300">
-                <div className="mx-auto w-9 h-9 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center text-slate-400 mb-2.5 shadow-sm">
-                  <Inbox className="w-4 h-4" />
-                </div>
-                <p className="text-xs font-semibold text-slate-700">Agenda totalmente despejada</p>
-                <p className="text-xs text-slate-400 mt-1 max-w-[240px] mx-auto">No hay visitas futuras pendientes de asignación en este ciclo.</p>
-              </div>
-            )}
-
           </div>
-        </div>
-        {/* Módulos del Sistema */}
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-6">
-          <div className="flex items-center gap-2 pb-4 border-b border-dashed border-slate-200">
-            <LayoutGrid className="w-5 h-5 text-slate-500" />
-            <h3 className="text-lg font-bold text-slate-700">Módulos activos</h3>
-          </div>
-
-          <div className="mt-5 grid grid-cols-2 gap-2">
-            {["Beneficiarios", "Donadores", "Postulantes", "Reportes", "Configuración"].map((mod) => (
-              <div
-                key={mod}
-                className="flex items-center gap-2 text-sm font-medium text-slate-600 bg-white border border-slate-100 px-3 py-2 rounded-xl shadow-sm"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                {mod}
-              </div>
-            ))}
-          </div>
-        </div>
-
-      </div>
+        </>
+      )}
     </section>
   );
 }

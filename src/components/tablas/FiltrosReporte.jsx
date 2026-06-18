@@ -51,6 +51,7 @@ export default function FiltrosReporte({
               return (
                 <accion.component
                   key={index}
+                  type="button"
                   variant={accion.variant}
                   onClick={accion.onClick}
                   className="whitespace-nowrap"

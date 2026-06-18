@@ -9,9 +9,14 @@ import { usePeriodoActivo } from "../features/periodos/hooks/usePeriodos";
 import { generarSemanasLaborales } from "../utils/dateHelpers";
 import ModalResultado from "../components/shared/ModalResultado";
 import ModalConfirmacion from "../components/shared/ModalConfirmacion";
-
+import { usePermissions } from "../context/PermissionsContext";
 
 const AsistenciasPagina = () => {
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canCreate = hasModulePermission("servicios", "crear");
+  const canEdit = hasModulePermission("servicios", "editar");
+  const puedeEditar = canCreate && canEdit
+
   const [pagina, setPagina] = useState(1);
   const [registrosPorPagina, setRegistrosPorPagina] = useState(10);
   const { data: periodoActivo = null, isLoading: loadingActivo, error: errorActivo } = usePeriodoActivo();
@@ -19,6 +24,7 @@ const AsistenciasPagina = () => {
   const [cambios, setCambios] = useState({});
   const [showConfirm, setShowConfirm] = useState(false);
   const [showResult, setShowResult] = useState(false);
+
   const statsCambios = useMemo(() => {
     const lista = Object.values(cambios);
     const creados = lista.filter(c => !c.id_asistencia_servicio).length;
@@ -26,7 +32,6 @@ const AsistenciasPagina = () => {
     return { creados, editados, total: lista.length };
   }, [cambios]);
 
-  //mensaje dinámico 
   const mensajeConfirmacion = useMemo(() => {
     const parts = [];
     if (statsCambios.creados > 0) parts.push(`agregar ${statsCambios.creados} nuevas asistencias`);
@@ -34,29 +39,25 @@ const AsistenciasPagina = () => {
 
     return `¿Estás seguro de que deseas ${parts.join(" y ")}?`;
   }, [statsCambios]);
+
   const onGuardarClick = () => setShowConfirm(true);
-  const { data, isLoading, isError, mutation } =
-    useAsistenciaData(periodoId);
-    console.log("filtradospagina",data)
-  // ✅ REEMPLAZA ESTA FUNCIÓN EN AsistenciasPagina.js
-const confirmarGuardado = async () => {
-  const listaCambios = Object.values(cambios);
 
-  if (!listaCambios.length) return;
+  const { data, isLoading, isError, mutation } =useAsistenciaData(periodoId);
 
-  setShowConfirm(false);
+  const confirmarGuardado = async () => {
+    const listaCambios = Object.values(cambios);
 
-  try {
-    // Como guardarAsistencias devuelve un Promise.all, esperamos a que termine con await
-    await mutation.guardarAsistencias(listaCambios);
-    
-    // Una vez guardado con éxito en el servidor:
-    setCambios({}); // 🔥 Esto quitará el botón de guardar inmediatamente
-    setShowResult(true);
-  } catch (err) {
-    console.error("ERROR GUARDANDO:", err);
-  }
-};
+    if (!listaCambios.length) return;
+
+    setShowConfirm(false);
+
+    try {
+      await mutation.guardarAsistencias(listaCambios);
+      setCambios({}); 
+      setShowResult(true);
+    } catch (err) {
+    }
+  };
   const [search, setSearch] = useState("");
 
   const [filters, setFilters] = useState({
@@ -67,14 +68,20 @@ const confirmarGuardado = async () => {
     useState(null);
 
   const limitesFecha = useMemo(() => {
-    const hoy = new Date().toLocaleDateString("en-CA");
-    const fin = periodoActivo?.fecha_fin;
+    const hoy = new Date().toISOString().split("T")[0];
 
     return {
-      min: periodoActivo?.fecha_inicio,
-      max: fin && fin < hoy ? fin : hoy,
+      min: null, 
+      max: hoy,  
     };
-  }, [periodoActivo]);
+  }, []);
+  const onFechaChangeSafe = (fecha) => {
+    const hoy = new Date().toISOString().split("T")[0];
+
+    if (fecha > hoy) return;
+
+    setFechaSeleccionada(fecha);
+  };
   const semanas = useMemo(() => {
     const inicio = periodoActivo?.fecha_inicio;
     const fin = periodoActivo?.fecha_fin;
@@ -85,21 +92,25 @@ const confirmarGuardado = async () => {
   }, [periodoActivo]);
 
   useEffect(() => {
-    if (!semanas.length || fechaSeleccionada) return;
+    if (!semanas.length) return;
 
     const hoy = new Date();
 
-    const semanaActual = semanas.find((s) => {
-      const inicio = new Date(s.inicio);
-      const fin = new Date(s.fin);
+    const dia = hoy.getDay(); 
+    const diff = hoy.getDate() - dia + (dia === 0 ? -6 : 1);
 
-      return hoy >= inicio && hoy <= fin;
-    });
+    const lunes = new Date(hoy.setDate(diff));
+
+    const inicioSemana = lunes.toISOString().split("T")[0];
+
+    const semanaActual = semanas.find(
+      (s) => s.inicio <= inicioSemana && s.fin >= inicioSemana
+    );
 
     setFechaSeleccionada(
-      semanaActual?.inicio || semanas[0]?.inicio
+      semanaActual?.inicio || inicioSemana
     );
-  }, [semanas, fechaSeleccionada]);
+  }, [semanas]);
   const semanaActiva = useMemo(() => {
     if (!fechaSeleccionada || semanas.length === 0) return null;
 
@@ -128,68 +139,80 @@ const confirmarGuardado = async () => {
   }, [fechaSeleccionada, semanas]);
 
   const dias = useMemo(() => {
-    if (!semanaActiva) return [];
-    const lunes = new Date(semanaActiva.inicio + "T00:00:00");
+    if (!fechaSeleccionada) return [];
+
+    const fecha = new Date(fechaSeleccionada + "T00:00:00");
+
+    const diaSemana = fecha.getDay();
+    const diff = diaSemana === 0 ? -6 : 1 - diaSemana;
+
+    const lunes = new Date(fecha);
+    lunes.setDate(fecha.getDate() + diff);
+
     return Array.from({ length: 5 }).map((_, i) => {
       const d = new Date(lunes);
       d.setDate(lunes.getDate() + i);
 
       return {
-        id: d.toLocaleDateString("en-CA"),
+        id: d.toISOString().split("T")[0],
         label: d.toLocaleDateString("es-ES", {
           day: "2-digit",
           month: "short",
         }).toUpperCase(),
       };
     });
-  }, [semanaActiva]);
-console.log("DATA CHECK:", data);
-console.log("BENEFICIARIOS CHECK:", data?.beneficiarios);
+  }, [fechaSeleccionada]);
+  console.log("DATA CHECK:", data);
+  console.log("BENEFICIARIOS CHECK:", data?.beneficiarios);
   const beneficiariosFiltrados = useMemo(() => {
-  const lista = Array.isArray(data) ? data : [];
+    const lista = Array.isArray(data) ? data : [];
 
-  const q = (search ?? "").trim().toLowerCase();
+    const q = (search ?? "").trim().toLowerCase();
 
-  if (!q) return lista;
+    if (!q) return lista;
 
-  return lista.filter((b) =>
-    (b.nombreCompleto ?? "").toLowerCase().includes(q)
-  );
-}, [data, search]);
+    return lista.filter((b) =>
+      (b.nombreCompleto ?? "").toLowerCase().includes(q)
+    );
+  }, [data, search]);
 
-const beneficiariosPaginados = useMemo(() => {
-  const inicio = (pagina - 1) * registrosPorPagina;
+  const beneficiariosPaginados = useMemo(() => {
+    const inicio = (pagina - 1) * registrosPorPagina;
 
-  return beneficiariosFiltrados.slice(
-    inicio,
-    inicio + registrosPorPagina
-  );
-}, [beneficiariosFiltrados, pagina, registrosPorPagina]);
- const handleLocalChange = (payload) => {
-  const key = `${payload.id_beneficiario}-${payload.fecha_realizacion}`;
+    return beneficiariosFiltrados.slice(
+      inicio,
+      inicio + registrosPorPagina
+    );
+  }, [beneficiariosFiltrados, pagina, registrosPorPagina]);
+  const handleLocalChange = (payload) => {
+    const hoy = new Date().toISOString().split("T")[0];
 
-  // 1. Buscamos el beneficiario en los datos procesados para extraer su id_seguimiento real
-  const beneficiarioOriginal = data?.find(b => b.id === payload.id_beneficiario);
-  const idSeguimientoReal = beneficiarioOriginal?.id_seguimiento;
+    if (payload.fecha_realizacion > hoy) {
+      console.warn("No se puede registrar asistencia en fecha futura");
+      return;
+    }
 
-  setCambios((prev) => {
-    const existente = prev[key] || {};
+    const key = `${payload.id_beneficiario}-${payload.fecha_realizacion}`;
 
-    return {
-      ...prev,
-      [key]: {
-        ...existente,
-        ...payload,
-        id_beneficiario: payload.id_beneficiario,
-        fecha_realizacion: payload.fecha_realizacion,
-        tipo_servicio: filters.servicio,
-        
-        // 2. Nos aseguramos de que use el id del beneficiario si payload no lo trae
-        id_seguimiento: payload.id_seguimiento || idSeguimientoReal,
-      },
-    };
-  });
-};
+    const beneficiarioOriginal = data?.find(
+      b => b.id === payload.id_beneficiario
+    );
+
+    const idSeguimientoReal = beneficiarioOriginal?.id_seguimiento;
+
+    setCambios((prev) => {
+      const existente = prev[key] || {};
+
+      return {
+        ...prev,
+        [key]: {
+          ...existente,
+          ...payload,
+          id_seguimiento: payload.id_seguimiento || idSeguimientoReal,
+        },
+      };
+    });
+  };
 
   const onGuardar = () => {
     const listaCambios = Object.values(cambios);
@@ -211,13 +234,13 @@ const beneficiariosPaginados = useMemo(() => {
         <AlertCircle />
       </div>
     ); console.log("DIAS:", dias);
-    console.log("SEARCH RAW:", JSON.stringify(search));
-console.log("beneficiarios originales", data);
-console.log("beneficiarios filtrados", beneficiariosFiltrados);
-console.log("beneficiarios paginados", beneficiariosPaginados);
-console.log("search", `"${search}"`);
-console.log("pagina", pagina);
-console.log("registros", registrosPorPagina);
+  console.log("SEARCH RAW:", JSON.stringify(search));
+  console.log("beneficiarios originales", data);
+  console.log("beneficiarios filtrados", beneficiariosFiltrados);
+  console.log("beneficiarios paginados", beneficiariosPaginados);
+  console.log("search", `"${search}"`);
+  console.log("pagina", pagina);
+  console.log("registros", registrosPorPagina);
   return (
     <section className="space-y-6">
 
@@ -253,7 +276,7 @@ console.log("registros", registrosPorPagina);
             fechaSeleccionada
           }
           onFechaChange={
-            setFechaSeleccionada
+            onFechaChangeSafe
           }
           min={limitesFecha.min}
           max={limitesFecha.max}
@@ -271,7 +294,7 @@ console.log("registros", registrosPorPagina);
           hayCambios={statsCambios.total > 0}
         />
 
-        {statsCambios.total > 0 && (
+        {statsCambios.total > 0 && puedeEditar && (
           <div className="fixed bottom-10 right-10 z-50">
             <button
               onClick={onGuardarClick}
@@ -283,7 +306,23 @@ console.log("registros", registrosPorPagina);
             </button>
           </div>
         )}
+        {mutation.isLoading && (
+          <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+            <div className="bg-white rounded-2xl p-6 shadow-xl text-center min-w-[320px]">
 
+              <div className="h-10 w-10 mx-auto mb-4 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+
+              <h3 className="font-semibold text-slate-800">
+                Guardando asistencias...
+              </h3>
+
+              <p className="text-sm text-slate-500 mt-2">
+                Esto puede tardar unos segundos.
+              </p>
+
+            </div>
+          </div>
+        )}
         <PaginacionTabla
           currentPage={pagina}
           totalPages={Math.ceil(
@@ -321,3 +360,4 @@ console.log("registros", registrosPorPagina);
 };
 
 export default AsistenciasPagina;
+

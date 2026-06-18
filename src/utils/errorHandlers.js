@@ -105,7 +105,6 @@ export const formatErrorAnidado = (err) => {
         return mensajes;
     };
 
-    // --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
     // Si el error es un objeto, primero verificamos si contiene el diccionario de errores detallados de validación
     const objetivoAProcesar = err.errors ? err.errors : err;
 

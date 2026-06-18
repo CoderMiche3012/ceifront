@@ -31,15 +31,17 @@ export default function ResumenServicioSocialCard({
               Registro de actividades
             </p>
           </div>
-          {canCreateObligaciones &&(
+          {canCreateObligaciones && (
             <button
-              onClick={
-                vm.abrirNuevo
-              }
-              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl flex items-center gap-2"
+              onClick={vm.abrirNuevo}
+              className="
+    bg-teal-600 hover:bg-teal-700 text-white
+    px-3 sm:px-4 py-2 rounded-xl
+    flex items-center gap-2
+  "
             >
               <Plus size={18} />
-              Agregar
+              <span className="hidden sm:inline">Agregar</span>
             </button>
           )}
         </div>
