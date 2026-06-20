@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { obtenerPostulantes, obtenerPostulantePorId, crearPostulante, actualizarPostulante, eliminarPostulante, aceptarPostulante } from "../services/postulantesService";
+import { 
+  obtenerPostulantes, obtenerPostulantePorId, crearPostulante, actualizarPostulante, 
+  eliminarPostulante, aceptarPostulante, obtenerAnalisisIA
+} from "../services/postulantesService";
 import { postulantesKeys } from "../services/postulantesKeys";
 import { actualizarEstudio } from "../services/estudiosService";
 import { estudiosKeys } from "../services/estudiosKeys";
@@ -149,5 +152,13 @@ export function useAceptarPostulante() {
         queryKey: beneficiariosKeys.all,
       });
     },
+  });
+}
+// análisis IA del estudio
+export function useAnalisisIA(idEstudio) {
+  return useQuery({
+    queryKey: ["analisisIA", idEstudio],
+    queryFn: () => obtenerAnalisisIA(idEstudio),
+    enabled: !!idEstudio,
   });
 }

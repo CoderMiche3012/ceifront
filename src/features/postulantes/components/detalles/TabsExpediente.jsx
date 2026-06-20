@@ -44,6 +44,16 @@ export default function TabsExpediente({ tab, setTab }) {
       >
         Resultados
       </button>
+      <button
+        onClick={() => setTab("IA")}
+        className={`pb-2 text-sm font-medium ${
+          tab === "Resultados"
+            ? "border-b-2 border-teal-600 text-teal-600"
+            : "text-slate-500"
+        }`}
+      >
+        Analisis IA
+      </button>
     </div>
   );
 }

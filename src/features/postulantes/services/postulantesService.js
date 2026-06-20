@@ -38,3 +38,9 @@ export const aceptarPostulante = async (id) => {
 
   return data;
 };
+
+// obtener análisis IA del estudio del postulante
+export const obtenerAnalisisIA = async (idEstudio) => {
+  const { data } = await API.get( `/api/modeloML/analisis-ia/${idEstudio}/`);
+  return data;
+};

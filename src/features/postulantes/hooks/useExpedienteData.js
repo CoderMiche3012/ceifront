@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { usePostulante } from "./usePostulantes";
+import { useAnalisisIA } from "./usePostulantes";
 
 export const useExpedienteData = (id) => {
   const [tab, setTab] = useState("generales");
@@ -8,8 +9,13 @@ export const useExpedienteData = (id) => {
     data: postulante,
     isLoading: loadingPostulante,
   } = usePostulante(id);
+  const idEstudio = postulante?.estudio?.id_estudio;
+  const {
+  data: analisisIA,
+  isLoading: loadingIA,
+} = useAnalisisIA(idEstudio);
 
-  const loading = loadingPostulante;
+  const loading = loadingPostulante || loadingIA;
 
   // base
   const expediente = postulante?.expediente;
@@ -26,6 +32,7 @@ export const useExpedienteData = (id) => {
   );
 
   const estudio = postulante?.estudio;
+
   const gastos = postulante?.estudio?.gastos || [];
   const visitasFiltradas = postulante?.visita
     ? [postulante.visita]
@@ -133,5 +140,6 @@ export const useExpedienteData = (id) => {
     visitasFiltradas,
     estatusInfo,
     edad,
+    analisisIA,
   };
 };

@@ -14,6 +14,7 @@ import { ui } from "../../styles/ui/uiClasses";
 
 import { useSubirEstudio } from "../../features/postulantes/hooks/useSubirEstudio";
 import { usePermissions } from "../../context/PermissionsContext";
+import SugerenciasIA from "../../features/postulantes/components/detalles/IA/Tab_IA";
 
 export default function ExpedientePagina() {
 
@@ -29,7 +30,9 @@ export default function ExpedientePagina() {
     visitasFiltradas,
     estatusInfo,
     edad,
+    analisisIA
   } = useExpedienteData(id);
+  console.log("analisisIA",analisisIA)
 
   const estudio = useSubirEstudio(data);
   // loading
@@ -124,6 +127,9 @@ export default function ExpedientePagina() {
           <ResultadosCard data={data} canEdit={canEdit} />
         )}
 
+        {tab === "IA" && (
+          <SugerenciasIA analisisIA={analisisIA} />
+        )}
 
       </main>
     </section>
