@@ -2,7 +2,6 @@ import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 export default function Sugerencias({ analisisIA }) {
-  // Seguridad: si no hay datos
   if (!analisisIA?.datos_graficas?.metricas_postulante) {
     return (
       <div className="p-6 text-center text-gray-500">
@@ -33,7 +32,6 @@ export default function Sugerencias({ analisisIA }) {
   return (
     <div className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
       
-      {/* Header */}
       <div className="mb-6 p-4 bg-orange-50/50 border-l-4 border-orange-500 rounded-lg">
         <h3 className="text-lg font-bold text-orange-900">
           Análisis IA: Prioridad {analisisIA.prioridad}
@@ -45,7 +43,6 @@ export default function Sugerencias({ analisisIA }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
 
-        {/* GRÁFICA CON ALTURA FIJA ASIGNADA PARA EVITAR EL ERROR */}
         <div style={{ width: '100%', height: 260 }} className="relative">
           <ResponsiveContainer width={400} height={260}>
             <PieChart>
@@ -76,7 +73,6 @@ export default function Sugerencias({ analisisIA }) {
           </div>
         </div>
 
-        {/* MÉTRICAS */}
         <div className="grid grid-cols-2 gap-4">
           {[
             { label: "Ingreso", val: `$${ingreso_familiar}` },

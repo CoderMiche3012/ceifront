@@ -1,4 +1,5 @@
 import { Folder, Plus, ChevronDown } from "lucide-react";
+import { useMemo } from "react";
 
 import DonativoTabla from "../tabla/DonativoTabla";
 import PaginacionTabla from "../../../../components/tablas/PaginacionTabla";
@@ -13,12 +14,17 @@ import useHistorialDonativos from "../../hooks/useHistorialDonativos";
 
 import { formatMoney } from "../../../../utils/formatMoney";
 import { usePermissions } from "../../../../context/PermissionsContext";
+import { usePeriodoActivo } from "../../../periodos/hooks/usePeriodos";
 
 
 export default function HistorialDonativos({ data }) {
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
   const canCreate = hasModulePermission("donativos", "crear");
   const canEdit = hasModulePermission("donativos", "editar");
+  const canViewHistorial = hasModulePermission("historial", "ver");
+  const canEditHistorial = hasModulePermission("historial", "editar");
+
+  const { data: periodoActivo, isLoading: loadingPeriodo } = usePeriodoActivo();
 
   const {
     PAGE_SIZE,
@@ -50,6 +56,31 @@ export default function HistorialDonativos({ data }) {
     handleSearchChange,
   } = useHistorialDonativos(data);
 
+  
+
+  const periodosVisibles = useMemo(() => {
+    if (canViewHistorial) {
+      return periodosOrdenados;
+    }
+
+    if (!periodoActivo?.id_periodo) {
+      return [];
+    }
+
+    return periodosOrdenados.filter(
+      (p) => p.id_periodo === periodoActivo.id_periodo
+    );
+  }, [canViewHistorial, periodosOrdenados, periodoActivo]);
+
+  
+  if (isPermsLoading || loadingPeriodo || !periodoActivo) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[300px] gap-2 text-slate-500">
+        <div className="animate-spin h-6 w-6 border-2 border-slate-300 border-t-teal-500 rounded-full" />
+        <p className="text-sm">Cargando historial...</p>
+      </div>
+    );
+  }
   const cerrarModal = () => { setErrorForm(""); cerrarModalOriginal(); };
   const donadorInactivo = data?.estatus?.toLowerCase() === "inactivo";
 
@@ -61,7 +92,7 @@ export default function HistorialDonativos({ data }) {
       </h3>
 
       <div className="space-y-4">
-        {periodosOrdenados.length === 0 && (
+        {periodosVisibles.length === 0 && (
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-10">
             <div className="flex flex-col items-center text-center">
 
@@ -82,7 +113,7 @@ export default function HistorialDonativos({ data }) {
           </div>
         )}
 
-        {periodosOrdenados.map((periodo) => {
+        {periodosVisibles.map((periodo) => {
 
           const search = searchByPeriodo[periodo.id_periodo] || "";
           const baseItems = donativos.filter((d) => Number(d.periodo) === Number(periodo.id_periodo));
@@ -97,6 +128,15 @@ export default function HistorialDonativos({ data }) {
 
           const dataPaginada = items.slice(inicio, inicio + PAGE_SIZE);
           const hayRegistros = periodo.total_donativos > 0;
+          const esActivo = periodoActivo?.id_periodo === periodo.id_periodo;
+
+          const puedeCrear = esActivo
+            ? canCreate
+            : canEditHistorial;
+
+          const puedeEditar = esActivo
+            ? canEdit
+            : canEditHistorial;
 
           return (
             <div
@@ -155,7 +195,8 @@ export default function HistorialDonativos({ data }) {
                 <div className="border-t border-slate-100 p-5">
 
                   <div className="flex justify-end mb-4">
-                    {(canCreate && !donadorInactivo) && (
+
+                    {(puedeCrear && !donadorInactivo) && (
                       <Boton
                         onClick={() => abrirModal(periodo)}
                         icon={<Plus className="w-4 h-4" />}
@@ -189,7 +230,7 @@ export default function HistorialDonativos({ data }) {
                         <DonativoTabla
                           donativos={dataPaginada}
                           onEditar={abrirModalEditar}
-                          canEdit={canEdit}
+                          canEdit={puedeEditar}
                           donadorInactivo={donadorInactivo}
                         />
                       </div>

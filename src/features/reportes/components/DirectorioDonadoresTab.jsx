@@ -8,6 +8,8 @@ import TarjetasEstadisticas from "../../../components/shared/TarjetasEstadistica
 import DatosTabla from "../../../components/tablas/DatosTabla";
 import PaginacionTabla from "../../../components/tablas/PaginacionTabla";
 import FiltrosReporte from "../../../components/tablas/FiltrosReporte";
+import kidsAnimation from "../../../assets/imagenes/kid.json";
+import Lottie from "lottie-react";
 
 import {
   UserX,
@@ -26,6 +28,7 @@ export default function DirectorioDonadoresTab() {
   const [estatus, setEstatus] = useState("Activo");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [descargando, setDescargando] = useState(false);
 
   // Normalización del padrón de datos
   const donadoresProcesados = useMemo(() => {
@@ -118,31 +121,54 @@ export default function DirectorioDonadoresTab() {
 
   const descargarExcel = async (e) => {
     if (e) e.preventDefault();
+    if (descargando) return;
     try {
+      setDescargando(true);
       // registros filtrados actuales al Worker Maestro
       const buffer = await exportarReporte("excel", filtrados);
       dispararDescargaCliente(
         buffer,
-        "padrón_donadores_cei.xlsx",
+        "Reporte_donadores_cei.xlsx",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       );
     } catch (error) {
       console.error("Error al descargar Excel de donadores desde el worker:", error);
+    } finally {
+      setDescargando(false);
     }
   };
 
   const descargarPDF = async (e) => {
     if (e) e.preventDefault();
+    if (descargando) return;
     try {
+      setDescargando(true);
       const buffer = await exportarReporte("pdf", filtrados);
-      dispararDescargaCliente(buffer, "padrón_donadores_cei.pdf", "application/pdf");
+      dispararDescargaCliente(buffer, "Reporte_donadores_cei.pdf", "application/pdf");
     } catch (error) {
       console.error("Error al descargar PDF de donadores desde el worker:", error);
+    } finally {
+      setDescargando(false);
     }
   };
 
   if (loading) {
-    return <div className="p-6 text-emerald-800 font-medium animate-pulse">Cargando reporte de donadores...</div>;
+    return (
+      <div className="flex h-64 flex-col items-center justify-center">
+
+        <div className="w-56">
+          <Lottie
+            animationData={kidsAnimation}
+            loop={true}
+          />
+        </div>
+
+        <p className="mt-4 text-slate-600 font-medium">
+          Cargando y estructurando reporte de donadores...
+        </p>
+
+      </div>
+    );
   }
 
   const totalCEI = donadores.filter(
@@ -239,15 +265,18 @@ export default function DirectorioDonadoresTab() {
               variant: "secondary",
               icon: FileSpreadsheet,
               label: "Excel",
-              onClick: descargarExcel
+              onClick: descargarExcel,
+              disabled: descargando, 
             },
             {
               component: (props) => <Boton {...props} type="button" />,
               icon: FileText,
               label: "PDF",
-              onClick: descargarPDF
+              onClick: descargarPDF,
+              disabled: descargando, 
             },
           ]}
+          descargando={descargando}
         />
 
         <DatosTabla

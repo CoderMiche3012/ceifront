@@ -24,6 +24,8 @@ import { obtenerDireccionPorCP } from "../../../donadores/services/donadoresServ
 import { usePostulanteEditarForm } from "../../hooks/usePostulanteEditarForm";
 import { obtenerUsuario } from "../../../../storage/userStorage";
 import { usePermissions } from "../../../../context/PermissionsContext";
+import loadingAnimation from "../../../../assets/imagenes/loading.json";
+import Lottie from "lottie-react";
 
 export default function PostulanteEditarModal({ open, postulante, onSuccess, onClose }) {
   const [step, setStep] = useState(1);
@@ -434,6 +436,17 @@ export default function PostulanteEditarModal({ open, postulante, onSuccess, onC
                           error={!!fieldErrors.numero}
                         />
                       </Field>
+                      <Field label="Referencia de la dirección" required error={fieldErrors.referencia_casa}>
+                        <InputG
+
+                          value={form.referencia_casa}
+                          error={!!fieldErrors.referencia_casa}
+                          onChange={(e) =>
+                            updateField("referencia_casa", e.target.value)
+                          }
+                        />
+                      </Field>
+
 
                     </div>
                   </div>
@@ -586,19 +599,16 @@ export default function PostulanteEditarModal({ open, postulante, onSuccess, onC
         description="¿Estás seguro de que deseas actualizar este postulante?"
       />
       {loading && (
-        <div className="fixed inset-0 z-[9999] bg-black/30 flex items-center justify-center">
-          <div className="bg-white rounded-2xl px-8 py-6 shadow-xl flex flex-col items-center gap-4">
-            <div className="h-10 w-10 border-4 border-[#0E5F63] border-t-transparent rounded-full animate-spin" />
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-50">
 
-            <div className="text-center">
-              <h3 className="font-semibold text-slate-800">
-                Actualizando postulante...
-              </h3>
-              <p className="text-sm text-slate-500">
-                Esto puede tardar unos segundos.
-              </p>
-            </div>
+          <div className="w-56">
+            <Lottie animationData={loadingAnimation} loop />
           </div>
+
+          <p className="mt-4 text-slate-600 font-medium">
+            Actualizando datos...
+          </p>
+
         </div>
       )}
       <ModalResultado

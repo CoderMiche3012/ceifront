@@ -56,7 +56,7 @@ export const reportesMenu = {
   icon: HiOutlineChartBar,
   permission: {
     module: "reportes",
-    action: "ver",
+    action: "exportar",
   },
 };
 export const reportesSubmenu = [
@@ -64,27 +64,33 @@ export const reportesSubmenu = [
     label: "Beneficiarios",
     path: "/app/reportes/beneficiarios",
     permission: {
-      module: "reportes",
-      action: "ver",
-    },
+      all: [
+        { module: "reportes", action: "exportar" },
+        { module: "beneficiarios", action: "ver" }
+      ]
+    }
   },
 
   {
     label: "Nuevos Ingresos",
     path: "/app/reportes/ingresos",
     permission: {
-      module: "reportes",
-      action: "ver",
-    },
+      all: [
+        { module: "reportes", action: "exportar" },
+        { module: "postulantes", action: "ver" }
+      ]
+    }
   },
 
   {
     label: "Donadores",
     path: "/app/reportes/donadores",
     permission: {
-      module: "reportes",
-      action: "ver",
-    },
+      all: [
+        { module: "reportes", action: "exportar" },
+        { module: "donadores", action: "ver" }
+      ]
+    }
   },
 ];
 export const configSubmenu = [

@@ -6,7 +6,7 @@ export default function FamiliaCard({ data, canEdit }) {
 
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
   const canEditPostulante = hasModulePermission("postulantes", "editar");
-  const puedeEditar = canEditPostulante && !["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
+  const puedeEditar = canEditPostulante && !["aceptado"].includes(data?.estatus_postulante?.toLowerCase());
   return (
     <div className="space-y-6">
       

@@ -12,10 +12,22 @@ import { useResumenPeriodoTotalesGenerales, useResumenPeriodoTotales } from "../
 import { usePeriodos } from "../../periodos/hooks/usePeriodos";
 import { solicitarDescargaReporte } from "../services/reporteService";
 
+const formatearMoneda = (moneda, valor) => {
+  const simbolos = {
+    MXN: "$",
+    USD: "US$",
+    EUR: "€",
+  };
+
+  return `${simbolos[moneda] || ""}${Number(valor).toLocaleString("es-MX")}`;
+};
+
 export default function DonativosPorDonadorTab() {
   const [periodo, setPeriodo] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState("");
+  const [descargando, setDescargando] = useState(false);
 
   // obtener datos
   const { data: resumenGeneral = [] } = useResumenPeriodoTotalesGenerales();
@@ -35,12 +47,18 @@ export default function DonativosPorDonadorTab() {
   const datosTabla = useMemo(() => {
     return resumen
       .filter((item) => {
-        if (!tipo) return true;
+        const coincideBusqueda =
+          !search ||
+          item.nombreCompleto
+            ?.toLowerCase()
+            .includes(search.toLowerCase());
 
-        return (
+        const coincideTipo =
+          !tipo ||
           item.tipo?.toLowerCase() ===
-          tipo.toLowerCase()
-        );
+          tipo.toLowerCase();
+
+        return coincideBusqueda && coincideTipo;
       })
       .map((item, index) => ({
         key: `${item.id_donador}-${index}`,
@@ -59,11 +77,13 @@ export default function DonativosPorDonadorTab() {
           Object.entries(item.totales || {})
             .map(
               ([moneda, monto]) =>
-                `${moneda}: $${Number(monto || 0).toLocaleString("es-MX")}`
+                `${moneda}: $${Number(
+                  monto || 0
+                ).toLocaleString("es-MX")}`
             )
             .join(", ") || "Sin aportaciones registradas",
       }));
-  }, [resumen, tipo]);
+  }, [resumen, tipo, search]);
   const totalPages = Math.ceil(datosTabla.length / pageSize) || 1;
   const datosPaginados = useMemo(() => {
     return datosTabla.slice(
@@ -76,6 +96,7 @@ export default function DonativosPorDonadorTab() {
     const acumulado = {};
     resumen.forEach((item) => {
       Object.entries(item.totales || {}).forEach(([moneda, monto]) => {
+        console.log(moneda, monto);
         acumulado[moneda] = (acumulado[moneda] || 0) + Number(monto || 0);
       });
     });
@@ -96,11 +117,14 @@ export default function DonativosPorDonadorTab() {
 
   // excel
   const descargarExcel = async () => {
+    if (descargando) return;
+
     try {
+      setDescargando(true);
 
       const meta = {
         periodo: periodoLabel,
-        periodoLabel: periodoLabel
+        periodoLabel,
       };
 
       const buffer = await solicitarDescargaReporte(
@@ -112,21 +136,26 @@ export default function DonativosPorDonadorTab() {
 
       ejecutarDescargaBlob(
         buffer,
-        `donativos_${periodoLabel}.xlsx`,
+        `Reporte_Donativos_${periodoLabel}.xlsx`,
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       );
     } catch (error) {
       console.error("Error Excel:", error);
+    } finally {
+      setDescargando(false);
     }
   };
 
   // pdf
   const descargarPDF = async () => {
+    if (descargando) return;
+
     try {
+      setDescargando(true);
 
       const meta = {
         periodo: periodoLabel,
-        periodoLabel: periodoLabel
+        periodoLabel,
       };
 
       const buffer = await solicitarDescargaReporte(
@@ -138,11 +167,13 @@ export default function DonativosPorDonadorTab() {
 
       ejecutarDescargaBlob(
         buffer,
-        `donativos_${periodoLabel}.pdf`,
+        `Reporte_Donativos_${periodoLabel}.pdf`,
         "application/pdf"
       );
     } catch (error) {
       console.error("Error PDF:", error);
+    } finally {
+      setDescargando(false);
     }
   };
 
@@ -163,18 +194,24 @@ export default function DonativosPorDonadorTab() {
             color: "violet",
           },
           ...Object.entries(totalesPorMoneda).map(([moneda, total]) => ({
+
             label: `Total ${moneda}`,
-            value: total,
+            value: formatearMoneda(moneda, total),
             icon: HandCoins,
             color: "emerald",
+            isCurrency: true,
+
           })),
         ]}
       />
 
       <Card>
         <FiltrosReporte
-          search=""
-          onSearchChange={() => { }}
+          search={search}
+          onSearchChange={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
           searchPlaceholder="Buscar donador..."
           filtros={[
             {
@@ -212,14 +249,16 @@ export default function DonativosPorDonadorTab() {
               component: Boton,
               variant: "secondary",
               icon: FileSpreadsheet,
-              label: "Excel",
+              label: descargando ? "Generando..." : "Excel",
               onClick: descargarExcel,
+              disabled: descargando,
             },
             {
               component: Boton,
               icon: FileText,
-              label: "PDF",
+              label: descargando ? "Generando..." : "PDF",
               onClick: descargarPDF,
+              disabled: descargando,
             },
           ]}
         />
@@ -251,3 +290,5 @@ export default function DonativosPorDonadorTab() {
     </div>
   );
 }
+
+

@@ -21,6 +21,8 @@ import { buildCountriesList } from "../../../../utils/buildCountriesList";
 
 import { usePermissions } from "../../../../context/PermissionsContext";
 import { obtenerUsuario } from "../../../../storage/userStorage";
+import loadingAnimation from "../../../../assets/imagenes/loading.json";
+import Lottie from "lottie-react";
 
 export default function EditarDatosGenerales({ open, onClose, onSuccess, donador,
 }) {
@@ -45,7 +47,7 @@ export default function EditarDatosGenerales({ open, onClose, onSuccess, donador
 
   const usuarioActual = obtenerUsuario();
   const puedeEditarNombre = usuarioActual?.esAdmin === true || usuarioActual?.esSuperUser === true;
-  
+
   const [step, setStep] = useState(1);
   const [cpError, setCpError] = useState("");
   const [manualAddressMode, setManualAddressMode] = useState(false);
@@ -143,7 +145,7 @@ export default function EditarDatosGenerales({ open, onClose, onSuccess, donador
   return (
     <>
       <div className={ui.modal.formOverlay} onClick={handleBackdropClick}>
-        <div className={ui.modal.formContainer}>
+        <div className={`${ui.modal.formContainer} relative`}>
 
           <div className={ui.modal.formHeader}>
             <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}>
@@ -200,7 +202,7 @@ export default function EditarDatosGenerales({ open, onClose, onSuccess, donador
                         disabled={!puedeEditarNombre} onChange={(e) => updateField("apellido_p", e.target.value)} error={!!fieldErrors.apellido_p} />
                     </Field>
 
-                    <Field label="Apellido materno"  error={fieldErrors.apellido_m} >
+                    <Field label="Apellido materno" error={fieldErrors.apellido_m} >
                       <Input value={form.apellido_m}
                         disabled={!puedeEditarNombre} onChange={(e) => updateField("apellido_m", e.target.value)} error={!!fieldErrors.apellido_m} />
                     </Field>
@@ -479,6 +481,19 @@ export default function EditarDatosGenerales({ open, onClose, onSuccess, donador
               )}
             </div>
           </div>
+          {loading && (
+            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-50">
+
+              <div className="w-56">
+                <Lottie animationData={loadingAnimation} loop />
+              </div>
+
+              <p className="mt-4 text-slate-600 font-medium">
+                Guardando cambios...
+              </p>
+
+            </div>
+          )}
         </div>
       </div>
 

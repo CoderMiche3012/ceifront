@@ -108,6 +108,7 @@ export const useDonadoresPage = () => {
 
   return {
     donadores: paginatedDonadores,
+    donadoresFiltrados: filteredDonadores,
     totalCount: filteredDonadores.length,
     loading,
     error,

@@ -8,6 +8,8 @@ import FiltrosReporte from "../../../components/tablas/FiltrosAvanzados";
 import DatosTabla from "../../../components/tablas/DatosTabla";
 import PaginacionTabla from "../../../components/tablas/PaginacionTabla";
 import AvatarGeneral from "../../../components/shared/AvatarGeneral";
+import kidsAnimation from "../../../assets/imagenes/kid.json";
+import Lottie from "lottie-react";
 
 import {
   HandCoins,
@@ -97,8 +99,19 @@ export default function ReporteApoyosEconomicosTab() {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-sm font-semibold text-slate-500">
-        Cargando reporte económico...
+      <div className="flex h-64 flex-col items-center justify-center">
+
+        <div className="w-56">
+          <Lottie
+            animationData={kidsAnimation}
+            loop={true}
+          />
+        </div>
+
+        <p className="mt-4 text-slate-600 font-medium">
+          Cargando y estructurando reporte De Reembolsos...
+        </p>
+
       </div>
     );
   }

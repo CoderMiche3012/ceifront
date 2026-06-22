@@ -8,6 +8,9 @@ import Donativos from "../../features/donadores/components/detalles/Donativos";
 import { useDonadorData } from "../../features/donadores/hooks/useDonadorData";
 import { ui } from "../../styles/ui/uiClasses";
 
+import kidsAnimation from "../../assets/imagenes/kid.json";
+import Lottie from "lottie-react";
+
 export default function DonadoresDetalle() {
   const { id } = useParams();
   // para los datos del donador
@@ -23,16 +26,27 @@ export default function DonadoresDetalle() {
     estatus === "activo"
       ? ui.badge.activo
       : estatus === "inactivo"
-      ? ui.badge.inactivo
-      : estatus === "pausa"
-      ? ui.badge.pendiente
-      : ui.badge.default;
+        ? ui.badge.inactivo
+        : estatus === "pausa"
+          ? ui.badge.pendiente
+          : ui.badge.default;
 
   // mientras carga
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+      <div className="flex h-64 flex-col items-center justify-center">
+
+        <div className="w-56">
+          <Lottie
+            animationData={kidsAnimation}
+            loop={true}
+          />
+        </div>
+
+        <p className="mt-4 text-slate-600 font-medium">
+          Cargando los datos de los donadores...
+        </p>
+
       </div>
     );
   }
@@ -46,10 +60,10 @@ export default function DonadoresDetalle() {
       </div>
     );
   }
-  
+
   return (
     <section className={`${ui.layout.page} flex flex-col h-full`}>
-      
+
       {/* parte fija de arriba */}
       <div className={`sticky top-0 z-10 pb-2 bg-[#f3f1f4] ${ui.layout.page}`}>
         <EncabezadoDetalle
@@ -65,14 +79,14 @@ export default function DonadoresDetalle() {
 
       {/*contenido del tab */}
       <main className="flex-1 overflow-y-auto pr-2 custom-scroll pb-10">
-    
-          {tab === "generales" && (
-            <DatosGenerales data={data}/>
-          )}
 
-          {tab === "donativo" && (
-            <Donativos data={data}/>
-          )}
+        {tab === "generales" && (
+          <DatosGenerales data={data} />
+        )}
+
+        {tab === "donativo" && (
+          <Donativos data={data} />
+        )}
       </main>
 
     </section>

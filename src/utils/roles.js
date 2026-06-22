@@ -6,6 +6,8 @@ import {
   User,
   CalendarPlus,
   Shield,
+  History,
+  MapPin
 } from "lucide-react";
 
 // módulos del sistema
@@ -74,7 +76,7 @@ export const modules = [
 
   {
     key: "donadores",
-    name: "Donaciones",
+    name: "Donadores",
     icon: Heart,
     children: [
       {
@@ -96,6 +98,18 @@ export const modules = [
     icon: BarChart3,
     extraActions: ["exportar"],
   },
+
+  {
+    key: "historial",
+    name: "Historial",
+    icon: History,
+  },
+
+  {
+    key: "direcciones",
+    name: "Direcciones",
+    icon: MapPin,
+  }
 ];
 
 // acciones estándar
@@ -134,10 +148,19 @@ export function getModuleActions(module) {
     return (module.extraActions || []).map(
       (action) => [
         extraActionsLabels[action] ||
-          action,
+        action,
         action,
       ]
     );
+  }
+  if (module.key === "historial") {
+    return [
+      ["Ver", "ver"],
+      ["Editar", "editar"],
+    ];
+  }
+  if (module.key === "direcciones") {
+    return [["Crear", "crear"]];
   }
 
   const actions = [
@@ -161,7 +184,7 @@ export function getModuleActions(module) {
     ...(module.extraActions || []).map(
       (action) => [
         extraActionsLabels[action] ||
-          action,
+        action,
         action,
       ]
     )
@@ -191,6 +214,19 @@ export function getEmptyPermissions() {
         exportar: false,
       };
 
+      return;
+    }
+    if (module.key === "historial") {
+      result[module.key] = {
+        ver: false,
+        editar: false,
+      };
+      return;
+    }
+    if (module.key === "direcciones") {
+      result[module.key] = {
+        crear: false,
+      };
       return;
     }
 
@@ -368,4 +404,6 @@ export function isProtectedRole(role) {
     "admin",
   ].includes(roleName);
 }
+
+
 

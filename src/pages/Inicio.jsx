@@ -97,6 +97,10 @@ export default function Inicio() {
     () => hasModulePermission("postulantes", "crear"),
     [hasModulePermission]
   );
+  const canViewPostulantes = useMemo(
+    () => hasModulePermission("postulantes", "ver"),
+    [hasModulePermission]
+  );
   const canEditPostulantes = useMemo(
     () => hasModulePermission("postulantes", "crear"),
     [hasModulePermission]
@@ -121,13 +125,28 @@ export default function Inicio() {
 
   const tieneAccionesRapidas =
     canCreateBeneficiarios ||
-    canCreateDonadores ||
-    canCreatePostulantes;
+    canCreatePostulantes ||
+    canCreateDonadores
+    ;
+
+  const soloDonadores =
+    canCreateDonadores &&
+    !canViewBeneficiarios &&
+    !canCreateBeneficiarios &&
+    !canViewPostulantes;
 
   const tieneContenidoDashboard =
-    puedeVerGraficas ||
-    tieneAccionesRapidas ||
+    canViewBeneficiarios ||
+    canCreateBeneficiarios ||
     verVisitas;
+
+  const soloPostulantes =
+    canViewPostulantes &&
+    !canViewBeneficiarios &&
+    !canCreateBeneficiarios &&
+    !canCreateDonadores;
+
+  const accesoLimitado = soloDonadores || soloPostulantes;
 
   const graficaEscolaridad = useMemo(() => {
     const niveles = {};
@@ -390,72 +409,129 @@ export default function Inicio() {
         </div>
       </div>
       {!tieneContenidoDashboard ? (
-        <div className="rounded-3xl bg-white p-12 text-center shadow-sm border border-slate-200">
-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-teal-50">
-            <LayoutGrid className="h-10 w-10 text-teal-600" />
-          </div>
+        accesoLimitado ? (
+          soloDonadores ? (
+            <div className="rounded-3xl bg-white p-12 text-center shadow-sm border border-slate-200">
+              <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50">
+                <Users className="h-10 w-10 text-emerald-600" />
+              </div>
 
-          <h3 className="text-2xl font-bold text-slate-800">
-            Bienvenido al Sistema de Gestión
-          </h3>
+              <h3 className="text-2xl font-bold text-slate-800">
+                Acceso limitado al sistema
+              </h3>
 
-          <p className="mt-4 max-w-2xl mx-auto text-slate-600 leading-relaxed">
-            Este sistema ha sido diseñado para facilitar la administración y el
-            seguimiento de beneficiarios, postulantes, donadores, visitas y demás
-            procesos relacionados con la operación de la organización.
-          </p>
+              <p className="mt-4 max-w-2xl mx-auto text-slate-600 leading-relaxed">
+                Actualmente tienes acceso únicamente al módulo de <strong>donadores</strong>.
+                Desde aquí podrás administrar la información disponible en ese apartado.
+              </p>
 
-          <p className="mt-3 max-w-2xl mx-auto text-slate-500 leading-relaxed">
-            La información y herramientas disponibles en este panel se mostrarán de
-            acuerdo con los permisos asignados a tu usuario. Conforme se habiliten
-            módulos, podrás acceder a reportes, estadísticas, registros y funciones
-            específicas de tu área de trabajo.
-          </p>
+              <p className="mt-3 max-w-2xl mx-auto text-slate-500 leading-relaxed">
+                Si necesitas acceder a más módulos solicita permisos adicionales al administrador.
+              </p>
 
-          <div className="mt-8 rounded-2xl bg-slate-50 border border-slate-200 p-4 max-w-xl mx-auto">
-            <p className="text-sm text-slate-600">
-              Tu panel se personaliza automáticamente según tu rol dentro del sistema.
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={() => navigate("/app/donadores")}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition"
+                >
+                  Ir a Donadores
+                </button>
+              </div>
+            </div>
+          ) : soloPostulantes ? (
+            <div className="rounded-3xl bg-white p-12 text-center shadow-sm border border-slate-200">
+              <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50">
+                <UserPlus className="h-10 w-10 text-indigo-600" />
+              </div>
+
+              <h3 className="text-2xl font-bold text-slate-800">
+                Acceso limitado al sistema
+              </h3>
+
+              <p className="mt-4 max-w-2xl mx-auto text-slate-600 leading-relaxed">
+                Actualmente tienes acceso únicamente al módulo de <strong>Nuevos Ingresos</strong>.
+                Desde aquí podrás gestionar registros y seguimiento de postulantes.
+              </p>
+
+              <p className="mt-3 max-w-2xl mx-auto text-slate-500 leading-relaxed">
+                Si necesitas acceso a beneficiarios, reportes o visitas, solicita permisos adicionales.
+              </p>
+
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={() => navigate("/app/ingresos")}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition"
+                >
+                  Ir a Nuevos Ingresos
+                </button>
+              </div>
+            </div>
+          ) : null
+        ) : (
+          <div className="rounded-3xl bg-white p-12 text-center shadow-sm border border-slate-200">
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-teal-50">
+              <LayoutGrid className="h-10 w-10 text-teal-600" />
+            </div>
+
+            <h3 className="text-2xl font-bold text-slate-800">
+              Bienvenido al Sistema de Gestión
+            </h3>
+
+            <p className="mt-4 max-w-2xl mx-auto text-slate-600 leading-relaxed">
+              Este sistema ha sido diseñado para facilitar la administración y el
+              seguimiento de beneficiarios, postulantes, donadores, visitas y demás
+              procesos relacionados con la operación de la organización.
             </p>
           </div>
-        </div>
+        )
       ) : (
         <>
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
-            <CardInterno
-              title="Beneficiarios Activos"
-              value={metrics.activos}
-              icon={Users}
-              type="default"
-              loading={loadingBeneficiarios}
-            />
-            <CardInterno
-              title="Sin Donador"
-              value={metrics.sinDonador}
-              icon={UserX}
-              type="danger"
-              loading={loadingBeneficiarios}
-            />
-            <CardInterno
-              title="Ingresos del Mes"
-              value={metrics.nuevosIngresos}
-              icon={UserPlus}
-              type="success"
-              loading={loadingBeneficiarios}
-            />
-            <CardInterno
-              title="Casos de Baja"
-              value={metrics.bajas}
-              icon={UserMinus}
-              type="warning"
-              loading={loadingBeneficiarios}
-            />
-            <CardInterno
-              title="Visitas Hoy"
-              value={totalVisitasHoy}
-              icon={CalendarDays}
-              type="info"
-              loading={loadingVisitas}
-            />
+          <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+            {canViewBeneficiarios && (
+              <CardInterno
+                title="Beneficiarios Activos"
+                value={metrics.activos}
+                icon={Users}
+                type="default"
+                loading={loadingBeneficiarios}
+              />
+            )}
+            {canViewBeneficiarios && (
+              <CardInterno
+                title="Sin Donador"
+                value={metrics.sinDonador}
+                icon={UserX}
+                type="danger"
+                loading={loadingBeneficiarios}
+              />
+            )}
+            {canViewBeneficiarios && (
+              <CardInterno
+                title="Ingresos del Mes"
+                value={metrics.nuevosIngresos}
+                icon={UserPlus}
+                type="success"
+                loading={loadingBeneficiarios}
+              />
+            )}
+            {canViewBeneficiarios && (
+              <CardInterno
+                title="Casos de Baja"
+                value={metrics.bajas}
+                icon={UserMinus}
+                type="warning"
+                loading={loadingBeneficiarios}
+              />
+            )}
+            {canViewPostulantes && (
+              <CardInterno
+                title="Visitas Hoy"
+                value={totalVisitasHoy}
+                icon={CalendarDays}
+                type="info"
+                loading={loadingVisitas}
+              />
+            )}
           </div>
           {canViewBeneficiarios && (
             <div className="grid gap-6 lg:grid-cols-2">
@@ -504,7 +580,7 @@ export default function Inicio() {
 
 
           <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
-            {tieneAccionesRapidas && (
+            {tieneAccionesRapidas && !soloDonadores && (
               < div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 pb-4 border-b border-slate-100">

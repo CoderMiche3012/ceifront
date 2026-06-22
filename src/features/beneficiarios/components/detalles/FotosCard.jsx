@@ -130,7 +130,6 @@ export default function FotosCard({ data }) {
     }
   };
 
-  // 🔥 ELIMINAR
   const eliminar = async () => {
     try {
       const foto = modal?.fotos?.[modal?.index];

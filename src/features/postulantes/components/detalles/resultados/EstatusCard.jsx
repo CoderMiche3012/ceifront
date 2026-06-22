@@ -14,18 +14,18 @@ export default function EstatusCard({ data }) {
   const mostrarAdvertenciaPrioridad = estudioCompleto && !tienePrioridad;
 
   const puedeEditar =
-    tienePrioridad && !["aceptado", "rechazado"].includes(
+    tienePrioridad && !["aceptado"].includes(
       data?.estatus_postulante?.toLowerCase()
     );
 
   const obtenerEstatusInicial = () => {
     const valor = data?.estatus_postulante?.toLowerCase()?.trim();
 
-    if (["aceptado", "rechazado"].includes(valor)) {
+    if (["aceptado", "rechazado", "pendiente"].includes(valor)) {
       return valor;
     }
 
-    return "seleccion";
+    return valor || "pendiente";
   };
 
   const [decision, setDecision] = useState(obtenerEstatusInicial());
@@ -47,9 +47,14 @@ export default function EstatusCard({ data }) {
         await aceptarPostulanteMutation.mutateAsync(
           data.id_postulante
         );
-      } else {
+      } else if (value === "rechazado"){
         await actualizarPostulanteMutation.mutateAsync({
           estatus: "Rechazado",
+        });
+      }
+      else {
+        await actualizarPostulanteMutation.mutateAsync({
+          estatus: "Pendiente",
         });
       }
 
@@ -85,6 +90,13 @@ export default function EstatusCard({ data }) {
       border: "border-rose-200",
       icon: AlertCircle,
       label: "Rechazado",
+    },
+    pendiente: {
+      color: "text-indigo-600",
+      bg: "bg-indigo-50",
+      border: "border-indigo-200",
+      icon: Clock,
+      label: "Pendiente",
     },
   };
 
@@ -238,6 +250,24 @@ export default function EstatusCard({ data }) {
                       </p>
                     </div>
                     <X size={24} className="text-rose-600" />
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleChange("pendiente")}
+                  className="w-full p-4 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="text-left">
+                      <p className="font-semibold text-slate-700">
+                        Marcar como pendiente
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Regresar a estado de revisión
+                      </p>
+                    </div>
+
+                    <Clock size={24} className="text-slate-500" />
                   </div>
                 </button>
               </div>

@@ -9,7 +9,8 @@ export function useBeneficiariosVinculados(data, setData) {
 
   const { data: activos = [], isLoading } = useBeneficiariosActivos();
 
-  const { mutateAsync: actualizarDonador } = useActualizarDonador();
+  const actualizarMutation = useActualizarDonador();
+  
 
   const calcularEdad = (fecha) => {
     if (!fecha) return "--";
@@ -62,16 +63,11 @@ export function useBeneficiariosVinculados(data, setData) {
 
       const actuales = (data?.beneficiarios_apoyados || []).map((b) => b.id);
 
-      if (actuales.includes(idBeneficiario)) {
-        return;
-      }
+      if (actuales.includes(idBeneficiario)) return;
 
-      const nuevosIds = [
-        ...actuales,
-        idBeneficiario,
-      ];
+      const nuevosIds = [...actuales, idBeneficiario];
 
-      await actualizarDonador({
+      await actualizarMutation.mutateAsync({
         id: data.id_donador,
         data: {
           beneficiarios_apoyados: nuevosIds,
@@ -80,8 +76,6 @@ export function useBeneficiariosVinculados(data, setData) {
 
       setOpenModal(false);
       setSearch("");
-    } catch (error) {
-      throw error;
     } finally {
       setLoadingId(null);
     }
@@ -97,7 +91,7 @@ export function useBeneficiariosVinculados(data, setData) {
         (id) => id !== idBeneficiario
       );
 
-      await actualizarDonador({
+      await actualizarMutation.mutateAsync({
         id: data.id_donador,
         data: {
           beneficiarios_apoyados: nuevosIds,
@@ -114,6 +108,7 @@ export function useBeneficiariosVinculados(data, setData) {
     search,
     setSearch,
     loading: isLoading,
+    loadingMutation: actualizarMutation.isPending,
     loadingId,
     listaBeneficiarios,
     filtrados,

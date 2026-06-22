@@ -15,7 +15,6 @@ export default function DonadorFiltros({
         { value: "todos", label: "Todos los estatus" },
         { value: "Activo", label: "Activo" },
         { value: "Inactivo", label: "Inactivo" },
-        { value: "Pausa", label: "En Pausa" },
       ],
     },
     {

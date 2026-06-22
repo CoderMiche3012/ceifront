@@ -9,7 +9,8 @@ import FiltrosReporte from "../../../components/tablas/FiltrosAvanzados";
 import AvatarGeneral from "../../../components/shared/AvatarGeneral";
 import DatosTabla from "../../../components/tablas/DatosTabla";
 import PaginacionTabla from "../../../components/tablas/PaginacionTabla";
-
+import kidsAnimation from "../../../assets/imagenes/kid.json";
+import Lottie from "lottie-react";
 import { ui } from "../../../styles/ui/index";
 
 import {
@@ -165,8 +166,19 @@ export default function ReporteAcademicoTab() {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-sm font-semibold text-slate-500">
-        Cargando y estructurando reporte de beneficiarios...
+      <div className="flex h-64 flex-col items-center justify-center">
+
+        <div className="w-56">
+          <Lottie
+            animationData={kidsAnimation}
+            loop={true}
+          />
+        </div>
+
+        <p className="mt-4 text-slate-600 font-medium">
+          Cargando y estructurando reporte Academico...
+        </p>
+
       </div>
     );
   }

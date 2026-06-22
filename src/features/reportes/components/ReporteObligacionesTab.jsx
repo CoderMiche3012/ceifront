@@ -8,6 +8,8 @@ import DatosTabla from "../../../components/tablas/DatosTabla";
 import PaginacionTabla from "../../../components/tablas/PaginacionTabla";
 import AvatarGeneral from "../../../components/shared/AvatarGeneral";
 import { useReporteObligaciones } from "../hooks/useReporteBeneficiariosObligaciones";
+import kidsAnimation from "../../../assets/imagenes/kid.json";
+import Lottie from "lottie-react";
 
 import { CheckCircle2, AlertCircle, FileText, ClipboardList, FileSpreadsheet } from "lucide-react";
 
@@ -62,7 +64,24 @@ export default function ReporteObligacionesTab() {
     }
   };
 
-  if (loading) return <div className="p-10 text-center">Cargando reporte de obligaciones...</div>;
+  if (loading) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center">
+
+        <div className="w-56">
+          <Lottie
+            animationData={kidsAnimation}
+            loop={true}
+          />
+        </div>
+
+        <p className="mt-4 text-slate-600 font-medium">
+          Cargando y estructurando reporte De Obligaciones...
+        </p>
+
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

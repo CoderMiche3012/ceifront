@@ -13,7 +13,7 @@ export default function DatosPersonalesCard({ data, canEdit }) {
 
   const gastoAlimentacion = data?.gastos?.find((g) => g.nombre === "Alimentacion")?.monto;
   const gastoTransporte = data?.gastos?.find((g) => g.nombre === "Transporte")?.monto;
-  const puedeEditar = canEdit && !["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
+  const puedeEditar = canEdit && !["aceptado"].includes(data?.estatus_postulante?.toLowerCase());
 
   const formatearTelefono = (telefono) => {
     if (!telefono) return "--";

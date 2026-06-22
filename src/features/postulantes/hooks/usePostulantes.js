@@ -7,6 +7,7 @@ import { postulantesKeys } from "../services/postulantesKeys";
 import { actualizarEstudio } from "../services/estudiosService";
 import { estudiosKeys } from "../services/estudiosKeys";
 import { beneficiariosKeys } from "../../beneficiarios/services/beneficiariosKeys";
+import { analisisKeys } from "../services/analisisKeys";
 
 export function useActualizarEstudioDetalle(id) {
   const queryClient =
@@ -84,6 +85,9 @@ export function useActualizarPostulante() {
       queryClient.invalidateQueries({
         queryKey: beneficiariosKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: analisisKeys.all,
+      });
     },
   });
 }
@@ -109,6 +113,9 @@ export function useActualizarPostulanteDetalle(id) {
 
       queryClient.invalidateQueries({
         queryKey: beneficiariosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: analisisKeys.all,
       });
     },
   });
@@ -155,9 +162,10 @@ export function useAceptarPostulante() {
   });
 }
 // análisis IA del estudio
+
 export function useAnalisisIA(idEstudio) {
   return useQuery({
-    queryKey: ["analisisIA", idEstudio],
+    queryKey: analisisKeys.detail(idEstudio),
     queryFn: () => obtenerAnalisisIA(idEstudio),
     enabled: !!idEstudio,
   });

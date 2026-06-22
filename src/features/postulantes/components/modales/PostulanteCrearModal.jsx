@@ -12,8 +12,11 @@ import ModalResultado from "../../../../components/shared/ModalResultado";
 
 import { usePostulanteCrearForm } from "../../hooks/usePostulanteCrearForm";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { usePermissions } from "../../../../context/PermissionsContext";
 
 import { obtenerDireccionPorCP } from "../../../donadores/services/donadoresService";
+import loadingAnimation from "../../../../assets/imagenes/loading.json";
+import Lottie from "lottie-react";
 
 export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
   const [step, setStep] = useState(1);
@@ -22,6 +25,8 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
   const [manualAddressMode, setManualAddressMode] = useState(false);
   const [manualCountryMode, setManualCountryMode] = useState(false);
   const estadoEditable = manualAddressMode;
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canCreate = hasModulePermission("direcciones", "crear");
 
   const {
     form,
@@ -309,37 +314,38 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
                       <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em]">
                         Dirección
                       </h3>
+                      {canCreate && (
+                        <button
+                          type="button"
+                          className="flex items-center gap-1 text-xs text-[#0E5F63] font-semibold hover:underline"
+                          onClick={() => {
+                            if (manualAddressMode) {
+                              setManualAddressMode(false);
+                              setManualCountryMode(false);
+                              updateField("colonia", "");
+                              updateField("estado", "");
+                              updateField("municipio", "");
+                              updateField("id_geografia", null);
 
-                      <button
-                        type="button"
-                        className="flex items-center gap-1 text-xs text-[#0E5F63] font-semibold hover:underline"
-                        onClick={() => {
-                          if (manualAddressMode) {
-                            setManualAddressMode(false);
-                            setManualCountryMode(false);
-                            updateField("colonia", "");
-                            updateField("estado", "");
-                            updateField("municipio", "");
-                            updateField("id_geografia", null);
-
-                            if (form.cp?.trim()) {
-                              handleBuscarCP(form.cp);
+                              if (form.cp?.trim()) {
+                                handleBuscarCP(form.cp);
+                              }
+                            } else {
+                              setManualAddressMode(true);
+                              setCpError("");
                             }
-                          } else {
-                            setManualAddressMode(true);
-                            setCpError("");
-                          }
-                        }}
-                      >
-                        {manualAddressMode ? (
-                          <>
-                            <HiOutlineArrowLeft size={14} />
-                            Volver a búsqueda por CP
-                          </>
-                        ) : (
-                          "Agregar dirección manual"
-                        )}
-                      </button>
+                          }}
+                        >
+                          {manualAddressMode ? (
+                            <>
+                              <HiOutlineArrowLeft size={14} />
+                              Volver a búsqueda por CP
+                            </>
+                          ) : (
+                            "Agregar dirección manual"
+                          )}
+                        </button>
+                      )}
                     </div>
 
                     <div className={ui.modal.twoCols}>
@@ -710,7 +716,7 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
 
             <div className={ui.modal.formActions}>
               <Boton
-                type="button" 
+                type="button"
                 variant="secondary"
                 onClick={() => {
                   if (step === 1) onClose();
@@ -721,12 +727,12 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
               </Boton>
 
               <Boton
-                type="button" 
+                type="button"
                 onClick={() => {
                   if (step < 4) {
                     setStep(step + 1);
                   } else {
-                    handlePreSubmit(); 
+                    handlePreSubmit();
                   }
                 }}
                 disabled={loading}
@@ -750,19 +756,16 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
         description="¿Estás seguro de que deseas crear a este postulante?"
       />
       {loading && (
-        <div className="fixed inset-0 z-[9999] bg-black/30 flex items-center justify-center">
-          <div className="bg-white rounded-2xl px-8 py-6 shadow-xl flex flex-col items-center gap-4">
-            <div className="h-10 w-10 border-4 border-[#0E5F63] border-t-transparent rounded-full animate-spin" />
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-50">
 
-            <div className="text-center">
-              <h3 className="font-semibold text-slate-800">
-                Registrando postulante...
-              </h3>
-              <p className="text-sm text-slate-500">
-                Esto puede tardar unos segundos.
-              </p>
-            </div>
+          <div className="w-56">
+            <Lottie animationData={loadingAnimation} loop />
           </div>
+
+          <p className="mt-4 text-slate-600 font-medium">
+              Esto puede tardar unos segundos...
+          </p>
+
         </div>
       )}
 
@@ -776,7 +779,7 @@ export default function PostulanteCrearModal({ open, onClose, onSuccess }) {
             setStep(1); // Regresa al paso 1 para la próxima vez
           }
           handleFinalClose(); // Ejecuta la limpieza del formulario y llama a onSuccess / onClose
-          onClose(); 
+          onClose();
         }}
       />
     </>

@@ -9,6 +9,8 @@ import { Users, CalendarDays, FileSpreadsheet, FileText } from "lucide-react";
 import { useAsistenciasPorFiltro } from "../../asistencias/hooks/useAsistencia";
 import { solicitarDescargaReporte } from "../services/reporteService";
 import AvatarGeneral from "../../../components/shared/AvatarGeneral";
+import kidsAnimation from "../../../assets/imagenes/kid.json";
+import Lottie from "lottie-react";
 
 export default function ReporteUsosServiciosTab() {
 
@@ -141,6 +143,26 @@ const [pagina, setPagina] = useState(1);
     1,
     Math.ceil(dataFiltrada.length / pageSize)
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center">
+
+        <div className="w-56">
+          <Lottie
+            animationData={kidsAnimation}
+            loop={true}
+          />
+        </div>
+
+        <p className="mt-4 text-slate-600 font-medium">
+          Cargando y estructurando reporte De Asistencias...
+        </p>
+
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <TarjetasEstadisticas

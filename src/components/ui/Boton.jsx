@@ -17,7 +17,13 @@ export default function Boton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`${ui.button.base} ${ui.button[size]} ${ui.button[variant]} ${className}`}
+      className={`
+  ${ui.button.base}
+  ${ui.button[size]}
+  ${ui.button[variant]}
+  ${className}
+  ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}
+`}
       {...props}
     >
       {icon && (

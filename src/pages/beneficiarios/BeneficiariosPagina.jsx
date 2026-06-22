@@ -46,6 +46,7 @@ export default function BeneficiariosPagina() {
     setIsModalOpen(false);
     setCurrentPage(1);
   };
+  
 
   return (
     <section className="space-y-6">

@@ -11,6 +11,7 @@ export default function FiltrosReporte({
   return (
     <div className="border-b border-[#edf2f7] px-5 py-4">
       <div className="flex flex-wrap items-center gap-3">
+
         {onSearchChange && (
           <div className="relative min-w-[220px] flex-1">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94a3b8]" />
@@ -33,10 +34,7 @@ export default function FiltrosReporte({
             className={ui.filters.select}
           >
             {(filtro.options || []).map((option) => (
-              <option
-                key={option.value}
-                value={option.value}
-              >
+              <option key={option.value} value={option.value}>
                 {option.label}
               </option>
             ))}
@@ -54,6 +52,7 @@ export default function FiltrosReporte({
                   type="button"
                   variant={accion.variant}
                   onClick={accion.onClick}
+                  disabled={accion.disabled}   
                   className="whitespace-nowrap"
                 >
                   {Icon && <Icon className="h-4 w-4" />}
@@ -63,6 +62,7 @@ export default function FiltrosReporte({
             })}
           </div>
         )}
+
       </div>
     </div>
   );

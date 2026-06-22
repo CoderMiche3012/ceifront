@@ -58,21 +58,18 @@ export const generarExcelEstrategia = async (datos, logoBase64) => {
   ]);
 
   resumen.addRow([
-    "Activos",
-    datos.filter((d) => d.estatus === "Activo").length,
+    "Donadores CEI",
+    datos.filter((d) => d.tipo_donador === "CEI").length,
   ]);
 
   resumen.addRow([
-    "Inactivos",
-    datos.filter((d) => d.estatus === "Inactivo").length,
+    "Donadores OYE",
+    datos.filter((d) => d.tipo_donador === "OYE").length,
   ]);
 
   resumen.addRow([
-    "Beneficiarios",
-    datos.reduce(
-      (acc, d) => acc + (d.beneficiarios_apoyados?.length || 0),
-      0
-    ),
+    "Donadores CANFRO",
+    datos.filter((d) => d.tipo_donador === "CANFRO").length,
   ]);
   resumen.columns = [
     { width: 22 },
@@ -170,7 +167,7 @@ export const generarExcelEstrategia = async (datos, logoBase64) => {
   // para el logo
   await aplicarEstilosExcelGlobal(
     worksheet,
-    "DIRECTORIO GLOBAL DE DONADORES",
+    "REPORTE GLOBAL DE DONADORES",
     workbook,
     logoBase64
   );
@@ -204,7 +201,7 @@ export const generarPdfEstrategia = async (datos, logoBase64) => {
   doc.setFontSize(22);
   doc.setTextColor(13, 111, 107);
   doc.text(
-    "DIRECTORIO GLOBAL DE DONADORES",
+    "REPORTE GLOBAL DE DONADORES",
     logoBase64 ? 50 : 14,
     20
   );
@@ -254,7 +251,6 @@ export const generarPdfEstrategia = async (datos, logoBase64) => {
         "Domicilio",
         "C.P.",
         "Pais",
-        "Nota"
       ],
     ],
     body: datos.map((d) => {
@@ -291,7 +287,6 @@ export const generarPdfEstrategia = async (datos, logoBase64) => {
         direccionCompleta,
         d.domicilio?.geografia?.codigo_postal || "-",
         obtenerNombrePais(d.domicilio?.geografia?.pais_codigo),
-        d.nota || "",
 
       ];
     }),

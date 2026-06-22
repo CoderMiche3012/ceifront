@@ -30,6 +30,7 @@ export default function DonadoresPagina() {
   const {
     filters,
     donadores,
+    donadoresFiltrados,
     totalCount,
     loading,
     error,
@@ -65,11 +66,11 @@ export default function DonadoresPagina() {
       setModalEditar(true);
     };
   // metricas
-  const activos = donadores.filter((d) => d.estatus?.toLowerCase() === "activo").length;
-  const inactivos = donadores.filter((d) => d.estatus?.toLowerCase() === "inactivo").length;
-  const cei = donadores.filter((d) => d.tipo_donador === "CEI").length;
-  const canfro = donadores.filter((d) => d.tipo_donador === "CANFRO").length;
-  const oye = donadores.filter((d) => d.tipo_donador === "OYE").length;
+  const activos = donadoresFiltrados.filter((d) => d.estatus?.toLowerCase() === "activo").length;
+  const inactivos = donadoresFiltrados.filter((d) => d.estatus?.toLowerCase() === "inactivo").length;
+  const cei = donadoresFiltrados.filter((d) => d.tipo_donador === "CEI").length;
+  const canfro = donadoresFiltrados.filter((d) => d.tipo_donador === "CANFRO").length;
+  const oye = donadoresFiltrados.filter((d) => d.tipo_donador === "OYE").length;
   
   return (
     <section className={ui.page}>

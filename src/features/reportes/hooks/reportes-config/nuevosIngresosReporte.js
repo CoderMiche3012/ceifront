@@ -55,7 +55,7 @@ export const generarExcelEstrategia = async (datos, logoBase64Param, meta = {}) 
     "Direccion",
     "Tutor responsable",
     "Tel. Tutor",
-    "Fam.",
+    "N° familiares",
     "Fecha Visita",
     "Nota Familiar",
     "Nota de la visita",
@@ -153,9 +153,8 @@ export const generarPdfEstrategia = async (datos, logoBase64Param, meta = {}) =>
   const col2 = pageWidth * 0.38;
   const col3 = pageWidth * 0.68;
 
-  doc.text(`Total de Solicitudes ${sufijoTexto}: ${totalSolicitudes}`, col1, 33);
+  doc.text(`Total de Solicitudes : ${totalSolicitudes}`, col1, 33);
   doc.text(`Casos Prioridad Alta: ${prioridadAlta}`, col2, 33);
-  doc.text(`Institución: Centro de Esperanza Infantil`, col3, 33);
 
   autoTable(doc, {
     startY: 42,

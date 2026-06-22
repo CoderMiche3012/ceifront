@@ -34,23 +34,28 @@ export default function Menu({ sidebarOpen, onLogout }) {
   }, [hasModulePermission]);
   // submenu de reporte
   const visibleReportesSubmenu = useMemo(() => {
-    return reportesSubmenu.filter((item) => {
-      if (!item.permission) return true;
+  return reportesSubmenu.filter((item) => {
+    const permission = item.permission;
 
-      return hasModulePermission(
-        item.permission.module,
-        item.permission.action
+    if (!permission) return false; 
+
+    if (permission.module && permission.action) {
+      return hasModulePermission(permission.module, permission.action);
+    }
+
+    if (permission.all) {
+      return permission.all.every((p) =>
+        hasModulePermission(p.module, p.action)
       );
-    });
-  }, [hasModulePermission]);
+    }
+
+    return false; 
+  });
+}, [hasModulePermission]);
   // permiso reportes
   const canViewReportes = useMemo(() => {
-    if (!reportesMenu.permission) return true;
-    return hasModulePermission(
-      reportesMenu.permission.module,
-      reportesMenu.permission.action
-    );
-  }, [hasModulePermission]);
+  return visibleReportesSubmenu.length > 0;
+}, [visibleReportesSubmenu]);
 
   const canViewConfig = visibleConfigSubmenu.length > 0;
 
@@ -125,8 +130,8 @@ export default function Menu({ sidebarOpen, onLogout }) {
                     type="button"
                     onClick={() => setReportesOpen((prev) => !prev)}
                     className={`flex w-full items-center rounded-2xl py-3 text-[15px] font-medium text-[#0E5F63] transition hover:bg-slate-200/50 ${sidebarOpen
-                        ? "px-4 gap-3"
-                        : "justify-center lg:justify-start lg:px-4 lg:gap-3"
+                      ? "px-4 gap-3"
+                      : "justify-center lg:justify-start lg:px-4 lg:gap-3"
                       }`}
                   >
                     <reportesMenu.icon className="shrink-0 text-xl" />

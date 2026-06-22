@@ -12,6 +12,7 @@ export default function PostulanteReporteFiltros({
   onClearFilters,
   onDescargarExcel,
   onDescargarPDF,
+   descargando,
 }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const advancedRef = useRef(null);
@@ -38,7 +39,6 @@ export default function PostulanteReporteFiltros({
       key: "decision",
       label: "Estatus",
       options: [
-        { value: "todos", label: "Todos los estatus" },
         { value: "Pendiente", label: "Pendiente" },
         { value: "Aceptado", label: "Aceptado" },
         { value: "Rechazado", label: "Rechazado" },
@@ -175,21 +175,27 @@ export default function PostulanteReporteFiltros({
           </div>
 
           <Boton
-            type="button"
-            variant="secondary"
-            icon={<FileSpreadsheet className="h-4 w-4" />}
-            onClick={onDescargarExcel}
-          >
-            Excel
-          </Boton>
+  type="button"
+  variant="secondary"
+  icon={<FileSpreadsheet className="h-4 w-4" />}
+  onClick={() => {
+    if (!descargando) onDescargarExcel();
+  }}
+  disabled={descargando}
+>
+  {descargando ? "Generando..." : "Excel"}
+</Boton>
 
           <Boton
-            type="button"
-            icon={<FileText className="h-4 w-4" />}
-            onClick={onDescargarPDF}
-          >
-            PDF
-          </Boton>
+  type="button"
+  icon={<FileText className="h-4 w-4" />}
+  onClick={() => {
+    if (!descargando) onDescargarPDF();
+  }}
+  disabled={descargando}
+>
+  {descargando ? "Generando..." : "PDF"}
+</Boton>
         </div>
       }
     />

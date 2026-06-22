@@ -47,7 +47,7 @@ export default function TabsExpediente({ tab, setTab }) {
       <button
         onClick={() => setTab("IA")}
         className={`pb-2 text-sm font-medium ${
-          tab === "Resultados"
+          tab === "IA"
             ? "border-b-2 border-teal-600 text-teal-600"
             : "text-slate-500"
         }`}

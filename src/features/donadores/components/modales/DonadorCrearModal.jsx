@@ -10,6 +10,8 @@ import Boton from "../../../../components/ui/Boton";
 import AlertaError from "../../../../components/ui/AlertaError";
 import ModalConfirmacion from "../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../components/shared/ModalResultado";
+import loadingAnimation from "../../../../assets/imagenes/loading.json";
+import Lottie from "lottie-react";
 
 import { useDonadorCrearForm } from "../../hooks/useDonadorCrearForm";
 
@@ -53,6 +55,7 @@ export default function DonadorCrearModal({ open, onClose, onSuccess }) {
     handleConfirmSave,
     handleFinalClose,
   } = useDonadorCrearForm(onSuccess, onClose);
+
   // reestablece todos los estados a su punto original
   useEffect(() => {
     if (!open) {
@@ -160,7 +163,7 @@ export default function DonadorCrearModal({ open, onClose, onSuccess }) {
         className={ui.modal.formOverlay}
         onClick={handleBackdropClick}
       >
-        <div className={ui.modal.formContainer}>
+        <div className={`${ui.modal.formContainer} relative`}>
           <div className={ui.modal.formHeader} >
             <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`} >
               <HiOutlineUserCircle size={24} />
@@ -544,6 +547,19 @@ export default function DonadorCrearModal({ open, onClose, onSuccess }) {
               )}
             </div>
           </div>
+          {loading && (
+            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-50">
+
+              <div className="w-56">
+                <Lottie animationData={loadingAnimation} loop />
+              </div>
+
+              <p className="mt-4 text-slate-600 font-medium">
+                Creando Donador...
+              </p>
+
+            </div>
+          )}
         </div>
       </div>
 
@@ -558,7 +574,7 @@ export default function DonadorCrearModal({ open, onClose, onSuccess }) {
         loading={loading}
         color="teal"
       />
-
+      
       <ModalResultado
         open={resultModal.open}
         type={resultModal.type}

@@ -169,8 +169,10 @@ export default function AppRouter() {
               path="reportes/donadores"
               element={
                 <PermissionRoute
-                  modulo="reportes"
-                  accion="exportar"
+                  permisos={[
+                    { modulo: "donadores", accion: "ver" },
+                    { modulo: "reportes", accion: "exportar" }
+                  ]}
                 >
                   <ReporteDonativos />
                 </PermissionRoute>
@@ -180,8 +182,10 @@ export default function AppRouter() {
               path="reportes/beneficiarios"
               element={
                 <PermissionRoute
-                  modulo="reportes"
-                  accion="exportar"
+                  permisos={[
+                    { modulo: "beneficiarios", accion: "ver" },
+                    { modulo: "reportes", accion: "exportar" }
+                  ]}
                 >
                   <ReporteBeneficiarios />
                 </PermissionRoute>
@@ -191,8 +195,10 @@ export default function AppRouter() {
               path="reportes/ingresos"
               element={
                 <PermissionRoute
-                  modulo="reportes"
-                  accion="exportar"
+                  permisos={[
+                    { modulo: "postulantes", accion: "ver" },
+                    { modulo: "reportes", accion: "exportar" }
+                  ]}
                 >
                   <ReportePostulantes />
                 </PermissionRoute>

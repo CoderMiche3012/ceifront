@@ -10,7 +10,7 @@ export default function RecomendacionCard({ data }) {
 
   const canEditPostulante = hasModulePermission("postulantes", "editar");
   const estudioCompleto = data?.estatus_estudio?.toLowerCase()?.trim() === "completo";
-  const puedeEditar = canEditPostulante && !["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
+  const puedeEditar = canEditPostulante && !["aceptado"].includes(data?.estatus_postulante?.toLowerCase());
 
 
   const [prioridad, setPrioridad] = useState("");

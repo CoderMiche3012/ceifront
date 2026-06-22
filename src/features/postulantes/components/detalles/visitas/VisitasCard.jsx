@@ -11,7 +11,7 @@ export default function VisitasCard({
 
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
   const canEditPostulante = hasModulePermission("postulantes", "editar");
-  const puedeEditar = canEditPostulante && !["aceptado", "rechazado"].includes(data?.estatus_postulante?.toLowerCase());
+  const puedeEditar = canEditPostulante && !["aceptado"].includes(data?.estatus_postulante?.toLowerCase());
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

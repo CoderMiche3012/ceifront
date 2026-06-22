@@ -35,6 +35,7 @@ export default function BeneficiariosVinculadosCard({ data, canEdit }) {
     search,
     setSearch,
     loading,
+    loadingMutation,
     loadingId,
     filtrados,
     handleAgregar,
@@ -299,6 +300,7 @@ export default function BeneficiariosVinculadosCard({ data, canEdit }) {
         color="red"
         onClose={() => setModalEliminar(false)}
         onConfirm={confirmarEliminar}
+        loading={loadingMutation}
       />
       <ModalConfirmacion
         open={modalAgregar}
@@ -309,6 +311,7 @@ export default function BeneficiariosVinculadosCard({ data, canEdit }) {
         color="green"
         onClose={() => setModalAgregar(false)}
         onConfirm={confirmarAgregar}
+        loading={loadingMutation}
       />
 
       <ModalResultado
@@ -319,6 +322,7 @@ export default function BeneficiariosVinculadosCard({ data, canEdit }) {
         onClose={() =>
           setResultado((prev) => ({ ...prev, open: false }))
         }
+        
       />
     </>
   );

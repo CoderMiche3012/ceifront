@@ -8,6 +8,8 @@ import Card from "../../components/ui/Card";
 import DatosTabla from "../../components/tablas/DatosTabla";
 import PaginacionTabla from "../../components/tablas/PaginacionTabla";
 import PostulanteReporteFiltros from "./components/PostulanteReporteFiltros";
+import kidsAnimation from "../../assets/imagenes/kid.json";
+import Lottie from "lottie-react";
 
 import { solicitarDescargaReporte } from "./services/reporteService";
 import { useReportePostulantes } from "./hooks/useReportePostulantes";
@@ -25,7 +27,7 @@ export default function ReportePostulantes() {
     const [search, setSearch] = useState("");
     const [filters, setFilters] = useState(INITIAL_FILTERS);
     const [page, setPage] = useState(1);
-
+    const [descargando, setDescargando] = useState(false);
     const { data: postulantes = [], loading } = useReportePostulantes();
 
     const handleFilterChange = (key, value) => {
@@ -145,34 +147,78 @@ export default function ReportePostulantes() {
     };
 
     const descargarExcel = async () => {
+        if (descargando) return; 
+
         try {
-            const buffer = await solicitarDescargaReporte("nuevosIngresos", "excel", postulantesFiltrados);
+            setDescargando(true);
+
+            const buffer = await solicitarDescargaReporte(
+                "nuevosIngresos",
+                "excel",
+                postulantesFiltrados
+            );
+
             ejecutarDescargaBlob(
                 buffer,
-                "padrón_nuevos_ingresos_cei.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                "Reporte_nuevos_ingresos_cei.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             );
+
         } catch (error) {
             console.error("Error al descargar Excel:", error);
+        } finally {
+            setDescargando(false); 
         }
     };
 
     const descargarPDF = async () => {
-        try {
-            const buffer = await solicitarDescargaReporte("nuevosIngresos", "pdf", postulantesFiltrados);
-            ejecutarDescargaBlob(buffer, "padrón_nuevos_ingresos_cei.pdf", "application/pdf");
-        } catch (error) {
-            console.error("Error al descargar PDF:", error);
-        }
-    };
+    if (descargando) return; 
+
+    try {
+        setDescargando(true);
+
+        const buffer = await solicitarDescargaReporte(
+            "nuevosIngresos",
+            "pdf",
+            postulantesFiltrados
+        );
+
+        ejecutarDescargaBlob(
+            buffer,
+            "Reporte_nuevos_ingresos_cei.pdf",
+            "application/pdf"
+        );
+
+    } catch (error) {
+        console.error("Error al descargar PDF:", error);
+    } finally {
+        setDescargando(false);
+    }
+};
 
     if (loading) {
-        return <div className="p-6 text-emerald-800 font-medium animate-pulse">Cargando reporte...</div>;
+        return (
+            <div className="flex h-64 flex-col items-center justify-center">
+
+                <div className="w-56">
+                    <Lottie
+                        animationData={kidsAnimation}
+                        loop={true}
+                    />
+                </div>
+
+                <p className="mt-4 text-slate-600 font-medium">
+                    Cargando y estructurando reporte De Postulantes...
+                </p>
+
+            </div>
+        );
     }
 
     return (
         <div className="space-y-6">
             <EncabezadoPagina
-                titulo="Padrón de Nuevos Ingresos"
+                titulo="Reporte de Nuevos Ingresos"
                 descripcion="Consulta y exporta información de los los postulantes a beneficiarios"
             />
 
@@ -187,6 +233,7 @@ export default function ReportePostulantes() {
                     onClearFilters={handleClearFilters}
                     onDescargarExcel={descargarExcel}
                     onDescargarPDF={descargarPDF}
+                    descargando={descargando}
                 />
 
                 <DatosTabla columns={columns} data={datosPaginados} rowKey="id_postulante" renderCell={renderCell} />

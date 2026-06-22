@@ -10,6 +10,8 @@ import { generarSemanasLaborales } from "../utils/dateHelpers";
 import ModalResultado from "../components/shared/ModalResultado";
 import ModalConfirmacion from "../components/shared/ModalConfirmacion";
 import { usePermissions } from "../context/PermissionsContext";
+import kidsAnimation from "../assets/imagenes/kid.json";
+import Lottie from "lottie-react";
 
 const AsistenciasPagina = () => {
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
@@ -219,28 +221,33 @@ const AsistenciasPagina = () => {
     mutation.mutate(listaCambios);
   };
 
-  if (isLoading)
-    if (semanas.length > 0 && !semanaActiva) {
-      return (
-        <div className="flex justify-center p-10">
-          <Loader2 className="animate-spin" />
-        </div>
-      );
-    }
+  if (isLoading) {
+  return (
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#f3f1f4]">
+
+      <div className="w-72">
+        <Lottie animationData={kidsAnimation} loop />
+      </div>
+
+      <p className="text-slate-600 font-medium text-lg">
+        Cargando asistencias...
+      </p>
+
+      <p className="text-xs text-slate-400 mt-2">
+        Preparando datos del periodo activo
+      </p>
+
+    </div>
+  );
+}
 
   if (isError)
     return (
       <div className="flex justify-center p-10 text-red-500">
         <AlertCircle />
       </div>
-    ); console.log("DIAS:", dias);
-  console.log("SEARCH RAW:", JSON.stringify(search));
-  console.log("beneficiarios originales", data);
-  console.log("beneficiarios filtrados", beneficiariosFiltrados);
-  console.log("beneficiarios paginados", beneficiariosPaginados);
-  console.log("search", `"${search}"`);
-  console.log("pagina", pagina);
-  console.log("registros", registrosPorPagina);
+    ); 
+  
   return (
     <section className="space-y-6">
 

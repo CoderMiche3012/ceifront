@@ -5,12 +5,15 @@ import { Bar, Doughnut } from "react-chartjs-2";
 import { useReporteBeneficiarios } from "./../hooks/useReporteBeneficiarios";
 
 import Card from "../../../components/ui/Card";
+import EncabezadoPagina from "../../../components/shared/EncabezadoPagina";
 import Boton from "../../../components/ui/Boton";
 import TarjetasEstadisticas from "../../../components/shared/TarjetasEstadisticas";
 import FiltrosReporte from "../../../components/tablas/FiltrosAvanzados";
 import AvatarGeneral from "../../../components/shared/AvatarGeneral";
 import DatosTabla from "../../../components/tablas/DatosTabla";
 import PaginacionTabla from "../../../components/tablas/PaginacionTabla";
+import kidsAnimation from "../../../assets/imagenes/kid.json";
+import Lottie from "lottie-react";
 
 import { ui } from "../../../styles/ui/index";
 
@@ -169,12 +172,22 @@ export default function ReporteBeneficiariosTab() {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-sm font-semibold text-slate-500">
-        Cargando y estructurando reporte de beneficiarios...
+      <div className="flex h-64 flex-col items-center justify-center">
+
+        <div className="w-56">
+          <Lottie
+            animationData={kidsAnimation}
+            loop={true}
+          />
+        </div>
+
+        <p className="mt-4 text-slate-600 font-medium">
+          Cargando y estructurando reporte de beneficiarios...
+        </p>
+
       </div>
     );
   }
-
   const opcionesFiltros = [
     { key: "periodo", label: "Periodo", value: periodo, onChange: actions.setPeriodo, options: periodosOptions },
     {
@@ -236,6 +249,7 @@ export default function ReporteBeneficiariosTab() {
 
   return (
     <div className="space-y-6">
+      
       <TarjetasEstadisticas
         items={[
           { label: "Total", value: stats.total, icon: Users, color: "blue" },

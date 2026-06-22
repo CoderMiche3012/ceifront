@@ -16,6 +16,7 @@ import { familiaKeys } from "../services/familiaKeys";
 import { postulantesKeys } from "../../postulantes/services/postulantesKeys";
 import { beneficiariosKeys } from "../../beneficiarios/services/beneficiariosKeys";
 import { expedientesKeys } from "../services/expedientesKeys";
+import { analisisKeys } from "../../postulantes/services/analisisKeys";
 // lista
 export function useFamilia() {
   return useQuery({
@@ -58,6 +59,9 @@ export function useCrearFamilia() {
       queryClient.invalidateQueries({
         queryKey: expedientesKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: analisisKeys.all,
+      });
     },
   });
 }
@@ -84,6 +88,9 @@ export function useActualizarFamilia() {
       });
       queryClient.invalidateQueries({
         queryKey: expedientesKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: analisisKeys.all,
       });
     },
   });

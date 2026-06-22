@@ -15,12 +15,16 @@ import { ui } from "../../styles/ui/uiClasses";
 import { useSubirEstudio } from "../../features/postulantes/hooks/useSubirEstudio";
 import { usePermissions } from "../../context/PermissionsContext";
 import SugerenciasIA from "../../features/postulantes/components/detalles/IA/Tab_IA";
+import Lottie from "lottie-react";
+import kidsAnimation from "../../assets/imagenes/kid.json";
+
 
 export default function ExpedientePagina() {
 
   const { id } = useParams();
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
   const canEdit = hasModulePermission("postulantes", "editar");
+  
 
   const {
     data,
@@ -32,14 +36,26 @@ export default function ExpedientePagina() {
     edad,
     analisisIA
   } = useExpedienteData(id);
-  console.log("analisisIA",analisisIA)
+  console.log("analisisIA", analisisIA)
 
   const estudio = useSubirEstudio(data);
   // loading
+
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+      <div className="flex h-64 flex-col items-center justify-center">
+
+        <div className="w-56">
+          <Lottie
+            animationData={kidsAnimation}
+            loop={true}
+          />
+        </div>
+
+        <p className="mt-4 text-slate-600 font-medium">
+          Cargando los datos...
+        </p>
+
       </div>
     );
   }

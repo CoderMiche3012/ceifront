@@ -224,7 +224,7 @@ export default function PostulanteTabla({ postulantes = [], onPrint }) {
       case "acciones": {
         const puedeEditar =
           canEditPostulante &&
-          !["aceptado", "rechazado"].includes(
+          !["aceptado"].includes(
             item?.estatus?.toLowerCase()
           );
         console.log({
