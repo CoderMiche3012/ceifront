@@ -57,7 +57,6 @@ export const usePeriodoCrearForm = (onSuccess, onClose) => {
         fecha_fin: "",
       });
     } catch (err) {
-      console.log(err)
       const mensaje = err?.message || "Ocurrió un error inesperado.";
       setError(mensaje);
     } finally {

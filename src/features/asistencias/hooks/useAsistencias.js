@@ -14,7 +14,6 @@ export const useAsistenciaData = (periodoId) => {
     error,
   } = useBeneficiarios(periodoId);
 
-  console.log("beneficiarios", beneficiarios)
 
   const beneficiariosProcesados = (beneficiarios || []).map((b) => ({
     id: b.id_beneficiario,
@@ -25,8 +24,6 @@ export const useAsistenciaData = (periodoId) => {
     asistencias: b.seguimiento?.usos_servicios || [],
     id_seguimiento: b.seguimiento?.id_seguimiento || null,
   }));
-
-  console.log("beneficiarios", beneficiariosProcesados)
 
   const guardarAsistencias = async (payload) => {
     const paraCrear = payload.filter((c) => !c.id_asistencia_servicio);

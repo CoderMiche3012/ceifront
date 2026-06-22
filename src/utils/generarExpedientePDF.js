@@ -173,7 +173,7 @@ export const generarExpedientePDF = (data, edad) => {
   };
 
   img.onerror = () => {
-    console.error("Error crítico cargando el logo. Generando PDF sin imagen.");
+    alert("Error cargando logo");
     img.onload(); 
   };
 };

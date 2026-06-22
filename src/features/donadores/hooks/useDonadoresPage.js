@@ -9,9 +9,6 @@ export const useDonadoresPage = () => {
   const { data: donadores = [], isLoading: loadingDonadores, error: errorDonadores, } = useDonadores();
   const { data: periodoActivo, isLoading: loadingPeriodo, error: errorPeriodo } = usePeriodoActivo();
   const { data: resumenPeriodo = [], isLoading: loadingResumen, error: errorResumen } = useResumenPeriodoTotales(periodoActivo?.id_periodo);
-  console.log("periodoActivo",periodoActivo)
-  console.log("resumen",resumenPeriodo)
-  console.log("donadores",donadores)
   const [filters, setFilters] = useState({ estatus: "todos", tipo: "todos" });
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);

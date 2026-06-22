@@ -7,9 +7,8 @@ import Input from "../components/ui/Input";
 import BotonInicio from "../components/ui/BotonInicio";
 import AlertaError from "../components/ui/AlertaError";
 //imagenes
-import inicio from "../assets/imagenes/inicio.png";
 import logoCei from "../assets/imagenes/logo.png";
-
+import inicioR from "../assets/imagenes/inicioR.jpeg";
 // para el bloqueo
 const getBloqueo = (username) => {
   const bloqueo = localStorage.getItem(`bloqueo_${username}`);
@@ -113,11 +112,20 @@ export default function InicioSesion() {
 
   const visualPanel = useMemo(() => (
     <div className="relative hidden min-h-screen lg:block" aria-hidden="true">
-      <img src={inicio} alt="Niños del centro" className="absolute inset-0 h-full w-full object-cover" loading="eager" />
-      <div className="absolute inset-0 bg-[#1F8A8A]/70" />
-      <div className="relative z-10 flex h-full flex-col justify-end px-8 pb-10 text-white">
-        <h2 className="max-w-[500px] text-4xl font-extrabold leading-tight">Creando esperanza para el futuro de nuestra comunidad.</h2>
-        <p className="mt-4 max-w-[420px] text-lg text-white/90">Cada inicio de sesión es un paso más hacia un mundo mejor.</p>
+      <img src={inicioR} alt="Niños del centro" className="absolute inset-0 h-full w-full object-cover" loading="eager" />
+      <div className="absolute " />
+      <div className="relative z-10 flex h-full items-end p-8">
+        <div className="relative z-10 flex h-full items-end p-8">
+          <div className="w-[750px] rounded-2xl bg-black/35 backdrop-blur-sm p-6">
+            <h2 className="text-5xl font-bold text-white">
+              Creando esperanza para el futuro de nuestra comunidad.
+            </h2>
+
+            <p className="mt-4 text-lg text-white/90">
+              Cada inicio de sesión es un paso más hacia un mundo mejor.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   ), []);

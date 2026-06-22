@@ -111,6 +111,7 @@ export default function DetalleSeguimiento({
         window.URL.revokeObjectURL(blobUrl);
 
       } catch (error) {
+        alert("Error al descargar");
       }
     };
 

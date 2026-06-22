@@ -397,7 +397,6 @@ export default function useDatosEscolares(id_seguimiento, datosIniciales) {
       }
       return true;
     } catch (err) {
-      console.log(err);
       setError(err.message || "Error inesperado");
       return false;
     } finally {

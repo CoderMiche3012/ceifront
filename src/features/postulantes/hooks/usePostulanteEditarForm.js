@@ -246,7 +246,6 @@ export const usePostulanteEditarForm = (open, postulante, onSuccess, onClose) =>
 
 
       const backendErrors = err?.errors || err?.response?.data;
-      console.log(backendErrors)
       if (
         backendErrors &&
         typeof backendErrors === "object" &&

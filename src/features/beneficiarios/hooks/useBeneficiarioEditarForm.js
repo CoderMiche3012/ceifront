@@ -65,12 +65,35 @@ export const useBeneficiarioEditarForm = (open, data, onSuccess, onClose) => {
 
   const validarFormulario = () => {
     const errors = {};
+
     if (!form.nombre.trim()) errors.nombre = "Nombre obligatorio";
     if (!form.apellido_p.trim()) errors.apellido_p = "Apellido obligatorio";
-    if (!form.correo.trim()) errors.correo = "Correo obligatorio";
-    if (!form.telefono.trim()) errors.telefono = "Teléfono obligatorio";
+
+    if (!form.correo.trim()) {
+      errors.correo = "Correo obligatorio";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo)) {
+      errors.correo = "Correo inválido";
+    }
+
+    if (!form.telefono.trim()) {
+      errors.telefono = "Teléfono obligatorio";
+    } else if (!/^\d{10}$/.test(form.telefono)) {
+      errors.telefono = "El teléfono debe tener 10 dígitos";
+    }
+
     if (!form.genero.trim()) errors.genero = "Selecciona género";
-    if (!form.fecha_nacimiento) errors.fecha_nacimiento = "Selecciona fecha";
+
+    if (!form.fecha_nacimiento) {
+      errors.fecha_nacimiento = "Selecciona fecha";
+    } else {
+      const hoy = new Date();
+      const nacimiento = new Date(form.fecha_nacimiento);
+
+      if (nacimiento > hoy) {
+        errors.fecha_nacimiento =
+          "La fecha de nacimiento no puede ser futura";
+      }
+    }
 
     if (!form.cp.trim()) errors.cp = "CP obligatorio";
     if (!form.municipio.trim()) errors.municipio = "Municipio obligatorio";
@@ -155,7 +178,6 @@ export const useBeneficiarioEditarForm = (open, data, onSuccess, onClose) => {
           },
         },
       };
-      console.log("pay", payload)
 
       await actualizarMutation.mutateAsync({
         id: data.id_beneficiario,
@@ -170,11 +192,8 @@ export const useBeneficiarioEditarForm = (open, data, onSuccess, onClose) => {
       });
 
     } catch (err) {
-      console.log(err)
-
 
       const backendErrors = err?.errors || err?.response?.data;
-      console.log(backendErrors)
       if (
         backendErrors &&
         typeof backendErrors === "object" &&

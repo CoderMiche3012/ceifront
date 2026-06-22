@@ -90,7 +90,12 @@ export const useBeneficiariosPage = (pageSize = 4) => {
           }
         }
       }
+      const estatusRaw = seguimiento?.estatus ?? "Sin seguimiento";
 
+      const estatusNormalizado =
+        estatusRaw?.toLowerCase() === "finalizado"
+          ? "Graduado"
+          : estatusRaw;
       return {
         ...b,
         expediente: {
@@ -100,7 +105,7 @@ export const useBeneficiariosPage = (pageSize = 4) => {
           municipio: b.expediente_resumen?.municipio ?? "--",
         },
         seguimientoActivo: seguimiento,
-        estatusSeguimiento: seguimiento?.estatus ?? "Sin seguimiento",
+        estatusSeguimiento: estatusNormalizado,
         nivelEducativo,
         nivelGrado: nivelGradoFinal.trim(),
         promedio: promedioFinal,
@@ -122,7 +127,9 @@ export const useBeneficiariosPage = (pageSize = 4) => {
       }
       const nombre = item.expediente?.nombre_completo?.toLowerCase() || "";
       const matchSearch = !searchLower || nombre.includes(searchLower);
-      const matchStatus = filters.estatus === "todos" || item.estatusSeguimiento?.toLowerCase() === filters.estatus.toLowerCase();
+      const matchStatus =
+        filters.estatus === "todos" ||
+        item.estatusSeguimiento?.toLowerCase() === filters.estatus.toLowerCase();
       const matchNivel = filters.nivel === "todos" || item.nivelEducativo?.toLowerCase() === filters.nivel.toLowerCase();
       let rendimiento = "sin_datos";
       const promedio = Number(item.promedio);

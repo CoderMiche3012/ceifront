@@ -164,8 +164,7 @@ const AsistenciasPagina = () => {
       };
     });
   }, [fechaSeleccionada]);
-  console.log("DATA CHECK:", data);
-  console.log("BENEFICIARIOS CHECK:", data?.beneficiarios);
+
   const beneficiariosFiltrados = useMemo(() => {
     const lista = Array.isArray(data) ? data : [];
 

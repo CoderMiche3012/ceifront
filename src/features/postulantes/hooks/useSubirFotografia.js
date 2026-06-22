@@ -72,13 +72,6 @@ export const useSubirFotografia = (idExpediente) => {
 
             limpiar();
         } catch (error) {
-            console.error("Error completo:", error);
-
-            console.error(
-                "Respuesta backend:",
-                error?.original?.response?.data ||
-                error?.response?.data
-            );
 
             const mensaje =
                 error?.errors?.foto_archivo?.[0] ||

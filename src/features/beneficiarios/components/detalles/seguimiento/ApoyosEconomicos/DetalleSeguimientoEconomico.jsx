@@ -143,17 +143,12 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT, editab
                   "archivo",
                   archivoComprobante
                 );
-                console.log("=== DOCUMENTO A GUARDAR ===");
 
                 for (const [key, value] of documentoData.entries()) {
                   if (value instanceof File) {
-                    console.log(key, {
-                      name: value.name,
-                      type: value.type,
-                      size: value.size,
-                    });
+                    console.log( "..", );
                   } else {
-                    console.log(key, value);
+                    console.log( "..", );
                   }
                 }
 
@@ -235,8 +230,6 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT, editab
                   "archivo",
                   archivoComprobante
                 );
-                console.log("id_expediente:", dataT?.id_expediente);
-                console.log("tipo:", typeof dataT?.id_expediente);
 
                 if (documentoExistente) {
                   await actualizarDocumentoMutation.mutateAsync({
@@ -244,17 +237,12 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT, editab
                     formData: documentoData,
                   });
                 } else {
-                  console.log("=== DOCUMENTO A GUARDAR ===");
 
                   for (const [key, value] of documentoData.entries()) {
                     if (value instanceof File) {
-                      console.log(key, {
-                        name: value.name,
-                        type: value.type,
-                        size: value.size,
-                      });
+                      console.log( "..", );
                     } else {
-                      console.log(key, value);
+                      console.log( "..", );
                     }
                   }
                   await subirDocumentoMutation.mutateAsync(

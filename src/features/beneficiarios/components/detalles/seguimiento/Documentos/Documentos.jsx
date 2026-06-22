@@ -169,10 +169,7 @@ export default function ExpedienteDigital({ data }) {
         );
 
       } catch (error) {
-
-        console.error(
-          error
-        );
+           alert("Error al descargar");
       }
     };
 

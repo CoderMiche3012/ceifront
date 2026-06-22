@@ -24,6 +24,9 @@ import { HiOutlineExclamationCircle } from "react-icons/hi";
 import { obtenerDireccionPorCP } from "../../../donadores/services/donadoresService";
 import { useBeneficiarioEditarForm } from "../../hooks/useBeneficiarioEditarForm";
 import { obtenerUsuario } from "../../../../storage/userStorage";
+import { usePermissions } from "../../../../context/PermissionsContext";
+import loadingAnimation from "../../../../assets/imagenes/loading.json";
+import Lottie from "lottie-react";
 
 export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose }) {
   const [step, setStep] = useState(1);
@@ -31,6 +34,8 @@ export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose
   const [cpError, setCpError] = useState("");
   const [manualAddressMode, setManualAddressMode] = useState(false);
   const estadoEditable = manualAddressMode;
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const canCreate = hasModulePermission("direcciones", "crear");
 
   const usuarioActual = obtenerUsuario();
   const puedeEditarNombre = usuarioActual?.esAdmin === true || usuarioActual?.esSuperUser === true;
@@ -290,36 +295,37 @@ export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose
                       <h3 className="text-[10px] font-black text-[#0E5F63]/60 uppercase tracking-[0.2em]">
                         Dirección
                       </h3>
+                      {canCreate && (
+                        <button
+                          type="button"
+                          className="flex items-center gap-1 text-xs text-[#0E5F63] font-semibold hover:underline"
+                          onClick={() => {
+                            if (manualAddressMode) {
+                              setManualAddressMode(false);
+                              updateField("colonia", "");
+                              updateField("estado", "");
+                              updateField("municipio", "");
+                              updateField("id_geografia", null);
 
-                      <button
-                        type="button"
-                        className="flex items-center gap-1 text-xs text-[#0E5F63] font-semibold hover:underline"
-                        onClick={() => {
-                          if (manualAddressMode) {
-                            setManualAddressMode(false);
-                            updateField("colonia", "");
-                            updateField("estado", "");
-                            updateField("municipio", "");
-                            updateField("id_geografia", null);
-
-                            if (form.cp?.trim()) {
-                              handleBuscarCP(form.cp);
+                              if (form.cp?.trim()) {
+                                handleBuscarCP(form.cp);
+                              }
+                            } else {
+                              setManualAddressMode(true);
+                              setCpError("");
                             }
-                          } else {
-                            setManualAddressMode(true);
-                            setCpError("");
-                          }
-                        }}
-                      >
-                        {manualAddressMode ? (
-                          <>
-                            <HiOutlineArrowLeft size={14} />
-                            Volver a búsqueda por CP
-                          </>
-                        ) : (
-                          "Agregar dirección manual"
-                        )}
-                      </button>
+                          }}
+                        >
+                          {manualAddressMode ? (
+                            <>
+                              <HiOutlineArrowLeft size={14} />
+                              Volver a búsqueda por CP
+                            </>
+                          ) : (
+                            "Agregar dirección manual"
+                          )}
+                        </button>
+                      )}
                     </div>
 
                     <div className={ui.modal.twoCols}>
@@ -475,19 +481,16 @@ export default function BeneficiarioEditarModal({ open, data, onSuccess, onClose
         description="¿Deseas actualizar al beneficiario?"
       />
       {loading && (
-        <div className="fixed inset-0 z-[9999] bg-black/30 flex items-center justify-center">
-          <div className="bg-white rounded-2xl px-8 py-6 shadow-xl flex flex-col items-center gap-4">
-            <div className="h-10 w-10 border-4 border-[#0E5F63] border-t-transparent rounded-full animate-spin" />
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-50">
 
-            <div className="text-center">
-              <h3 className="font-semibold text-slate-800">
-                Editando beneficiario...
-              </h3>
-              <p className="text-sm text-slate-500">
-                Esto puede tardar unos segundos.
-              </p>
-            </div>
+          <div className="w-56">
+            <Lottie animationData={loadingAnimation} loop />
           </div>
+
+          <p className="mt-4 text-slate-600 font-medium">
+              Esto puede tardar unos segundos...
+          </p>
+
         </div>
       )}
       <ModalResultado

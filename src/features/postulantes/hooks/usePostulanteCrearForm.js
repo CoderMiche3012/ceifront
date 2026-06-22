@@ -397,7 +397,6 @@ export const usePostulanteCrearForm = (onSuccess, onClose) => {
 
       flattenErrors(backendErrors);
 
-      console.log(parsedErrors);
 
       if (Object.keys(parsedErrors).length > 0) {
         setFieldErrors(parsedErrors);

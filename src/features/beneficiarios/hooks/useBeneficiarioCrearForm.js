@@ -61,13 +61,37 @@ export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
   const validarFormulario = () => {
     const errors = {};
 
+    // PRINCIPAL
     if (!form.nombre.trim()) errors.nombre = "Nombre obligatorio";
     if (!form.apellido_p.trim()) errors.apellido_p = "Apellido obligatorio";
-    if (!form.correo.trim()) errors.correo = "Correo obligatorio";
-    if (!form.telefono.trim()) errors.telefono = "Teléfono obligatorio";
+    if (!form.correo.trim()) {
+      errors.correo = "Correo obligatorio";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo)) {
+      errors.correo = "Correo inválido";
+    }
+
+    if (!form.telefono.trim()) {
+      errors.telefono = "Teléfono obligatorio";
+    } else if (!/^\d{10}$/.test(form.telefono)) {
+      errors.telefono = "El teléfono debe tener 10 dígitos";
+    }
+
     if (!form.genero.trim()) errors.genero = "Selecciona género";
-    if (!form.fecha_nacimiento) errors.fecha_nacimiento = "Selecciona fecha";
-    if (!form.fecha_ingreso) errors.fecha_nacimiento = "Selecciona fecha";
+    if (!form.fecha_nacimiento) {
+      errors.fecha_nacimiento = "Selecciona fecha";
+    } else {
+      const hoy = new Date();
+      const nacimiento = new Date(form.fecha_nacimiento);
+
+      if (nacimiento > hoy) {
+        errors.fecha_nacimiento =
+          "La fecha de nacimiento no puede ser futura";
+      }
+    }
+
+    if (!form.fecha_ingreso) {
+      errors.fecha_ingreso = "Selecciona fecha";
+    }
 
     if (!form.cp.trim()) errors.cp = "CP obligatorio";
     if (!form.municipio.trim()) errors.municipio = "Municipio obligatorio";
@@ -75,7 +99,7 @@ export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
     if (!form.calle.trim()) errors.calle = "Calle obligatoria";
     if (!form.numero.trim()) errors.numero = "Número obligatorio";
 
-
+    //FAMILIA
     form.familia.forEach((fam, idx) => {
       if (!fam.nombre?.trim())
         errors[`familia.${idx}.nombre`] = "Nombre obligatorio";
@@ -89,16 +113,52 @@ export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
       if (!fam.parentesco?.trim())
         errors[`familia.${idx}.parentesco`] = "Parentesco obligatorio";
 
-      if (!fam.fecha_nacimiento)
+      if (!fam.fecha_nacimiento) {
         errors[`familia.${idx}.fecha_nacimiento`] = "Fecha obligatoria";
+      } else {
+        const hoy = new Date();
+        const nacimiento = new Date(fam.fecha_nacimiento);
+
+        if (nacimiento > hoy) {
+          errors[`familia.${idx}.fecha_nacimiento`] =
+            "La fecha no puede ser futura";
+        }
+      }
+
+      //TELEFONO
+      if (fam.telefono && !/^\d{10}$/.test(fam.telefono)) {
+        errors[`familia.${idx}.telefono`] =
+          "El teléfono debe tener 10 dígitos";
+      }
 
       if (!fam.salario)
-        errors[`familia.${idx}.salario`] = "Salario o escuela Obligatorio";
+        errors[`familia.${idx}.salario`] =
+          "Salario o escuela obligatorio";
 
       if (!fam.actividad_principal?.trim())
         errors[`familia.${idx}.actividad_principal`] =
           "Actividad obligatoria";
     });
+
+    // TUTOR
+    const tutor = form.familia?.[0];
+
+    if (tutor?.fecha_nacimiento) {
+      const hoy = new Date();
+      const nacimiento = new Date(tutor.fecha_nacimiento);
+
+      let edad = hoy.getFullYear() - nacimiento.getFullYear();
+      const m = hoy.getMonth() - nacimiento.getMonth();
+
+      if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) {
+        edad--;
+      }
+
+      if (edad < 18) {
+        errors["familia.0.fecha_nacimiento"] =
+          "El tutor debe ser mayor o igual a 18 años";
+      }
+    }
 
     return errors;
   };
@@ -289,8 +349,6 @@ export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
 
       flattenErrors(backendErrors);
 
-      console.log(parsedErrors);
-
       if (Object.keys(parsedErrors).length > 0) {
         setFieldErrors(parsedErrors);
         setError(null);
@@ -325,7 +383,7 @@ export const useBeneficiarioCrearForm = (onSuccess, onClose) => {
       setFieldErrors({});
       setError(null);
       setShowConfirm(false);
-      onSuccess?.(); 
+      onSuccess?.();
     }
     onClose?.();
   };

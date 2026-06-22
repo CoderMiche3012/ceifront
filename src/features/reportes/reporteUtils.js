@@ -45,7 +45,7 @@ export const aplicarEstilosExcelGlobal = async (
         ext: { width: 85, height: 85 },
       });
     } catch (e) {
-      console.error("Error insertando logo:", e);
+      alert("Error insertando logo");
     }
   }
 

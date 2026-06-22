@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Doughnut, Bar } from "react-chartjs-2";
+
 import { useNavigate } from "react-router-dom";
 import { useBeneficiariosPage } from "../features/beneficiarios/hooks/useBeneficiariosPage";
 import { obtenerVisitas } from "../features/postulantes/services/visitasService";
@@ -7,6 +8,7 @@ import { usePermissions } from "../context/PermissionsContext";
 import { usePeriodoActivo } from "../features/periodos/hooks/usePeriodos";
 import { useBeneficiarios } from "../features/beneficiarios/hooks/useBeneficiarios";
 import Card from "../components/ui/Card";
+import { obtenerUsuario } from "../storage/userStorage";
 import {
   Calendar,
   Sparkles,
@@ -20,9 +22,9 @@ import {
   PlusCircle,
   AlertTriangle,
   LayoutGrid,
-  ChevronRight
+  ChevronRight,
+  UserCircle
 } from "lucide-react";
-
 const calcularEdad = (fechaNacimiento) => {
   if (!fechaNacimiento) return "";
   const hoy = new Date();
@@ -73,7 +75,22 @@ const formatearNivel = (nivel = "") => {
 
 export default function Inicio() {
   const navigate = useNavigate();
+  const usuarioActual = obtenerUsuario();
+  const nombreCompleto = [
+    usuarioActual?.nombre,
+    usuarioActual?.apellido_p,
+    usuarioActual?.apellido_m
+  ]
+    .filter(Boolean)
+    .join(" ");
 
+  const frases = [
+    "Cada registro representa una oportunidad de mejora en la atención a la comunidad.",
+    "El seguimiento oportuno permite brindar una atención más efectiva y humana.",
+    "La calidad en los procesos contribuye al bienestar de la población atendida.",
+  ];
+
+  const fraseAleatoria = frases[Math.floor(Math.random() * frases.length)];
 
   const { periodoActivo, loading: loadingPeriodo } = usePeriodoActivo();
 
@@ -243,7 +260,7 @@ export default function Inicio() {
           setVisitas(dataVisitas);
         }
       } catch (error) {
-        console.error("Error al obtener visitas:", error);
+        alert("Error al obtener visitas");
       } finally {
         if (isMounted) {
           setLoadingVisitas(false);
@@ -404,8 +421,22 @@ export default function Inicio() {
 
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-5">
-        <div>
-          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Inicio</h2>
+        <div className="flex items-center gap-3">
+
+         <div className="p-5 rounded-2xl bg-teal-50 border border-teal-100">
+  <UserCircle className="w-12 h-12 text-teal-600" />
+</div>
+
+          <div>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Bienvenido, {nombreCompleto}
+            </h2>
+
+            <p className="text-sm text-slate-500 flex items-center gap-2 mt-1">
+              {fraseAleatoria}
+            </p>
+          </div>
+
         </div>
       </div>
       {!tieneContenidoDashboard ? (
@@ -737,3 +768,4 @@ export default function Inicio() {
     </section>
   );
 }
+

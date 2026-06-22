@@ -78,8 +78,6 @@ export default function AsistenciasTabla({
       </div>
     );
   };
-  console.log("TABLA", beneficiarios);
-  console.log("COLUMNAS", columns);
   return (
     <div className="relative">
       <div className="overflow-x-auto">

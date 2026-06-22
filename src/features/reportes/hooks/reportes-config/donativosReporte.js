@@ -173,7 +173,7 @@ export const generarPdfEstrategia = async (datos, logoBase64, meta = {}) => {
     try {
       doc.addImage(`data:image/png;base64,${logoBase64}`, "PNG", 14, 8, 30, 30);
     } catch (e) {
-      console.error("Error agregando logo al PDF", e);
+     alert("Error ");
     }
   }
 

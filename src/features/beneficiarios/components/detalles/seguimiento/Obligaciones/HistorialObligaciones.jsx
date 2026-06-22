@@ -2,11 +2,24 @@ import HistorialBase from "../Historial";
 import ResumenServicioSocialCard from "./servicioSocial/ResumenServicioSocialCard";
 import CartaCard from "./carta/CartaCard";
 import { usePermissions } from "../../../../../../context/PermissionsContext";
+import { usePeriodoActivo } from "../../../../../periodos/hooks/usePeriodos";
 
 export default function HistorialObligacionesCard({ data }) {
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
   const canEditObligaciones = hasModulePermission("obligaciones", "editar");
   const canCreateObligaciones = hasModulePermission("obligaciones", "crear")
+  const canViewHistorial = hasModulePermission("historial", "ver");
+  const canEditHistorial = hasModulePermission("historial", "editar");
+
+  const { data: periodoActivo, isLoading: loadingPeriodo } = usePeriodoActivo();
+  const esPeriodoActivo = (item) =>
+    item.id_periodo === periodoActivo?.id_periodo;
+
+  const puedeEditarEnItem = (item) => {
+    if (canEditHistorial) return true;
+    return esPeriodoActivo(item);
+  };
+
   const obtenerEstado = (obligaciones = []) => {
     if (!obligaciones.length) {
       return {
@@ -29,12 +42,22 @@ export default function HistorialObligacionesCard({ data }) {
         color: "text-emerald-600",
       };
   };
+  const historialFiltrado = (data?.historial_seguimientos ?? []).filter((item) => {
+    // si puede ver todo, no filtra
+    if (canViewHistorial) return true;
 
+    // si no puede ver todo, solo periodo activo
+    return item.id_periodo === periodoActivo?.id_periodo;
+  });
+
+  const periodosFiltrados = !canViewHistorial
+    ? (periodoActivo ? [periodoActivo] : [])
+    : (data?.periodos ?? []);
   return (
     <HistorialBase
       title="Historial de Obligaciones"
-      items={data?.historial_seguimientos ?? []}
-      periodos={data?.periodos ?? []}
+      items={historialFiltrado}
+      periodos={periodosFiltrados}
       periodoActivo={data?.periodoActivo}
 
       renderTitulo={(item, periodo) => (
@@ -78,21 +101,24 @@ export default function HistorialObligacionesCard({ data }) {
       }}
 
       renderDetalle={(item) => {
-        const esEditable = item.estatus === "Activo";
+        const editablePorPermisoPeriodo = puedeEditarEnItem(item);
+
+        const editableFinal =
+          editablePorPermisoPeriodo && item.estatus === "Activo";
 
         return (
           <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <ResumenServicioSocialCard
                 seguimiento={item}
-                editable={esEditable && canEditObligaciones}
-                canCreateObligaciones={esEditable && canCreateObligaciones}
+                editable={editableFinal && canEditObligaciones}
+                canCreateObligaciones={editableFinal && canCreateObligaciones}
               />
 
               <CartaCard
                 seguimiento={item}
-                editable={esEditable && canEditObligaciones}
-                canCreateObligaciones={esEditable && canCreateObligaciones}
+                editable={editableFinal && canEditObligaciones}
+                canCreateObligaciones={editableFinal && canCreateObligaciones}
               />
             </div>
           </div>

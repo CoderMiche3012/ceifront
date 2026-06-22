@@ -73,7 +73,6 @@ export function useSubirEstudio(data) {
       setMostrarSubida(false);
       setArchivo(null);
     } catch (error) {
-      console.error(error);
 
       const mensaje =
         error?.errors?.archivo?.[0] ||

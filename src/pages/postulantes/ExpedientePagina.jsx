@@ -36,7 +36,6 @@ export default function ExpedientePagina() {
     edad,
     analisisIA
   } = useExpedienteData(id);
-  console.log("analisisIA", analisisIA)
 
   const estudio = useSubirEstudio(data);
   // loading

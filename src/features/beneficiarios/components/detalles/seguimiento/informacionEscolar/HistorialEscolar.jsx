@@ -1,11 +1,23 @@
 import HistorialBase from "./../Historial";
 import DetalleSeguimientoEscolar from "./DetalleSeguimientoEscolar";
 import { usePermissions } from "../../../../../../context/PermissionsContext";
+import { usePeriodoActivo } from "../../../../../periodos/hooks/usePeriodos";
 
 export default function HistorialEscolarCard({ data }) {
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
-  const canEditEscuela = hasModulePermission("datos_escolares.ver", "editar");
-  const canCreateEscuela = hasModulePermission("datos_escolares.ver", "crear")
+  const canEditEscuela = hasModulePermission("datos_escolares", "editar");
+  const canCreateEscuela = hasModulePermission("datos_escolares", "crear")
+  const canViewHistorial = hasModulePermission("historial", "ver");
+  const canEditHistorial = hasModulePermission("historial", "editar");
+
+  const { data: periodoActivo, isLoading: loadingPeriodo } = usePeriodoActivo();
+  const esPeriodoActivo = (item) =>
+    item.id_periodo === periodoActivo?.id_periodo;
+
+  const puedeEditarEnItem = (item) => {
+    if (canEditHistorial) return true;
+    return esPeriodoActivo(item);
+  };
   const calcularPromedio = (boletas) => {
     if (!boletas?.length) return null;
 
@@ -16,12 +28,23 @@ export default function HistorialEscolarCard({ data }) {
 
     return (suma / boletas.length).toFixed(2);
   };
+  const historialFiltrado = (data?.historial_seguimientos ?? []).filter((item) => {
+    // si puede ver todo, no filtra
+    if (canViewHistorial) return true;
+
+    // si no puede ver todo, solo periodo activo
+    return item.id_periodo === periodoActivo?.id_periodo;
+  });
+
+  const periodosFiltrados = !canViewHistorial
+    ? (periodoActivo ? [periodoActivo] : [])
+    : (data?.periodos ?? []);
 
   return (
     <HistorialBase
       title="Historial Escolar"
-      items={data?.historial_seguimientos ?? []}
-      periodos={data?.periodos ?? []}
+      items={historialFiltrado}
+      periodos={periodosFiltrados}
       periodoActivo={data?.periodoActivo}
 
       renderTitulo={(item, periodo) => (
@@ -50,14 +73,17 @@ export default function HistorialEscolarCard({ data }) {
 
 
       renderDetalle={(item) => {
-        const esEditable = item.estatus === "Activo";
+        const editablePorPermisoPeriodo = puedeEditarEnItem(item);
+
+        const editableFinal =
+          editablePorPermisoPeriodo && item.estatus === "Activo";
 
         return (
           <DetalleSeguimientoEscolar
             seguimiento={item}
             id_expediente={data?.id_expediente}
-            editable={esEditable && canEditEscuela}
-            canCreateEscuela={esEditable && canCreateEscuela}
+            editable={editableFinal && canEditEscuela}
+            canCreateEscuela={editableFinal && canCreateEscuela}
           />
         );
       }}

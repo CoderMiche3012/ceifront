@@ -183,7 +183,7 @@ export default function HistorialFotografias({ data }) {
         );
 
       } catch (error) {
-        console.error(error);
+        alert("Error al descargar");
       }
     };
 
@@ -300,11 +300,10 @@ export default function HistorialFotografias({ data }) {
         message: "La fotografía se eliminó correctamente.",
       });
     } catch (error) {
-      console.error(error);
+      alert("Error al eliminar");
     }
   };
   const handleSelectFile = () => {
-    console.log(inputRef.current);
 
     inputRef.current?.click();
   };

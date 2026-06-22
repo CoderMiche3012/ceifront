@@ -1,7 +1,22 @@
 import HistorialBase from "../Historial";
 import ResumenServiciosCard from "./ResumenServiciosCard";
-
+import { usePermissions } from "../../../../../../context/PermissionsContext";
+import { usePeriodoActivo } from "../../../../../periodos/hooks/usePeriodos";
 export default function HistorialServicios({ data }) {
+  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+
+  const canViewHistorial = hasModulePermission("historial", "ver");
+  const canEditHistorial = hasModulePermission("historial", "editar");
+
+  const { data: periodoActivo, isLoading: loadingPeriodo } = usePeriodoActivo();
+  const esPeriodoActivo = (item) =>
+    item.id_periodo === periodoActivo?.id_periodo;
+
+  const puedeEditarEnItem = (item) => {
+    if (canEditHistorial) return true;
+    return esPeriodoActivo(item);
+  };
+
   const contarServicios = (servicios = []) => {
     return servicios.filter((s) => s.asistencia).length;
   };
@@ -28,12 +43,22 @@ export default function HistorialServicios({ data }) {
       }
     );
   };
+  const historialFiltrado = (data?.historial_seguimientos ?? []).filter((item) => {
+    // si puede ver todo, no filtra
+    if (canViewHistorial) return true;
 
+    // si no puede ver todo, solo periodo activo
+    return item.id_periodo === periodoActivo?.id_periodo;
+  });
+
+  const periodosFiltrados = !canViewHistorial
+    ? (periodoActivo ? [periodoActivo] : [])
+    : (data?.periodos ?? []);
   return (
     <HistorialBase
       title="Historial de Servicios"
-      items={data?.historial_seguimientos ?? []}
-      periodos={data?.periodos ?? []}
+      items={historialFiltrado}
+      periodos={periodosFiltrados}
       periodoActivo={data?.periodoActivo}
 
       renderTitulo={(item, periodo) => (

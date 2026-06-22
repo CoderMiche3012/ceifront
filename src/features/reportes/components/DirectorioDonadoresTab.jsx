@@ -132,7 +132,7 @@ export default function DirectorioDonadoresTab() {
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       );
     } catch (error) {
-      console.error("Error al descargar Excel de donadores desde el worker:", error);
+      alert("Error al descargar");
     } finally {
       setDescargando(false);
     }
@@ -146,7 +146,7 @@ export default function DirectorioDonadoresTab() {
       const buffer = await exportarReporte("pdf", filtrados);
       dispararDescargaCliente(buffer, "Reporte_donadores_cei.pdf", "application/pdf");
     } catch (error) {
-      console.error("Error al descargar PDF de donadores desde el worker:", error);
+      alert("Error al descargar");
     } finally {
       setDescargando(false);
     }

@@ -34,7 +34,6 @@ export const crearGrado = async (payload) => {
     const res = await API.post(`${BASE_URL}/`, payload);
     return res.data;
   } catch (error) {
-    console.log(error)
     const errorData = error.response?.data || error;
     if (errorData) {
       throw new Error(formatError(errorData));

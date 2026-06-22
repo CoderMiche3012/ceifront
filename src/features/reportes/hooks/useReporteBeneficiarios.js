@@ -239,7 +239,7 @@ export function useReporteBeneficiarios() {
       const meta = { periodo: periodoLabel, periodoLabel };
       const buffer = await solicitarDescargaReporte("beneficiarios", "excel", dataFiltrada, meta);
       ejecutarDescargaBlob(buffer, `beneficiarios_${periodoLabel}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    } catch (error) { console.error("Error Excel:", error); }
+    } catch (error) { alert("Error al descargar"); }
   };
 
   const descargarPDF = async () => {
@@ -282,6 +282,7 @@ export function useReporteBeneficiarios() {
       // datos compactos
       const dataCompacta = dataFiltrada.map((b) => ({
         nombre_completo: b.nombre_completo,
+        periodo_columna: b.periodo_columna,
         edad: b.edad,
         estatus: b.estatus,
         escolaridad: b.escolaridad,
@@ -374,7 +375,7 @@ export function useReporteBeneficiarios() {
       );
 
     } catch (e) {
-      console.error("Error PDF:", e);
+      alert("Error al descargar");
     }
   };
   const graficaEdades = useMemo(() => {

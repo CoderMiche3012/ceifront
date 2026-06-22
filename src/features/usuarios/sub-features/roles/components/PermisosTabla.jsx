@@ -42,11 +42,24 @@ export default function PermisosTabla({ permisos = {}, onPermissionChange, disab
   };
 
   // Esta función es la que hace que "agarre" el cambio
-  const handleToggle = (moduleKey, actionKey) => {
-    if (disabled) return;
+  
 
-    onPermissionChange?.(moduleKey, actionKey);
-  };
+  const handleToggle = (moduleKey, actionKey) => {
+  if (disabled) return;
+
+  if (moduleKey === "postulantes" && (actionKey === "aceptar" || actionKey === "rechazar")) {
+    const actual = !!permisos[moduleKey]?.aceptar;
+
+    const nuevoValor = !actual;
+
+    onPermissionChange(moduleKey, "aceptar", nuevoValor);
+    onPermissionChange(moduleKey, "rechazar", nuevoValor);
+
+    return;
+  }
+
+  onPermissionChange?.(moduleKey, actionKey);
+};
 
   return (
     <div className="space-y-4">
@@ -100,7 +113,7 @@ export default function PermisosTabla({ permisos = {}, onPermissionChange, disab
                         checked={!!permisos[child.key][action]}
                         disabled={disabled}
                         // AQUÍ PASAMOS EL childKey
-                        onChange={() => onPermissionChange(child.key, action)}
+                        onChange={() => handleToggle(child.key, action)}
                       />
                     ))}
                   </div>

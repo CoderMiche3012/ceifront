@@ -20,7 +20,7 @@ const HEADERS_BENEFICIARIOS = [
   "Fecha realización",
 ];
 export const generarExcelEstrategia = async (datos, logoBase64, meta = {}) => {
-  const titulo = `REPORTE DE ASISTENCIAS`;
+  const titulo = `REPORTE DE ASISTENCIAS `;
 
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Beneficiarios");
@@ -66,10 +66,22 @@ export const generarPdfEstrategia = async (datos, logoBase64, meta = {}) => {
 
   doc.setFontSize(22);
   doc.setTextColor(13, 111, 107);
-  doc.text(`REPORTE DE APOYOS `, logoBase64 ? 45 : 14, 20);
+  doc.text(`REPORTE DE ASISTENCIAS `, logoBase64 ? 45 : 14, 20);
+  const fechaReporte = new Date().toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(
+    `Fecha de generación: ${fechaReporte}`,
+    logoBase64 ? 45 : 14,
+    28
+  );
   autoTable(doc, {
-    startY: 40,
+    startY: 45,
     theme: "grid",
     headStyles: { fillColor: [13, 111, 107], fontSize: 8, halign: "center" },
     styles: { fontSize: 7, cellPadding: 2 },

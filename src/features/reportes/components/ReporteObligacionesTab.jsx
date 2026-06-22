@@ -16,14 +16,36 @@ import { CheckCircle2, AlertCircle, FileText, ClipboardList, FileSpreadsheet } f
 export default function ReporteObligacionesTab() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [descargando, setDescargando] = useState(false);
 
+  const descargarExcel = async () => {
+    if (descargando) return;
+
+    try {
+      setDescargando(true);
+      await actions.descargarExcel();
+    } finally {
+      setDescargando(false);
+    }
+  };
+
+  const descargarPDF = async () => {
+    if (descargando) return;
+
+    try {
+      setDescargando(true);
+      await actions.descargarPDF();
+    } finally {
+      setDescargando(false);
+    }
+  };
   const { state, actions, loading } = useReporteObligaciones();
   const { search, periodo, tipoObligacion, estatus, dataFiltrada, periodosOptions } = state;
 
   useEffect(() => {
     setCurrentPage(1);
   }, [search, periodo, tipoObligacion, estatus]);
-  
+
 
   const stats = useMemo(() => {
     const total = dataFiltrada.length;
@@ -51,9 +73,8 @@ export default function ReporteObligacionesTab() {
         return <span className="text-sm capitalize">{item.tipo === "servicioSocial" ? "Servicio Social" : "Carta"}</span>;
       case "estatus":
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-            item.estatus === "Cumplio" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-          }`}>
+          <span className={`px-2 py-1 rounded-full text-xs font-bold ${item.estatus === "Cumplio" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+            }`}>
             {item.estatus}
           </span>
         );
@@ -99,26 +120,46 @@ export default function ReporteObligacionesTab() {
           onSearchChange={actions.setSearch}
           filters={[
             { key: "periodo", label: "Periodo", value: periodo, onChange: actions.setPeriodo, options: periodosOptions },
-            { 
-              key: "tipo", label: "Tipo", value: tipoObligacion, onChange: actions.setTipoObligacion, 
-              options: [{ value: "", label: "Todos" }, { value: "servicioSocial", label: "Servicio Social" }, { value: "carta", label: "Carta" }] 
+            {
+              key: "tipo", label: "Tipo", value: tipoObligacion, onChange: actions.setTipoObligacion,
+              options: [{ value: "", label: "Todos" }, { value: "servicioSocial", label: "Servicio Social" }, { value: "carta", label: "Carta" }]
             },
-            { 
-              key: "estatus", label: "Estatus", value: estatus, onChange: actions.setEstatus, 
-              options: [{ value: "", label: "Todos" }, { value: "Cumplio", label: "Cumplió" }, { value: "Pendiente", label: "Pendiente" }] 
+            {
+              key: "estatus", label: "Estatus", value: estatus, onChange: actions.setEstatus,
+              options: [{ value: "", label: "Todos" }, { value: "Cumplio", label: "Cumplió" }, { value: "Pendiente", label: "Pendiente" }]
             }
           ]}
           extraAction={
             <div className="flex gap-2">
-              <Boton variant="secondary" onClick={actions.descargarExcel}><FileSpreadsheet className="h-4 w-4" /> Excel</Boton>
-              <Boton onClick={actions.descargarPDF}><FileText className="h-4 w-4" /> PDF</Boton>
+              <Boton
+                type="button"
+                variant="secondary"
+                icon={<FileSpreadsheet className="h-4 w-4" />}
+                onClick={() => {
+                  if (!descargando) descargarExcel();
+                }}
+                disabled={descargando}
+              >
+                {descargando ? "Generando..." : "Excel"}
+              </Boton>
+
+              <Boton
+                type="button"
+                icon={<FileText className="h-4 w-4" />}
+                onClick={() => {
+                  if (!descargando) descargarPDF();
+                }}
+                disabled={descargando}
+              >
+                {descargando ? "Generando..." : "PDF"}
+              </Boton>
             </div>
           }
         />
 
         <DatosTabla columns={COLUMNS} data={dataPaginada} renderCell={renderCell} />
 
-        <PaginacionTabla 
+        <PaginacionTabla
           currentPage={currentPage} totalPages={totalPages} totalItems={dataFiltrada.length}
           onPageChange={setCurrentPage} onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
         />

@@ -17,16 +17,16 @@ const HEADERS_BENEFICIARIOS = [
   "Nombre Completo",
   "Edad",
   "Periodo",
-  "Total de apoyos",
-  "Apoyos entregados",
-  "Apoyos Pendientes",
-  "Ultimo apoyo entregado",
+  "Total de reembolsos",
+  "Reembolsos entregados",
+  "Reembolsos Pendientes",
+  "Ultimo Reembolso entregado",
 ];
 
 // excel
 export const generarExcelEstrategia = async (datos, logoBase64, meta = {}) => {
   const periodoRaw = (meta.periodoLabel || meta.periodo || "General").toString().trim();
-  const titulo = `REPORTE DE APOYOS - ${periodoRaw}`;
+  const titulo = `REPORTE DE REEMBOLSOS - ${periodoRaw}`;
 
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Beneficiarios");
@@ -66,10 +66,23 @@ export const generarPdfEstrategia = async (datos, logoBase64, meta = {}) => {
 
   doc.setFontSize(22);
   doc.setTextColor(13, 111, 107);
-  doc.text(`REPORTE DE APOYOS - ${periodoRaw}`, logoBase64 ? 45 : 14, 20);
+  doc.text(`REPORTE DE REEMBOLSOS - ${periodoRaw}`, logoBase64 ? 45 : 14, 20);
+  const fechaReporte = new Date().toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(
+    `Fecha de generación: ${fechaReporte}`,
+    logoBase64 ? 45 : 14,
+    28
+  );
 
   autoTable(doc, {
-    startY: 40,
+    startY: 45,
     theme: "grid",
     headStyles: { fillColor: [13, 111, 107], fontSize: 8, halign: "center" },
     styles: { fontSize: 7, cellPadding: 2 },

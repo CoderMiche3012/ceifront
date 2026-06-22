@@ -45,7 +45,6 @@ export function useDonadorEditarForm(open, donador, onSuccess, onClose) {
   // cargar datos al abrir modal
   useEffect(() => {
     if (!open || !donador) return;
-    console.log("reinicializando formulario");
     setFieldErrors({});
     setError("");
     setShowConfirm(false);

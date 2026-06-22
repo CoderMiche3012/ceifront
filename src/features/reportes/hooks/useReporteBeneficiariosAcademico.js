@@ -314,7 +314,7 @@ export function useReporteBeneficiariosAcademico() {
       const meta = { periodo: periodoLabel, periodoLabel };
       const buffer = await solicitarDescargaReporte("academico", "excel", dataFiltrada, meta);
       ejecutarDescargaBlob(buffer, `ReporteAcademico_${periodoLabel}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    } catch (error) { console.error("Error Excel:", error); }
+    } catch (error) { alert("Error al descargar"); }
   };
 
   const descargarPDF = async () => {
@@ -355,6 +355,7 @@ export function useReporteBeneficiariosAcademico() {
 
       const dataCompacta = dataFiltrada.map((b) => ({
         nombre_completo: b.nombre_completo,
+        periodo_columna: b.periodo_columna,
         estatus: b.estatus,
         escuela: b.escuela,
         grado: b.grado,
@@ -433,7 +434,7 @@ export function useReporteBeneficiariosAcademico() {
         "application/pdf"
       );
     } catch (e) {
-      console.error("Error PDF:", e);
+      calert("Error al descargar");
     }
   };
 

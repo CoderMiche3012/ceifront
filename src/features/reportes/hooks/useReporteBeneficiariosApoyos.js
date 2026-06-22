@@ -169,14 +169,11 @@ export function useReporteBeneficiariosEconomico() {
 
         ejecutarDescargaBlob(
           buffer,
-          `ReporteEconomico_${periodoLabel}.xlsx`,
+          `ReporteApoyoEconomico_${periodoLabel}.xlsx`,
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         );
       } catch (error) {
-        console.error(
-          "Error Excel:",
-          error
-        );
+        alert("Error al descargar");
       }
     };
 
@@ -214,14 +211,11 @@ export function useReporteBeneficiariosEconomico() {
 
         ejecutarDescargaBlob(
           buffer,
-          `ReporteEconomico_${periodoLabel}.pdf`,
+          `ReporteApoyoEconomico_${periodoLabel}.pdf`,
           "application/pdf"
         );
       } catch (error) {
-        console.error(
-          "Error PDF:",
-          error
-        );
+        alert("Error al descargar");
       }
     };
 

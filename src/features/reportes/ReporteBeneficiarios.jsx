@@ -35,12 +35,12 @@ export default function ReporteBeneficiarios() {
     obligaciones: {
       titulo: "Reporte de Obligaciones",
       descripcion:
-        "Visualiza el cumplimiento de obligaciones y compromisos de los beneficiarios.",
+        "Visualiza el cumplimiento de obligaciones y compromisos de los beneficiarios (carta/servicio social).",
     },
     asistencias: {
-      titulo: "Reporte de Asistencias",
+      titulo: "Reporte de Asistencias a Comedor y Psicología",
       descripcion:
-        "Consulta estadísticas y registros de asistencia de los beneficiarios.",
+        "Consulta registros de asistencia de los beneficiarios.",
     },
   };
 

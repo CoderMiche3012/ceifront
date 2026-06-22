@@ -15,7 +15,7 @@ import Lottie from "lottie-react";
 export default function ReporteUsosServiciosTab() {
 
   const [pageSize, setPageSize] = useState(10);
-const [pagina, setPagina] = useState(1);
+  const [pagina, setPagina] = useState(1);
   const hoy = new Date();
   const [isExporting, setIsExporting] = useState(false);
   const [search, setSearch] = useState("");
@@ -28,19 +28,19 @@ const [pagina, setPagina] = useState(1);
 
   //filtrado
   const dataFiltrada = useMemo(() => {
-  // 1. Filtrar primero para dejar solo los registros que asistieron (true)
-  const soloAsistidos = asistencias.filter((item) => item.asistencia === true);
+    // 1. Filtrar primero para dejar solo los registros que asistieron (true)
+    const soloAsistidos = asistencias.filter((item) => item.asistencia === true);
 
-  // 2. Si el buscador está vacío, regresar solo los que asistieron
-  if (!search) return soloAsistidos;
+    // 2. Si el buscador está vacío, regresar solo los que asistieron
+    if (!search) return soloAsistidos;
 
-  // 3. Si escriben en el buscador, filtrar por nombre sobre los que sí asistieron
-  return soloAsistidos.filter((item) =>
-    item.expediente_resumen?.nombre_completo
-      ?.toLowerCase()
-      .includes(search.toLowerCase())
-  );
-}, [asistencias, search]);
+    // 3. Si escriben en el buscador, filtrar por nombre sobre los que sí asistieron
+    return soloAsistidos.filter((item) =>
+      item.expediente_resumen?.nombre_completo
+        ?.toLowerCase()
+        .includes(search.toLowerCase())
+    );
+  }, [asistencias, search]);
   useEffect(() => {
     setPagina(1);
   }, [search, mes, anio, tipo]);
@@ -84,13 +84,42 @@ const [pagina, setPagina] = useState(1);
     }));
   }, [dataFiltrada]);
   const descargarExcel = async () => {
-    const buffer = await solicitarDescargaReporte("asistencias", "excel", dataExport);
-    ejecutarDescargaBlob(buffer, "ReporteAsistencias.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    if (isExporting) return;
+    try {
+      setIsExporting(true);
+      const buffer = await solicitarDescargaReporte(
+        "asistencias",
+        "excel",
+        dataExport
+      );
+      ejecutarDescargaBlob(buffer,
+        "ReporteAsistencias.xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+    } catch (error) {
+      alert("Error al descargar");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const descargarPDF = async () => {
-    const buffer = await solicitarDescargaReporte("asistencias", "pdf", dataExport);
-    ejecutarDescargaBlob(buffer, "ReporteAsistencias.pdf", "application/pdf");
+    if (isExporting) return;
+    try {
+      setIsExporting(true);
+      const buffer = await solicitarDescargaReporte("asistencias",
+        "pdf",
+        dataExport
+      );
+      ejecutarDescargaBlob(buffer,
+        "ReporteAsistencias.pdf",
+        "application/pdf"
+      );
+    } catch (error) {
+      alert("Error al descargar");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   //filtros
@@ -206,8 +235,9 @@ const [pagina, setPagina] = useState(1);
             {
               component: Boton,
               icon: FileText,
-              label: "PDF",
+              label: isExporting ? "Generando..." : "PDF",
               onClick: descargarPDF,
+              disabled: isExporting,
             },
           ]}
         />
@@ -237,13 +267,13 @@ const [pagina, setPagina] = useState(1);
         />
 
         <PaginacionTabla
-  currentPage={pagina}
-  totalPages={totalPages}
-  totalItems={dataFiltrada.length}
-  pageSize={pageSize}
-  onPageChange={setPagina}
-  onPageSizeChange={setPageSize}
-/>
+          currentPage={pagina}
+          totalPages={totalPages}
+          totalItems={dataFiltrada.length}
+          pageSize={pageSize}
+          onPageChange={setPagina}
+          onPageSizeChange={setPageSize}
+        />
       </Card>
     </div>
   );

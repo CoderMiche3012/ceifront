@@ -47,7 +47,7 @@ export default function EstudioCard({ data, estudio, puedeEditar = true }) {
       link.remove();
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      console.error("Error al descargar:", error);
+      alert("Error al descargar:");
     }
   };
 

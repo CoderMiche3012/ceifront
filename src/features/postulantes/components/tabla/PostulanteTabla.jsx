@@ -227,11 +227,7 @@ export default function PostulanteTabla({ postulantes = [], onPrint }) {
           !["aceptado"].includes(
             item?.estatus?.toLowerCase()
           );
-        console.log({
-          estatus: item.estatus,
-          estatus_postulante: item.estatus_postulante,
-          canEditPostulante,
-        })
+
         return (
           <div className="flex items-center gap-1">
             <NavLink

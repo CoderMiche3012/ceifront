@@ -45,7 +45,7 @@ export const mainMenu = [
     path: "/app/asistencias",
     icon: HiOutlineUsers,
     permission: {
-      module: "beneficiarios",
+      module: "servicios",
       action: "ver",
     },
   },

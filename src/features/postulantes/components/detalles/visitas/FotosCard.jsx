@@ -56,7 +56,6 @@ export default function FotosCard({ data, puedeEditar=true }) {
       });
 
     } catch (error) {
-      console.log(error)
       setResultado({
         open: true,
         type: "error",

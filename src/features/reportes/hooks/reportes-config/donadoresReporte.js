@@ -193,7 +193,7 @@ export const generarPdfEstrategia = async (datos, logoBase64) => {
         30
       );
     } catch (e) {
-      console.error("Error logo PDF:", e);
+      alert("Error ");
     }
   }
 

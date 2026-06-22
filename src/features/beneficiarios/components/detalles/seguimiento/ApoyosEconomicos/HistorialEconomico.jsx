@@ -1,24 +1,45 @@
 import HistorialBase from "../Historial";
 import DetalleSeguimientoEconomico from "./DetalleSeguimientoEconomico";
 import { usePermissions } from "../../../../../../context/PermissionsContext";
-
+import { usePeriodoActivo } from "../../../../../periodos/hooks/usePeriodos";
 
 export default function HistorialEconomicoCard({ data }) {
   const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
   const canEditApoyos = hasModulePermission("apoyos", "editar");
   const canCreateApoyos = hasModulePermission("apoyos", "crear")
+  const canViewHistorial = hasModulePermission("historial", "ver");
+  const canEditHistorial = hasModulePermission("historial", "editar");
+  const { data: periodoActivo, isLoading: loadingPeriodo } = usePeriodoActivo();
+  const esPeriodoActivo = (item) =>
+    item.id_periodo === periodoActivo?.id_periodo;
+
+  const puedeEditarEnItem = (item) => {
+    if (canEditHistorial) return true;
+    return esPeriodoActivo(item);
+  };
   const calcularTotalPeriodo = (apoyos = []) => {
     return apoyos.reduce(
       (acc, apoyo) => acc + Number(apoyo.monto || 0),
       0
     );
   };
+  const historialFiltrado = (data?.historial_seguimientos ?? []).filter((item) => {
+    // si puede ver todo, no filtra
+    if (canViewHistorial) return true;
+
+    // si no puede ver todo, solo periodo activo
+    return item.id_periodo === periodoActivo?.id_periodo;
+  });
+
+  const periodosFiltrados = !canViewHistorial
+    ? (periodoActivo ? [periodoActivo] : [])
+    : (data?.periodos ?? []);
 
   return (
     <HistorialBase
       title="Historial Económico"
-      items={data?.historial_seguimientos ?? []}
-      periodos={data?.periodos ?? []}
+      items={historialFiltrado}
+      periodos={periodosFiltrados}
       periodoActivo={data?.periodoActivo}
 
       /* TÍTULO */
@@ -53,14 +74,17 @@ export default function HistorialEconomicoCard({ data }) {
 
       /* DETALLE */
       renderDetalle={(item) => {
-        const esEditable = item.estatus === "Activo";
+        const editablePorPermisoPeriodo = puedeEditarEnItem(item);
+
+        const editableFinal =
+          editablePorPermisoPeriodo && item.estatus === "Activo";
 
         return (
           <DetalleSeguimientoEconomico
             seguimiento={item}
             dataT={data}
-            editable={esEditable && canEditApoyos}
-            canCreateApoyos={esEditable && canCreateApoyos}
+            editable={editableFinal && canEditApoyos}
+            canCreateApoyos={editableFinal && canCreateApoyos}
           />
         );
       }}

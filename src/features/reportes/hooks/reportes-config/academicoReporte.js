@@ -68,7 +68,7 @@ const procesarMetricas = (datos) => {
 // para el excel
 export const generarExcelEstrategia = async (datos, logoBase64, meta = {}) => {
   const periodoRaw = (meta.periodoLabel || meta.periodo || "General").toString().trim();
-  const titulo = `REPORTE DE BENEFICIARIOS - ${periodoRaw}`;
+  const titulo = `REPORTE ACADÉMICO DE BENEFICIARIOS - ${periodoRaw}`;
   const colorTitulo = "0D6F6B";
   const m = procesarMetricas(datos);
 
@@ -203,7 +203,14 @@ export const generarExcelEstrategia = async (datos, logoBase64, meta = {}) => {
 // general el pdf
 export const generarPdfEstrategia = async (datos, logoBase64, meta = {}) => {
 
-  const periodoRaw = (meta.periodoLabel || meta.periodo || "General").toString().trim();
+  const periodoRaw = (
+    meta.periodoLabel ||
+    meta.periodo ||
+    "GENERAL"
+  )
+    .toString()
+    .trim()
+    .toUpperCase();
   const doc = new jsPDF({ orientation: "landscape", format: "a3" });
   const pageWidth = doc.internal.pageSize.width;
 
@@ -214,14 +221,27 @@ export const generarPdfEstrategia = async (datos, logoBase64, meta = {}) => {
   doc.setFontSize(22);
   doc.setTextColor(13, 111, 107);
   doc.text(
-    `REPORTE DE BENEFICIARIOS - ${periodoRaw}`,
+    `REPORTE ACADÉMICO DE BENEFICIARIOS - ${periodoRaw}`,
     logoBase64 ? 45 : 14,
     20
+  );
+  const fechaReporte = new Date().toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(
+    `Fecha de generación: ${fechaReporte}`,
+    logoBase64 ? 45 : 14,
+    28
   );
 
 
   autoTable(doc, {
-    startY: 40,
+    startY: 45,
     theme: "grid",
     headStyles: {
       fillColor: [13, 111, 107],

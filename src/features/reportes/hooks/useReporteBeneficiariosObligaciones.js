@@ -82,7 +82,7 @@ useEffect(() => {
       const buffer = await solicitarDescargaReporte("obligaciones", "excel", dataFiltrada, meta);
       ejecutarDescargaBlob(buffer, `ReporteObligaciones_${periodoLabel}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     } catch (error) {
-      console.error("Error Excel:", error);
+      alert("Error al descargar");
     }
   };
 
@@ -91,7 +91,7 @@ useEffect(() => {
       const buffer = await solicitarDescargaReporte("obligaciones", "pdf", dataFiltrada, { periodoLabel });
       ejecutarDescargaBlob(buffer, `ReporteObligaciones_${periodoLabel}.pdf`, "application/pdf");
     } catch (error) {
-      console.error("Error PDF:", error);
+      alert("Error al descargar");
     }
   };
 

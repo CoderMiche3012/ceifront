@@ -44,8 +44,6 @@ export const solicitarDescargaReporte = async (
 
     worker.addEventListener("message", handleMessage);
 
-    console.log("ENVIANDO WORKER:", tipoReporte, formato, datos.length);
-
     worker.postMessage({
       tipoReporte,
       formato,

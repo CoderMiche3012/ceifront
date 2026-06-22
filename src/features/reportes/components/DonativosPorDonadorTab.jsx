@@ -96,7 +96,6 @@ export default function DonativosPorDonadorTab() {
     const acumulado = {};
     resumen.forEach((item) => {
       Object.entries(item.totales || {}).forEach(([moneda, monto]) => {
-        console.log(moneda, monto);
         acumulado[moneda] = (acumulado[moneda] || 0) + Number(monto || 0);
       });
     });
@@ -140,7 +139,7 @@ export default function DonativosPorDonadorTab() {
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       );
     } catch (error) {
-      console.error("Error Excel:", error);
+      alert("Error al descargar");
     } finally {
       setDescargando(false);
     }
@@ -171,7 +170,7 @@ export default function DonativosPorDonadorTab() {
         "application/pdf"
       );
     } catch (error) {
-      console.error("Error PDF:", error);
+      alert("Error al descargar");
     } finally {
       setDescargando(false);
     }

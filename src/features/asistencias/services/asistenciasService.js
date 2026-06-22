@@ -107,7 +107,6 @@ export const obtenerAsistenciasPorFiltro = async (mes, servicio) => {
     );
     return res.data;
   } catch (error) {
-    console.log(error);
 
     const errorData = error.response?.data || error;
 

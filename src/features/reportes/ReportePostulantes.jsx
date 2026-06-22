@@ -165,7 +165,7 @@ export default function ReportePostulantes() {
             );
 
         } catch (error) {
-            console.error("Error al descargar Excel:", error);
+            alert("Error al descargar Excel");
         } finally {
             setDescargando(false); 
         }
@@ -190,7 +190,7 @@ export default function ReportePostulantes() {
         );
 
     } catch (error) {
-        console.error("Error al descargar PDF:", error);
+        alert("Error al descargar PDF");
     } finally {
         setDescargando(false);
     }

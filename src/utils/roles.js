@@ -57,7 +57,7 @@ export const modules = [
       },
       {
         key: "servicios",
-        name: "Servicios",
+        name: "Servicios (Comedor / Psicología)",
       },
       {
         key: "obligaciones",

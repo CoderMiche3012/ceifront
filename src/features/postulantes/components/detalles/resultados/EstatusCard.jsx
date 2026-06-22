@@ -60,7 +60,6 @@ export default function EstatusCard({ data }) {
 
       setDecision(value);
     } catch (error) {
-      console.log(error);
       alert("Error al guardar");
     } finally {
       setLoading(false);

@@ -50,7 +50,6 @@ export default function RecomendacionCard({ data }) {
 
       setTimeout(() => setGuardado(false), 2500);
     } catch (error) {
-      console.error(error);
       alert("Error al guardar recomendación");
     }
   };

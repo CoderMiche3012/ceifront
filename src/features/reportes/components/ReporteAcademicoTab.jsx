@@ -55,6 +55,29 @@ export default function ReporteAcademicoTab() {
     right: 0,
     haciaArriba: false
   });
+  const [descargando, setDescargando] = useState(false);
+
+  const descargarExcel = async () => {
+    if (descargando) return;
+
+    try {
+      setDescargando(true);
+      await actions.descargarExcel();
+    } finally {
+      setDescargando(false);
+    }
+  };
+
+  const descargarPDF = async () => {
+    if (descargando) return;
+
+    try {
+      setDescargando(true);
+      await actions.descargarPDF();
+    } finally {
+      setDescargando(false);
+    }
+  };
 
   const { state, actions, loading } = useReporteBeneficiariosAcademico();
 
@@ -467,18 +490,26 @@ export default function ReporteAcademicoTab() {
               </div>
 
               <Boton
+                type="button"
                 variant="secondary"
                 icon={<FileSpreadsheet className="h-4 w-4" />}
-                onClick={actions.descargarExcel}
+                onClick={() => {
+                  if (!descargando) descargarExcel();
+                }}
+                disabled={descargando}
               >
-                Excel
+                {descargando ? "Generando..." : "Excel"}
               </Boton>
 
               <Boton
+                type="button"
                 icon={<FileText className="h-4 w-4" />}
-                onClick={actions.descargarPDF}
+                onClick={() => {
+                  if (!descargando) descargarPDF();
+                }}
+                disabled={descargando}
               >
-                PDF
+                {descargando ? "Generando..." : "PDF"}
               </Boton>
             </div>
           }

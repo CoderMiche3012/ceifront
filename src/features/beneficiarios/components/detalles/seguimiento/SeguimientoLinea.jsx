@@ -91,7 +91,9 @@ export default function SeguimientoLinea({ data }) {
                   ? "bg-teal-100 text-teal-700"
                   : "bg-slate-100 text-slate-600"
                   }`}>
-                  {item.estatus}
+                  {item.estatus?.toLowerCase() === "finalizado"
+                    ? "Graduado"
+                    : item.estatus}
                 </span>
 
                 <p className="text-sm text-slate-600">

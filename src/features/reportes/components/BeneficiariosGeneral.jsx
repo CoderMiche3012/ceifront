@@ -63,7 +63,39 @@ export default function ReporteBeneficiariosTab() {
   } = state;
 
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [menuData, setMenuData] = useState({ id: null, top: 0, right: 0, haciaArriba: false });
+  const [menuData, setMenuData] = useState({
+    id: null,
+    top: 0,
+    right: 0,
+    haciaArriba: false
+  });
+  const [descargando, setDescargando] = useState(false);
+
+  const descargarExcel = async () => {
+    if (descargando) return;
+
+    try {
+      setDescargando(true);
+      await actions.descargarExcel();
+    } finally {
+      setDescargando(false);
+    }
+  };
+
+  const descargarPDF = async () => {
+    if (descargando) return;
+
+    try {
+      setDescargando(true);
+      await actions.descargarPDF();
+    } finally {
+      setDescargando(false);
+    }
+  };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, periodo, estatus, nivel, rendimiento]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -249,7 +281,7 @@ export default function ReporteBeneficiariosTab() {
 
   return (
     <div className="space-y-6">
-      
+
       <TarjetasEstadisticas
         items={[
           { label: "Total", value: stats.total, icon: Users, color: "blue" },
@@ -312,19 +344,26 @@ export default function ReporteBeneficiariosTab() {
                 type="button"
                 variant="secondary"
                 icon={<FileSpreadsheet className="h-4 w-4" />}
-                onClick={actions.descargarExcel}
+                onClick={() => {
+                  if (!descargando) descargarExcel();
+                }}
+                disabled={descargando}
               >
-                Excel
+                {descargando ? "Generando..." : "Excel"}
               </Boton>
 
               <Boton
                 type="button"
                 icon={<FileText className="h-4 w-4" />}
-                onClick={actions.descargarPDF}
+                onClick={() => {
+                  if (!descargando) descargarPDF();
+                }}
+                disabled={descargando}
               >
-                PDF
+                {descargando ? "Generando..." : "PDF"}
               </Boton>
             </div>
+
           }
         />
 

@@ -66,7 +66,7 @@ export function useEditarSeguimientoForm() {
     setConfirmarEdicion(false);
 
   } catch (error) {
-    console.error("Error en el proceso de actualización:", error);
+    alert("Error al actualizar");
   }
 };
 
