@@ -13,15 +13,15 @@ import ModalResultado from "../../../../../components/shared/ModalResultado";
 import { useEliminarFotografia } from "../../../../expedientes/hooks/useFotografias";
 import { useSubirFotografia } from "../../../hooks/useSubirFotografia";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+export default function FotosCard({ data, puedeEditar = true }) {
+  const { mutateAsync: eliminarFoto,isPending } = useEliminarFotografia(data.id_expediente, data.id_postulante);
+  
 
-export default function FotosCard({ data, puedeEditar=true }) {
-  const { mutateAsync: eliminarFoto } = useEliminarFotografia(data.id_expediente, data.id_postulante);
-
-  const fotos = data?.fotografias || [];
+  const fotos = data?.fotografias?.filter((foto) => foto.etapa === "Inicial") || [];
 
   const [index, setIndex] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
   const {
     inputRef,
     descripcion,
@@ -40,6 +40,7 @@ export default function FotosCard({ data, puedeEditar=true }) {
     resultado,
     setResultado,
     cerrarResultado,
+    loading
   } = useSubirFotografia(data.id_expediente);
 
   const eliminarFotografiaActual = async () => {
@@ -131,7 +132,7 @@ export default function FotosCard({ data, puedeEditar=true }) {
           </div>
         ) : (
           <img
-            src={`${API_URL}${fotos[index].foto_archivo}`}
+            src={fotos[index].foto_archivo}
             className="w-full h-full object-cover"
           />
         )}
@@ -145,7 +146,8 @@ export default function FotosCard({ data, puedeEditar=true }) {
 
             <button
               onClick={async () => {
-                const imgUrl = `${API_URL}${fotos[index].foto_archivo}`;
+                const imgUrl = fotos[index].foto_archivo;
+
 
                 const response = await fetch(imgUrl);
                 const blob = await response.blob();
@@ -234,7 +236,7 @@ export default function FotosCard({ data, puedeEditar=true }) {
                       <Field label="Descripción">
                         <Input
                           value={descripcion}
-                          onChange={(e) => setDescripcion(e.target.value) }
+                          onChange={(e) => setDescripcion(e.target.value)}
                           placeholder="Describe la fotografía"
                         />
                       </Field>
@@ -275,7 +277,7 @@ export default function FotosCard({ data, puedeEditar=true }) {
         onClose={() => setShowConfirm(false)}
         color="teal"
       />
-      
+
       <ModalConfirmacion
         open={showDeleteConfirm}
         title="Eliminar fotografía"
@@ -286,7 +288,36 @@ export default function FotosCard({ data, puedeEditar=true }) {
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={eliminarFotografiaActual}
       />
+      {loading && (
+        <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-6 shadow-xl text-center min-w-[320px]">
+            <div className="h-10 w-10 mx-auto mb-4 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
 
+            <h3 className="font-semibold text-slate-800">
+              Procesando documento...
+            </h3>
+
+            <p className="text-sm text-slate-500 mt-2">
+              Esto puede tardar unos segundos.
+            </p>
+          </div>
+        </div>
+      )}
+      {isPending && (
+        <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-6 shadow-xl text-center min-w-[320px]">
+            <div className="h-10 w-10 mx-auto mb-4 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+
+            <h3 className="font-semibold text-slate-800">
+              Eliminando documento...
+            </h3>
+
+            <p className="text-sm text-slate-500 mt-2">
+              Esto puede tardar unos segundos.
+            </p>
+          </div>
+        </div>
+      )}
       <ModalResultado
         open={resultado.open}
         type={resultado.type}

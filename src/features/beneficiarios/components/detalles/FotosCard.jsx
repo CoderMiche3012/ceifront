@@ -40,7 +40,7 @@ export default function FotosCard({ data }) {
   const { mutateAsync: eliminarFoto } = useEliminarFotografia(id_expediente);
 
   const inputRef = useRef(null);
-  const fotos = data?.fotografias || [];
+  const fotos = data?.fotografias?.filter((foto) => foto.etapa === "Inicial") || [];
 
   const [index, setIndex] = useState(0);
   const [descripcion, setDescripcion] = useState("");
@@ -402,6 +402,21 @@ export default function FotosCard({ data }) {
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={eliminar}
       />
+      {loading && (
+        <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-6 shadow-xl text-center min-w-[320px]">
+            <div className="h-10 w-10 mx-auto mb-4 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+
+            <h3 className="font-semibold text-slate-800">
+              Procesando Fotografia...
+            </h3>
+
+            <p className="text-sm text-slate-500 mt-2">
+              Esto puede tardar unos segundos.
+            </p>
+          </div>
+        </div>
+      )}
       <ModalResultado
         open={resultado.open}
         type={resultado.type}
@@ -412,4 +427,5 @@ export default function FotosCard({ data }) {
     </div>
   );
 }
+
 

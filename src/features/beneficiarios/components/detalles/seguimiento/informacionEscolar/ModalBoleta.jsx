@@ -6,7 +6,7 @@ import Field from "../../../../../../components/ui/Field";
 import Input from "../../../../../../components/ui/InputG";
 import Boton from "../../../../../../components/ui/Boton";
 
-import {useCrearBoleta, useActualizarBoleta,} from "../../../../hooks/seguimiento/useBoletas";
+import { useCrearBoleta, useActualizarBoleta, } from "../../../../hooks/seguimiento/useBoletas";
 import { useSubirDocumento } from "../../../../../expedientes/hooks/useDocumentos";
 
 import ModalConfirmacion from "../../../../../../components/shared/ModalConfirmacion";
@@ -137,7 +137,7 @@ export default function ModalBoleta({
       setResultado({
         type: "error",
         title: "Error al guardar",
-        message: mensaje|| "Ocurrió un problema, verifica los datos e intenta nuevamente.",
+        message: mensaje || "Ocurrió un problema, verifica los datos e intenta nuevamente.",
       });
       setOpenResult(true);
     }
@@ -157,7 +157,7 @@ export default function ModalBoleta({
       <div className={ui.modal.formOverlay}>
         <div className="w-full max-w-2xl">
           <div className={ui.modal.formContainer}>
-            
+
             <div className={ui.modal.formHeader}>
               <div className={`${ui.modal.iconWrapper} bg-[#0E5F63]/10 text-[#0E5F63]`}>
                 <HiOutlineAcademicCap size={24} />
@@ -183,7 +183,7 @@ export default function ModalBoleta({
             <div className={ui.modal.formBody}>
               <div className={ui.modal.formScroll}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                  
+
                   <Field label="Promedio General" required>
                     <Input
                       type="number"
@@ -205,17 +205,29 @@ export default function ModalBoleta({
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                       Documento Digital
                     </span>
-                    
+
                     <div className="border-2 border-dashed border-slate-200 hover:border-teal-500 rounded-2xl p-5 text-center bg-slate-50/50 transition relative group">
                       <input
                         type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) =>
+                        accept="application/pdf,.pdf"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+
+                          if (file && file.type !== "application/pdf") {
+                            setResultado({
+                              type: "warning",
+                              title: "Archivo no válido",
+                              message: "Solo se permiten archivos PDF.",
+                            });
+                            setOpenResult(true);
+                            return;
+                          }
+
                           setForm({
                             ...form,
-                            archivo: e.target.files?.[0] || null,
-                          })
-                        }
+                            archivo: file || null,
+                          });
+                        }}
                         className="hidden"
                         id="fileInput"
                       />
@@ -263,15 +275,15 @@ export default function ModalBoleta({
               </div>
 
               <div className={ui.modal.formActions}>
-                <Boton 
-                  variant="secondary" 
+                <Boton
+                  variant="secondary"
                   onClick={onClose}
                   disabled={estaCargando}
                 >
                   Cancelar
                 </Boton>
 
-                <Boton 
+                <Boton
                   onClick={handleGuardar}
                   disabled={estaCargando}
                 >
@@ -293,7 +305,25 @@ export default function ModalBoleta({
         title={boleta?.id_boleta ? "Actualizar Boleta" : "Registrar Boleta"}
         description={`¿Estás seguro de que deseas guardar la información y los archivos asignados para el ${boleta?.periodo_boleta || "periodo"}?`}
       />
+      {estaCargando && (
+        <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
 
+          <div className="bg-white rounded-2xl p-6 shadow-xl text-center min-w-[320px]">
+
+            <div className="h-10 w-10 mx-auto mb-4 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+
+            <h3 className="font-semibold text-slate-800">
+              Procesando documento...
+            </h3>
+
+            <p className="text-sm text-slate-500 mt-2">
+              Esto puede tardar unos segundos.
+            </p>
+
+          </div>
+
+        </div>
+      )}
       <ModalResultado
         open={openResult}
         onClose={handleCloseResultado}
@@ -304,3 +334,5 @@ export default function ModalBoleta({
     </>
   );
 }
+
+

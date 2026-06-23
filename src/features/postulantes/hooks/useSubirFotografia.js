@@ -7,6 +7,7 @@ export const useSubirFotografia = (idExpediente) => {
     const [preview, setPreview] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const [resultado, setResultado] = useState({
         open: false,
@@ -50,8 +51,9 @@ export const useSubirFotografia = (idExpediente) => {
             });
             return;
         }
-
+        setShowConfirm(false);
         try {
+            setLoading(true);
             const formData = new FormData();
 
             formData.append("foto_archivo", preview);
@@ -87,6 +89,8 @@ export const useSubirFotografia = (idExpediente) => {
                 title: "Error al subir fotografía",
                 message: mensaje,
             });
+        } finally {
+            setLoading(false);
         }
     };
     const cerrarResultado = () => {
@@ -118,5 +122,6 @@ export const useSubirFotografia = (idExpediente) => {
         setResultado,
 
         cerrarResultado,
+        loading
     };
 };

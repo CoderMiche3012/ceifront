@@ -7,7 +7,7 @@ import { HandCoins } from "lucide-react";
 import { HiOutlineX } from "react-icons/hi";
 import BotonPrincipal from "../../../../../../components/ui/Boton";
 
-import { useCrearApoyo, useActualizarApoyo, useEliminarApoyo} from "./../../../../hooks/useApoyos";
+import { useCrearApoyo, useActualizarApoyo, useEliminarApoyo } from "./../../../../hooks/useApoyos";
 
 import ApoyoTabla from "./tabla/ApoyoTabla";
 import ApoyoFiltros from "./tabla/ApoyoFiltros";
@@ -28,7 +28,7 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT, editab
   const eliminarApoyoMutation = useEliminarApoyo();
   const entregarApoyoMutation = useActualizarApoyo();
   const subirDocumentoMutation = useSubirDocumento();
-
+  const [loadingComprobante, setLoadingComprobante] = useState(false);
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -120,6 +120,7 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT, editab
         {
           onSuccess: async (apoyoCreado) => {
             try {
+              setLoadingComprobante(true);
               if (archivoComprobante) {
                 const documentoData = new FormData();
 
@@ -146,9 +147,9 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT, editab
 
                 for (const [key, value] of documentoData.entries()) {
                   if (value instanceof File) {
-                    console.log( "..", );
+                    console.log("..",);
                   } else {
-                    console.log( "..", );
+                    console.log("..",);
                   }
                 }
 
@@ -177,6 +178,8 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT, editab
                 "Error",
                 `El apoyo se creó pero no se pudo subir el comprobante.\n\nDetalle: ${mensaje}`
               );
+            } finally {
+              setLoadingComprobante(false);
             }
           },
           onError: (error) => {
@@ -240,9 +243,9 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT, editab
 
                   for (const [key, value] of documentoData.entries()) {
                     if (value instanceof File) {
-                      console.log( "..", );
+                      console.log("..",);
                     } else {
-                      console.log( "..", );
+                      console.log("..",);
                     }
                   }
                   await subirDocumentoMutation.mutateAsync(
@@ -517,7 +520,7 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT, editab
                             </p>
 
                             <a
-                              href={`http://localhost:8000${documentoExistente.archivo}`}
+                              href={documentoExistente.archivo}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 underline font-medium"
@@ -560,17 +563,34 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT, editab
                               </p>
 
                               <p className="text-xs text-slate-500">
-                                PDF, JPG o PNG
+                                PDF
                               </p>
                             </div>
 
                             <input
                               type="file"
-                              accept=".pdf,.jpg,.jpeg,.png"
+                              accept="application/pdf"
                               className="hidden"
-                              onChange={(e) =>
-                                setArchivoComprobante(e.target.files?.[0] || null)
-                              }
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+
+                                if (!file) return;
+
+                                // 🔒 VALIDACIÓN REAL
+                                if (file.type !== "application/pdf") {
+                                  setAlerta({
+                                    open: true,
+                                    mensaje: "Solo se permiten archivos PDF.",
+                                    tipo: "error",
+                                  });
+
+                                  // limpiar input (importante)
+                                  e.target.value = null;
+                                  return;
+                                }
+
+                                setArchivoComprobante(file);
+                              }}
                             />
                           </div>
                         </label>
@@ -655,13 +675,36 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT, editab
           crearApoyoMutation.isPending ||
           actualizarApoyoMutation.isPending ||
           eliminarApoyoMutation.isPending ||
-          entregarApoyoMutation.isPending
+          entregarApoyoMutation.isPending ||
+          subirDocumentoMutation.isPending ||
+          actualizarDocumentoMutation.isPending
+
         }
         color={
           accionPendiente === "eliminar" ? "red" :
             accionPendiente === "entregar" ? "green" : "teal"
         }
       />
+
+      {loadingComprobante && (
+        <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+
+          <div className="bg-white rounded-2xl p-6 shadow-xl text-center min-w-[320px]">
+
+            <div className="h-10 w-10 mx-auto mb-4 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+
+            <h3 className="font-semibold text-slate-800">
+              Procesando documento...
+            </h3>
+
+            <p className="text-sm text-slate-500 mt-2">
+              Esto puede tardar unos segundos.
+            </p>
+
+          </div>
+
+        </div>
+      )}
 
       {/* MODAL RESULTADO */}
       <ModalResultado
@@ -674,4 +717,5 @@ export default function DetalleSeguimientoEconomico({ seguimiento, dataT, editab
     </>
   );
 }
+
 

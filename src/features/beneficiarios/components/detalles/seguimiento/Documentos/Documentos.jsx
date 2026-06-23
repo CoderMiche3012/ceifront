@@ -10,14 +10,13 @@ import Boton from "../../../../../../components/ui/BotonInterno";
 import ModalConfirmacion from "../../../../../../components/shared/ModalConfirmacion";
 import ModalResultado from "../../../../../../components/shared/ModalResultado";
 import { usePermissions } from "../../../../../../context/PermissionsContext";
-const API_URL = "http://localhost:8000";
 
 import { useSubirDocumento, useEliminarDocumento } from "../../../../../expedientes/hooks/useDocumentos";
 
 const PAGE_SIZE = 10;
 
 export default function ExpedienteDigital({ data }) {
-  const { hasModulePermission, loading: isPermsLoading, } = usePermissions();
+  const { hasModulePermission, Do: isPermsDo, } = usePermissions();
   const canDeleteDocumentos = hasModulePermission("documentos", "eliminar");
   const canCreateDocumentos = hasModulePermission("documentos", "crear")
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -32,6 +31,7 @@ export default function ExpedienteDigital({ data }) {
   const [pendingFile, setPendingFile] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [DoDocumeto, setDoDocumeto] = useState(false);
 
   const inputRef = useRef(null);
   const [search, setSearch] = useState("");
@@ -53,8 +53,9 @@ export default function ExpedienteDigital({ data }) {
 
   const confirmarSubida = async () => {
     if (!pendingFile) return;
-
+    setConfirmOpen(false);
     try {
+      setDoDocumeto(true);
       const formData = new FormData();
 
       formData.append("archivo", pendingFile);
@@ -86,6 +87,7 @@ export default function ExpedienteDigital({ data }) {
         message: mensaje || "No se pudo subir el documento.",
       });
     } finally {
+      setDoDocumeto(false);
       setConfirmOpen(false);
       setPendingFile(null);
       setSelectedFile(null);
@@ -169,7 +171,7 @@ export default function ExpedienteDigital({ data }) {
         );
 
       } catch (error) {
-           alert("Error al descargar");
+        alert("Error al descargar");
       }
     };
 
@@ -356,10 +358,7 @@ export default function ExpedienteDigital({ data }) {
 
                 onClick:
                   (row) =>
-                    window.open(
-                      `${API_URL}${row.archivo}`,
-                      "_blank"
-                    ),
+                    window.open(row.archivo, "_blank"),
               },
 
               {
@@ -370,12 +369,11 @@ export default function ExpedienteDigital({ data }) {
                   <Download size={16} />
                 ),
 
-                onClick:
-                  (row) =>
-                    descargarArchivo(
-                      `${API_URL}${row.archivo}`,
-                      row.nombre_documento
-                    ),
+                onClick: (row) =>
+                  descargarArchivo(
+                    row.archivo,
+                    row.nombre_documento
+                  ),
               },
 
               {
@@ -490,6 +488,25 @@ export default function ExpedienteDigital({ data }) {
             : "¿Deseas subir este documento?"
         }
       />
+      {DoDocumeto && (
+        <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+
+          <div className="bg-white rounded-2xl p-6 shadow-xl text-center min-w-[320px]">
+
+            <div className="h-10 w-10 mx-auto mb-4 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+
+            <h3 className="font-semibold text-slate-800">
+              Procesando documento...
+            </h3>
+
+            <p className="text-sm text-slate-500 mt-2">
+              Esto puede tardar unos segundos.
+            </p>
+
+          </div>
+
+        </div>
+      )}
       <ModalResultado
         open={resultado.open}
         type={resultado.type}
@@ -578,8 +595,4 @@ export default function ExpedienteDigital({ data }) {
 
 
 }
-
-
-
-
 

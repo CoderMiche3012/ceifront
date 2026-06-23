@@ -37,9 +37,7 @@ export default function EstudioCard({
       "estudio"
   );
 
-  const estudioUrl = documentoEstudio?.archivo
-    ? `http://localhost:8000${documentoEstudio.archivo}`
-    : null;
+  const estudioUrl = documentoEstudio?.archivo || null;
   const abrirModal = (tipo = "subir") => {
     setModo(tipo);
     setMostrarSubida(true);
@@ -55,12 +53,24 @@ export default function EstudioCard({
   };
 
   const seleccionar = () => { inputRef.current?.click(); };
-  const handleFile =
-    (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      setPreview(file);
-    };
+  const handleFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      setResultado({
+        open: true,
+        type: "error",
+        title: "Archivo no válido",
+        message: "Solo se permiten archivos PDF.",
+      });
+
+      e.target.value = "";
+      return;
+    }
+
+    setPreview(file);
+  };
 
   const confirmarSubida =
     async () => {
@@ -407,10 +417,11 @@ export default function EstudioCard({
       <input
         ref={inputRef}
         type="file"
-        accept=".pdf,.jpg,.png,.jpeg"
+        accept="application/pdf,.pdf"
         className="hidden"
         onChange={handleFile}
       />
     </div>
   );
 }
+

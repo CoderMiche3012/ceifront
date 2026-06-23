@@ -60,6 +60,7 @@ export function useSubirEstudio(data) {
         data: {
           estudio: {
             id_documento: documento.id_documento,
+            estatus_estudio: "Completo",
           },
         },
       });
@@ -73,6 +74,7 @@ export function useSubirEstudio(data) {
       setMostrarSubida(false);
       setArchivo(null);
     } catch (error) {
+      console.log(error)
 
       const mensaje =
         error?.errors?.archivo?.[0] ||

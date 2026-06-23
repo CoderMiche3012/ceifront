@@ -41,6 +41,7 @@ export default function HistorialFotografias({ data }) {
   const [modalFoto, setModalFoto] = useState(null);
   const inputRef = useRef(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [loadingFoto, setLoadingFoto] = useState(false);
 
   const [resultado, setResultado] = useState({
     open: false,
@@ -206,6 +207,7 @@ export default function HistorialFotografias({ data }) {
 
       try {
         setShowConfirm(false);
+        setLoadingFoto(true);
 
         setSaving(true);
 
@@ -265,6 +267,7 @@ export default function HistorialFotografias({ data }) {
         });
 
       } finally {
+        setLoadingFoto(false);
 
         setSaving(false);
       }
@@ -834,7 +837,21 @@ export default function HistorialFotografias({ data }) {
         onConfirm={confirmarSubida}
       />
 
+      {loadingFoto && (
+        <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-6 shadow-xl text-center min-w-[320px]">
+            <div className="h-10 w-10 mx-auto mb-4 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
 
+            <h3 className="font-semibold text-slate-800">
+              Procesando Fotografia...
+            </h3>
+
+            <p className="text-sm text-slate-500 mt-2">
+              Esto puede tardar unos segundos.
+            </p>
+          </div>
+        </div>
+      )}
 
       <ModalResultado
         open={resultado.open}
