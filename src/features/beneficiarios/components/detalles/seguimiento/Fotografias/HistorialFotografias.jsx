@@ -42,7 +42,7 @@ export default function HistorialFotografias({ data }) {
   const inputRef = useRef(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [loadingFoto, setLoadingFoto] = useState(false);
-
+  const [fotoAEliminar, setFotoAEliminar] = useState(null);
   const [resultado, setResultado] = useState({
     open: false,
     type: "success",
@@ -144,49 +144,28 @@ export default function HistorialFotografias({ data }) {
     }));
   };
 
-  const descargarFoto =
-    async (
-      url,
-      nombre =
-        "fotografia.jpg"
-    ) => {
+  const descargarFoto = async (url, nombre = "fotografia.jpg") => {
+    try {
+      const response = await fetch(url);
 
-      try {
+      if (!response.ok) return;
 
-        const response = await fetch(url);
-        const blob = await response.blob();
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
 
-        const blobUrl =
-          window.URL.createObjectURL(
-            blob
-          );
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = nombre;
 
-        const link =
-          document.createElement(
-            "a"
-          );
+      document.body.appendChild(link);
+      link.click();
 
-        link.href = blobUrl;
-
-        link.download =
-          nombre;
-
-        document.body.appendChild(
-          link
-        );
-
-        link.click();
-
-        link.remove();
-
-        window.URL.revokeObjectURL(
-          blobUrl
-        );
-
-      } catch (error) {
-        alert("Error al descargar");
-      }
-    };
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Error descargando imagen:", error);
+    }
+  };
 
   const confirmarSubida =
     async () => {
@@ -274,36 +253,46 @@ export default function HistorialFotografias({ data }) {
     };
   const eliminarFotografiaActual = async () => {
     try {
-      const foto = modalFoto?.fotos?.[modalFoto?.index];
+      if (!fotoAEliminar) return;
 
-      if (!foto) return;
-
-      await eliminarFoto(foto.id_foto);
+      await eliminarFoto(fotoAEliminar.id_foto);
 
       const nuevasFotos = modalFoto.fotos.filter(
-        (f) => f.id_foto !== foto.id_foto
+        (f) => f.id_foto !== fotoAEliminar.id_foto
       );
 
       if (nuevasFotos.length === 0) {
         setModalFoto(null);
       } else {
+        const newIndex = Math.min(modalFoto.index, nuevasFotos.length - 1);
+
         setModalFoto({
           fotos: nuevasFotos,
-          index: Math.min(
-            modalFoto.index,
-            nuevasFotos.length - 1
-          ),
+          index: newIndex,
+          seguimiento: modalFoto.seguimiento,
         });
       }
+
       setShowDeleteConfirm(false);
+      setFotoAEliminar(null);
+
       setResultado({
         open: true,
         type: "success",
         title: "Fotografía eliminada",
         message: "La fotografía se eliminó correctamente.",
       });
+
     } catch (error) {
-      alert("Error al eliminar");
+      setShowDeleteConfirm(false);
+      setFotoAEliminar(null);
+
+      setResultado({
+        open: true,
+        type: "error",
+        title: "Error",
+        message: "No fue posible eliminar la fotografía.",
+      });
     }
   };
   const handleSelectFile = () => {
@@ -625,9 +614,13 @@ export default function HistorialFotografias({ data }) {
             />
           </button>
           {canEditFotografias &&
-            modalFoto?.seguimiento?.estatus === "Activo" && (
+            data.estatus_beneficiario === "Activo" && (
               <button
-                onClick={() => setShowDeleteConfirm(true)}
+                onClick={() => {
+                  const foto = modalFoto?.fotos?.[modalFoto?.index];
+                  setFotoAEliminar(foto);
+                  setShowDeleteConfirm(true);
+                }}
                 className="absolute top-5 right-35 h-11 w-11 rounded-full bg-red-500/80 text-white hover:bg-red-600 flex items-center justify-center"
               >
                 <Trash2 size={18} />
@@ -868,4 +861,5 @@ export default function HistorialFotografias({ data }) {
     </>
   );
 }
+
 

@@ -10,6 +10,7 @@ import { fotografiasKeys } from "../services/fotografiasKeys";
 import { postulantesKeys } from "../../postulantes/services/postulantesKeys";
 import { seguimientosKeys } from "../../beneficiarios/services/seguimientosKeys";
 import { expedientesKeys } from "../services/expedientesKeys";
+import { beneficiariosKeys } from "../../beneficiarios/services/beneficiariosKeys";
 
 
 export const useFotografias = (idExpediente) => {
@@ -45,6 +46,9 @@ export const useSubirFotografia = (idExpediente, idPostulante) => {
       queryClient.invalidateQueries({
         queryKey: seguimientosKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
+      });
 
     },
   });
@@ -73,6 +77,10 @@ export const useEliminarFotografia = (idExpediente, idPostulante) => {
       queryClient.invalidateQueries({
         queryKey: expedientesKeys.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
+      });
+
     },
     
   });
@@ -97,6 +105,14 @@ export const useEliminarFotografiaBeneficiarios = () => {
       queryClient.invalidateQueries({
         queryKey: seguimientosKeys.all,
       });
+
+      queryClient.invalidateQueries({
+        queryKey: seguimientosKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: beneficiariosKeys.all,
+      });
+
     },
   });
 };

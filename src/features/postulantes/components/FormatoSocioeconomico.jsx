@@ -97,7 +97,18 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
     };
 
     return (
-        <div ref={ref} className="bg-white text-[11px] leading-tight text-black font-sans mt-[5.5mm] print:mt-[5.5mm] p-10 print:px-4 print:pb-4 print:pt-0 break-inside-avoid-page page-break-inside-avoid">
+        <div
+            ref={ref}
+            className="
+    bg-white
+    text-[12px]
+    leading-tight
+    text-black
+    font-sans
+    p-0
+    print:p-0
+  "
+        >
             <div className="mb-4">
                 {/* Encabezado */}
                 <div className="flex items-center mb-4">
@@ -111,10 +122,11 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                     </div>
                     <div className="w-2/3">
                         <div className="border border-black text-center py-2">
-                            <h1 className="text-base font-bold tracking-wide">
+                            <h1 className="text-lg font-bold tracking-wide">
                                 ESTUDIO SOCIOECONÓMICO FAMILIAR
                             </h1>
-                            <p className="text-[10px] italic">
+                            <p className="text-[11px]
+                             italic">
                                 FAMILY INTAKE ASSESSMENT
                             </p>
                         </div>
@@ -137,29 +149,32 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
 
                     {/* Contenedor Nombre */}
                     <div className="flex items-baseline gap-2">
-                        <span className="text-[11px] font-bold whitespace-nowrap">
-                            Nombre del niño / <span className="text-[10px] italic font-normal text-slate-600">Name:</span>
+                        <span className="text-[12px] font-bold whitespace-nowrap">
+                            Nombre del niño / <span className="text-[11px]
+                             italic font-normal text-slate-600">Name:</span>
                         </span>
-                        <span className="text-[11px] font-bold whitespace-nowrap">
+                        <span className="text-[12px] font-bold whitespace-nowrap">
                             {postulante.expediente?.nombre} {postulante.expediente?.apellido_p} {postulante.expediente?.apellido_m}
                         </span>
                     </div>
 
                     {/* Contenedor Edad */}
                     <div className="flex items-baseline gap-2">
-                        <span className="text-[11px] font-bold whitespace-nowrap">
-                            Edad / <span className="text-[10px] italic font-normal text-slate-600">Age:</span>
+                        <span className="text-[12px] font-bold whitespace-nowrap">
+                            Edad / <span className="text-[11px]
+                             italic font-normal text-slate-600">Age:</span>
                         </span>
-                        <span className="text-[11px] font-bold whitespace-nowrap">
+                        <span className="text-[12px] font-bold whitespace-nowrap">
                             {calcularEdad(postulante.expediente?.fecha_nacimiento)} años
                         </span>
                     </div>
 
                     <div className="flex items-baseline gap-2">
-                        <span className="text-[11px] font-bold whitespace-nowrap">
-                            Grado Esc./ <span className="text-[10px] italic font-normal text-slate-600">Level School:</span>
+                        <span className="text-[12px] font-bold whitespace-nowrap">
+                            Grado Esc./ <span className="text-[11px]
+                             italic font-normal text-slate-600">Level School:</span>
                         </span>
-                        <span className="text-[11px] font-bold whitespace-nowrap">
+                        <span className="text-[12px] font-bold whitespace-nowrap">
                             {postulante.grado_escolar_inicial} ° {postulante.nivel_escolar_inicial}
                         </span>
                     </div>
@@ -171,22 +186,27 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                 <table className="w-full border-collapse border border-black">
                     <thead>
                         <tr className="bg-slate-50">
-                            <th className="border border-black p-1 text-[9px] w-[25%]">Nombre / <br /><span className="italic lowercase">Name</span></th>
-                            <th className="border border-black p-1 text-[9px] w-[15%]">Parentesco / <br /><span className="italic lowercase">Relationship</span></th>
-                            <th className="border border-black p-1 text-[9px] w-[10%]">Edad / <br /><span className="italic lowercase">Age</span></th>
-                            <th className="border border-black p-1 text-[9px] w-[20%]">Ocupación o grado escolar / <br /><span className="italic lowercase">Occupation</span></th>
-                            <th className="border border-black p-1 text-[9px] w-[15%]">Salario o Escuela / <br /><span className="italic lowercase">Monthly Income</span></th>
+                            <th className="border border-black p-1 text-[10px] w-[25%]">Nombre / <br /><span className="italic lowercase">Name</span></th>
+                            <th className="border border-black p-1 text-[10px] w-[15%]">Parentesco / <br /><span className="italic lowercase">Relationship</span></th>
+                            <th className="border border-black p-1 text-[10px] w-[10%]">Edad / <br /><span className="italic lowercase">Age</span></th>
+                            <th className="border border-black p-1 text-[10px] w-[20%]">Ocupación o grado escolar / <br /><span className="italic lowercase">Occupation</span></th>
+                            <th className="border border-black p-1 text-[10px] w-[15%]">Salario o Escuela / <br /><span className="italic lowercase">Monthly Income</span></th>
                         </tr>
                     </thead>
                     <tbody>
                         {familia.length > 0 ? (
                             familia.map((miembro, index) => (
                                 <tr key={index} className="text-center h-8">
-                                    <td className="border border-black p-1 text-[10px] text-left">{miembro.nombre} {miembro.apellido_p} {miembro.apellido_m}</td>
-                                    <td className="border border-black p-1 text-[10px]">{miembro.parentesco}</td>
-                                    <td className="border border-black p-1 text-[10px]">{miembro.fecha_nacimiento ? `${calcularEdad(miembro.fecha_nacimiento)} años` : "--"}</td>
-                                    <td className="border border-black p-1 text-[10px]">{miembro.actividad_principal || "---"}</td>
-                                    <td className="border border-black p-1 text-[10px]">${miembro.salario || "0.00"}</td>
+                                    <td className="border border-black p-1 text-[11px]
+                                     text-left">{miembro.nombre} {miembro.apellido_p} {miembro.apellido_m}</td>
+                                    <td className="border border-black p-1 text-[11px]
+                                    ">{miembro.parentesco}</td>
+                                    <td className="border border-black p-1 text-[11px]
+                                    ">{miembro.fecha_nacimiento ? `${calcularEdad(miembro.fecha_nacimiento)} años` : "--"}</td>
+                                    <td className="border border-black p-1 text-[11px]
+                                    ">{miembro.actividad_principal || "---"}</td>
+                                    <td className="border border-black p-1 text-[11px]
+                                    ">${miembro.salario || "0.00"}</td>
                                 </tr>
                             ))
                         ) : (
@@ -204,15 +224,15 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                         )}
                     </tbody>
                 </table>
-                <p className="text-[11px] font-bold text-slate-500">
+                <p className="text-[12px] font-bold text-slate-500">
                     Total de personas en el hogar:{" "}
-                    <span className="text-[11px] font-bold text-slate-500">
+                    <span className="text-[12px] font-bold text-slate-500">
                         {totalPersonasEnCasa}
                     </span>
                 </p>
-                <p className="text-[11px] font-bold text-slate-500">
+                <p className="text-[12px] font-bold text-slate-500">
                     Dirección:{" "}
-                    <span className="text-[11px] font-bold text-slate-500">
+                    <span className="text-[12px] font-bold text-slate-500">
                         Calle {direccion?.calle || "____"}, #
                         {direccion?.numero || "____"},
                         Col. {geo?.colonia || "____"},
@@ -220,31 +240,31 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                         C.P {geo?.codigo_postal || "____"}
                     </span>
                 </p>
-                <p className="text-[11px] font-bold text-slate-500">
+                <p className="text-[12px] font-bold text-slate-500">
                     Referencia:{" "}
-                    <span className="text-[11px] font-bold text-slate-500">
+                    <span className="text-[12px] font-bold text-slate-500">
                         {postulante.estudio?.referencia_casa || ""}
                     </span>
                 </p>
-                <p className="text-[11px] font-bold text-slate-500">
+                <p className="text-[12px] font-bold text-slate-500">
                     ¿Por medio de quien se enteró del Programa?{" "}
-                    <span className="text-[11px] font-bold text-slate-500">
+                    <span className="text-[12px] font-bold text-slate-500">
                         {postulante.estudio?.referencia_ingreso || ""}
                     </span>
                 </p>
-                <p className="text-[11px] font-bold text-slate-500">
+                <p className="text-[12px] font-bold text-slate-500">
                     ¿Sus hijos son del mismo padre, o ha tenido diferentes parejas?{" "}
                 </p>
             </div>
-            <div className="mt-4 text-[11px]">
+            <div className="mt-4 text-[12px]">
                 {/* Estado civil */}
                 <div className="mb-2">
                     <p className="font-bold">
                         Estado civil actual de los padres /
-                        <span className="text-[11px] italic font-normal text-slate-600">Marital  status of parents now:</span>
+                        <span className="text-[12px] italic font-normal text-slate-600">Marital  status of parents now:</span>
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-[11px]">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-[12px]">
 
                         {/* Unión libre */}
                         <div className="flex items-center gap-1">
@@ -286,12 +306,13 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                 {/* Familia en programa */}
                 <p className="font-bold">
                     ¿Tiene algún otro miembro de su familia en el programa? /
-                    <span className="text-[11px] italic font-normal text-slate-600">do you have any other family members in the program?</span>
+                    <span className="text-[12px] italic font-normal text-slate-600">do you have any other family members in the program?</span>
                 </p>
 
                 {/* Tipo de casa */}
                 <div className="mb-2">
-                    <div className="flex items-center gap-3 text-[10px]">
+                    <div className="flex items-center gap-3 text-[11px]
+                    ">
 
                         <p className="font-bold whitespace-nowrap">
                             Su casa es /
@@ -315,17 +336,18 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                 {/* Renta */}
                 <p className="font-bold">
                     Si paga renta, ¿cuánto paga mensualmente? /
-                    <span className="text-[11px] italic font-normal text-slate-600">If you pay rent, how much do you pay monthly?</span>
+                    <span className="text-[12px] italic font-normal text-slate-600">If you pay rent, how much do you pay monthly?</span>
                 </p>
 
-                <p className="font-bold text-[11px] border-b border-black leading-none inline mb-0 pb-0">
+                <p className="font-bold text-[12px] border-b border-black leading-none inline mb-0 pb-0">
                     Tipo de construcción de la casa /
                     <span className="text-[12px] italic font-normal text-slate-600 ml-1">
                         Type of construction
                     </span>
                 </p>
 
-                <div className="mt-4 text-[10px] leading-tight space-y-1">
+                <div className="mt-4 text-[11px]
+                 leading-tight space-y-1">
 
                     {/* PAREDES */}
                     <div>
@@ -457,7 +479,8 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                     </div>
 
                     {/* UBICACIÓN BAÑO */}
-                    <div className="flex items-center gap-4 text-[10px] break-inside-avoid-page">
+                    <div className="flex items-center gap-4 text-[11px]
+                     break-inside-avoid-page">
 
                         <p className="font-bold whitespace-nowrap">
                             ¿Dónde se localiza el baño? /
@@ -480,7 +503,8 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
 
                     {/* DRENAJE */}
                     <div>
-                        <div className="flex items-center gap-4 text-[10px] break-inside-avoid-page">
+                        <div className="flex items-center gap-4 text-[11px]
+                         break-inside-avoid-page">
 
                             <p className="font-bold whitespace-nowrap">
                                 ¿Cuenta con drenaje? /
@@ -512,7 +536,8 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                     </div>
 
                     {/* SERVICIOS */}
-                    <div className="flex items-center gap-4 text-[10px] break-inside-avoid-page">
+                    <div className="flex items-center gap-4 text-[11px]
+                     break-inside-avoid-page">
                         <p className="font-bold">
                             ¿Con qué servicios se cuenta? /
                             <span className="italic text-slate-600"> What services are available?</span>
@@ -532,7 +557,8 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4 text-[10px] break-inside-avoid-page">
+                    <div className="flex items-center gap-4 text-[11px]
+                     break-inside-avoid-page">
 
                         <p className="font-bold whitespace-nowrap">
                             ¿Cuánto gasta en agua cada mes? /
@@ -557,7 +583,8 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                         </div>
 
                     </div>
-                    <div className="flex items-center gap-6 text-[10px] whitespace-nowrap break-inside-avoid-page">
+                    <div className="flex items-center gap-6 text-[11px]
+                     whitespace-nowrap break-inside-avoid-page">
 
                         <span className="font-bold">
                             ¿Cuánto gasta en luz cada mes? /
@@ -570,7 +597,8 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                         <span className="border-b border-black inline-block min-w-[60px] ml-1"></span>
 
                     </div>
-                    <div className="flex items-center gap-4 text-[10px] break-inside-avoid-page">
+                    <div className="flex items-center gap-4 text-[11px]
+                     break-inside-avoid-page">
 
                         <p className="font-bold whitespace-nowrap">
                             ¿Cuánto gasta en teléfono cada mes? /
@@ -590,7 +618,8 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                         </div>
 
                     </div>
-                    <div className="flex items-center gap-4 text-[10px] whitespace-nowrap break-inside-avoid-page">
+                    <div className="flex items-center gap-4 text-[11px]
+                     whitespace-nowrap break-inside-avoid-page">
 
                         <span className="font-bold">
                             ¿Cuánto gasta toda la familia en transporte? /
@@ -599,39 +628,41 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
 
                         <span>
                             Semana / <span className="italic text-slate-600">week</span> $
-                            <span className="text-[11px] font-bold whitespace-nowrap">
-                                {(postulante.estudio?.gastos?.[0]?.monto ?? 0) / 4}
+                            <span className="text-[12px] font-bold whitespace-nowrap">
+                                {(postulante.estudio?.gastos?.[1]?.monto ?? 0) / 4}
                             </span>
                         </span>
 
                         <span>
                             Mes / <span className="italic text-slate-600">month</span> $
-                            <span className="text-[11px] font-bold whitespace-nowrap">
-                                {postulante.estudio?.gastos?.[0]?.monto ?? 0}
+                            <span className="text-[12px] font-bold whitespace-nowrap">
+                                {postulante.estudio?.gastos?.[1]?.monto ?? 0}
                             </span>
                         </span>
 
                     </div>
 
-                    <div className="flex items-center gap-4 text-[10px] whitespace-nowrap mt-1 break-inside-avoid-page">
+                    <div className="flex items-center gap-4 text-[11px]
+                     whitespace-nowrap mt-1 break-inside-avoid-page">
                         <span className="font-bold">
                             ¿Cuánto gasta en comida para la familia? /
                             <span className="italic text-slate-600"> Food per week?</span>
                         </span>
                         <span>
                             Semana / <span className="italic text-slate-600">week</span> $
-                            <span className="text-[11px] font-bold whitespace-nowrap">
-                                {(postulante.estudio?.gastos?.[1]?.monto ?? 0) / 4}
+                            <span className="text-[12px] font-bold whitespace-nowrap">
+                                {(postulante.estudio?.gastos?.[0]?.monto ?? 0) / 4}
                             </span>
                         </span>
                         <span>
                             Mes / <span className="italic text-slate-600">month</span> $
-                            <span className="text-[11px] font-bold whitespace-nowrap">
-                                {postulante.estudio?.gastos?.[1]?.monto ?? 0}
+                            <span className="text-[12px] font-bold whitespace-nowrap">
+                                {postulante.estudio?.gastos?.[0]?.monto ?? 0}
                             </span>
                         </span>
                     </div>
-                    <div className="flex items-center gap-4 text-[10px] flex-wrap break-inside-avoid-page">
+                    <div className="flex items-center gap-4 text-[11px]
+                     flex-wrap break-inside-avoid-page">
 
                         <span className="font-bold">
                             ¿Qué aparatos electrónicos tiene? /
@@ -657,7 +688,8 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                         </span>
 
                     </div>
-                    <div className="flex items-center gap-4 text-[10px] flex-wrap break-inside-avoid-page print:mt-8">
+                    <div className="flex items-center gap-4 text-[11px]
+                     flex-wrap break-inside-avoid-page print:mt-8">
 
                         <span className="font-bold">
                             ¿Qué tipo de electrodomésticos tiene? /
@@ -687,8 +719,10 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                     </div>
 
                 </div>
-                <div className="mt-3 text-[10px] break-inside-avoid-page">
-                    <div className="mt-3 text-[10px]">
+                <div className="mt-3 text-[11px]
+                 break-inside-avoid-page">
+                    <div className="mt-3 text-[11px]
+                    ">
                         {/* Título */}
                         <p className="font-bold mb-1">
                             Con qué frecuencia come lo siguiente: /
@@ -725,7 +759,8 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
                     </div>
                 </div>
 
-                <div className="mt-3 text-[10px] space-y-2">
+                <div className="mt-3 text-[11px]
+                 space-y-2">
 
                     <span className="font-bold">
                         ¿Qué tipo de comida se encontró en la casa? /
@@ -834,6 +869,5 @@ const FormatoImpresionComponent = React.forwardRef(({ postulante }, ref) => {
     );
 });
 export const FormatoImpresion = React.memo(FormatoImpresionComponent);
-
 
 

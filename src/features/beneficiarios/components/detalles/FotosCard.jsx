@@ -9,6 +9,7 @@ import {
   X,
   Expand,
   Trash2,
+  Download
 } from "lucide-react";
 
 import { useSubirFotografia, useEliminarFotografia } from "../../../expedientes/hooks/useFotografias";
@@ -28,6 +29,7 @@ export default function FotosCard({ data }) {
   const id_expediente = data?.id_expediente;
   const [showConfirm, setShowConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   const [resultado, setResultado] = useState({
     open: false,
@@ -48,22 +50,29 @@ export default function FotosCard({ data }) {
   const [loading, setLoading] = useState(false);
 
   const [modal, setModal] = useState(null);
+
   useEffect(() => {
-    if (index >= fotos.length && fotos.length > 0) {
-      setIndex(fotos.length - 1);
+    if (!fotos.length) {
+      setIndex(0);
+      return;
     }
 
-    if (fotos.length === 0) {
-      setIndex(0);
+    if (index > fotos.length - 1) {
+      setIndex(fotos.length - 1);
     }
   }, [fotos.length, index]);
+
   const seleccionar = () => inputRef.current?.click();
 
   const onFile = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPreview(file);
-  };
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  setPreview(file);
+
+  const url = URL.createObjectURL(file);
+  setPreviewUrl(url);
+};
   const cerrarResultado = () => {
     setResultado((prev) => ({
       ...prev,
@@ -71,14 +80,19 @@ export default function FotosCard({ data }) {
     }));
   };
   const cancelar = () => {
-    setPreview(null);
-    setDescripcion("");
-    setShowModal(false);
+  setPreview(null);
+  setDescripcion("");
+  setShowModal(false);
 
-    if (inputRef.current) {
-      inputRef.current.value = null;
-    }
-  };
+  if (previewUrl) {
+    URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  }
+
+  if (inputRef.current) {
+    inputRef.current.value = null;
+  }
+};
 
   const confirmarSubida = async () => {
     if (!preview) return;
@@ -132,7 +146,8 @@ export default function FotosCard({ data }) {
 
   const eliminar = async () => {
     try {
-      const foto = modal?.fotos?.[modal?.index];
+      const foto =
+      modal?.fotos?.[modal?.index];
 
       if (!foto) return;
 
@@ -147,8 +162,16 @@ export default function FotosCard({ data }) {
         title: "Fotografía eliminada",
         message: "La fotografía se eliminó correctamente.",
       });
+
+      if (fotos.length <= 1) {
+        setIndex(0);
+      } else if (index >= fotos.length - 1) {
+        setIndex(fotos.length - 2);
+      }
+
     } catch (e) {
       setShowDeleteConfirm(false);
+      setModal(null);
 
       setResultado({
         open: true,
@@ -176,7 +199,7 @@ export default function FotosCard({ data }) {
       <div className="flex items-center justify-between">
         <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
           <Camera size={18} />
-          Fotos del expediente
+          Fotos Iniciales
         </h3>
         {canEditPostulante && (
           <button
@@ -199,7 +222,7 @@ export default function FotosCard({ data }) {
         ) : (
           <>
             <img
-              src={fotos[index].foto_archivo}
+              src={fotos?.[index]?.foto_archivo}
               className="w-full h-full object-cover cursor-pointer"
               onClick={() => setModal({ fotos, index })}
             />
@@ -233,6 +256,63 @@ export default function FotosCard({ data }) {
           </>
         )}
       </div>
+      {fotos.length > 0 && (
+        <div className="rounded-xl bg-slate-50 px-4 py-3 border border-slate-100 flex items-center justify-between">
+
+          {/* DESCRIPCIÓN */}
+          <p className="text-sm text-slate-700">
+            {fotos?.[index]?.descripcion || "Sin descripción"}
+          </p>
+
+          {/* BOTONES */}
+          <div className="flex items-center gap-2">
+
+            {/* DESCARGAR */}
+            <button
+              onClick={async () => {
+                const imgUrl = fotos?.[index]?.foto_archivo;
+                if (!imgUrl) return;
+
+                const response = await fetch(imgUrl);
+
+                if (!response.ok) return;
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `Fotografia_${index + 1}.jpg`;
+
+                document.body.appendChild(link);
+                link.click();
+
+                link.remove();
+                window.URL.revokeObjectURL(url);
+              }}
+              className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
+              title="Descargar foto"
+            >
+              <Download size={16} />
+            </button>
+
+            {/* ELIMINAR */}
+            {canEditPostulante && (
+              <button
+                onClick={() => {
+                  setModal({ fotos, index }); // asegura contexto
+                  setShowDeleteConfirm(true);
+                }}
+                className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                title="Eliminar foto"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className={ui.modal.formOverlay}>
@@ -280,7 +360,7 @@ export default function FotosCard({ data }) {
                       </button>
                     ) : (
                       <img
-                        src={URL.createObjectURL(preview)}
+                        src={previewUrl}
                         alt=""
                         className="w-full h-72 object-cover rounded-2xl border"
                       />
@@ -427,5 +507,4 @@ export default function FotosCard({ data }) {
     </div>
   );
 }
-
 

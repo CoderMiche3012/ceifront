@@ -84,3 +84,17 @@
   75%  { transform: translateY(-4px) rotate(-1deg); }
   100% { transform: translateY(0px) rotate(0deg); }
 }
+
+
+@media print {
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

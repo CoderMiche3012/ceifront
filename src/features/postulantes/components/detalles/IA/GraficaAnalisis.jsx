@@ -6,7 +6,7 @@ export default function GraficaAnalisis({
   valorDisponible,
 }) {
   return (
-    <div className="relative w-full h-[300px] flex items-center justify-center">
+    <div className="relative w-full h-[280px] flex items-center justify-center">
       {/* Gradientes */}
       <svg width="0" height="0">
         <defs>
@@ -24,7 +24,7 @@ export default function GraficaAnalisis({
         </defs>
       </svg>
 
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={280}>
         <PieChart>
           <Pie
             data={data}

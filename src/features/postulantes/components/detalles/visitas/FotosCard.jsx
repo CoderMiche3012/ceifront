@@ -88,7 +88,7 @@ export default function FotosCard({ data, puedeEditar = true }) {
       <div className="flex items-center justify-between">
         <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
           <Camera size={18} />
-          Fotos del expediente
+          Fotos Iniciales
         </h3>
         {puedeEditar && (
           <button
