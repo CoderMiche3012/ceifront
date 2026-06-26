@@ -84,7 +84,7 @@ export default function EditarNotaGeneral({ isOpen, onClose, data }) {
                 </h2>
 
                 <p className={ui.modal.description}>
-                  Agrega observaciones o comentarios del donador
+                  Agrega observaciones o comentarios escolares
                 </p>
               </div>
 

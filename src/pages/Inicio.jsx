@@ -104,6 +104,7 @@ export default function Inicio() {
     loading: loadingBeneficiarios,
   } = useBeneficiariosPage();
 
+
   const [visitas, setVisitas] = useState([]);
   const [loadingVisitas, setLoadingVisitas] = useState(true);
 
@@ -279,16 +280,15 @@ export default function Inicio() {
     if (!beneficiarios || beneficiarios.length === 0) {
       return { activos: 0, sinDonador: 0, nuevosIngresos: 0, bajas: 0 };
     }
+
     const fechaActual = new Date();
     const mesActual = fechaActual.getMonth();
     const anioActual = fechaActual.getFullYear();
-
-    return beneficiarios.reduce((acc, b) => {
+    return beneficiariosPeriodo.reduce((acc, b) => {
       const ultimoSeguimiento = b.seguimientos && b.seguimientos.length > 0
         ? b.seguimientos[b.seguimientos.length - 1]
         : null;
-
-      const esActivo = ultimoSeguimiento?.e === "Activo" || b.e === "Activo";
+      const esActivo = b.estatus === "Activo";
       if (esActivo) acc.activos++;
 
       const tieneDonador = b.id_donador || b.donador || b.tieneDonador;
@@ -301,7 +301,7 @@ export default function Inicio() {
         }
       }
 
-      const esBaja = ultimoSeguimiento?.e === "Inactivo" || b.e === "Inactivo";
+      const esBaja = b.estatus === "Inactivo";
       if (esBaja) acc.bajas++;
 
       return acc;
@@ -423,9 +423,9 @@ export default function Inicio() {
       <div className="flex items-center justify-between border-b border-slate-200 pb-5">
         <div className="flex items-center gap-3">
 
-         <div className="p-5 rounded-2xl bg-teal-50 border border-teal-100">
-  <UserCircle className="w-12 h-12 text-teal-600" />
-</div>
+          <div className="p-5 rounded-2xl bg-teal-50 border border-teal-100">
+            <UserCircle className="w-12 h-12 text-teal-600" />
+          </div>
 
           <div>
             <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -552,15 +552,6 @@ export default function Inicio() {
                 icon={UserMinus}
                 type="warning"
                 loading={loadingBeneficiarios}
-              />
-            )}
-            {canViewPostulantes && (
-              <CardInterno
-                title="Visitas Hoy"
-                value={totalVisitasHoy}
-                icon={CalendarDays}
-                type="info"
-                loading={loadingVisitas}
               />
             )}
           </div>

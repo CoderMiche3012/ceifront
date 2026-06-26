@@ -5,7 +5,7 @@ export default function PaginacionTabla({
   currentPage,
   totalPages,
   totalItems,
-  pageSize,
+  pageSize=5,
   onPageChange,
   onPageSizeChange,
 }) {

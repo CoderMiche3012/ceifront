@@ -159,10 +159,17 @@ export default function ReporteObligacionesTab() {
 
         <DatosTabla columns={COLUMNS} data={dataPaginada} renderCell={renderCell} />
 
-        <PaginacionTabla
-          currentPage={currentPage} totalPages={totalPages} totalItems={dataFiltrada.length}
-          onPageChange={setCurrentPage} onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
-        />
+       <PaginacionTabla
+  currentPage={currentPage}
+  totalPages={totalPages}
+  totalItems={dataFiltrada.length}
+  pageSize={pageSize}
+  onPageChange={setCurrentPage}
+  onPageSizeChange={(s) => {
+    setPageSize(s);
+    setCurrentPage(1);
+  }}
+/>
       </Card>
     </div>
   );
